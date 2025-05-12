@@ -1,0 +1,126 @@
+import math
+from typing import List
+from latex2json.nodes.base import ASTNode, check_children_equal
+
+# from latex2json.nodes.utils import check_children_equal
+
+
+def strip_whitespace(nodes: List[ASTNode]):
+    if nodes:
+        if isinstance(nodes[0], TextNode):
+            nodes[0].text = nodes[0].text.lstrip()
+        if isinstance(nodes[-1], TextNode):
+            nodes[-1].text = nodes[-1].text.rstrip()
+
+
+class EndOfLineNode(ASTNode):
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return "EOL"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, EndOfLineNode):
+            return False
+        return True
+
+
+class TextNode(ASTNode):
+    def __init__(self, text: str):
+        self.text = text
+
+    def __str__(self):
+        return f"'{self.text}'"
+
+    def is_whitespace(self):
+        return self.text.isspace()
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, TextNode):
+            return False
+        return self.text == other.text
+
+
+class BraceNode(ASTNode):
+    def __init__(self, children: List[ASTNode]):
+        self.set_children(children)
+
+    def strip_whitespace(self):
+        strip_whitespace(self.children)
+
+    def __str__(self):
+        return f"Brace({', '.join(str(child) for child in self.children)})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, BraceNode):
+            return False
+        return super().__eq__(other)
+
+
+class BracketNode(BraceNode):
+    def __str__(self):
+        return f"Bracket({', '.join(str(child) for child in self.children)})"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, BracketNode):
+            return False
+        return super().__eq__(other)
+
+
+class CommandNode(ASTNode):
+    def __init__(
+        self, name: str, args: List[ASTNode] = [], opt_args: List[ASTNode] = []
+    ):
+        self.name = name
+        self.args = args
+        self.opt_args = opt_args
+
+        self.set_children(self.opt_args + self.args)
+
+    def __str__(self):
+        out_str = f"{self.name}"
+        if self.args or self.opt_args:
+            out_str += f"([{self.opt_args}], {self.args})"
+        return out_str
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, CommandNode):
+            return False
+        if self.name != other.name:
+            return False
+        return check_children_equal(self.args, other.args) and check_children_equal(
+            self.opt_args, other.opt_args
+        )
+
+
+class ArgNode(ASTNode):
+    def __init__(self, num: int, num_params: int = 0):
+        self.num = num
+        self.depth = ArgNode.compute_depth(num_params)
+        self.value: List[ASTNode] = []  # store of current arg value
+
+    def get_literal(self):
+        text = "#" * 2 ** (self.depth)
+        return text + str(self.num)
+
+    @staticmethod
+    def compute_depth(num_params: int) -> int:
+        return int(math.log(num_params, 2)) if num_params > 0 else -1
+
+    def __str__(self):
+        out = f"ArgNode({self.get_literal()})"
+        if self.value:
+            out += f": {self.value}"
+        return out
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, ArgNode):
+            return False
+        return self.num == other.num and self.depth == other.depth
