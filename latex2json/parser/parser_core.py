@@ -31,7 +31,7 @@ from latex2json.tokens.utils import (
 
 
 class ParserCore:
-    def __init__(self, tokenizer: Tokenizer):
+    def __init__(self, tokenizer: Tokenizer = Tokenizer()):
         """
         Initializes the ParserCore.
         Requires a CatcodeTokenizer instance (used by parse_text).
@@ -642,8 +642,7 @@ class ParserCore:
 # --- Example Usage for Unit Testing Parser in Isolation ---
 if __name__ == "__main__":
 
-    tokenizer = Tokenizer()
-    parser = ParserCore(tokenizer=tokenizer)
+    parser = ParserCore()
 
     text = r"""
     $

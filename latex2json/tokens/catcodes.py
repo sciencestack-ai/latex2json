@@ -55,3 +55,7 @@ for char in ".,:;!?-+/=()[]<>|`'*\"":
         DEFAULT_CATCODES[ord(char)] = Catcode.OTHER
 
 # Note: You would import DEFAULT_CATCODES in your tokenizer if you initialize with defaults
+
+
+def get_default_catcodes() -> Dict[int, Catcode]:
+    return DEFAULT_CATCODES.copy()
