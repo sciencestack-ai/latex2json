@@ -1,0 +1,1 @@
+from latex2json.expander.handlers.primitives import register_primitives

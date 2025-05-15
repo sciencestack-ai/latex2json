@@ -1,0 +1,93 @@
+from typing import List, Callable, Optional, Any, Dict, Tuple, TYPE_CHECKING
+from latex2json.nodes import ASTNode, CommandNode
+
+if TYPE_CHECKING:
+    from latex2json.expander.expander_core import ExpanderCore
+
+
+Handler = Callable[["ExpanderCore", CommandNode], Optional[List[ASTNode]]]
+
+
+# Base class for command definitions (Primitives and Macros)
+class Macro:
+    def __init__(
+        self,
+        name: str,
+        handler: Optional[Handler] = None,
+    ):
+        self.name = name
+        self.handler = handler
+
+
+class MacroRegistry:
+    """
+    Manages macro and primitive definitions for a single scope layer.
+    Uses a parent registry for lookup chaining in higher scopes.
+    """
+
+    def __init__(self, parent: Optional["MacroRegistry"] = None):
+        self._definitions: Dict[str, Macro] = {}
+        self._parent = parent
+
+    @property
+    def parent(self) -> Optional["MacroRegistry"]:
+        return self._parent
+
+    def set(self, name: str, definition: Macro, is_global: bool = False):
+        """
+        Sets a definition in this registry layer.
+        If is_global is True, it propagates the definition up to the root registry.
+        """
+        if not name.startswith("\\"):
+            name = f"\\{name}"
+
+        if is_global and self._parent:
+            # If global and has a parent, delegate to the parent's set method
+            # until we reach the root registry (which has no parent).
+            self._parent.set(name, definition, is_global=True)
+        else:
+            # Set the definition in the current layer's dictionary.
+            # This definition shadows any definitions in parent layers.
+            self._definitions[name] = definition
+
+    def get(self, name: str) -> Optional[Macro]:
+        """
+        Retrieves the definition for the given name, checking this layer
+        and then recursively checking parent layers.
+        """
+        if not name.startswith("\\"):
+            name = f"\\{name}"
+
+        # Check the current layer first
+        if name in self._definitions:
+            return self._definitions[name]
+
+        # If not found in the current layer, check the parent registry
+        if self._parent:
+            return self._parent.get(name)
+
+        # If no parent and not found, the definition is not in scope
+        return None
+
+    def register_handler(
+        self,
+        name: str,
+        handler: Handler,
+        is_global: bool = False,
+    ):
+        """Convenience method to define a primitive in this registry layer (usually the root)."""
+        macro_def = Macro(name, handler)
+        # Primitives are typically defined globally in the root registry.
+        # We use set with is_global=True to ensure it goes to the root if called on a child.
+        self.set(name, macro_def, is_global=is_global)
+
+    def get_all_macros(self) -> List[Macro]:
+        """Returns all macros in this registry and its parents."""
+        all_macros = {}
+        current = self
+        while current:
+            for name, definition in current._definitions.items():
+                # if definition.is_macro:
+                all_macros[name] = definition
+            current = current.parent
+        return all_macros
