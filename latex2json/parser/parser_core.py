@@ -43,12 +43,6 @@ class ParserCore:
     def set_text(self, text: str):
         self.stream.set_text(text)
 
-    def set_catcode(self, char_code: int, catcode: Catcode):
-        self.stream.set_catcode(char_code, catcode)
-
-    def get_catcode(self, char_code: int) -> Catcode:
-        return self.stream.get_catcode(char_code)
-
     def parse_text(self, text: str) -> List[ASTNode]:
         """
         Convenience: tokenizes the text using the injected tokenizer,
@@ -59,6 +53,9 @@ class ParserCore:
 
     def set_pos(self, pos: int):
         self.stream.set_pos(pos)
+
+    def reset(self):
+        self.stream.reset()
 
     def eof(self) -> bool:
         return self.stream.eof()

@@ -5,7 +5,6 @@ import enum
 # If in a package, use from .catcodes import Catcode, DEFAULT_CATCODES
 from latex2json.tokens.catcodes import (
     Catcode,
-    DEFAULT_CATCODES,
     get_default_catcodes,
 )  # Example import if in same directory
 
@@ -38,6 +37,9 @@ class Tokenizer:
     def set_catcode(self, char_code: int, catcode: Catcode) -> None:
         """Allows changing a character's catcode dynamically."""
         self._catcodes[char_code] = catcode
+
+    def set_catcode_table(self, catcodes: Dict[int, Catcode]) -> None:
+        self._catcodes = catcodes
 
     def get_catcode(self, char_code: int) -> Catcode:
         """Gets the current catcode for a character code, defaulting to OTHER if unknown."""

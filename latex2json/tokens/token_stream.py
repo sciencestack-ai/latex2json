@@ -27,12 +27,6 @@ class TokenStream:
     def reset(self):
         self.set_pos(0)
 
-    def set_catcode(self, char_code: int, catcode: Catcode):
-        self.tokenizer.set_catcode(char_code, catcode)
-
-    def get_catcode(self, char_code: int) -> Catcode:
-        return self.tokenizer.get_catcode(char_code)
-
     def peek(self, n: int = 0) -> Optional[Token]:
         """Peek at the token at the given offset from the current position."""
         start_pos = self.pos

@@ -201,7 +201,7 @@ def test_mock_makeatletter():
     parser.parse_element() == CommandNode(r"\makeatletter")
 
     # mock \makeatletter by setting @ to LETTER
-    parser.set_catcode(ord("@"), Catcode.LETTER)
+    tokenizer.set_catcode(ord("@"), Catcode.LETTER)
 
     parser.parse_element(skip_whitespace=True) == CommandNode(r"\def")
     parser.parse_element() == CommandNode(r"\@star")
@@ -211,7 +211,7 @@ def test_mock_makeatletter():
 
     # mock \makeatother by setting @ back to OTHER
     parser.parse_element(skip_whitespace=True) == CommandNode(r"\makeatother")
-    parser.set_catcode(ord("@"), Catcode.OTHER)
+    tokenizer.set_catcode(ord("@"), Catcode.OTHER)
 
     # \@ and star are now split!
     parser.parse_element(skip_whitespace=True) == CommandNode(r"\@")
