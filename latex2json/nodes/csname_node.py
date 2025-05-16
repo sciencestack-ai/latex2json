@@ -37,3 +37,6 @@ class CSNameNode(ASTNode):
         if not isinstance(other, CSNameNode):
             return False
         return check_children_equal(self.nodes, other.nodes)
+
+    def detokenize(self):
+        return self.get_literal()

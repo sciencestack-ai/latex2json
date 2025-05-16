@@ -17,7 +17,6 @@ from latex2json.nodes import (
     EnvironmentNode,
     TextNode,
     BraceNode,
-    EquationNode,
     ArgNode,
 )
 from latex2json.nodes.syntactic_nodes import EndOfLineNode

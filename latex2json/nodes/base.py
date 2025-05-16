@@ -18,6 +18,9 @@ class ASTNode:
             return False
         return check_children_equal(self.children, other.children)
 
+    def detokenize(self):
+        return "".join(child.detokenize() for child in self.children)
+
 
 def check_children_equal(children: List[ASTNode], other_children: List[ASTNode]):
     if len(children) != len(other_children):

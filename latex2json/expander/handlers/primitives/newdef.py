@@ -186,8 +186,11 @@ def def_handler(expander: ExpanderCore, node: CommandNode) -> Optional[DefResult
     parser = expander.parser
 
     expander.skip_whitespace()
-    cmd = parser.parse_command()
-    if not cmd:
+    cmd = parser.parse_element()
+    if not isinstance(cmd, CommandNode):
+        expander.logger.warning(
+            f"Warning: \\def expects a command node, but found {cmd}"
+        )
         return None
 
     name = cmd.name

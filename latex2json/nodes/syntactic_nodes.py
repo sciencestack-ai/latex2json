@@ -13,6 +13,28 @@ def strip_whitespace(nodes: List[ASTNode]):
             nodes[-1].text = nodes[-1].text.rstrip()
 
 
+class BeginBraceNode(ASTNode):  # e.g. {
+    def __init__(self, value: str):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+    def detokenize(self):
+        return self.value
+
+
+class EndBraceNode(ASTNode):  # e.g. }
+    def __init__(self, value: str):
+        self.value = value
+
+    def __str__(self):
+        return self.value
+
+    def detokenize(self):
+        return self.value
+
+
 class EndOfLineNode(ASTNode):
     def __init__(self):
         pass
@@ -24,6 +46,9 @@ class EndOfLineNode(ASTNode):
         if not isinstance(other, EndOfLineNode):
             return False
         return True
+
+    def detokenize(self):
+        return "\n"
 
 
 class TextNode(ASTNode):
@@ -47,6 +72,9 @@ class TextNode(ASTNode):
             return False
         return self.text == other.text
 
+    def detokenize(self):
+        return self.text
+
 
 class BraceNode(ASTNode):
     def __init__(self, children: List[ASTNode]):
@@ -66,6 +94,10 @@ class BraceNode(ASTNode):
             return False
         return super().__eq__(other)
 
+    def detokenize(self):
+        child_strs = "".join(child.detokenize() for child in self.children)
+        return "{" + child_strs + "}"
+
 
 class BracketNode(ASTNode):
     def __init__(self, children: List[ASTNode]):
@@ -81,6 +113,10 @@ class BracketNode(ASTNode):
         if not isinstance(other, BracketNode):
             return False
         return super().__eq__(other)
+
+    def detokenize(self):
+        child_strs = "".join(child.detokenize() for child in self.children)
+        return "[" + child_strs + "]"
 
 
 class CommandNode(ASTNode):
@@ -111,6 +147,14 @@ class CommandNode(ASTNode):
             self.opt_args, other.opt_args
         )
 
+    def detokenize(self):
+        out = self.name
+        if self.opt_args:
+            out += "".join(child.detokenize() for child in self.opt_args)
+        if self.args:
+            out += "".join(child.detokenize() for child in self.args)
+        return out
+
 
 class ArgNode(ASTNode):
     def __init__(self, num: int, num_params: int = 1):
@@ -136,3 +180,6 @@ class ArgNode(ASTNode):
         if not isinstance(other, ArgNode):
             return False
         return self.num == other.num and self.depth == other.depth
+
+    def detokenize(self):
+        return self.get_literal()

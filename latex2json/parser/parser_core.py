@@ -5,7 +5,6 @@ from latex2json.nodes import (
     BracketNode,
     CommandNode,
     EnvironmentNode,
-    EquationNode,
     TextNode,
     MathShiftNode,
     DimensionNode,
