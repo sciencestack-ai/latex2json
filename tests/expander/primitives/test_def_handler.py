@@ -23,7 +23,7 @@ def test_get_def_usage_pattern_and_definition():
         assert parser.parse_command() == CommandNode(r"\def")
         assert parser.parse_command() == CommandNode(r"\test")
 
-        usage_pattern, definition = get_def_usage_pattern_and_definition(parser)
+        usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
         assert usage_pattern is not None
         assert definition is not None
 
@@ -55,7 +55,7 @@ def test_get_def_usage_pattern_and_definition():
         assert parser.parse_command() == CommandNode(r"\def")
         assert parser.parse_command() == CommandNode(r"\XXint")
 
-        usage_pattern, definition = get_def_usage_pattern_and_definition(parser)
+        usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
         assert usage_pattern is not None
         assert definition is not None
 
@@ -91,7 +91,7 @@ def test_get_def_usage_pattern_and_definition():
         assert parser.parse_command() == CommandNode(r"\def")
         assert parser.parse_command() == CommandNode(r"\pair")
 
-        usage_pattern, definition = get_def_usage_pattern_and_definition(parser)
+        usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
         assert usage_pattern is not None
         assert definition is not None
 
@@ -241,7 +241,7 @@ def test_edef():
 
     # test instant expansion
     text = r"""
-    \def\foo{FOO} 
+    \def\foo{FOO}
     \edef\bar#1{\foo #1}
     \def\foo{BAR} % shouldn't affect \bar since \edef\bar is already expanded
     \bar{3}
@@ -256,19 +256,19 @@ def test_edef():
         TextNode("FOO 3"),
     ]
 
-    # # test edef inside scope
-    # text = r"""
-    # {
-    #     \edef\bar{NEW BAR}
-    # }
-    # \bar{4} % STILL FOO due to scope
-    # """.strip()
-    # expander.set_text(text)
-    # out = expander.process()
-    # assert expander.macros.get("bar")
-    # assert expander.macros.get("foo")
+    # test edef inside scope
+    text = r"""
+    {
+        \edef\bar{NEW BAR}
+    }
+    \bar{4} % STILL FOO due to scope
+    """.strip()
+    expander.set_text(text)
+    out = expander.process()
+    assert expander.macros.get("bar")
+    assert expander.macros.get("foo")
 
-    # strip_whitespace(out)
-    # assert out == [
-    #     TextNode("FOO 4"),
-    # ]
+    strip_whitespace(out)
+    assert out == [
+        TextNode("FOO 4"),
+    ]

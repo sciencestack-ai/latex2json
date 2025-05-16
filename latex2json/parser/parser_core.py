@@ -11,6 +11,7 @@ from latex2json.nodes import (
     EndOfLineNode,
     ArgNode,
 )
+from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode
 from latex2json.tokens import TokenStream, Tokenizer, Catcode, Token, TokenType
 from latex2json.tokens.types import (
     WHITESPACE_TOKEN,
@@ -168,13 +169,18 @@ class ParserCore:
         if not tok:
             return None
 
-        if tok.type == TokenType.CHARACTER and tok.catcode in [
+        if tok == BEGIN_BRACE_TOKEN:
+            return self.parse_brace_group()
+        elif tok.type == TokenType.CHARACTER and tok.catcode in [
             Catcode.LETTER,
             Catcode.OTHER,
         ]:
             self.consume()
             return TextNode(tok.value)
-        return self.parse_element()
+        out = self.parse_element()
+        if out and isinstance(out, EndOfLineNode):
+            return TextNode(" ")
+        return out
 
     def _combine_sequence_as_str(self, predicate: Callable[[Token], bool]):
         tok = self.peek()
@@ -232,12 +238,11 @@ class ParserCore:
             catcode = tok.catcode
 
             if catcode == Catcode.BEGIN_GROUP:  # { (Catcode 1)
-                return self.parse_brace_group()
+                self.consume()
+                return BeginBraceNode(tok.value)
             elif catcode == Catcode.END_GROUP:  # } (Catcode 2)
-                # This indicates a mismatched group end. Handle as error.
-                print(f"ERROR: Mismatched group end '}}' at position {tok.position}")
-                self.consume()  # Consume the erroneous token (TokenStream.consume handles ignored)
-                return None  # Or return an error node
+                self.consume()
+                return EndBraceNode(tok.value)
 
             elif catcode == Catcode.OTHER and tok.value == "[":
                 bracket = self.parse_bracket_group()

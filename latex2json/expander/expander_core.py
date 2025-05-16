@@ -19,7 +19,7 @@ from latex2json.nodes import (
     BraceNode,
     ArgNode,
 )
-from latex2json.nodes.syntactic_nodes import EndOfLineNode
+from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode, EndOfLineNode
 from latex2json.parser import ParserCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
@@ -76,13 +76,29 @@ class ExpanderCore:
     def skip_whitespace(self) -> int:
         return self.parser.skip_whitespace()
 
-    # def parse_element(self) -> Optional[ASTNode]:
-    #     element = self.parser.parse_element()
-    #     if element is None:
-    #         return None
-    #     if isinstance(element, CommandNode):
-    #         return self._handle_command(element)
-    #     return [element]
+    def parse_element(self) -> Optional[List[ASTNode]]:
+        element = self.parser.parse_element()
+        if element is None:
+            return None
+        if isinstance(element, CommandNode):
+            out = self._handle_command(element)
+            return out
+        if isinstance(element, BeginBraceNode):
+            return [self._handle_brace_group()]
+        return [element]
+
+    def _handle_brace_group(self) -> BraceNode:
+        self.push_scope()
+
+        processed_children = []
+        nodes = self.parse_element()
+        while nodes and not isinstance(nodes[0], EndBraceNode):
+            processed_children.extend(nodes)
+            # for node in nodes:
+            #     processed_children.extend(self._process_element(node))
+            nodes = self.parse_element()
+        self.pop_scope()
+        return BraceNode(processed_children)
 
     def process(self) -> List[ASTNode]:
         """
@@ -95,17 +111,21 @@ class ExpanderCore:
         # The main processing loop
         while not self.parser.eof():
             # Expander pulls the next element from the parser
-            next_element = self.parser.parse_element()
+            next_elements = self.parse_element()
 
-            if next_element is None:
+            if next_elements is None:
                 # Should only happen at EOF, but handle potential errors
                 if not self.parser.eof():
                     print("Error: parse_element returned None before EOF.")
-                    continue
+                    break
                 break  # Exit loop if parse_element fails or stream is truly empty
 
             # Process the obtained element (node or potentially raw tokens from expansion queue)
-            processed_results = self._process_element(next_element)
+            processed_results = []
+            for element in next_elements:
+                processed = self._process_element(element)
+                if processed:
+                    processed_results.extend(processed)
 
             if processed_results:
                 # Add the results of processing to the final output.
@@ -139,6 +159,14 @@ class ExpanderCore:
         if isinstance(element, CommandNode):
             # Handle command execution (primitives or macros)
             return self._handle_command(element)
+
+        elif isinstance(element, BeginBraceNode):
+            self.push_scope()
+            return []
+
+        elif isinstance(element, EndBraceNode):
+            self.pop_scope()
+            return []
 
         elif isinstance(element, EndOfLineNode):
             return []  # Produce no output?

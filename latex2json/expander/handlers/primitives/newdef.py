@@ -62,6 +62,11 @@ def get_parsed_args_from_usage_pattern(
         # match the args
         if isinstance(pat, ArgNode):
             ast = parser.parse_immediate_token()
+            if not ast:
+                expander.logger.warning(
+                    f"Warning: expected an argument but found nothing"
+                )
+                return parsed_args
 
             # if the arg is a brace or command, we simply add it
             if isinstance(ast, BraceNode) or isinstance(ast, CommandNode):
@@ -155,17 +160,18 @@ class DefMacro(Macro):
 
 
 def get_def_usage_pattern_and_definition(
-    parser: ParserCore,
+    expander: ExpanderCore,
 ) -> Tuple[List[ASTNode], List[ASTNode]]:
     raw_usage_pattern: List[ASTNode] = []
 
-    node = parser.parse_element()
-    while node and not isinstance(node, BraceNode):
-        if isinstance(node, BracketNode):
-            raw_usage_pattern.extend(convert_bracket_node_to_literal_ast(node))
-        else:
-            raw_usage_pattern.append(node)
-        node = parser.parse_element()
+    nodes = expander.parse_element()
+    while nodes and not isinstance(nodes[0], BraceNode):
+        for node in nodes:
+            if isinstance(node, BracketNode):
+                raw_usage_pattern.extend(convert_bracket_node_to_literal_ast(node))
+            else:
+                raw_usage_pattern.append(node)
+        nodes = expander.parse_element()
 
     # break up usage pattern textnodes to single character nodes
     usage_pattern: List[ASTNode] = []
@@ -175,18 +181,16 @@ def get_def_usage_pattern_and_definition(
         else:
             usage_pattern.append(ele)
 
-    if isinstance(node, BraceNode):
-        definition = node.children
+    if nodes and isinstance(nodes[0], BraceNode):
+        definition = nodes[0].children
         return usage_pattern, definition
 
     return None, None
 
 
 def def_handler(expander: ExpanderCore, node: CommandNode) -> Optional[DefResult]:
-    parser = expander.parser
-
     expander.skip_whitespace()
-    cmd = parser.parse_element()
+    cmd = expander.parser.parse_element()
     if not isinstance(cmd, CommandNode):
         expander.logger.warning(
             f"Warning: \\def expects a command node, but found {cmd}"
@@ -194,7 +198,7 @@ def def_handler(expander: ExpanderCore, node: CommandNode) -> Optional[DefResult
         return None
 
     name = cmd.name
-    usage_pattern, definition = get_def_usage_pattern_and_definition(parser)
+    usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
 
     if usage_pattern is None or definition is None:
         expander.logger.warning(
@@ -249,10 +253,16 @@ if __name__ == "__main__":
     # print(out)
 
     text = r"""
+    \def\foo{FOO}
+    \edef\bar#1{\foo #1}
+    \def\foo{BAR} % shouldn't affect \bar since \edef\bar is already expanded
+    \bar{3}
     {
         \edef\bar{NEW BAR}
+        \bar
     }
-"""
+    \bar{4} % 
+""".strip()
 
     expander.set_text(text)
     out = expander.process()

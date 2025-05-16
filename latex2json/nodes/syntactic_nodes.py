@@ -23,6 +23,11 @@ class BeginBraceNode(ASTNode):  # e.g. {
     def detokenize(self):
         return self.value
 
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, BeginBraceNode):
+            return False
+        return self.value == other.value
+
 
 class EndBraceNode(ASTNode):  # e.g. }
     def __init__(self, value: str):
@@ -33,6 +38,11 @@ class EndBraceNode(ASTNode):  # e.g. }
 
     def detokenize(self):
         return self.value
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, EndBraceNode):
+            return False
+        return self.value == other.value
 
 
 class EndOfLineNode(ASTNode):

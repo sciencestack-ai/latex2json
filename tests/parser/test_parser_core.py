@@ -13,6 +13,7 @@ from latex2json.nodes import (
     EndOfLineNode,
     TextNode,
 )
+from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode
 from latex2json.tokens import Tokenizer, TokenType, Catcode, Token
 from latex2json.parser import ParserCore
 
@@ -34,12 +35,18 @@ def test_parser_core():
     asts = parser.parse_text(text)
     expected_asts = [
         CommandNode(r"\begin"),
-        BraceNode([TextNode("document"), TextNode(" "), CommandNode(r"\cmd")]),
+        BeginBraceNode("{"),
+        TextNode("document"),
+        TextNode(" "),
+        CommandNode(r"\cmd"),
+        EndBraceNode("}"),
         BracketNode([TextNode("opt")]),
         TextNode(" "),
         EndOfLineNode(),
         CommandNode(r"\end"),
-        BraceNode([TextNode("document")]),
+        BeginBraceNode("{"),
+        TextNode("document"),
+        EndBraceNode("}"),
     ]
     assert_ast_sequence(asts, expected_asts)
 
@@ -48,9 +55,13 @@ def test_parser_core():
     asts = parser.parse_text(text)
     expected_asts = [
         CommandNode(r"\newcommand"),
-        BraceNode([CommandNode(r"\cmd")]),
+        BeginBraceNode("{"),
+        CommandNode(r"\cmd"),
+        EndBraceNode("}"),
         BracketNode([TextNode("1")]),
-        BraceNode([ArgNode(12, num_params=2)]),
+        BeginBraceNode("{"),
+        ArgNode(12, num_params=2),
+        EndBraceNode("}"),
     ]
     assert_ast_sequence(asts, expected_asts)
 
@@ -93,7 +104,7 @@ def test_malformed_braces_brackets():
     parser = ParserCore(tokenizer)
     asts = parser.parse_text(text)
     expected_asts = [
-        TextNode("{"),
+        BeginBraceNode("{"),
         TextNode("]"),
         CommandNode(r"\@"),
         TextNode("#"),
@@ -105,7 +116,7 @@ def test_malformed_braces_brackets():
     # test catcode change of braces
     text = "{sdsds}"
     asts = parser.parse_text(text)
-    expected_asts = [BraceNode([TextNode("sdsds")])]
+    expected_asts = [BeginBraceNode("{"), TextNode("sdsds"), EndBraceNode("}")]
     assert_ast_sequence(asts, expected_asts)
 
     # now change catcode to LETTER
@@ -213,7 +224,9 @@ def test_mock_makeatletter():
 
     parser.parse_element(skip_whitespace=True) == CommandNode(r"\def")
     parser.parse_element() == CommandNode(r"\@star")
-    parser.parse_element() == BraceNode([TextNode("STAR")])
+    parser.parse_element() == BeginBraceNode("{")
+    parser.parse_element() == TextNode("STAR")
+    parser.parse_element() == EndBraceNode("}")
     # \@star is a single commandnode
     parser.parse_element(skip_whitespace=True) == CommandNode(r"\@star")
 
