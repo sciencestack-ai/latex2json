@@ -8,9 +8,17 @@ from latex2json.nodes.base import ASTNode, check_children_equal
 def strip_whitespace(nodes: List[ASTNode]):
     if nodes:
         if isinstance(nodes[0], TextNode):
-            nodes[0].text = nodes[0].text.lstrip()
+            text = nodes[0].text.lstrip()
+            if text:
+                nodes[0].text = text
+            else:
+                nodes.pop(0)
         if isinstance(nodes[-1], TextNode):
-            nodes[-1].text = nodes[-1].text.rstrip()
+            text = nodes[-1].text.rstrip()
+            if text:
+                nodes[-1].text = text
+            else:
+                nodes.pop(-1)
 
 
 class BeginBraceNode(ASTNode):  # e.g. {

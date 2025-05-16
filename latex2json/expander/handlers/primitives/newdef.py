@@ -13,8 +13,6 @@ from latex2json.nodes.syntactic_nodes import (
     TextNode,
 )
 from latex2json.nodes.utils import convert_bracket_node_to_literal_ast
-from latex2json.parser.parser_core import ParserCore
-from latex2json.tokens.catcodes import Catcode
 from dataclasses import dataclass
 
 from latex2json.tokens.types import TokenType

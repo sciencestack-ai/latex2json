@@ -97,7 +97,8 @@ class ExpanderCore:
             # for node in nodes:
             #     processed_children.extend(self._process_element(node))
             nodes = self.parse_element()
-        self.pop_scope()
+        if nodes and isinstance(nodes[0], EndBraceNode):
+            self.pop_scope()
         return BraceNode(processed_children)
 
     def process(self) -> List[ASTNode]:

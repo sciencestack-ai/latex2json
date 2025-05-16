@@ -260,6 +260,7 @@ def test_edef():
     text = r"""
     {
         \edef\bar{NEW BAR}
+        \edef\barry{BARRY}
     }
     \bar{4} % STILL FOO due to scope
     """.strip()
@@ -267,8 +268,54 @@ def test_edef():
     out = expander.process()
     assert expander.macros.get("bar")
     assert expander.macros.get("foo")
+    assert not expander.macros.get("barry")  # out of scope
 
     strip_whitespace(out)
     assert out == [
         TextNode("FOO 4"),
+    ]
+
+
+def test_gdef():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    {
+        \def\foo{FOO}
+        \gdef\bar#1{\foo #1}
+    }
+    \foo\bar{3}
+    """.strip()
+    expander.set_text(text)
+    out = expander.process()
+    assert not expander.macros.get("foo")
+    assert expander.macros.get("bar")  # global \gdef
+
+    strip_whitespace(out)
+    assert out == [
+        CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
+        TextNode("FOO 3"),
+    ]
+
+
+def test_xdef():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    {
+        \def\foo{FOO}
+        \xdef\bar#1{\foo #1} % global
+    }
+    \bar{3} % FOO 3 due to immediate expansion
+    """.strip()
+    expander.set_text(text)
+    out = expander.process()
+    assert not expander.macros.get("foo")
+    assert expander.macros.get("bar")  # global \xdef
+
+    strip_whitespace(out)
+    assert out == [
+        TextNode("FOO 3"),
     ]

@@ -20,5 +20,12 @@ class Expander(ExpanderCore):
 
 if __name__ == "__main__":
     expander = Expander()
-    print(expander.expand(r"\catcode`\]=3"))
-    print(expander.get_catcode(ord("]")))
+
+    text = r"""
+    {
+            \edef\bar{NEW BAR}
+            \edef\barry{BARRY}
+    }
+""".strip()
+    expander.set_text(text)
+    print(expander.process())
