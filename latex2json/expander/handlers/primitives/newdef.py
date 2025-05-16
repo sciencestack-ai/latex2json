@@ -147,7 +147,7 @@ class DefMacro(Macro):
             subbed = substitute_args(
                 definition, parsed_args, depth=depth, math_mode=False
             )
-            return subbed
+            return expander.expand_nodes(subbed)
 
         expander.register_handler(out.name, handler, is_global=self.is_global)
 
@@ -245,11 +245,12 @@ if __name__ == "__main__":
     # out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
     # print(out)
 
-    expander.set_text(r"{abc}a\cmd")
-    usage_pattern = [
-        ArgNode(1, 1),
-        ArgNode(2, 1),
-        ArgNode(3, 1),
-    ]
-    out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
+    text = r"""
+    {
+        \edef\bar{NEW BAR}
+    }
+"""
+
+    expander.set_text(text)
+    out = expander.process()
     print(out)
