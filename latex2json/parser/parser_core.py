@@ -173,6 +173,7 @@ class ParserCore:
             Catcode.LETTER,
             Catcode.OTHER,
         ]:
+            self.consume()
             return TextNode(tok.value)
         return self.parse_element()
 

@@ -13,9 +13,9 @@ class Expander(ExpanderCore):
     def _init_primitives(self):
         # Define core TeX/LaTeX primitives in the base registry.
         # Primitives are defined using define_primitive which uses set(is_global=True)
-        from latex2json.expander.handlers import register_primitives
+        from latex2json.expander.handlers import register_handlers
 
-        register_primitives(self)
+        register_handlers(self)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,8 @@ BACK_TICK_TOKEN = Token(TokenType.CHARACTER, value="`", catcode=Catcode.OTHER)
 def catcode_handler(
     expander: ExpanderCore, node: CommandNode
 ) -> Optional[List[ASTNode]]:
+    parser = expander.parser
+
     """need check for `"""
     if expander.peek() == BACK_TICK_TOKEN:
         expander.consume()
@@ -19,25 +21,30 @@ def catcode_handler(
 
     # check for controlsequence
     cmd: CommandNode | None = None
-    if expander.parser.match(TokenType.CONTROL_SEQUENCE):
-        cmd = expander.parser.parse_command()
+    if parser.match(TokenType.CONTROL_SEQUENCE):
+        cmd = parser.parse_command()
 
     if not cmd:
         return None
 
-    char = cmd.name.lstrip("\\")[0]
+    char = cmd.name.lstrip("\\")
+    if len(char) > 1:
+        char = char[0]
+        expander.logger.warning(
+            f"WARNING: \\catcode only takes one character, using {char}"
+        )
 
     expander.skip_whitespace()
-    if not expander.parser.parse_equals():
+    if not parser.parse_equals():
         return None
 
     expander.skip_whitespace()
-    new_catcode_int = expander.parser.parse_integer()
+    new_catcode_int = parser.parse_integer()
     if new_catcode_int is None:
         return None
 
     if new_catcode_int < 0 or new_catcode_int > 15:
-        print(
+        expander.logger.warning(
             f"Error: Invalid catcode value {new_catcode_int} for \\catcode {char}. Must be 0-15."
         )
         return []  # Return empty list on error

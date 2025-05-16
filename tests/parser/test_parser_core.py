@@ -87,7 +87,7 @@ def test_whitespace_and_match():
 
 def test_malformed_braces_brackets():
     tokenizer = Tokenizer()
-    text = r"{]\@#["
+    text = r"{]\@#[aa"
 
     # malformed braces and brackets are parsed as text nodes
     parser = ParserCore(tokenizer)
@@ -98,6 +98,7 @@ def test_malformed_braces_brackets():
         CommandNode(r"\@"),
         TextNode("#"),
         TextNode("["),
+        TextNode("aa"),
     ]
     assert_ast_sequence(asts, expected_asts)
 
@@ -182,6 +183,13 @@ def test_parse_immediate_token():
     for text, expected in text_ast_pairs:
         parser.set_text(text)
         assert parser.parse_immediate_token() == expected
+
+    # test character token sequence
+    parser.set_text("abc")
+    assert parser.parse_immediate_token() == TextNode("a")
+    assert parser.parse_immediate_token() == TextNode("b")
+    assert parser.parse_immediate_token() == TextNode("c")
+    assert parser.parse_immediate_token() is None
 
 
 def test_mock_makeatletter():

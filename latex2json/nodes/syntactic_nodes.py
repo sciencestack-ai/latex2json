@@ -36,6 +36,12 @@ class TextNode(ASTNode):
     def is_whitespace(self):
         return self.text.isspace()
 
+    def split(self, delimiter: str) -> List["TextNode"]:
+        return [TextNode(t) for t in self.text.split(delimiter)]
+
+    def to_chars(self) -> List["TextNode"]:
+        return [TextNode(c) for c in self.text]
+
     def __eq__(self, other: ASTNode):
         if not isinstance(other, TextNode):
             return False
@@ -61,7 +67,13 @@ class BraceNode(ASTNode):
         return super().__eq__(other)
 
 
-class BracketNode(BraceNode):
+class BracketNode(ASTNode):
+    def __init__(self, children: List[ASTNode]):
+        self.set_children(children)
+
+    def strip_whitespace(self):
+        strip_whitespace(self.children)
+
     def __str__(self):
         return f"Bracket({', '.join(str(child) for child in self.children)})"
 
@@ -101,7 +113,7 @@ class CommandNode(ASTNode):
 
 
 class ArgNode(ASTNode):
-    def __init__(self, num: int, num_params: int = 0):
+    def __init__(self, num: int, num_params: int = 1):
         self.num = num
         self.depth = ArgNode.compute_depth(num_params)
         self.value: List[ASTNode] = []  # store of current arg value

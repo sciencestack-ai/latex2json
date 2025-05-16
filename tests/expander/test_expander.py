@@ -40,3 +40,9 @@ def test_makeatletter_makeatother():
 
     expander.expand("\\makeatother")
     assert expander.state.get_catcode(ord("@")) == Catcode.OTHER
+
+
+def test_def():
+    expander = Expander()
+    # expander.expand(r"\def\test{test}")
+    # assert expander.macros.get("test") == "test"

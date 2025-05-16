@@ -1,3 +1,4 @@
+from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Type
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union, Deque
 from collections import deque
@@ -16,7 +17,6 @@ from latex2json.nodes import (
     EnvironmentNode,
     TextNode,
     BraceNode,
-    BracketNode,
     EquationNode,
     ArgNode,
 )
@@ -32,9 +32,12 @@ class ExpanderCore:
     Drives parsing, manages state, executes commands, and performs expansion.
     """
 
-    def __init__(self, parser: ParserCore = ParserCore()):
+    def __init__(
+        self, parser: ParserCore = ParserCore(), logger: Logger = Logger("expander")
+    ):
         self.parser = parser
         self.state = ExpanderState(parser.tokenizer)  # The stack of state layers
+        self.logger = logger
 
     @property
     def macros(self) -> MacroRegistry:
@@ -53,6 +56,12 @@ class ExpanderCore:
         self.set_text(text)
         return self.process()
 
+    def expand_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
+        out_nodes: List[ASTNode] = []
+        for node in nodes:
+            out_nodes.extend(self._process_element(node))
+        return merge_text_nodes(out_nodes)
+
     def push_scope(self):
         self.state.push_scope()
 
@@ -67,6 +76,14 @@ class ExpanderCore:
 
     def skip_whitespace(self) -> int:
         return self.parser.skip_whitespace()
+
+    # def parse_element(self) -> Optional[ASTNode]:
+    #     element = self.parser.parse_element()
+    #     if element is None:
+    #         return None
+    #     if isinstance(element, CommandNode):
+    #         return self._handle_command(element)
+    #     return [element]
 
     def process(self) -> List[ASTNode]:
         """
@@ -156,6 +173,10 @@ class ExpanderCore:
             self.state.pop_scope()  # End local scope
             # The environment handler returns the nodes representing the environment's output.
             return processed_output
+
+        elif isinstance(element, ArgNode):
+            return [element]
+            # return self.expand_nodes(element.value)
 
         elif isinstance(element, TextNode):
             # Text nodes are typically just passed through to the output
