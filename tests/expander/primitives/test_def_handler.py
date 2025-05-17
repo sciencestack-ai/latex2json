@@ -319,3 +319,26 @@ def test_xdef():
     assert out == [
         TextNode("FOO 3"),
     ]
+
+
+def test_nested_defs():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \gdef\barx{\bar{BRO}}
+    }
+    \foo{hello}
+    \barx
+    """.strip()
+
+    expander.set_text(text)
+    out = expander.process()
+    assert expander.macros.get("foo")
+
+    strip_whitespace(out)
+    assert out == [
+        TextNode("BAR hello BRO"),
+    ]

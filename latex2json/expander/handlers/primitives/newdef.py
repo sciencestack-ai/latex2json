@@ -1,4 +1,5 @@
 from copy import deepcopy
+from inspect import stack
 from typing import List, Optional, Tuple
 from latex2json import expander
 from latex2json.expander.expander_core import ExpanderCore
@@ -15,7 +16,8 @@ from latex2json.nodes.syntactic_nodes import (
 from latex2json.nodes.utils import convert_bracket_node_to_literal_ast
 from dataclasses import dataclass
 
-from latex2json.tokens.types import TokenType
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, TokenType
 
 
 @dataclass
@@ -137,7 +139,6 @@ class DefMacro(Macro):
 
         if not self.is_lazy:
             out.definition = expander.expand_nodes(out.definition)
-
         depth = out.depth
 
         def handler(
@@ -162,26 +163,25 @@ def get_def_usage_pattern_and_definition(
 ) -> Tuple[List[ASTNode], List[ASTNode]]:
     raw_usage_pattern: List[ASTNode] = []
 
-    nodes = expander.parse_element()
-    while nodes and not isinstance(nodes[0], BraceNode):
-        for node in nodes:
-            if isinstance(node, BracketNode):
-                raw_usage_pattern.extend(convert_bracket_node_to_literal_ast(node))
-            else:
-                raw_usage_pattern.append(node)
-        nodes = expander.parse_element()
+    parser = expander.parser
+    tok = parser.peek()
+    while tok and tok != BEGIN_BRACE_TOKEN:
+        if tok.catcode == Catcode.PARAMETER:
+            arg = parser.parse_argnode()
+            raw_usage_pattern.append(arg)
+        else:
+            parser.consume()
+            raw_usage_pattern.append(TextNode(tok.value))
+        tok = parser.peek()
 
     # break up usage pattern textnodes to single character nodes
-    usage_pattern: List[ASTNode] = []
-    for ele in raw_usage_pattern:
-        if isinstance(ele, TextNode):
-            usage_pattern.extend(ele.to_chars())
-        else:
-            usage_pattern.append(ele)
+    usage_pattern: List[ASTNode] = raw_usage_pattern
 
-    if nodes and isinstance(nodes[0], BraceNode):
-        definition = nodes[0].children
-        return usage_pattern, definition
+    if tok == BEGIN_BRACE_TOKEN:
+        parser.consume()
+        definition = expander.parse_brace_group()
+        if definition:
+            return usage_pattern, definition.children
 
     return None, None
 
@@ -251,15 +251,12 @@ if __name__ == "__main__":
     # print(out)
 
     text = r"""
-    \def\foo{FOO}
-    \edef\bar#1{\foo #1}
-    \def\foo{BAR} % shouldn't affect \bar since \edef\bar is already expanded
-    \bar{3}
-    {
-        \edef\bar{NEW BAR}
-        \bar
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \gdef\barx{\bar{BRO}}
     }
-    \bar{4} % 
+    \foo{hello}
+    \barx
 """.strip()
 
     expander.set_text(text)

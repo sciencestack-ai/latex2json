@@ -1,3 +1,4 @@
+from inspect import stack
 from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Type
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union, Deque
@@ -84,21 +85,36 @@ class ExpanderCore:
             out = self._handle_command(element)
             return out
         if isinstance(element, BeginBraceNode):
-            return [self._handle_brace_group()]
+            return [self.parse_brace_group()]
         return [element]
 
-    def _handle_brace_group(self) -> BraceNode:
-        self.push_scope()
+    def parse_brace_group(self) -> BraceNode:
+        self.push_scope()  # Correct for runtime scope management for this brace group
 
-        processed_children = []
-        nodes = self.parse_element()
-        while nodes and not isinstance(nodes[0], EndBraceNode):
-            processed_children.extend(nodes)
-            # for node in nodes:
-            #     processed_children.extend(self._process_element(node))
+        processed_children: List[ASTNode] = []
+
+        # Loop indefinitely until we specifically find the matching EndBraceNode for *this* group.
+        # This relies on ExpanderCore.parse_element() recursively handling nested braces
+        # by returning full BraceNodes for those inner groups.
+        while True:
+            # Get the next fully processed element from the Expander's stream.
+            # 'nodes' will always be a List[ASTNode] (or None if EOF/error).
+            # It will NEVER contain a 'BeginBraceNode' directly, as parse_element converts it
+            # into a full BraceNode via recursive call to _handle_brace_group.
             nodes = self.parse_element()
-        if nodes and isinstance(nodes[0], EndBraceNode):
-            self.pop_scope()
+
+            if nodes is None:
+                # In a robust system, you might want to raise a custom exception here (e.g., UnmatchedBraceError)
+                break
+
+            # If the first node in the returned list is an EndBraceNode,
+            # it means we've found the closing brace for *this* current brace group.
+            if len(nodes) > 0 and isinstance(nodes[0], EndBraceNode):
+                break  # Exit the loop for this brace group, we're done.
+
+            processed_children.extend(nodes)
+
+        self.pop_scope()  # Pop the scope associated with this brace group
         return BraceNode(processed_children)
 
     def process(self) -> List[ASTNode]:
@@ -175,7 +191,7 @@ class ExpanderCore:
         elif isinstance(element, BraceNode):
             # Process the content of a brace group within a new scope
             # The BraceNode was parsed as a block by parser.parse_brace_group
-            self.state.push_scope()  # Start local scope for the group
+            self.push_scope()  # Start local scope for the group
             # Process the children nodes within this new scope
             processed_children = []
             for child_node in element.children:
@@ -183,7 +199,7 @@ class ExpanderCore:
                 results = self._process_element(child_node)
                 if results:
                     processed_children.extend(results)
-            self.state.pop_scope()  # End local scope
+            self.pop_scope()  # End local scope
             # Usually, the BraceNode itself is discarded after processing its content.
             # Return the processed content.
             return processed_children
@@ -191,14 +207,14 @@ class ExpanderCore:
         elif isinstance(element, EnvironmentNode):
             # Process the content of an environment within a new scope
             # The EnvironmentNode was parsed as a block by parser.parse_environment_syntax
-            self.state.push_scope()  # Start local scope for the environment
+            self.push_scope()  # Start local scope for the environment
             # Environment handling is complex - involves looking up the environment
             # command (e.g., \itemize for itemize environment), executing its handler,
             # which then processes opt_args, args, and body.
             processed_output = self._handle_environment(
                 element
             )  # Delegate to environment handler
-            self.state.pop_scope()  # End local scope
+            self.pop_scope()  # End local scope
             # The environment handler returns the nodes representing the environment's output.
             return processed_output
 
@@ -273,30 +289,17 @@ if __name__ == "__main__":
     from latex2json.tokens.tokenizer import Tokenizer
     from latex2json.tokens.catcodes import Catcode
 
-    parser = ParserCore()
-    expander = ExpanderCore(parser)
-
-    def make_at_letter_handler(
-        expander: ExpanderCore, command_node: CommandNode
-    ) -> Optional[List[ASTNode]]:
-        char_ord_at = ord("@")
-        expander.set_catcode(char_ord_at, Catcode.LETTER)
-        return []  # Produces no output
-
-    def make_at_other_handler(
-        expander: ExpanderCore, command_node: CommandNode
-    ) -> Optional[List[ASTNode]]:
-        char_ord_at = ord("@")
-        expander.set_catcode(char_ord_at, Catcode.OTHER)
-        return []  # Produces no output
-
-    expander.register_macro("\\makeatletter", make_at_letter_handler, is_global=True)
-    expander.register_macro("\\makeatother", make_at_other_handler, is_global=True)
+    expander = ExpanderCore()
 
     text = r"""
-    \makeatletter
-    ONE TEX@T
-    \makeatother
-    """
+    {
+        Outer
+        {
+            Inner
+        }
+        Post
+    }
+    """.strip()
     expander.set_text(text)
-    print(expander.process())
+    expander.parser.parse_element()
+    out = expander.parse_brace_group()

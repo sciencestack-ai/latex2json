@@ -22,9 +22,9 @@ if __name__ == "__main__":
     expander = Expander()
 
     text = r"""
-    {
-            \edef\bar{NEW BAR}
-            \edef\barry{BARRY}
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \gdef\barx{\bar{BRO}}
     }
 """.strip()
     expander.set_text(text)
