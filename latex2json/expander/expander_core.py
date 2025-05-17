@@ -74,7 +74,7 @@ class ExpanderCore:
     def consume(self) -> Optional[Token]:
         return self.parser.consume()
 
-    def skip_whitespace(self) -> int:
+    def skip_whitespace(self):
         return self.parser.skip_whitespace()
 
     def parse_element(self) -> Optional[List[ASTNode]]:
@@ -122,7 +122,6 @@ class ExpanderCore:
         Starts the expansion and processing of the document stream.
         Returns the final list of processed AST nodes.
         """
-        self.parser.reset()
         final_output_nodes: List[ASTNode] = []
 
         # The main processing loop

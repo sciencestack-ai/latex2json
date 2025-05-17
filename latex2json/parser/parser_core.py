@@ -51,12 +51,6 @@ class ParserCore:
         self.stream.set_text(text)
         return self.parse()
 
-    def set_pos(self, pos: int):
-        self.stream.set_pos(pos)
-
-    def reset(self):
-        self.stream.reset()
-
     def eof(self) -> bool:
         return self.stream.eof()
 
@@ -87,7 +81,7 @@ class ParserCore:
         return nodes
 
     # skip_whitespace method remains, using stream peek/consume
-    def skip_whitespace(self) -> int:
+    def skip_whitespace(self):
         """Skips over consecutive space tokens (Catcode 10)."""
         return self.stream.skip_whitespace()
 
@@ -129,7 +123,7 @@ class ParserCore:
 
         tok = self.peek()  # TokenStream.peek handles skipping ignored
         if tok is None:
-            self.set_pos(start_pos)
+            self.stream.set_pos(*start_pos)
             return False
 
         type_match = token_type is None or tok.type == token_type
@@ -154,7 +148,7 @@ class ParserCore:
         if is_match:
             return True
 
-        self.set_pos(start_pos)
+        self.stream.set_pos(*start_pos)
         return False
 
     # parse_immediate_token might need rethinking depending on its exact purpose.
@@ -337,7 +331,7 @@ class ParserCore:
         # (e.g., parse_brace_group consumes the '{' token)
 
         children: List[ASTNode] = []
-        start_pos = self.stream.pos
+        start_pos = self.stream.get_pos()
         # Loop until the end delimiter is found or end of stream
         while not self.eof() and not self.match_token(end_token):
             # Parse the next element inside the group
@@ -352,7 +346,7 @@ class ParserCore:
         else:
             # This case should ideally be caught by the loop condition, but handle defensively
             print(f"ERROR: Expected closing delimiter end_token: {end_token!r}")
-            self.stream.set_pos(start_pos)
+            self.stream.set_pos(*start_pos)
             return None
 
         if strip and len(children) > 0:
@@ -371,7 +365,7 @@ class ParserCore:
         if not (self.match_token(BEGIN_BRACE_TOKEN)):
             # This error should ideally be caught by parse_element dispatching here
             print(
-                f"ERROR: Expected opening brace (catcode {Catcode.BEGIN_GROUP.name}), but found {self.peek()!r} at position {self.stream.pos if self.stream else -1}"
+                f"ERROR: Expected opening brace (catcode {Catcode.BEGIN_GROUP.name}), but found {self.peek()!r}"
             )
             # Handle error: perhaps return an empty BraceNode or raise error
             # Attempt to consume the unexpected token to avoid infinite loop (consume handles ignored)
@@ -403,7 +397,7 @@ class ParserCore:
         if not (self.match_token(BEGIN_BRACKET_TOKEN)):
             # This error should ideally be caught by parse_element dispatching here
             print(
-                f"ERROR: Expected opening bracket '[' (catcode {Catcode.OTHER.name}), but found {self.peek()!r} at position {self.stream.pos_ignoring_ignored if self.stream else -1}"
+                f"ERROR: Expected opening bracket '[' (catcode {Catcode.OTHER.name}), but found {self.peek()!r}"
             )
             # Handle error: return empty BracketNode
             # Attempt to consume the unexpected token
@@ -455,7 +449,7 @@ class ParserCore:
         if not isinstance(name_group, BraceNode):
             # Should be a BraceNode if parsing was successful
             print(
-                f"ERROR: Expected brace group for environment name, but got {type(name_group).__name__} at position {self.stream.pos_ignoring_ignored if self.stream else -1}"
+                f"ERROR: Expected brace group for environment name, but got {type(name_group).__name__}"
             )
             return None
 
@@ -613,14 +607,14 @@ class ParserCore:
         return None
 
     def parse_dimension_unit(self) -> str:
-        start_pos = self.stream.pos
+        start_pos = self.stream.get_pos()
         combined_text = self._combine_sequence_as_str(
             lambda tok: tok.catcode == Catcode.LETTER
         )
         if not DimensionNode.is_valid_unit(combined_text):
             print(f"WARNING: Invalid unit: {combined_text} at position {start_pos}")
             # if not found, reset
-            self.set_pos(start_pos)
+            self.stream.set_pos(*start_pos)
             return None
         return combined_text
 
