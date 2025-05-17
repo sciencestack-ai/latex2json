@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from latex2json.nodes.base import ASTNode, check_children_equal
+from latex2json.nodes.base import ASTNode, check_asts_equal
 from latex2json.nodes.syntactic_nodes import ArgNode, BraceNode, CommandNode, TextNode
 from latex2json.nodes.utils import flatten
 
@@ -51,8 +51,8 @@ class NewCommandNode(BaseDefinitionNode):
         return (
             self.num_args == other.num_args
             and self.depth == other.depth
-            and check_children_equal(self.defaults, other.defaults)
-            and check_children_equal(self.definition, other.definition)
+            and check_asts_equal(self.defaults, other.defaults)
+            and check_asts_equal(self.definition, other.definition)
         )
 
 
@@ -95,7 +95,7 @@ class NewEnvironmentNode(BaseDefinitionNode):
             and self.depth == other.depth
             and self.before_block == other.before_block
             and self.after_block == other.after_block
-            and check_children_equal(self.defaults, other.defaults)
+            and check_asts_equal(self.defaults, other.defaults)
         )
 
 
@@ -157,8 +157,8 @@ class DefNode(BaseDefinitionNode):
             self.name == other.name
             and self.is_lazy == other.is_lazy
             and self.is_global == other.is_global
-            and check_children_equal(self.usage_pattern, other.usage_pattern)
-            and check_children_equal(self.definition, other.definition)
+            and check_asts_equal(self.usage_pattern, other.usage_pattern)
+            and check_asts_equal(self.definition, other.definition)
         )
 
 

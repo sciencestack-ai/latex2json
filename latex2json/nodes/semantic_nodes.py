@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.nodes.base import ASTNode, check_children_equal
+from latex2json.nodes.base import ASTNode, check_asts_equal
 
 
 SECTION_LEVELS = {
@@ -42,7 +42,7 @@ class SectionNode(ASTNode):
         same = self.level == other.level and self.title == other.title
         if not same:
             return False
-        return check_children_equal(self.content, other.content)
+        return check_asts_equal(self.content, other.content)
 
 
 class ParagraphNode(ASTNode):
@@ -63,7 +63,7 @@ class ParagraphNode(ASTNode):
         same = self.level == other.level and self.title == other.title
         if not same:
             return False
-        return check_children_equal(self.content, other.content)
+        return check_asts_equal(self.content, other.content)
 
 
 LATEX_DIMENSION_UNITS = [

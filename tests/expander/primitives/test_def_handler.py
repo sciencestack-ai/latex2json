@@ -235,6 +235,28 @@ def test_def_handler():
     test2()
 
 
+def test_def_redefine():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\foo{FOO}
+    \def\bar{\foo}
+    \def\foo{BAR}
+    \bar
+    """.strip()
+
+    expander.set_text(text)
+    out = expander.process()
+    assert expander.macros.get("foo")
+    assert expander.macros.get("bar")
+
+    out = strip_whitespace(out)
+    assert out == [
+        TextNode("BAR"),
+    ]
+
+
 def test_edef():
     expander = ExpanderCore()
     register_def(expander)
@@ -295,7 +317,8 @@ def test_gdef():
     strip_whitespace(out)
     assert out == [
         CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
-        TextNode("FOO 3"),
+        CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
+        TextNode(" 3"),
     ]
 
 
@@ -307,6 +330,7 @@ def test_xdef():
     {
         \def\foo{FOO}
         \xdef\bar#1{\foo #1} % global
+        \def\foo{BAR}
     }
     \bar{3} % FOO 3 due to immediate expansion
     """.strip()
@@ -321,24 +345,24 @@ def test_xdef():
     ]
 
 
-# def test_nested_defs():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_nested_defs():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     \def\foo#1{
-#         \def\bar##1{BAR #1 ##1}
-#         \gdef\barx{\bar{BRO}}
-#     }
-#     \foo{hello}
-#     \barx
-#     """.strip()
+    text = r"""
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \gdef\barx{\bar{BRO}}
+    }
+    \foo{hello}
+    \barx
+    """.strip()
 
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("foo")
+    expander.set_text(text)
+    out = expander.process()
+    assert expander.macros.get("foo")
 
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("BAR hello BRO"),
-#     ]
+    strip_whitespace(out)
+    assert out == [
+        TextNode("BAR hello BRO"),
+    ]

@@ -1,6 +1,6 @@
 import math
 from typing import List
-from latex2json.nodes.base import ASTNode, check_children_equal
+from latex2json.nodes.base import ASTNode, check_asts_equal
 
 # from latex2json.nodes.utils import check_children_equal
 
@@ -19,6 +19,7 @@ def strip_whitespace(nodes: List[ASTNode]):
                 nodes[-1].text = text
             else:
                 nodes.pop(-1)
+    return nodes
 
 
 class BeginBraceNode(ASTNode):  # e.g. {
@@ -161,7 +162,7 @@ class CommandNode(ASTNode):
             return False
         if self.name != other.name:
             return False
-        return check_children_equal(self.args, other.args) and check_children_equal(
+        return check_asts_equal(self.args, other.args) and check_asts_equal(
             self.opt_args, other.opt_args
         )
 

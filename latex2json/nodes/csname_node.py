@@ -1,6 +1,6 @@
 from typing import Any, List
 
-from latex2json.nodes.base import ASTNode, check_children_equal
+from latex2json.nodes.base import ASTNode, check_asts_equal
 from latex2json.nodes.syntactic_nodes import CommandNode, TextNode
 
 
@@ -36,7 +36,7 @@ class CSNameNode(ASTNode):
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CSNameNode):
             return False
-        return check_children_equal(self.nodes, other.nodes)
+        return check_asts_equal(self.nodes, other.nodes)
 
     def detokenize(self):
         return self.get_literal()

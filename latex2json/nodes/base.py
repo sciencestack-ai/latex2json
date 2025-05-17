@@ -16,16 +16,16 @@ class ASTNode:
     def __eq__(self, other: "ASTNode"):
         if not isinstance(other, self.__class__):
             return False
-        return check_children_equal(self.children, other.children)
+        return check_asts_equal(self.children, other.children)
 
     def detokenize(self):
         return "".join(child.detokenize() for child in self.children)
 
 
-def check_children_equal(children: List[ASTNode], other_children: List[ASTNode]):
-    if len(children) != len(other_children):
+def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):
+    if len(ast1) != len(ast2):
         return False
-    for child, other_child in zip(children, other_children):
-        if child != other_child:
+    for node1, node2 in zip(ast1, ast2):
+        if node1 != node2:
             return False
     return True

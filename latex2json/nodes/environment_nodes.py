@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.nodes.base import ASTNode, check_children_equal
+from latex2json.nodes.base import ASTNode, check_asts_equal
 
 
 class EnvironmentNode(ASTNode):
@@ -32,7 +32,7 @@ class EnvironmentNode(ASTNode):
         if not same:
             return False
         return (
-            check_children_equal(self.body, other.body)
-            and check_children_equal(self.args, other.args)
-            and check_children_equal(self.opt_args, other.opt_args)
+            check_asts_equal(self.body, other.body)
+            and check_asts_equal(self.args, other.args)
+            and check_asts_equal(self.opt_args, other.opt_args)
         )
