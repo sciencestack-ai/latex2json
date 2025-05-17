@@ -7,7 +7,7 @@ from latex2json.nodes.syntactic_nodes import BraceNode, TextNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
-from tests.parser.test_parser_core import assert_ast_sequence
+from tests.test_utils import assert_ast_sequence
 
 
 def test_expander_core():

@@ -16,12 +16,7 @@ from latex2json.nodes import (
 from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode
 from latex2json.tokens import Tokenizer, TokenType, Catcode, Token
 from latex2json.parser import ParserCore
-
-
-def assert_ast_sequence(asts: List[ASTNode], expected_sequence: List[ASTNode]):
-    assert len(asts) == len(expected_sequence)
-    for ast, expected in zip(asts, expected_sequence):
-        assert ast == expected
+from tests.test_utils import assert_ast_sequence
 
 
 def test_parser_core():

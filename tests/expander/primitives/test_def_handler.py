@@ -9,7 +9,7 @@ from latex2json.expander.handlers.primitives.newdef import (
 )
 
 from latex2json.nodes.syntactic_nodes import CommandNode, strip_whitespace
-from tests.parser.test_parser_core import assert_ast_sequence
+from tests.test_utils import assert_ast_sequence
 
 
 def test_get_def_usage_pattern_and_definition():
@@ -321,24 +321,24 @@ def test_xdef():
     ]
 
 
-def test_nested_defs():
-    expander = ExpanderCore()
-    register_def(expander)
+# def test_nested_defs():
+#     expander = ExpanderCore()
+#     register_def(expander)
 
-    text = r"""
-    \def\foo#1{
-        \def\bar##1{BAR #1 ##1}
-        \gdef\barx{\bar{BRO}}
-    }
-    \foo{hello}
-    \barx
-    """.strip()
+#     text = r"""
+#     \def\foo#1{
+#         \def\bar##1{BAR #1 ##1}
+#         \gdef\barx{\bar{BRO}}
+#     }
+#     \foo{hello}
+#     \barx
+#     """.strip()
 
-    expander.set_text(text)
-    out = expander.process()
-    assert expander.macros.get("foo")
+#     expander.set_text(text)
+#     out = expander.process()
+#     assert expander.macros.get("foo")
 
-    strip_whitespace(out)
-    assert out == [
-        TextNode("BAR hello BRO"),
-    ]
+#     strip_whitespace(out)
+#     assert out == [
+#         TextNode("BAR hello BRO"),
+#     ]

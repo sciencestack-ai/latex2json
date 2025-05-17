@@ -40,3 +40,23 @@ def extract_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
         else:
             out.append(node)
     return out
+
+
+if __name__ == "__main__":
+    argnode1 = ArgNode(1, 1)
+    argnode2 = ArgNode(2, 1)
+    argnode_1_2 = ArgNode(1, 2)
+
+    # e.g. #1 x #2 = ##1
+    definition: List[ASTNode] = [
+        argnode1,
+        TextNode(" x "),
+        argnode2,
+        TextNode(" = "),
+        argnode_1_2,
+    ]
+
+    depth1_args = [TextNode("100"), TextNode("2")]
+    depth2_args = [TextNode("200")]
+    substituted = substitute_args(definition, depth2_args, depth=argnode_1_2.depth)
+    print(substituted)
