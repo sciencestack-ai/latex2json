@@ -8,7 +8,7 @@ from latex2json.tokens.utils import is_whitespace_token
 
 
 # Dynamic token stream
-class TokenStream:
+class BaseTokenStream:
     """A stream of Tokens, fetching dynamically from a Tokenizer and skipping ignored tokens."""
 
     def __init__(self, tokenizer: Tokenizer):
@@ -63,7 +63,7 @@ class TokenStream:
 TokensBuffer = List[Tuple[List[Token], int]]  # List of (tokens, position at tokens)
 
 
-class TokenStreamWithBuffer(TokenStream):
+class TokenStream(BaseTokenStream):
     def __init__(self, tokenizer: Tokenizer):
         super().__init__(tokenizer)
         self._buffer: TokensBuffer = []
@@ -71,7 +71,7 @@ class TokenStreamWithBuffer(TokenStream):
     def has_buffer(self):
         return len(self._buffer) > 0
 
-    def get_buffer_len(self):
+    def get_buffer_stacks(self):
         return len(self._buffer)
 
     def get_pos(self) -> Tuple[int, int]:
@@ -170,7 +170,7 @@ class TokenStreamWithBuffer(TokenStream):
         return (start_pos, start_stack)
 
 
-TokenSource = Union[List[Token], TokenStream]
+TokenSource = Union[List[Token], BaseTokenStream]
 
 
 class MultiTokenStream:  # This is the main, stack-based stream manager
