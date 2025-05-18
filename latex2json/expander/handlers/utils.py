@@ -70,37 +70,44 @@ def extract_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
 def substitute_token_args(
     definition: List[Token],
     args: List[List[Token]],
-    depth: int = 1,
     math_mode: bool = False,
 ) -> List[Token]:
 
     out: List[Token] = []
 
-    buffer_state = TokenArgBufferState()
-
-    def parse_buffer():
-        out.extend(
-            buffer_state.parse_buffer_with_args(args, depth, math_mode=math_mode)
-        )
-
     for token in definition:
-        if token.catcode == Catcode.PARAMETER:
-            if buffer_state.number_buffer:
-                parse_buffer()
-            buffer_state.params_buffer.append(token)
-        elif is_integer_token(token):
-            if buffer_state.params_buffer:
-                if buffer_state.number_buffer:
-                    parse_buffer()
-                    out.append(token)
-                else:
-                    buffer_state.number_buffer.append(token)
-            else:
-                out.append(token)
+        if token.type == TokenType.PARAMETER:
+            index = int(token.value) - 1
+            if index < len(args):
+                out.extend(args[index])
         else:
-            parse_buffer()
             out.append(token)
-    parse_buffer()
+
+    # buffer_state = TokenArgBufferState()
+
+    # def parse_buffer():
+    #     out.extend(
+    #         buffer_state.parse_buffer_with_args(args, depth, math_mode=math_mode)
+    #     )
+
+    # for token in definition:
+    #     if token.catcode == Catcode.PARAMETER:
+    #         if buffer_state.number_buffer:
+    #             parse_buffer()
+    #         buffer_state.params_buffer.append(token)
+    #     elif is_integer_token(token):
+    #         if buffer_state.params_buffer:
+    #             if buffer_state.number_buffer:
+    #                 parse_buffer()
+    #                 out.append(token)
+    #             else:
+    #                 buffer_state.number_buffer.append(token)
+    #         else:
+    #             out.append(token)
+    #     else:
+    #         parse_buffer()
+    #         out.append(token)
+    # parse_buffer()
     return out
 
 

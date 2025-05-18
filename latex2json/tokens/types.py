@@ -15,6 +15,7 @@ class TokenType(Enum):
     )
     MATH_SHIFT = 3  # Simulate Catcode.Mathshift=3
     END_OF_LINE = 5  # Simulate Catcode.END_OF_LINE=5
+    PARAMETER = 6  # Simulate Catcode.PARAMETER=6
     # Add other potential types if needed, though character/control sequence are primary
     # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
     INVALID = 15  # For invalid tokens or errors
@@ -43,6 +44,8 @@ class Token:
             return f"Pos {self.position:3}: {self.type.name:18} -> \\{self.value!r}"
         elif self.type == TokenType.CHARACTER:
             return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r} (Catcode {self.catcode.name if self.catcode else 'None'})"  # Print enum name
+        elif self.type == TokenType.PARAMETER:
+            return f"Token(PARAM='{self.value}')"
         else:
             return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r}"
 

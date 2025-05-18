@@ -181,23 +181,39 @@ def test_parse_immediate_token():
     tokenizer = Tokenizer()
     parser = ParserCore(tokenizer)
 
-    text_ast_pairs = [
-        ("{abc}2", BraceNode([TextNode("abc")])),
-        (r"\cmd sss", CommandNode(r"\cmd")),
-        ("abc", TextNode("a")),
-        ("123", TextNode("1")),
-        ("$333$", MathShiftNode("$")),
+    test_sequence_pairs = [
+        (
+            "{abc}2",
+            [
+                Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+                Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+                Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+            ],
+        ),
+        (r"\cmd sss", [Token(TokenType.CONTROL_SEQUENCE, "cmd")]),
+        ("abc", [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)]),
+        ("123", [Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)]),
+        ("$333$", [Token(TokenType.MATH_SHIFT, "$")]),
     ]
 
-    for text, expected in text_ast_pairs:
+    for text, expected in test_sequence_pairs:
         parser.set_text(text)
-        assert parser.parse_immediate_token() == expected
+        assert_token_sequence(parser.parse_immediate_token(), expected)
 
     # test character token sequence
     parser.set_text("abc")
-    assert parser.parse_immediate_token() == TextNode("a")
-    assert parser.parse_immediate_token() == TextNode("b")
-    assert parser.parse_immediate_token() == TextNode("c")
+    assert_token_sequence(
+        parser.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)],
+    )
+    assert_token_sequence(
+        parser.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER)],
+    )
+    assert_token_sequence(
+        parser.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER)],
+    )
     assert parser.parse_immediate_token() is None
 
 
@@ -362,10 +378,44 @@ def test_parse_asterisk():
     assert parser.parse_integer() == 1
 
 
+def test_parse_parameter_token():
+    tokenizer = Tokenizer()
+    parser = ParserCore(tokenizer)
+
+    parser.set_text("#1#22")
+    assert parser.parse_parameter_token() == Token(TokenType.PARAMETER, "1")
+    assert parser.parse_parameter_token() == Token(TokenType.PARAMETER, "2")
+    assert parser.parse_parameter_token() is None
+    assert parser.parse_integer() == 2
+    assert parser.eof()
+
+    parser.set_text("##1")
+    assert parser.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert parser.parse_integer() == 1
+    assert parser.eof()
+
+    # invalid single parameter token
+    parser.set_text("#")
+    assert parser.parse_parameter_token() is None
+    assert parser.eof()
+
+    parser.set_text("####4")
+    assert parser.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert parser.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert parser.parse_integer() == 4
+    assert parser.eof()
+
+
 def test_parse_brace_as_tokens():
     parser = ParserCore()
 
-    text = r"{Hi {abc} 1}"
+    text = r"{Hi {abc} #12}"
     parser.set_text(text)
     tokens = parser.parse_brace_as_tokens()
     expected_tokens = [
@@ -378,6 +428,7 @@ def test_parse_brace_as_tokens():
         Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
         END_BRACE_TOKEN,
         Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-        Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+        Token(TokenType.PARAMETER, "1"),
+        Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
     ]
     assert_token_sequence(tokens, expected_tokens)
