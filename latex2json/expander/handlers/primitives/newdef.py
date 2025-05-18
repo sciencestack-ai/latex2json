@@ -16,7 +16,7 @@ from latex2json.nodes.syntactic_nodes import (
 from dataclasses import dataclass
 
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, TokenType
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token, TokenType
 
 
 @dataclass
@@ -177,10 +177,10 @@ def get_def_usage_pattern_and_definition(
     usage_pattern: List[ASTNode] = raw_usage_pattern
 
     if tok == BEGIN_BRACE_TOKEN:
-        parser.consume()
-        definition = expander.parse_brace_group()
-        if definition:
-            return usage_pattern, definition.children
+        tokens = parser.parse_brace_as_tokens()
+        # definition = expander.parse_brace_group()
+        # if definition:
+        #     return usage_pattern, definition.children
 
     return None, None
 

@@ -16,7 +16,8 @@ from latex2json.nodes import (
 from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode
 from latex2json.tokens import Tokenizer, TokenType, Catcode, Token
 from latex2json.parser import ParserCore
-from tests.test_utils import assert_ast_sequence
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
+from tests.test_utils import assert_ast_sequence, assert_token_sequence
 
 
 def test_parser_core():
@@ -357,3 +358,24 @@ def test_parse_asterisk():
     parser.set_text("*1")
     assert parser.parse_asterisk()
     assert parser.parse_integer() == 1
+
+
+def test_parse_brace_as_tokens():
+    parser = ParserCore()
+
+    text = r"{Hi {abc} 1}"
+    parser.set_text(text)
+    tokens = parser.parse_brace_as_tokens()
+    expected_tokens = [
+        Token(TokenType.CHARACTER, "H", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "i", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        BEGIN_BRACE_TOKEN,
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+        END_BRACE_TOKEN,
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+    ]
+    assert_token_sequence(tokens, expected_tokens)

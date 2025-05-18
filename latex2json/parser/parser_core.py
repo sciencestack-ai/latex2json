@@ -634,6 +634,51 @@ class ParserCore:
             return True
         return False
 
+    def parse_brace_as_tokens(self) -> List[Token]:
+        """
+        Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
+        The outermost braces are NOT included in the returned list.
+        Handles nested braces correctly.
+        """
+        # 1. Peek at the very first token to check for the opening brace
+        first_token = self.peek()
+
+        if not first_token or first_token != BEGIN_BRACE_TOKEN:
+            return []
+
+        # 2. Consume the opening brace itself
+        self.consume()
+
+        definition_tokens: List[Token] = []
+        brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
+
+        # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
+        while brace_depth > 0:
+            current_token = self.peek()
+
+            if current_token is None:
+                # Error: Reached the end of the input stream before finding a matching closing brace.
+                print("Unmatched braces: Reached end of stream within a definition.")
+                # Depending on your error handling strategy, you might raise an exception here
+                # or return the partially collected tokens.
+                break  # Exit loop due to error
+
+            # Check token type and update brace_depth
+            if current_token == BEGIN_BRACE_TOKEN:
+                brace_depth += 1
+            elif current_token == END_BRACE_TOKEN:
+                brace_depth -= 1
+
+            consumed_token = self.consume()
+
+            # Add the token to our list *unless* it's the final closing brace
+            # (i.e., the one that brings brace_depth back to 0).
+            # For inner braces, brace_depth will still be > 0 after decrement, so they are included.
+            if brace_depth > 0:
+                definition_tokens.append(consumed_token)
+
+        return definition_tokens
+
 
 # --- Example Usage for Unit Testing Parser in Isolation ---
 if __name__ == "__main__":
