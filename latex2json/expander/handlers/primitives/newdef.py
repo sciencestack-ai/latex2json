@@ -177,7 +177,7 @@ def get_def_usage_pattern_and_definition(
     usage_pattern: List[ASTNode] = raw_usage_pattern
 
     if tok == BEGIN_BRACE_TOKEN:
-        tokens = parser.parse_brace_as_tokens()
+        definition_tokens = parser.parse_brace_as_tokens()
         # definition = expander.parse_brace_group()
         # if definition:
         #     return usage_pattern, definition.children

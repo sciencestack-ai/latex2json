@@ -13,7 +13,11 @@ from latex2json.nodes import (
     EndOfLineNode,
     TextNode,
 )
-from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode
+from latex2json.nodes.syntactic_nodes import (
+    BeginBraceNode,
+    EndBraceNode,
+    strip_whitespace,
+)
 from latex2json.tokens import Tokenizer, TokenType, Catcode, Token
 from latex2json.parser import ParserCore
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
@@ -56,7 +60,8 @@ def test_parser_core():
         EndBraceNode("}"),
         BracketNode([TextNode("1")]),
         BeginBraceNode("{"),
-        ArgNode(12, num_params=2),
+        ArgNode(1, num_params=2),
+        TextNode("2"),
         EndBraceNode("}"),
     ]
     assert_ast_sequence(asts, expected_asts)
@@ -94,7 +99,7 @@ def test_whitespace_and_match():
 
 def test_malformed_braces_brackets():
     tokenizer = Tokenizer()
-    text = r"{]\@#[aa"
+    text = r"{]\@[aa"
 
     # malformed braces and brackets are parsed as text nodes
     parser = ParserCore(tokenizer)
@@ -103,7 +108,6 @@ def test_malformed_braces_brackets():
         BeginBraceNode("{"),
         TextNode("]"),
         CommandNode(r"\@"),
-        TextNode("#"),
         TextNode("["),
         TextNode("aa"),
     ]
@@ -124,7 +128,7 @@ def test_malformed_braces_brackets():
     assert_ast_sequence(asts, expected_asts)
 
 
-def test_parameters_hash():
+def test_parameters_argnodes():
     tokenizer = Tokenizer()
     parser = ParserCore(tokenizer)
     asts = parser.parse_text("####2")
@@ -133,18 +137,24 @@ def test_parameters_hash():
     ]
     assert_ast_sequence(asts, expected_asts)
 
+    # 0 wont work!
+    asts = parser.parse_text("#0")
+    asts = strip_whitespace(asts)
+    expected_asts = [TextNode("0")]
+    assert_ast_sequence(asts, expected_asts)
+
     # fallback string if no number
     asts = parser.parse_text("###")
     expected_asts = [
-        TextNode("###"),
+        TextNode(""),
     ]
     assert_ast_sequence(asts, expected_asts)
 
     # ensure separated hash with whitespace is not ArgNode
     asts = parser.parse_text("## 1")
+    asts = strip_whitespace(asts)
+    asts = strip_whitespace(asts)
     expected_asts = [
-        TextNode("##"),
-        TextNode(" "),
         TextNode("1"),
     ]
     assert_ast_sequence(asts, expected_asts)
@@ -163,14 +173,6 @@ def test_parameters_hash():
     asts = parser.parse_text(text)
     expected_asts = [
         ArgNode(2, num_params=2),
-    ]
-    assert_ast_sequence(asts, expected_asts)
-
-    # fallback string if no number
-    text = "@@@"
-    asts = parser.parse_text(text)
-    expected_asts = [
-        TextNode(text),
     ]
     assert_ast_sequence(asts, expected_asts)
 

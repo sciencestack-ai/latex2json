@@ -28,6 +28,18 @@ def is_integer_token(tok: Token) -> bool:
     return is_digit_token(tok) and tok.value != "."
 
 
+# 1-9
+one_to_nine = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+
+
+def is_1_to_9_token(tok: Token) -> bool:
+    return (
+        tok.type == TokenType.CHARACTER
+        and tok.catcode == Catcode.OTHER
+        and tok.value in one_to_nine
+    )
+
+
 def is_digit_token(tok: Token) -> bool:
     return (
         tok.type == TokenType.CHARACTER

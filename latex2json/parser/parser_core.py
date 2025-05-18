@@ -23,6 +23,7 @@ from latex2json.tokens.types import (
     END_ENV_TOKEN,
 )
 from latex2json.tokens.utils import (
+    is_1_to_9_token,
     is_text_token,
     is_integer_token,
     is_digit_token,
@@ -563,21 +564,17 @@ class ParserCore:
             tok = self.peek()
 
         # Expect a digit (Catcode 12) or a letter (Catcode 11, for control word parameter)
-        if tok and is_integer_token(tok):
-            param_number = self.parse_integer()
-            return ArgNode(param_number, num_params=hash_count)
-
-        # Add handling for other cases if needed:
-        # - # followed by a letter (e.g., #\commandname for \futurelet)
-        # - ## followed by #1 etc. (handled by hash_count)
-        # - # followed by non-digit/non-letter (error?)
+        if tok and is_1_to_9_token(tok):
+            self.consume()
+            # can only be integer 1-9 in TEX
+            return ArgNode(int(tok.value), num_params=hash_count)
 
         # If it's not followed by a digit, treat the # sequence as literal text for now
         # This might need refinement based on TeX rules for # outside definitions.
         print(
-            f"WARNING: # sequence not followed by a digit at position {hash_tok.position}. Treating as text."
+            f"WARNING: # sequence not followed by a digit at position {hash_tok.position}."
         )
-        return TextNode(fallback_str)
+        return TextNode("")  # return empty string
 
     """HELPER FUNCTIONS"""
 
