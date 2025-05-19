@@ -108,6 +108,59 @@ class BaseTokenStream:
             return prev_pos_table[cur_stack]
         return (start_pos, start_stack)
 
+    # parser helper functions
+    def match_token(self, tok: Token) -> bool:
+        """Checks if the next non-ignored token matches the given token."""
+        return self.match(
+            token_type=tok.type,
+            value=tok.value,
+            catcode=tok.catcode,
+        )
+
+    # The match method now checks against the new Token structure (type and catcode)
+    def match(
+        self,
+        token_type: Optional[TokenType] = None,
+        value: Optional[str] = None,
+        catcode: Optional[Catcode] = None,
+    ) -> bool:
+        """
+        Checks if the next non-ignored token matches the criteria.
+        Can match by TokenType, Catcode, or Value.
+        """
+        # skip whitespace?
+        start_pos = self.skip_whitespace()
+
+        tok = self.peek()  # TokenStream.peek handles skipping ignored
+        if tok is None:
+            self.set_pos(*start_pos)
+            return False
+
+        type_match = token_type is None or tok.type == token_type
+        catcode_match = catcode is None or tok.catcode == catcode
+        value_match = value is None or tok.value == value
+
+        # For CHARACTER tokens, catcode is the primary discriminator after type
+        is_match = False
+        if tok.type == TokenType.CHARACTER:
+            is_match = type_match and catcode_match and value_match
+            # Value match is less common for characters
+        # For CONTROL_SEQUENCE tokens, value is the primary discriminator after type
+        elif tok.type == TokenType.CONTROL_SEQUENCE:
+            is_match = type_match and value_match
+            # Catcode is implicitly 0 for the backslash, not on the token itself
+        # Default for other token types (if any)
+        else:
+            is_match = (
+                type_match and value_match
+            )  # Or adjust based on other token types
+
+        if is_match:
+            return True
+
+        self.set_pos(*start_pos)
+        return False
+
 
 class TokenStream(BaseTokenStream):
     """Stream that reads tokens from a Tokenizer."""

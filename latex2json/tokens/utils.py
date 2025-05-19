@@ -22,6 +22,22 @@ def is_end_group_token(tok: Token) -> bool:
     return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.END_GROUP
 
 
+def is_begin_bracket_token(tok: Token) -> bool:
+    return (
+        tok.type == TokenType.CHARACTER
+        and tok.catcode == Catcode.OTHER
+        and tok.value == "["
+    )
+
+
+def is_end_bracket_token(tok: Token) -> bool:
+    return (
+        tok.type == TokenType.CHARACTER
+        and tok.catcode == Catcode.OTHER
+        and tok.value == "]"
+    )
+
+
 def is_whitespace_token(tok: Token) -> bool:
     if tok.type == TokenType.END_OF_LINE:
         return True

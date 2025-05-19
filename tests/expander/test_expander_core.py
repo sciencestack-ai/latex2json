@@ -3,7 +3,14 @@ import pytest
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    BEGIN_BRACKET_TOKEN,
+    END_BRACE_TOKEN,
+    END_BRACKET_TOKEN,
+    Token,
+    TokenType,
+)
 from tests.test_utils import assert_token_sequence
 
 TEST_CHARS = [
@@ -19,8 +26,7 @@ def test_expander_core():
 
     # standard process
     text = "{abcd}"
-    expander.set_text(text)
-    tokens = expander.process()
+    tokens = expander.expand(text)
 
     expected = [
         BEGIN_BRACE_TOKEN,
@@ -56,7 +62,6 @@ def test_whitespace_and_match():
 
     # test that all whitespace gets merged to single token
     text = r"""  Hi  % Hi surrounded by 2 whitespaces both sides"""
-    expander.set_text(text)
     expected_tokens = [
         Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
         Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
@@ -65,7 +70,7 @@ def test_whitespace_and_match():
         Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
         Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
     ]
-    assert_token_sequence(expander.process(), expected_tokens)
+    assert_token_sequence(expander.expand(text), expected_tokens)
 
     expander.set_text(r" \cmd @")
     assert expander.match(TokenType.CONTROL_SEQUENCE, value="cmd")
@@ -183,6 +188,25 @@ def test_parse_brace_as_tokens():
         Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
     ]
     assert_token_sequence(tokens, expected_tokens)
+
+
+def test_parse_bracket_as_tokens():
+    expander = ExpanderCore()
+
+    expander.set_text("[[abc] #1]")
+    tokens = expander.parse_bracket_as_tokens()
+    assert_token_sequence(
+        tokens,
+        [
+            BEGIN_BRACKET_TOKEN,
+            Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+            Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+            Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+            END_BRACKET_TOKEN,
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.PARAMETER, "1"),
+        ],
+    )
 
 
 # test helper functions

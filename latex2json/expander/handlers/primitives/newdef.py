@@ -13,7 +13,6 @@ class DefResult:
     name: str
     definition: List[Token]
     usage_pattern: List[Token]
-    depth: int = -1
 
 
 def get_parsed_args_from_usage_pattern(
@@ -104,7 +103,7 @@ def get_def_usage_pattern_and_definition(
 
     tok = expander.peek()
     while tok and not is_begin_group_token(tok):
-        raw_usage_pattern_tokens.extend(expander.parse(expand_macros=False))
+        raw_usage_pattern_tokens.append(expander.parse_token())
         tok = expander.peek()
 
     if is_begin_group_token(tok):
@@ -134,17 +133,10 @@ def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
         )
         return None
 
-    # depth = -1
-    # for ele in usage_pattern:
-    #     if isinstance(ele, ArgNode):
-    #         depth = ele.depth
-    #         break
-
     return DefResult(
         name=name,
         definition=definition,
         usage_pattern=usage_pattern,
-        # depth=depth,
     )
 
 

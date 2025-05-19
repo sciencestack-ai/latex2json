@@ -14,7 +14,9 @@ from latex2json.tokens.token_stream import (
 )
 from latex2json.tokens.utils import (
     is_1_to_9_token,
+    is_begin_bracket_token,
     is_begin_group_token,
+    is_end_bracket_token,
     is_end_group_token,
     is_integer_token,
     is_digit_token,
@@ -23,6 +25,8 @@ from latex2json.tokens.utils import (
 
 # arbitrary character that is not a valid token
 STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
+
+TokenPredicate = Callable[[Token], bool]
 
 
 class ExpanderCore:
@@ -63,9 +67,9 @@ class ExpanderCore:
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         self.stream.push_tokens(tokens + [STOP_TOKEN])
-        return self.process(stop_token=STOP_TOKEN)
+        return self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
 
-    def process(self, stop_token: Optional[Token] = None) -> List[Token]:
+    def process(self, stop_token_logic: Optional[TokenPredicate] = None) -> List[Token]:
         """
         Processes the entire token stream, performing expansions and executing side effects,
         until the stop token is encountered.
@@ -77,11 +81,11 @@ class ExpanderCore:
 
             if current_token is None:  # Should be caught by eof(), but defensive check
                 break
-            if stop_token and current_token == stop_token:
+            if stop_token_logic and stop_token_logic(current_token):
                 self.consume()
                 break
 
-            final_expanded_tokens.extend(self.parse())
+            final_expanded_tokens.extend(self._expand_next())
 
         return final_expanded_tokens
 
@@ -101,79 +105,40 @@ class ExpanderCore:
         return self.stream.skip_whitespace()
 
     # main parsing logic
-    def parse(self, expand_macros=True) -> Optional[List[Token]]:
+    def _expand_next(self) -> Optional[List[Token]]:
+        tok = self.parse_token()
+        if tok is None:
+            return None
+
+        if is_begin_group_token(tok):
+            self.push_scope()
+        elif is_end_group_token(tok):
+            self.pop_scope()
+        elif tok.type == TokenType.CONTROL_SEQUENCE:
+            macro = self.macros.get(tok.value)
+            if macro:
+                processed = macro.handler(self, tok)
+                return processed
+        return [tok]
+
+    def parse_token(self) -> Optional[Token]:
         tok = self.peek()
         if tok is None:
             return None
         if is_param_token(tok):
             param = self.parse_parameter_token()
             if param:
-                return [param]
-        elif is_begin_group_token(tok):
-            self.push_scope()
-        elif is_end_group_token(tok):
-            self.pop_scope()
-
-        elif expand_macros and tok.type == TokenType.CONTROL_SEQUENCE:
-            macro = self.macros.get(tok.value)
-            if macro:
-                self.consume()  # Consume the control sequence token itself
-                processed = macro.handler(self, tok)
-                return processed
-        return [self.consume()]
+                return param
+        return self.consume()
 
     # parser helper functions
-    def match_token(self, tok: Token) -> bool:
-        """Checks if the next non-ignored token matches the given token."""
-        return self.match(
-            token_type=tok.type,
-            value=tok.value,
-            catcode=tok.catcode,
-        )
-
-    # The match method now checks against the new Token structure (type and catcode)
     def match(
         self,
         token_type: Optional[TokenType] = None,
         value: Optional[str] = None,
         catcode: Optional[Catcode] = None,
     ) -> bool:
-        """
-        Checks if the next non-ignored token matches the criteria.
-        Can match by TokenType, Catcode, or Value.
-        """
-        # skip whitespace?
-        start_pos = self.skip_whitespace()
-
-        tok = self.peek()  # TokenStream.peek handles skipping ignored
-        if tok is None:
-            self.stream.set_pos(*start_pos)
-            return False
-
-        type_match = token_type is None or tok.type == token_type
-        catcode_match = catcode is None or tok.catcode == catcode
-        value_match = value is None or tok.value == value
-
-        # For CHARACTER tokens, catcode is the primary discriminator after type
-        is_match = False
-        if tok.type == TokenType.CHARACTER:
-            is_match = type_match and catcode_match and value_match
-            # Value match is less common for characters
-        # For CONTROL_SEQUENCE tokens, value is the primary discriminator after type
-        elif tok.type == TokenType.CONTROL_SEQUENCE:
-            is_match = type_match and value_match
-            # Catcode is implicitly 0 for the backslash, not on the token itself
-        # Default for other token types (if any)
-        else:
-            is_match = (
-                type_match and value_match
-            )  # Or adjust based on other token types
-
-        if is_match:
-            return True
-
-        self.stream.set_pos(*start_pos)
-        return False
+        return self.stream.match(token_type, value, catcode)
 
     def _combine_sequence_as_str(self, predicate: Callable[[Token], bool]):
         tok = self.peek()
@@ -277,7 +242,9 @@ class ExpanderCore:
         )
         return None  # Indicate an error for the parser to handle
 
-    def parse_brace_as_tokens(self) -> List[Token]:
+    def parse_begin_end_as_tokens(
+        self, begin_predicate: TokenPredicate, end_predicate: TokenPredicate
+    ) -> List[Token]:
         """
         Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
         The outermost braces are NOT included in the returned list.
@@ -286,13 +253,13 @@ class ExpanderCore:
         # 1. Peek at the very first token to check for the opening brace
         first_token = self.peek()
 
-        if not first_token or not is_begin_group_token(first_token):
+        if not first_token or not begin_predicate(first_token):
             return []
 
         # 2. Consume the opening brace itself
         self.consume()
 
-        definition_tokens: List[Token] = []
+        out_tokens: List[Token] = []
         brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
 
         # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
@@ -307,24 +274,25 @@ class ExpanderCore:
                 break  # Exit loop due to error
 
             # Check token type and update brace_depth
-            if is_begin_group_token(current_token):
+            if begin_predicate(current_token):
                 brace_depth += 1
-                self.consume()
-                definition_tokens.append(current_token)
-                continue
-            elif is_end_group_token(current_token):
+            elif end_predicate(current_token):
                 brace_depth -= 1
-                self.consume()
-                if brace_depth > 0:
-                    definition_tokens.append(current_token)
-                continue
 
-            parsed_tokens = self.parse(expand_macros=False)
+            current_token = self.parse_token()
 
             if brace_depth > 0:
-                definition_tokens.extend(parsed_tokens)
+                out_tokens.append(current_token)
 
-        return definition_tokens
+        return out_tokens
+
+    def parse_brace_as_tokens(self) -> List[Token]:
+        return self.parse_begin_end_as_tokens(is_begin_group_token, is_end_group_token)
+
+    def parse_bracket_as_tokens(self) -> List[Token]:
+        return self.parse_begin_end_as_tokens(
+            is_begin_bracket_token, is_end_bracket_token
+        )
 
     def set_catcode(self, char_ord: int, catcode: Catcode):
         self.state.set_catcode(char_ord, catcode)

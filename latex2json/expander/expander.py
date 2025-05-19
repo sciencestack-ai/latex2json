@@ -30,5 +30,4 @@ if __name__ == "__main__":
         \gdef\barx{\bar{BRO}}
     }
 """.strip()
-    expander.set_text(text)
-    print(expander.process())
+    print(expander.expand(text))

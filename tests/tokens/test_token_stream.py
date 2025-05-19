@@ -61,6 +61,24 @@ def test_token_stream():
     assert stream.peek() == expected_tokens[1]
 
 
+def test_token_stream_match():
+    stream = BaseTokenStream()
+    stream.push_tokens(
+        [
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.END_OF_LINE, "\n"),
+            Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+        ]
+    )
+    assert stream.match(TokenType.CHARACTER, "1")
+    assert stream.consume() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+    assert stream.peek() == Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE)
+    assert stream.match(TokenType.CHARACTER, "2")
+
+
 def test_skip_ignored():
     tokenizer = Tokenizer()
 
