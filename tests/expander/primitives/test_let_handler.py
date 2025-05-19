@@ -1,7 +1,6 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.expander.handlers.primitives.let import register_let
 from tests.test_utils import assert_token_sequence
 
 
@@ -49,6 +48,14 @@ def test_let():
 
     assert_token_sequence(expander.expand(r"\greet"), expander.expand("3"))
 
+    # \let also grabs whitespace
+    text = r"""
+    \let\greet= 344 % note that it grabs the whitespace
+    """.strip()
+    out = expander.expand(text)
+    assert_token_sequence(out, expander.expand("344 "))
+    assert_token_sequence(expander.expand(r"\greet"), expander.expand(" "))
+
 
 def test_let_scope():
     expander = Expander()
@@ -63,7 +70,7 @@ def test_let_scope():
     # now with \global
     text = r"""
     {
-    \global\let\foo=344
+    \global\let \foo =344
     }
     """.strip()
     expander.expand(text)

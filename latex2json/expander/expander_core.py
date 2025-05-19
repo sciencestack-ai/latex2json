@@ -95,7 +95,9 @@ class ExpanderCore:
                 self.consume()
                 break
 
-            final_expanded_tokens.extend(self._expand_next())
+            processed = self._expand_next()
+            if processed:
+                final_expanded_tokens.extend(processed)
 
         return final_expanded_tokens
 
@@ -266,7 +268,7 @@ class ExpanderCore:
         first_token = self.peek()
 
         if not first_token or not begin_predicate(first_token):
-            return []
+            return None
 
         # 2. Consume the opening brace itself
         self.consume()
@@ -313,6 +315,17 @@ class ExpanderCore:
 
     def get_catcode(self, char_ord: int) -> Catcode:
         return self.state.get_catcode(char_ord)
+
+    def copy_macro_definitions(self, definition: List[Token]) -> List[Token]:
+        final_definition = []
+        for tok in definition:
+            if tok.type == TokenType.CONTROL_SEQUENCE:
+                macro = self.state.get_macro(tok.value)
+                if macro:
+                    final_definition.extend(macro.definition)
+                    continue
+            final_definition.append(tok)
+        return final_definition
 
 
 if __name__ == "__main__":

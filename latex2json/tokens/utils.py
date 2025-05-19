@@ -1,3 +1,4 @@
+from typing import List
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
     Token,
@@ -66,3 +67,12 @@ def is_digit_token(tok: Token) -> bool:
 
 def is_param_token(tok: Token) -> bool:
     return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.PARAMETER
+
+
+def strip_whitespace_tokens(tokens: List[Token]) -> List[Token]:
+    # strip whitespace tokens from the beginning and end of the list
+    while tokens and is_whitespace_token(tokens[0]):
+        tokens.pop(0)
+    while tokens and is_whitespace_token(tokens[-1]):
+        tokens.pop()
+    return tokens
