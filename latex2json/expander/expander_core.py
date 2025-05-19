@@ -9,7 +9,9 @@ from latex2json.expander.macro_registry import (
 
 from latex2json.expander.state import ExpanderState
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
-from latex2json.tokens.token_stream import MultiTokenStream, TokenStream
+from latex2json.tokens.token_stream import (
+    TokenStream,
+)
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
 from latex2json.tokens.utils import (
     is_1_to_9_token,
@@ -18,6 +20,9 @@ from latex2json.tokens.utils import (
     is_digit_token,
     is_param_token,
 )
+
+# arbitrary character that is not a valid token
+STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
 
 
 class ExpanderCore:
@@ -57,23 +62,13 @@ class ExpanderCore:
         return self.process()
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
-        prev_stream = self.stream
-        # prev_pos = self.stream.get_pos()
+        self.stream.push_tokens(tokens + [STOP_TOKEN])
+        return self.process(stop_token=STOP_TOKEN)
 
-        # set temporary token stream
-        temp_stream = MultiTokenStream([tokens])
-        self.stream = temp_stream
-        result = self.process()
-
-        # set back prev stream
-        self.stream = prev_stream
-        # self.stream.set_pos(*prev_pos)
-        return result
-
-    def process(self) -> List[Token]:
+    def process(self, stop_token: Optional[Token] = None) -> List[Token]:
         """
         Processes the entire token stream, performing expansions and executing side effects,
-        until only non-expandable tokens remain. These final tokens are returned.
+        until the stop token is encountered.
         """
         final_expanded_tokens: List[Token] = []
 
@@ -81,6 +76,9 @@ class ExpanderCore:
             current_token = self.peek()  # Peek at the next token
 
             if current_token is None:  # Should be caught by eof(), but defensive check
+                break
+            if stop_token and current_token == stop_token:
+                self.consume()
                 break
 
             final_expanded_tokens.extend(self.parse())
