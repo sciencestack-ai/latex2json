@@ -4,9 +4,8 @@ from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
 from dataclasses import dataclass
 
-from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token, TokenType
-from tests.test_utils import assert_token_sequence
+from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import is_begin_group_token
 
 
 @dataclass
@@ -83,9 +82,7 @@ class DefMacro(Macro):
             return None
 
         if not self.is_lazy:
-            raise NotImplementedError("Eager expansion not implemented")
             out.definition = expander.expand_tokens(out.definition)
-        # depth = out.depth
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             parsed_args = get_parsed_args_from_usage_pattern(
@@ -106,11 +103,11 @@ def get_def_usage_pattern_and_definition(
     raw_usage_pattern_tokens: List[Token] = []
 
     tok = expander.peek()
-    while tok and tok != BEGIN_BRACE_TOKEN:
-        raw_usage_pattern_tokens.extend(expander.parse())
+    while tok and not is_begin_group_token(tok):
+        raw_usage_pattern_tokens.extend(expander.parse(expand_macros=False))
         tok = expander.peek()
 
-    if tok == BEGIN_BRACE_TOKEN:
+    if is_begin_group_token(tok):
         definition_tokens = expander.parse_brace_as_tokens()
         return raw_usage_pattern_tokens, definition_tokens
 
@@ -170,40 +167,22 @@ if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    # print(expander.expand(r"\edef\test[#1:#2]{test #1:#2 ENDTEST}\test[HELLO:world]"))
+    register_def(expander)
 
-    text = r"\def\test[[#1:#2]{T #1:#2 ENDT}"
-    expander.set_text(text)
+    # expander.expand(r"\def\foo(e#1{BAR #1 BAR}")
 
-    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "def")
-    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "test")
+    # text = r"\def\foo(e#1{BAR #1 BAR} \def\hi{HI}"
+    # expander.expand(text)
 
-    usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
-    assert usage_pattern is not None
-    assert definition is not None
+    # out = expander.expand(r"\foo(e\hi")
+    # # expected = expander.expand("BAR HI BAR")
+    # print(out)
 
-    expected_usage_pattern = [
-        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
-        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
-        Token(TokenType.PARAMETER, "1"),
-        Token(TokenType.CHARACTER, ":", catcode=Catcode.OTHER),
-        Token(TokenType.PARAMETER, "2"),
-        Token(TokenType.CHARACTER, "]", catcode=Catcode.OTHER),
-    ]
+    text = r"""
+    \def\foo{FOO}
+    \def\bar{\foo}
+    \def\foo{BAR}
+    """.strip()
 
-    expected_definition = [
-        Token(TokenType.CHARACTER, "T", catcode=Catcode.LETTER),
-        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-        Token(TokenType.PARAMETER, "1"),
-        Token(TokenType.CHARACTER, ":", catcode=Catcode.OTHER),
-        Token(TokenType.PARAMETER, "2"),
-        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-        Token(TokenType.CHARACTER, "E", catcode=Catcode.LETTER),
-        Token(TokenType.CHARACTER, "N", catcode=Catcode.LETTER),
-        Token(TokenType.CHARACTER, "D", catcode=Catcode.LETTER),
-        Token(TokenType.CHARACTER, "T", catcode=Catcode.LETTER),
-    ]
-
-    # print(expected_usage_pattern)
-    print(expected_definition)
-    assert_token_sequence(definition, expected_definition)
+    expander.expand(text)
+    print(expander.expand(r"\bar"))

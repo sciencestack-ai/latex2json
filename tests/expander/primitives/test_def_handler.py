@@ -1,17 +1,15 @@
 import pytest
 
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.nodes import TextNode, ArgNode, BraceNode
 from latex2json.expander.handlers.primitives.newdef import (
     get_def_usage_pattern_and_definition,
     get_parsed_args_from_usage_pattern,
     register_def,
 )
 
-from latex2json.nodes.syntactic_nodes import CommandNode, strip_whitespace
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token, TokenType
-from tests.test_utils import assert_ast_sequence, assert_token_sequence
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from tests.test_utils import assert_token_sequence
 
 
 def test_get_def_usage_pattern_and_definition():
@@ -185,205 +183,190 @@ def test_parse_args_from_usage_pattern():
     test3()
 
 
-# def test_def_handler():
-#     expander = ExpanderCore()
+def test_def_handler():
+    expander = ExpanderCore()
 
-#     register_def(expander)
+    register_def(expander)
 
-#     def test1():
-#         assert not expander.macros.get("test")
-#         expander.set_text(r"\def\test[#1:#2]{TEST #1:#2 ENDTEST}")
-#         expander.process()
-#         assert expander.macros.get("test")
+    def test1():
+        assert not expander.macros.get("test")
+        expander.expand(r"\def\test[#1:#2]{TEST #1:#2 ENDTEST}")
+        assert expander.macros.get("test")
 
-#         expander.set_text(r"\test[HELLO:world]")
-#         out = expander.process()
-#         assert out == [
-#             TextNode("TEST HELLO:world ENDTEST"),
-#         ]
+        out = expander.expand(r"\test[HELLO:world]")
+        expected = expander.expand("TEST HELLO:world ENDTEST")
+        assert_token_sequence(out, expected)
 
-#     def test2():
-#         text = r"\def\foo(e#1{BAR #1 BAR} \def\hi{HI}"
-#         expander.set_text(text)
-#         expander.process()
-#         assert expander.macros.get("foo")
-#         assert expander.macros.get("hi")
+    def test2():
+        text = r"\def\foo(e#1{BAR #1 BAR} \def\hi{HI}"
+        expander.expand(text)
+        assert expander.macros.get("foo")
+        assert expander.macros.get("hi")
 
-#         expander.set_text(r"\foo(e{33}")
-#         out = expander.process()
-#         assert out == [
-#             TextNode("BAR 33 BAR"),
-#         ]
+        out = expander.expand(r"\foo(e{33}")
+        expected = expander.expand("BAR 33 BAR")
+        assert_token_sequence(out, expected)
 
-#         expander.set_text(r"\foo(ee")
-#         out = expander.process()
-#         assert out == [
-#             TextNode("BAR e BAR"),
-#         ]
+        out = expander.expand(r"\foo(ee")
+        expected = expander.expand("BAR e BAR")
+        assert_token_sequence(out, expected)
 
-#         expander.set_text(r"\foo(e\hi")
-#         out = expander.process()
-#         assert out == [
-#             TextNode("BAR HI BAR"),
-#         ]
+        out = expander.expand(r"\foo(e\hi")
+        expected = expander.expand("BAR HI BAR")
+        assert_token_sequence(out, expected)
 
-#     test1()
-#     test2()
+    test1()
+    test2()
 
 
-# def test_def_redefine():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_def_redefine():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     \def\foo{FOO}
-#     \def\bar{\foo}
-#     \def\foo{BAR}
-#     \bar
-#     """.strip()
+    text = r"""
+    \def\foo{FOO}
+    \def\bar{\foo}
+    \def\foo{BAR}
+    """.strip()
 
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("foo")
-#     assert expander.macros.get("bar")
+    expander.expand(text)
+    assert expander.macros.get("foo")
+    assert expander.macros.get("bar")
 
-#     out = strip_whitespace(out)
-#     assert out == [
-#         TextNode("BAR"),
-#     ]
+    assert_token_sequence(expander.expand(r"\bar"), expander.expand("BAR"))
 
 
-# def test_nested_defs():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_nested_defs():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     \def\foo#1{
-#         \def\bar##1{BAR #1 ##1}
-#         \def\barx{\bar{BRO}}
-#     }
-#     \foo{hello}
-#     \barx
-#     """.strip()
+    text = r"""
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \def\barx{\bar{BRO}}
+    }
+    \foo{hello}
+    """.strip()
 
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("foo")
-#     assert expander.macros.get("bar")
-#     assert expander.macros.get("barx")
+    expander.expand(text)
+    assert expander.macros.get("foo")
+    assert expander.macros.get("bar")
+    assert expander.macros.get("barx")
 
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("BAR hello BRO"),
-#     ]
+    assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR hello BRO"))
 
 
-# def test_gdef():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_gdef():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     {
-#         \def\foo{FOO}
-#         \gdef\bar#1{\foo #1}
-#     }
-#     \foo\bar{3}
-#     """.strip()
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert not expander.macros.get("foo")
-#     assert expander.macros.get("bar")  # global \gdef
+    text = r"""
+    {
+        \def\foo{FOO}
+        \gdef\bar#1{\foo #1}
+    }
+    """.strip()
 
-#     strip_whitespace(out)
-#     assert out == [
-#         CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
-#         CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
-#         TextNode(" 3"),
-#     ]
+    expander.expand(text)
+    assert not expander.macros.get("foo")
+    assert expander.macros.get("bar")  # global \gdef
 
+    # unresolved since \foo does not exist outside scope
+    assert_token_sequence(
+        expander.expand(r"\foo\bar{3}"), expander.expand(r"\foo\foo 3")
+    )
 
-# def test_edef():
-#     expander = ExpanderCore()
-#     register_def(expander)
-
-#     # test instant expansion
-#     text = r"""
-#     \def\foo{FOO}
-#     \edef\bar#1{\foo #1}
-#     \def\foo{BAR} % shouldn't affect \bar since \edef\bar is already expanded
-#     \bar{3}
-# """
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("bar")
-#     assert expander.macros.get("foo")
-
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("FOO 3"),
-#     ]
-
-#     # test edef inside scope
-#     text = r"""
-#     {
-#         \edef\bar{NEW BAR}
-#         \edef\barry{BARRY}
-#     }
-#     \bar{4} % STILL FOO due to scope
-#     """.strip()
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("bar")
-#     assert expander.macros.get("foo")
-#     assert not expander.macros.get("barry")  # out of scope
-
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("FOO 4"),
-#     ]
+    # now define \foo
+    expander.expand(r"\def\foo{FOO}")
+    assert expander.macros.get("foo")
+    assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
 
 
-# def test_xdef():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_edef():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     {
-#         \def\foo{FOO}
-#         \xdef\bar#1{\foo #1} % global
-#         \def\foo{BAR}
-#     }
-#     \bar{3} % FOO 3 due to immediate expansion
-#     """.strip()
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert not expander.macros.get("foo")
-#     assert expander.macros.get("bar")  # global \xdef
+    # test instant expansion
+    text = r"""
+    \def\foo{FOO}
+    \edef\bar#1{\foo #1} % immediate expansion to FOO #1
+    \def\foo{BAR} % shouldn't affect \bar since \edef\bar is already expanded
+    \bar{3}
+"""
+    expander.expand(text)
+    assert expander.macros.get("bar")
+    assert expander.macros.get("foo")
 
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("FOO 3"),
-#     ]
+    assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
+
+    # test edef inside scope
+    text = r"""
+    {
+        \edef\bar{NEW BAR}
+        \edef\barry{BARRY}
+    }
+    \bar{4} % STILL FOO due to scope (from above)
+    """.strip()
+    expander.expand(text)
+    assert expander.macros.get("bar")
+    assert expander.macros.get("foo")
+    assert not expander.macros.get("barry")  # out of scope
+
+    assert_token_sequence(expander.expand(r"\bar{4}"), expander.expand("FOO 4"))
 
 
-# def test_nested_defs():
-#     expander = ExpanderCore()
-#     register_def(expander)
+def test_xdef():
+    expander = ExpanderCore()
+    register_def(expander)
 
-#     text = r"""
-#     \def\foo#1{
-#         \def\bar##1{BAR #1 ##1}
-#         \gdef\barx{\bar{BRO}}
-#     }
-#     \foo{hello}
-#     \barx
-#     """.strip()
+    text = r"""
+    {
+        \def\foo{FOO}
+        \xdef\bar#1{\foo #1} % global
+        \def\foo{BAR}
+    }
+    \bar{3} % FOO 3 due to immediate expansion
+    """.strip()
 
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert expander.macros.get("foo")
+    expander.expand(text)
+    assert not expander.macros.get("foo")
+    assert expander.macros.get("bar")  # global \xdef
 
-#     strip_whitespace(out)
-#     assert out == [
-#         TextNode("BAR hello BRO"),
-#     ]
+    assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
+
+
+def test_nested_defs():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\foo#1{
+        {
+            \def\bar##1{BAR #1 ##1}
+            \gdef\barx{\bar{BRO}}
+        }
+    }
+    \foo{hello}
+    \barx
+    """.strip()
+
+    expander.expand(text)
+    assert expander.macros.get("foo")
+    assert expander.macros.get("barx")
+    assert not expander.macros.get("bar")
+
+    # Since \bar is not defined in scope, \barx expands literally
+    expected = [
+        Token(TokenType.CONTROL_SEQUENCE, "bar"),
+        BEGIN_BRACE_TOKEN,
+        Token(TokenType.CHARACTER, "B", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "R", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "O", catcode=Catcode.LETTER),
+        END_BRACE_TOKEN,
+    ]
+    assert_token_sequence(expander.expand(r"\barx"), expected)
+
+    # Now define \bar in scope
+    expander.expand(r"\def\bar{BAR}")
+    assert expander.macros.get("bar")
+    assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR{BRO}"))

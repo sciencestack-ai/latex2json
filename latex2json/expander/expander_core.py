@@ -12,10 +12,10 @@ from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,
 )
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
 from latex2json.tokens.utils import (
     is_1_to_9_token,
-    is_text_token,
+    is_begin_group_token,
+    is_end_group_token,
     is_integer_token,
     is_digit_token,
     is_param_token,
@@ -100,7 +100,8 @@ class ExpanderCore:
     def skip_whitespace(self):
         return self.stream.skip_whitespace()
 
-    def parse(self) -> Optional[List[Token]]:
+    # main parsing logic
+    def parse(self, expand_macros=True) -> Optional[List[Token]]:
         tok = self.peek()
         if tok is None:
             return None
@@ -108,8 +109,12 @@ class ExpanderCore:
             param = self.parse_parameter_token()
             if param:
                 return [param]
+        elif is_begin_group_token(tok):
+            self.push_scope()
+        elif is_end_group_token(tok):
+            self.pop_scope()
 
-        if tok.type == TokenType.CONTROL_SEQUENCE:
+        elif expand_macros and tok.type == TokenType.CONTROL_SEQUENCE:
             macro = self.macros.get(tok.value)
             if macro:
                 self.consume()  # Consume the control sequence token itself
@@ -184,9 +189,9 @@ class ExpanderCore:
         if not tok:
             return None
 
-        if tok == BEGIN_BRACE_TOKEN:
+        if is_begin_group_token(tok):
             return self.parse_brace_as_tokens()
-        return self.parse()
+        return [self.consume()]
 
     def parse_integer(self) -> int:
         sequence = self._combine_sequence_as_str(is_integer_token)
@@ -212,6 +217,12 @@ class ExpanderCore:
         ):
             return self.consume().value
         return None
+
+    def parse_asterisk(self) -> bool:
+        if self.match(value="*", catcode=Catcode.OTHER):
+            self.consume()
+            return True
+        return False
 
     # simulate Tex engine behavior of parsing #1 -> Parameter token '1', ##1 -> "#", 1
     def parse_parameter_token(self) -> Optional[Token]:
@@ -275,7 +286,7 @@ class ExpanderCore:
         # 1. Peek at the very first token to check for the opening brace
         first_token = self.peek()
 
-        if not first_token or first_token != BEGIN_BRACE_TOKEN:
+        if not first_token or not is_begin_group_token(first_token):
             return []
 
         # 2. Consume the opening brace itself
@@ -296,12 +307,19 @@ class ExpanderCore:
                 break  # Exit loop due to error
 
             # Check token type and update brace_depth
-            if current_token == BEGIN_BRACE_TOKEN:
+            if is_begin_group_token(current_token):
                 brace_depth += 1
-            elif current_token == END_BRACE_TOKEN:
+                self.consume()
+                definition_tokens.append(current_token)
+                continue
+            elif is_end_group_token(current_token):
                 brace_depth -= 1
+                self.consume()
+                if brace_depth > 0:
+                    definition_tokens.append(current_token)
+                continue
 
-            parsed_tokens = self.parse()
+            parsed_tokens = self.parse(expand_macros=False)
 
             if brace_depth > 0:
                 definition_tokens.extend(parsed_tokens)

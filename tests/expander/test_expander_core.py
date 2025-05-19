@@ -1,8 +1,6 @@
 import pytest
 
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.macro_registry import Macro
-from latex2json.expander.state import ExpanderState, StateLayer, ProcessingMode
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
@@ -52,21 +50,207 @@ def test_expand_tokens():
     assert expander.peek() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
 
 
-# def test_parse_brace_group():
-#     text = r"""{OUTER{INNER}POST}"""
+def test_whitespace_and_match():
+    tokenizer = Tokenizer()
+    expander = ExpanderCore(tokenizer)
 
-#     expander = ExpanderCore()
-#     expander.set_text(text)
-#     expander.parser.parse_element()  # parse beginning brace...
-#     brace_group = expander.parse_brace_group()
-#     assert brace_group == BraceNode(
-#         [
-#             TextNode("OUTER"),
-#             BraceNode(
-#                 [
-#                     TextNode("INNER"),
-#                 ]
-#             ),
-#             TextNode("POST"),
-#         ]
-#     )
+    # test that all whitespace gets merged to single token
+    text = r"""  Hi  % Hi surrounded by 2 whitespaces both sides"""
+    expander.set_text(text)
+    expected_tokens = [
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.CHARACTER, "H", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "i", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+    ]
+    assert_token_sequence(expander.process(), expected_tokens)
+
+    expander.set_text(r" \cmd @")
+    assert expander.match(TokenType.CONTROL_SEQUENCE, value="cmd")
+    expander.consume()
+    assert expander.match(TokenType.CHARACTER, value="@")
+
+    # now let's test setting the catcode of \ to WHITESPACE!
+    expander.set_catcode(ord("\\"), Catcode.SPACE)
+    expander.set_text(r"\cmd @")
+    assert expander.peek() == Token(
+        type=TokenType.CHARACTER, value="\\", catcode=Catcode.SPACE, position=0
+    )
+    # \ is now skipped with match!
+    assert expander.match(TokenType.CHARACTER, value="c")
+    expander.consume()
+    assert expander.consume() == Token(
+        TokenType.CHARACTER, value="m", catcode=Catcode.LETTER
+    )
+    assert expander.consume() == Token(
+        TokenType.CHARACTER, value="d", catcode=Catcode.LETTER
+    )
+    # assert expander.match(TokenType.CHARACTER, value="@")  # , catcode=Catcode.OTHER)
+    # assert expander.match(TokenType.CHARACTER, value="@", catcode=Catcode.OTHER)
+
+
+def test_parse_immediate_token():
+    expander = ExpanderCore()
+
+    test_sequence_pairs = [
+        (
+            "{abc}2",
+            [
+                Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+                Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+                Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+            ],
+        ),
+        (r"\cmd sss", [Token(TokenType.CONTROL_SEQUENCE, "cmd")]),
+        ("abc", [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)]),
+        ("123", [Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)]),
+        ("$333$", [Token(TokenType.MATH_SHIFT, "$")]),
+    ]
+
+    for text, expected in test_sequence_pairs:
+        expander.set_text(text)
+        assert_token_sequence(expander.parse_immediate_token(), expected)
+
+    # test character token sequence
+    expander.set_text("abc")
+    assert_token_sequence(
+        expander.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)],
+    )
+    assert_token_sequence(
+        expander.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER)],
+    )
+    assert_token_sequence(
+        expander.parse_immediate_token(),
+        [Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER)],
+    )
+    assert expander.parse_immediate_token() is None
+
+
+def test_parse_parameter_token():
+    expander = ExpanderCore()
+
+    expander.set_text("#1#22")
+    assert expander.parse_parameter_token() == Token(TokenType.PARAMETER, "1")
+    assert expander.parse_parameter_token() == Token(TokenType.PARAMETER, "2")
+    assert expander.parse_parameter_token() is None
+    assert expander.parse_integer() == 2
+    assert expander.eof()
+
+    expander.set_text("##1")
+    assert expander.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert expander.parse_integer() == 1
+    assert expander.eof()
+
+    # invalid single parameter token
+    expander.set_text("#")
+    assert expander.parse_parameter_token() is None
+    assert expander.eof()
+
+    expander.set_text("####4")
+    assert expander.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert expander.parse_parameter_token() == Token(
+        TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+    )
+    assert expander.parse_integer() == 4
+    assert expander.eof()
+
+
+def test_parse_brace_as_tokens():
+    expander = ExpanderCore()
+
+    text = r"{Hi {abc} #12}"
+    expander.set_text(text)
+    tokens = expander.parse_brace_as_tokens()
+    expected_tokens = [
+        Token(TokenType.CHARACTER, "H", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "i", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        BEGIN_BRACE_TOKEN,
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+        END_BRACE_TOKEN,
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.PARAMETER, "1"),
+        Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+    ]
+    assert_token_sequence(tokens, expected_tokens)
+
+
+# test helper functions
+def test_parse_int_float_arguments():
+    expander = ExpanderCore()
+
+    expander.set_text("123 456")
+    assert expander.parse_integer() == 123
+    expander.skip_whitespace()
+    assert expander.parse_integer() == 456
+
+    expander.set_text("-10.234")
+    assert expander.parse_integer() == -10
+
+    expander.set_text(".333")
+    assert expander.parse_integer() is None
+
+    # test float
+    expander.set_text("-123.456")
+    assert expander.parse_float() == -123.456
+
+    expander.set_text(".23fe")
+    assert expander.parse_float() == 0.23
+
+
+def test_equality_ops():
+    expander = ExpanderCore()
+
+    expander.set_text(" =1")
+    assert expander.parse_equals()
+    assert expander.parse_integer() == 1
+    expander.set_text(" s= ")
+    assert not expander.parse_equals()
+
+    # test changing catcode of = to LETTER
+    expander.set_catcode(ord("="), Catcode.LETTER)
+    expander.set_text("=")
+    assert not expander.parse_equals()
+    assert expander.consume() == Token(TokenType.CHARACTER, "=", catcode=Catcode.LETTER)
+
+    # test angle brackets
+    expander.set_text(" <")
+    assert expander.parse_angle_brackets() == "<"
+
+    expander.set_text(">")
+    assert expander.parse_angle_brackets() == ">"
+
+    expander.set_text(" s< ")
+    assert not expander.parse_angle_brackets()
+
+    expander.set_text(" s> ")
+    assert not expander.parse_angle_brackets()
+
+    # test changing catcode of < and > to LETTER
+    expander.set_catcode(ord("<"), Catcode.LETTER)
+    expander.set_catcode(ord(">"), Catcode.LETTER)
+    expander.set_text("<")
+    assert not expander.parse_angle_brackets()
+    assert expander.consume() == Token(TokenType.CHARACTER, "<", catcode=Catcode.LETTER)
+
+    expander.set_text(">")
+    assert not expander.parse_angle_brackets()
+    assert expander.consume() == Token(TokenType.CHARACTER, ">", catcode=Catcode.LETTER)
+
+
+def test_parse_asterisk():
+    expander = ExpanderCore()
+
+    expander.set_text("*1")
+    assert expander.parse_asterisk()
+    assert expander.parse_integer() == 1
