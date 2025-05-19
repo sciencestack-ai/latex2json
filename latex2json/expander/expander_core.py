@@ -9,7 +9,7 @@ from latex2json.expander.macro_registry import (
 
 from latex2json.expander.state import ExpanderState
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
-from latex2json.tokens.token_stream import TokenStream
+from latex2json.tokens.token_stream import MultiTokenStream, TokenStream
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
 from latex2json.tokens.utils import (
     is_1_to_9_token,
@@ -57,9 +57,18 @@ class ExpanderCore:
         return self.process()
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
-        raise NotImplementedError("Expand tokens Not implemented")
-        # self.stream.push_tokens(tokens)
-        # return self.process()
+        prev_stream = self.stream
+        # prev_pos = self.stream.get_pos()
+
+        # set temporary token stream
+        temp_stream = MultiTokenStream([tokens])
+        self.stream = temp_stream
+        result = self.process()
+
+        # set back prev stream
+        self.stream = prev_stream
+        # self.stream.set_pos(*prev_pos)
+        return result
 
     def process(self) -> List[Token]:
         """
@@ -74,17 +83,7 @@ class ExpanderCore:
             if current_token is None:  # Should be caught by eof(), but defensive check
                 break
 
-            # 1. Handle Control Sequences
-            if current_token.type == TokenType.CONTROL_SEQUENCE:
-                macro = self.macros.get(current_token.value)
-
-                if macro:
-                    self.consume()  # Consume the control sequence token itself
-                    processed = macro.handler(self, current_token)
-                    if processed:
-                        final_expanded_tokens.extend(processed)
-
-            final_expanded_tokens.append(self.consume())
+            final_expanded_tokens.extend(self.parse())
 
         return final_expanded_tokens
 
@@ -102,6 +101,23 @@ class ExpanderCore:
 
     def skip_whitespace(self):
         return self.stream.skip_whitespace()
+
+    def parse(self) -> Optional[List[Token]]:
+        tok = self.peek()
+        if tok is None:
+            return None
+        if is_param_token(tok):
+            param = self.parse_parameter_token()
+            if param:
+                return [param]
+
+        if tok.type == TokenType.CONTROL_SEQUENCE:
+            macro = self.macros.get(tok.value)
+            if macro:
+                self.consume()  # Consume the control sequence token itself
+                processed = macro.handler(self, tok)
+                return processed
+        return [self.consume()]
 
     # parser helper functions
     def match_token(self, tok: Token) -> bool:
@@ -166,19 +182,13 @@ class ExpanderCore:
         return out
 
     def parse_immediate_token(self) -> List[Token] | None:
-        """
-        Parses an 'immediate' token. Behavior depends heavily on context in TeX.
-        This is a simplified implementation.
-        """
-        tok = self.peek()  # TokenStream.peek handles skipping ignored
+        tok = self.peek()
         if not tok:
             return None
 
         if tok == BEGIN_BRACE_TOKEN:
             return self.parse_brace_as_tokens()
-        else:
-            self.consume()
-            return [tok]
+        return self.parse()
 
     def parse_integer(self) -> int:
         sequence = self._combine_sequence_as_str(is_integer_token)
@@ -220,15 +230,12 @@ class ExpanderCore:
         """
         # Ensure we are starting with a '#' token with Catcode.PARAMETER
         # This check is defensive, as the caller should ensure this.
-        initial_hash_token = self.peek()
-        if (
-            not initial_hash_token
-            or initial_hash_token.type != TokenType.CHARACTER
-            or initial_hash_token.catcode != Catcode.PARAMETER
-            or initial_hash_token.value != "#"
-        ):  # Also check value is '#'
+        tok = self.peek()
+        if not tok:
+            return None
+        if not is_param_token(tok):
             print(
-                f"WARNING: parse_parameter_sequence called without current token being a '#' with Catcode.PARAMETER: {initial_hash_token}"
+                f"WARNING: parse_parameter_sequence called without current Catcode.PARAMETER: {tok}"
             )
             return None  # Not the start of a parameter sequence
 
@@ -236,39 +243,28 @@ class ExpanderCore:
         self.consume()
 
         # Peek the token immediately following the first '#'
-        next_token = self.peek()
+        tok = self.peek()
 
-        if next_token is None:
+        if tok is None:
             print(
                 "Error: Unexpected end of input after '#'. Expected a digit (1-9) or another '#'."
             )
             return None  # Syntax error: incomplete sequence
 
         # Case 1: ## -> Literal '#'
-        if (
-            next_token.type == TokenType.CHARACTER
-            and next_token.catcode == Catcode.PARAMETER
-            and next_token.value == "#"
-        ):  # Check value is '#' for clarity
+        if is_param_token(tok):
             self.consume()  # Consume the second '#'
-            return Token(
-                TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
-            )  # This is the literal '#' token
+            return tok  # return as literal #
 
         # Case 2: #N -> Parameter token (N must be 1-9)
-        if (
-            next_token.type == TokenType.CHARACTER
-            and next_token.catcode == Catcode.OTHER
-            and "1" <= next_token.value <= "9"
-        ):  # Check for digits '1' through '9'
+        if is_1_to_9_token(tok):  # Check for digits '1' through '9'
             self.consume()  # Consume the digit
-            # The value of the PARAMETER token is the digit itself (e.g., '1' for #1)
-            return Token(TokenType.PARAMETER, next_token.value)
+            return Token(TokenType.PARAMETER, tok.value)
 
         # Case 3: # followed by something else (error in definition)
         print(
             f"Error: Illegal parameter number or escape sequence after '#'. "
-            f"Found '{next_token.value}' (type: {next_token.type}, catcode: {next_token.catcode.name})."
+            f"Found '{tok.value}' (type: {tok.type}, catcode: {tok.catcode.name})."
         )
         return None  # Indicate an error for the parser to handle
 
@@ -307,13 +303,10 @@ class ExpanderCore:
             elif current_token == END_BRACE_TOKEN:
                 brace_depth -= 1
 
-            if current_token.catcode == Catcode.PARAMETER:
-                current_token = self.parse_parameter_token()
-            else:
-                current_token = self.consume()
+            parsed_tokens = self.parse()
 
             if brace_depth > 0:
-                definition_tokens.append(current_token)
+                definition_tokens.extend(parsed_tokens)
 
         return definition_tokens
 
@@ -325,9 +318,6 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    from latex2json.parser import ParserCore
-    from latex2json.tokens.tokenizer import Tokenizer
-    from latex2json.tokens.catcodes import Catcode
 
     expander = ExpanderCore()
 

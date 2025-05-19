@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token, TokenType
+from tests.test_utils import assert_token_sequence
 
 
 @dataclass
@@ -106,13 +107,7 @@ def get_def_usage_pattern_and_definition(
 
     tok = expander.peek()
     while tok and tok != BEGIN_BRACE_TOKEN:
-        if tok.catcode == Catcode.PARAMETER:
-            param_token = expander.parse_parameter_token()
-            if param_token:
-                raw_usage_pattern_tokens.append(param_token)
-        else:
-            raw_usage_pattern_tokens.append(tok)
-            expander.consume()
+        raw_usage_pattern_tokens.extend(expander.parse())
         tok = expander.peek()
 
     if tok == BEGIN_BRACE_TOKEN:
@@ -177,17 +172,17 @@ if __name__ == "__main__":
     expander = Expander()
     # print(expander.expand(r"\edef\test[#1:#2]{test #1:#2 ENDTEST}\test[HELLO:world]"))
 
-    # text = r"\def\test[[#1:#2]{T #1:#2 ENDT}"
-    # expander.set_text(text)
+    text = r"\def\test[[#1:#2]{T #1:#2 ENDT}"
+    expander.set_text(text)
 
-    # assert expander.parser.parse_command() == CommandNode(r"\def")
-    # assert expander.parser.parse_command() == CommandNode(r"\test")
+    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "def")
+    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "test")
 
-    # usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
-    # print(usage_pattern)
+    usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
+    assert usage_pattern is not None
+    assert definition is not None
 
-    expander.set_text(r"[[HI:{123}\cmd]")
-    usage_pattern = [
+    expected_usage_pattern = [
         Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
         Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
         Token(TokenType.PARAMETER, "1"),
@@ -195,4 +190,20 @@ if __name__ == "__main__":
         Token(TokenType.PARAMETER, "2"),
         Token(TokenType.CHARACTER, "]", catcode=Catcode.OTHER),
     ]
-    out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
+
+    expected_definition = [
+        Token(TokenType.CHARACTER, "T", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.PARAMETER, "1"),
+        Token(TokenType.CHARACTER, ":", catcode=Catcode.OTHER),
+        Token(TokenType.PARAMETER, "2"),
+        Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+        Token(TokenType.CHARACTER, "E", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "N", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "D", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "T", catcode=Catcode.LETTER),
+    ]
+
+    # print(expected_usage_pattern)
+    print(expected_definition)
+    assert_token_sequence(definition, expected_definition)

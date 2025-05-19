@@ -13,6 +13,7 @@ class BaseTokenStream:
 
     def __init__(self, tokenizer: Tokenizer):
         self.tokenizer = tokenizer
+        self.text = ""
 
     def get_pos(self):
         return (self.tokenizer.pos, 0)
@@ -21,6 +22,7 @@ class BaseTokenStream:
         self.tokenizer.pos = pos
 
     def set_text(self, text: str):
+        self.text = text
         self.tokenizer.set(text)
 
     def reset(self):
