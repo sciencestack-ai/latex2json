@@ -1,8 +1,5 @@
-from inspect import stack
 from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Type
-from typing import List, Optional, Dict, Any, Tuple, Callable, Union, Deque
-from collections import deque
 
 from latex2json.expander.macro_registry import (
     Handler,
@@ -11,19 +8,16 @@ from latex2json.expander.macro_registry import (
 )
 
 from latex2json.expander.state import ExpanderState
-from latex2json.expander.utils import merge_text_nodes
-from latex2json.nodes import (
-    ASTNode,
-    CommandNode,
-    EnvironmentNode,
-    TextNode,
-    BraceNode,
-    ArgNode,
+from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
+from latex2json.tokens.token_stream import TokenStream
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
+from latex2json.tokens.utils import (
+    is_1_to_9_token,
+    is_text_token,
+    is_integer_token,
+    is_digit_token,
+    is_param_token,
 )
-from latex2json.nodes.syntactic_nodes import BeginBraceNode, EndBraceNode, EndOfLineNode
-from latex2json.parser import ParserCore
-from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token, TokenType
 
 
 class ExpanderCore:
@@ -33,10 +27,13 @@ class ExpanderCore:
     """
 
     def __init__(
-        self, parser: ParserCore = ParserCore(), logger: Logger = Logger("expander")
+        self,
+        tokenizer: Tokenizer = Tokenizer(),
+        logger: Logger = Logger("expander"),
     ):
-        self.parser = parser
-        self.state = ExpanderState(parser.tokenizer)  # The stack of state layers
+        self.tokenizer = tokenizer
+        self.stream = TokenStream(tokenizer)
+        self.state = ExpanderState(tokenizer)  # The stack of state layers
         self.logger = logger
 
     @property
@@ -50,17 +47,46 @@ class ExpanderCore:
         self.macros.register_handler(name, handler, is_global=is_global)
 
     def set_text(self, text: str):
-        self.parser.set_text(text)
+        self.stream.set_text(text)
 
-    def expand(self, text: str) -> List[ASTNode]:
+    def eof(self) -> bool:
+        return self.stream.eof()
+
+    def expand(self, text: str) -> List[Token]:
         self.set_text(text)
         return self.process()
 
-    def expand_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
-        out_nodes: List[ASTNode] = []
-        for node in nodes:
-            out_nodes.extend(self._process_element(node))
-        return merge_text_nodes(out_nodes)
+    def expand_tokens(self, tokens: List[Token]) -> List[Token]:
+        raise NotImplementedError("Expand tokens Not implemented")
+        # self.stream.push_tokens(tokens)
+        # return self.process()
+
+    def process(self) -> List[Token]:
+        """
+        Processes the entire token stream, performing expansions and executing side effects,
+        until only non-expandable tokens remain. These final tokens are returned.
+        """
+        final_expanded_tokens: List[Token] = []
+
+        while not self.eof():
+            current_token = self.peek()  # Peek at the next token
+
+            if current_token is None:  # Should be caught by eof(), but defensive check
+                break
+
+            # 1. Handle Control Sequences
+            if current_token.type == TokenType.CONTROL_SEQUENCE:
+                macro = self.macros.get(current_token.value)
+
+                if macro:
+                    self.consume()  # Consume the control sequence token itself
+                    processed = macro.handler(self, current_token)
+                    if processed:
+                        final_expanded_tokens.extend(processed)
+
+            final_expanded_tokens.append(self.consume())
+
+        return final_expanded_tokens
 
     def push_scope(self):
         self.state.push_scope()
@@ -69,197 +95,230 @@ class ExpanderCore:
         self.state.pop_scope()
 
     def peek(self) -> Optional[Token]:
-        return self.parser.peek()
+        return self.stream.peek()
 
     def consume(self) -> Optional[Token]:
-        return self.parser.consume()
+        return self.stream.consume()
 
     def skip_whitespace(self):
-        return self.parser.skip_whitespace()
+        return self.stream.skip_whitespace()
 
-    def parse_element(self) -> Optional[List[ASTNode]]:
-        element = self.parser.parse_element()
-        if element is None:
+    # parser helper functions
+    def match_token(self, tok: Token) -> bool:
+        """Checks if the next non-ignored token matches the given token."""
+        return self.match(
+            token_type=tok.type,
+            value=tok.value,
+            catcode=tok.catcode,
+        )
+
+    # The match method now checks against the new Token structure (type and catcode)
+    def match(
+        self,
+        token_type: Optional[TokenType] = None,
+        value: Optional[str] = None,
+        catcode: Optional[Catcode] = None,
+    ) -> bool:
+        """
+        Checks if the next non-ignored token matches the criteria.
+        Can match by TokenType, Catcode, or Value.
+        """
+        # skip whitespace?
+        start_pos = self.skip_whitespace()
+
+        tok = self.peek()  # TokenStream.peek handles skipping ignored
+        if tok is None:
+            self.stream.set_pos(*start_pos)
+            return False
+
+        type_match = token_type is None or tok.type == token_type
+        catcode_match = catcode is None or tok.catcode == catcode
+        value_match = value is None or tok.value == value
+
+        # For CHARACTER tokens, catcode is the primary discriminator after type
+        is_match = False
+        if tok.type == TokenType.CHARACTER:
+            is_match = type_match and catcode_match and value_match
+            # Value match is less common for characters
+        # For CONTROL_SEQUENCE tokens, value is the primary discriminator after type
+        elif tok.type == TokenType.CONTROL_SEQUENCE:
+            is_match = type_match and value_match
+            # Catcode is implicitly 0 for the backslash, not on the token itself
+        # Default for other token types (if any)
+        else:
+            is_match = (
+                type_match and value_match
+            )  # Or adjust based on other token types
+
+        if is_match:
+            return True
+
+        self.stream.set_pos(*start_pos)
+        return False
+
+    def _combine_sequence_as_str(self, predicate: Callable[[Token], bool]):
+        tok = self.peek()
+        out = ""
+        while tok and predicate(tok):
+            out += tok.value
+            self.consume()
+            tok = self.peek()
+        return out
+
+    def parse_immediate_token(self) -> List[Token] | None:
+        """
+        Parses an 'immediate' token. Behavior depends heavily on context in TeX.
+        This is a simplified implementation.
+        """
+        tok = self.peek()  # TokenStream.peek handles skipping ignored
+        if not tok:
             return None
-        if isinstance(element, CommandNode):
-            out = self._handle_command(element)
-            return out
-        if isinstance(element, BeginBraceNode):
-            return [self.parse_brace_group()]
-        return [element]
 
-    def parse_brace_group(self) -> BraceNode:
-        self.push_scope()  # Correct for runtime scope management for this brace group
-
-        processed_children: List[ASTNode] = []
-
-        while True:
-            nodes = self.parse_element()
-
-            if nodes is None:
-                # In a robust system, you might want to raise a custom exception here (e.g., UnmatchedBraceError)
-                break
-
-            # If the first node in the returned list is an EndBraceNode,
-            # it means we've found the closing brace for *this* current brace group.
-            if len(nodes) > 0 and isinstance(nodes[0], EndBraceNode):
-                break  # Exit the loop for this brace group, we're done.
-
-            processed_children.extend(nodes)
-
-        self.pop_scope()  # Pop the scope associated with this brace group
-        return BraceNode(processed_children)
-
-    def process(self) -> List[ASTNode]:
-        """
-        Starts the expansion and processing of the document stream.
-        Returns the final list of processed AST nodes.
-        """
-        final_output_nodes: List[ASTNode] = []
-
-        # The main processing loop
-        while not self.parser.eof():
-            # Expander pulls the next element from the parser
-            next_elements = self.parse_element()
-
-            if next_elements is None:
-                # Should only happen at EOF, but handle potential errors
-                if not self.parser.eof():
-                    print("Error: parse_element returned None before EOF.")
-                    break
-                break  # Exit loop if parse_element fails or stream is truly empty
-
-            # Process the obtained element (node or potentially raw tokens from expansion queue)
-            processed_results = []
-            for element in next_elements:
-                processed = self._process_element(element)
-                if processed:
-                    processed_results.extend(processed)
-
-            if processed_results:
-                final_output_nodes.extend(processed_results)
-
-        return merge_text_nodes(final_output_nodes)
-
-    def _process_element(self, element: ASTNode) -> Optional[List[ASTNode]]:
-        # Check conditional state - skip processing if currently in a false branch
-        if not self.state.current.conditional_state.is_true:
-            # If skipping, only process nodes that affect conditional state (\else, \fi)
-            if isinstance(element, CommandNode):
-                if element.name in ["\\else", "\\fi"]:  # Add other conditional commands
-                    # Handle the conditional command even when skipping
-                    return self._handle_command(element)
-            # Skip other nodes when in a false conditional branch
-            return []  # Produce no output
-
-        # --- Dispatch based on node type ---
-
-        if isinstance(element, CommandNode):
-            # Handle command execution (primitives or macros)
-            return self._handle_command(element)
-
-        elif isinstance(element, BeginBraceNode):
-            self.push_scope()
-            return []
-
-        elif isinstance(element, EndBraceNode):
-            self.pop_scope()
-            return []
-
-        elif isinstance(element, EndOfLineNode):
-            return []  # Produce no output?
-
-        elif isinstance(element, BraceNode):
-            # Process the content of a brace group within a new scope
-            # The BraceNode was parsed as a block by parser.parse_brace_group
-            self.push_scope()  # Start local scope for the group
-            # Process the children nodes within this new scope
-            processed_children = []
-            for child_node in element.children:
-                # Recursively process each child node
-                results = self._process_element(child_node)
-                if results:
-                    processed_children.extend(results)
-            self.pop_scope()  # End local scope
-            # Usually, the BraceNode itself is discarded after processing its content.
-            # Return the processed content.
-            return processed_children
-
-        elif isinstance(element, EnvironmentNode):
-            # Process the content of an environment within a new scope
-            # The EnvironmentNode was parsed as a block by parser.parse_environment_syntax
-            self.push_scope()  # Start local scope for the environment
-            # Environment handling is complex - involves looking up the environment
-            # command (e.g., \itemize for itemize environment), executing its handler,
-            # which then processes opt_args, args, and body.
-            processed_output = self._handle_environment(
-                element
-            )  # Delegate to environment handler
-            self.pop_scope()  # End local scope
-            # The environment handler returns the nodes representing the environment's output.
-            return processed_output
-
-        elif isinstance(element, ArgNode):
-            return [element]
-            # return self.expand_nodes(element.value)
-
-        elif isinstance(element, TextNode):
-            # Text nodes are typically just passed through to the output
-            return [element]
-
-        # --- Handle other node types ---
-        # Add handling for MathNode, BracketNode, etc.
-        # BracketNode content is often processed by the command handler that uses it.
-        # MathNode content needs math parsing after expansion.
-
+        if tok == BEGIN_BRACE_TOKEN:
+            return self.parse_brace_as_tokens()
         else:
-            # Default handling for unknown or unhandled node types - pass them through
+            self.consume()
+            return [tok]
+
+    def parse_integer(self) -> int:
+        sequence = self._combine_sequence_as_str(is_integer_token)
+        if not sequence:
+            return None
+        return int(sequence)
+
+    def parse_float(self) -> float:
+        sequence = self._combine_sequence_as_str(is_digit_token)
+        if not sequence:
+            return None
+        return float(sequence)
+
+    def parse_equals(self) -> bool:
+        if self.match(value="=", catcode=Catcode.OTHER):
+            self.consume()
+            return True
+        return False
+
+    def parse_angle_brackets(self) -> str:
+        if self.match(value="<", catcode=Catcode.OTHER) or self.match(
+            value=">", catcode=Catcode.OTHER
+        ):
+            return self.consume().value
+        return None
+
+    # simulate Tex engine behavior of parsing #1 -> Parameter token '1', ##1 -> "#", 1
+    def parse_parameter_token(self) -> Optional[Token]:
+        """
+        Parses a TeX parameter sequence (#N) or an escaped hash (##) from the stream,
+        as encountered when parsing a macro definition body.
+
+        This function assumes the current token being peeked at is a
+        '#' character with Catcode.PARAMETER.
+
+        Returns:
+            A single Token representing the parsed parameter (#N) or literal hash (#),
+            or None if there's a syntax error (e.g., # followed by non-digit/non-#).
+        """
+        # Ensure we are starting with a '#' token with Catcode.PARAMETER
+        # This check is defensive, as the caller should ensure this.
+        initial_hash_token = self.peek()
+        if (
+            not initial_hash_token
+            or initial_hash_token.type != TokenType.CHARACTER
+            or initial_hash_token.catcode != Catcode.PARAMETER
+            or initial_hash_token.value != "#"
+        ):  # Also check value is '#'
             print(
-                f"Warning: Unhandled node type: {type(element).__name__}. Passing through."
+                f"WARNING: parse_parameter_sequence called without current token being a '#' with Catcode.PARAMETER: {initial_hash_token}"
             )
-            return [element]  # Return the node itself
+            return None  # Not the start of a parameter sequence
 
-    def _handle_command(self, node: CommandNode) -> Optional[List[ASTNode]]:
-        """
-        Looks up and executes the command represented by the CommandNode.
-        Handles primitive execution and macro expansion.
-        Returns a list of nodes to be inserted into the stream/output, or None/empty list.
-        """
-        command_name = node.name
-        definition = self.state.registry.get(
-            command_name
-        )  # Look up in the current scope's registry
+        # Consume the initial '#' token
+        self.consume()
 
-        if definition is None:
-            # Undefined command - handle as error
+        # Peek the token immediately following the first '#'
+        next_token = self.peek()
+
+        if next_token is None:
             print(
-                f"Error: Undefined command {command_name}."
-            )  # Assuming node has position
-            # Return the command node itself or an error node for the output
-            return [node]
+                "Error: Unexpected end of input after '#'. Expected a digit (1-9) or another '#'."
+            )
+            return None  # Syntax error: incomplete sequence
 
-        # --- Execute the command based on its definition type ---
+        # Case 1: ## -> Literal '#'
+        if (
+            next_token.type == TokenType.CHARACTER
+            and next_token.catcode == Catcode.PARAMETER
+            and next_token.value == "#"
+        ):  # Check value is '#' for clarity
+            self.consume()  # Consume the second '#'
+            return Token(
+                TokenType.CHARACTER, "#", catcode=Catcode.PARAMETER
+            )  # This is the literal '#' token
 
-        if definition.handler:
-            # Execute the primitive handler function
-            # Primitive handlers have access to self (ExpanderCore) and the command node.
-            # They are responsible for parsing arguments using self.parser,
-            # modifying self.state, and returning any nodes to be inserted/output.
-            try:
-                # Pass self (the ExpanderCore instance) and the command node to the handler
-                return definition.handler(self, node)
-            except Exception as e:
-                print(f"Error executing primitive {command_name}: {e}")
-                # Handle primitive execution errors
-                return [node]  # Return the command node on error
+        # Case 2: #N -> Parameter token (N must be 1-9)
+        if (
+            next_token.type == TokenType.CHARACTER
+            and next_token.catcode == Catcode.OTHER
+            and "1" <= next_token.value <= "9"
+        ):  # Check for digits '1' through '9'
+            self.consume()  # Consume the digit
+            # The value of the PARAMETER token is the digit itself (e.g., '1' for #1)
+            return Token(TokenType.PARAMETER, next_token.value)
 
-        else:
-            print(f"Error: No handlers for {command_name}.")
-            return [node]  # Return the command node
+        # Case 3: # followed by something else (error in definition)
+        print(
+            f"Error: Illegal parameter number or escape sequence after '#'. "
+            f"Found '{next_token.value}' (type: {next_token.type}, catcode: {next_token.catcode.name})."
+        )
+        return None  # Indicate an error for the parser to handle
+
+    def parse_brace_as_tokens(self) -> List[Token]:
+        """
+        Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
+        The outermost braces are NOT included in the returned list.
+        Handles nested braces correctly.
+        """
+        # 1. Peek at the very first token to check for the opening brace
+        first_token = self.peek()
+
+        if not first_token or first_token != BEGIN_BRACE_TOKEN:
+            return []
+
+        # 2. Consume the opening brace itself
+        self.consume()
+
+        definition_tokens: List[Token] = []
+        brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
+
+        # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
+        while brace_depth > 0:
+            current_token = self.peek()
+
+            if current_token is None:
+                # Error: Reached the end of the input stream before finding a matching closing brace.
+                print("Unmatched braces: Reached end of stream within a definition.")
+                # Depending on your error handling strategy, you might raise an exception here
+                # or return the partially collected tokens.
+                break  # Exit loop due to error
+
+            # Check token type and update brace_depth
+            if current_token == BEGIN_BRACE_TOKEN:
+                brace_depth += 1
+            elif current_token == END_BRACE_TOKEN:
+                brace_depth -= 1
+
+            if current_token.catcode == Catcode.PARAMETER:
+                current_token = self.parse_parameter_token()
+            else:
+                current_token = self.consume()
+
+            if brace_depth > 0:
+                definition_tokens.append(current_token)
+
+        return definition_tokens
 
     def set_catcode(self, char_ord: int, catcode: Catcode):
         self.state.set_catcode(char_ord, catcode)
-        self.parser.tokenizer.set_catcode(char_ord, catcode)
 
     def get_catcode(self, char_ord: int) -> Catcode:
         return self.state.get_catcode(char_ord)
@@ -282,5 +341,3 @@ if __name__ == "__main__":
     }
     """.strip()
     expander.set_text(text)
-    expander.parser.parse_element()
-    out = expander.parse_brace_group()

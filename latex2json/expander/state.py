@@ -1,7 +1,6 @@
 import enum
 import dataclasses
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union
-from collections import deque
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
 from latex2json.tokens import Catcode, get_default_catcodes
@@ -175,6 +174,7 @@ class ExpanderState:
     def set_catcode(self, char_ord: int, catcode: Catcode):
         """Set the catcode for a character in the current scope."""
         self.current.set_catcode(char_ord, catcode)
+        self.tokenizer.set_catcode(char_ord, catcode)
 
     def get_catcode(self, char_ord: int) -> Catcode:
         """Get the current catcode for a character."""

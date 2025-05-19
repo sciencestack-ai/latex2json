@@ -1,15 +1,7 @@
-from copy import deepcopy
-from inspect import stack
 from typing import List, Optional, Tuple
-from latex2json import expander
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.utils import substitute_args, substitute_token_args
+from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
-from latex2json.nodes import ASTNode, DefNode
-from latex2json.nodes.syntactic_nodes import (
-    ArgNode,
-    CommandNode,
-)
 from dataclasses import dataclass
 
 from latex2json.tokens.catcodes import Catcode
@@ -29,18 +21,16 @@ def get_parsed_args_from_usage_pattern(
 ) -> List[List[Token]]:
     parsed_args: List[List[Token]] = []
 
-    parser = expander.parser
-
     N = len(usage_pattern)
 
     for i, pat in enumerate(usage_pattern):
-        tok = parser.peek()
+        tok = expander.peek()
         if tok is None:
             return parsed_args
 
         if pat.type == TokenType.PARAMETER:
             # expects argument
-            tokens = parser.parse_immediate_token()
+            tokens = expander.parse_immediate_token()
             if tokens is None:
                 expander.logger.warning(
                     f"Warning: expected an argument but found nothing"
@@ -53,11 +43,11 @@ def get_parsed_args_from_usage_pattern(
                 next_literal_token = usage_pattern[i + 1]
 
             if next_literal_token:
-                tok = parser.peek()
+                tok = expander.peek()
                 # if there is a next literal token, we keep consuming until we find it
                 while tok and tok != next_literal_token:
-                    tokens.append(parser.consume())
-                    tok = parser.peek()
+                    tokens.append(expander.consume())
+                    tok = expander.peek()
 
             index = int(pat.value) - 1
             # Extend parsed_args with empty lists if needed
@@ -67,7 +57,7 @@ def get_parsed_args_from_usage_pattern(
             continue
         else:
             if tok == pat:
-                parser.consume()
+                expander.consume()
                 continue
             else:
                 expander.logger.warning(
@@ -86,26 +76,22 @@ class DefMacro(Macro):
 
         self.handler = lambda expander, node: self._expand(expander, node)
 
-    def _expand(
-        self, expander: ExpanderCore, node: CommandNode
-    ) -> Optional[List[ASTNode]]:
-        out = def_handler(expander, node)
+    def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        out = def_handler(expander, token)
         if out is None:
             return None
 
         if not self.is_lazy:
             raise NotImplementedError("Eager expansion not implemented")
-            out.definition = expander.expand_nodes(out.definition)
+            out.definition = expander.expand_tokens(out.definition)
         # depth = out.depth
 
-        def handler(
-            expander: ExpanderCore, node: CommandNode
-        ) -> Optional[List[ASTNode]]:
+        def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             parsed_args = get_parsed_args_from_usage_pattern(
                 expander, out.usage_pattern
             )
             subbed = substitute_token_args(out.definition, parsed_args, math_mode=False)
-            expander.parser.stream.push_tokens(subbed)
+            expander.stream.push_tokens(subbed)
             return []
 
         expander.register_handler(out.name, handler, is_global=self.is_global)
@@ -116,37 +102,38 @@ class DefMacro(Macro):
 def get_def_usage_pattern_and_definition(
     expander: ExpanderCore,
 ) -> Tuple[List[Token], List[Token]]:
-    parser = expander.parser
     raw_usage_pattern_tokens: List[Token] = []
 
-    tok = parser.peek()
+    tok = expander.peek()
     while tok and tok != BEGIN_BRACE_TOKEN:
         if tok.catcode == Catcode.PARAMETER:
-            param_token = parser.parse_parameter_token()
+            param_token = expander.parse_parameter_token()
             if param_token:
                 raw_usage_pattern_tokens.append(param_token)
         else:
             raw_usage_pattern_tokens.append(tok)
-            parser.consume()
-        tok = parser.peek()
+            expander.consume()
+        tok = expander.peek()
 
     if tok == BEGIN_BRACE_TOKEN:
-        definition_tokens = parser.parse_brace_as_tokens()
+        definition_tokens = expander.parse_brace_as_tokens()
         return raw_usage_pattern_tokens, definition_tokens
 
     return None, None
 
 
-def def_handler(expander: ExpanderCore, node: CommandNode) -> Optional[DefResult]:
+def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
     expander.skip_whitespace()
-    cmd = expander.parser.parse_element()
-    if not isinstance(cmd, CommandNode):
+    cmd = expander.peek()
+    if cmd.type != TokenType.CONTROL_SEQUENCE:
         expander.logger.warning(
             f"Warning: \\def expects a command node, but found {cmd}"
         )
         return None
 
-    name = cmd.name
+    expander.consume()
+
+    name = cmd.value
     usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
 
     if usage_pattern is None or definition is None:
