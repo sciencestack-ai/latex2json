@@ -372,16 +372,6 @@ class ParserCore:
                 self.consume()  # Consume to avoid infinite loop (TokenStream.consume handles ignored)
                 return TextNode(tok.value)  # Return as text fallback
 
-        # # Handle other potential TokenType values if your tokenizer emits them (like math blocks)
-        # elif tok.type in (TokenType.MATH_INLINE, TokenType.MATH_DISPLAY):
-        #     # The tokenizer already captured the math content.
-        #     self.consume()  # Consume the math token (TokenStream.consume handles ignored)
-        #     # The value of the token is the math content string
-        #     return EquationNode(tok.value, inline=(tok.type == TokenType.MATH_INLINE))
-
-        # Your old TokenType.BEGIN and TokenType.END are now CONTROL_SEQUENCE tokens
-        # with values "begin" and "end". They are handled by parse_command.
-
         elif tok.type == TokenType.INVALID:
             print(
                 f"ERROR: Parser encountered invalid token: {tok!r} at position {tok.position}"
@@ -456,11 +446,6 @@ class ParserCore:
 
         return BraceNode(children)
 
-    # parse_bracket_group now uses Catcode.OTHER for brackets (default)
-    # Note: Brackets [] are NOT standard TeX group delimiters like {}
-    # Their grouping behavior is often handled by the command that expects them as optional args.
-    # However, if you want to parse them as structural nodes, this is how you'd do it.
-    # This assumes '[' and ']' have Catcode.OTHER (12) by default.
     def parse_bracket_group(self, strip=False) -> BracketNode:
         """Parses an optional group [...]."""
         # Consume the opening bracket token (usually Catcode 12)
@@ -525,10 +510,6 @@ class ParserCore:
             )
             return None
 
-        # Extract the text content from the children of the BraceNode
-        # The children should ideally be TextNodes or simple character nodes after expansion
-        # but at the parser stage, they might be other nodes if the name was complex.
-        # For simplicity, join text content.
         name_parts = []
         for child in name_group.children:
             if isinstance(child, TextNode):
@@ -558,9 +539,7 @@ class ParserCore:
             print(
                 f"ERROR: Failed to parse environment name atposition {start_tok.position}"
             )
-            # Handle error
-            # Consume tokens until a likely end or brace to attempt recovery?
-            # For now, return error node
+
             return None  # EnvironmentNode("error", [], [], [])
 
         # Parse optional args [...] and mandatory args {...} that follow \begin{name}
@@ -568,13 +547,9 @@ class ParserCore:
         opt_args: List[BracketNode] = []
         mand_args: List[BraceNode] = []
 
-        # Parse optional args (BracketNode, usually Catcode 12 for [)
-        # Use match to check for the opening bracket token (match uses peek which handles ignored)
         while self.match_token(BEGIN_BRACKET_TOKEN):
             opt_args.append(self.parse_bracket_group())
 
-        # Parse mandatory args (BraceNode, Catcode 1 for {)
-        # Use match to check for the opening brace token (match uses peek which handles ignored)
         while self.match_token(BEGIN_BRACE_TOKEN):
             mand_args.append(self.parse_brace_group())
 
@@ -640,8 +615,6 @@ class ParserCore:
             # can only be integer 1-9 in TEX
             return ArgNode(int(tok.value), num_params=hash_count)
 
-        # If it's not followed by a digit, treat the # sequence as literal text for now
-        # This might need refinement based on TeX rules for # outside definitions.
         print(
             f"WARNING: # sequence not followed by a digit at position {hash_tok.position}."
         )
@@ -742,9 +715,6 @@ class ParserCore:
             else:
                 current_token = self.consume()
 
-            # Add the token to our list *unless* it's the final closing brace
-            # (i.e., the one that brings brace_depth back to 0).
-            # For inner braces, brace_depth will still be > 0 after decrement, so they are included.
             if brace_depth > 0:
                 definition_tokens.append(current_token)
 

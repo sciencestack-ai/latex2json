@@ -93,14 +93,7 @@ class ExpanderCore:
 
         processed_children: List[ASTNode] = []
 
-        # Loop indefinitely until we specifically find the matching EndBraceNode for *this* group.
-        # This relies on ExpanderCore.parse_element() recursively handling nested braces
-        # by returning full BraceNodes for those inner groups.
         while True:
-            # Get the next fully processed element from the Expander's stream.
-            # 'nodes' will always be a List[ASTNode] (or None if EOF/error).
-            # It will NEVER contain a 'BeginBraceNode' directly, as parse_element converts it
-            # into a full BraceNode via recursive call to _handle_brace_group.
             nodes = self.parse_element()
 
             if nodes is None:
@@ -144,22 +137,11 @@ class ExpanderCore:
                     processed_results.extend(processed)
 
             if processed_results:
-                # Add the results of processing to the final output.
-                # If expansion inserts tokens/nodes back into the stream,
-                # this list might only contain nodes that are not expanded away.
                 final_output_nodes.extend(processed_results)
 
-        # After processing, merge consecutive TextNodes in the final output
-        # This is a common post-processing step.
         return merge_text_nodes(final_output_nodes)
 
     def _process_element(self, element: ASTNode) -> Optional[List[ASTNode]]:
-        """
-        Processes a single AST node obtained from the parser.
-        Handles command execution, group processing, etc.
-        Returns a list of nodes to be added to the output, or None/empty list
-        if the node was fully expanded or handled internally.
-        """
         # Check conditional state - skip processing if currently in a false branch
         if not self.state.current.conditional_state.is_true:
             # If skipping, only process nodes that affect conditional state (\else, \fi)

@@ -20,14 +20,15 @@ def catcode_handler(
         return None
 
     # check for controlsequence
-    cmd: CommandNode | None = None
-    if parser.match(TokenType.CONTROL_SEQUENCE):
-        cmd = parser.parse_command()
-
-    if not cmd:
+    tok = parser.peek()
+    cmd_name: str | None = None
+    if tok.type == TokenType.CONTROL_SEQUENCE:
+        cmd_name = tok.value
+        parser.consume()
+    else:
         return None
 
-    char = cmd.name.lstrip("\\")
+    char = cmd_name
     if len(char) > 1:
         char = char[0]
         expander.logger.warning(
@@ -36,12 +37,12 @@ def catcode_handler(
 
     expander.skip_whitespace()
     if not parser.parse_equals():
-        return None
+        return []
 
     expander.skip_whitespace()
     new_catcode_int = parser.parse_integer()
     if new_catcode_int is None:
-        return None
+        return []
 
     if new_catcode_int < 0 or new_catcode_int > 15:
         expander.logger.warning(

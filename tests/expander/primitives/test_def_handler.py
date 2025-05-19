@@ -254,6 +254,55 @@ def test_def_redefine():
     ]
 
 
+def test_nested_defs():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\foo#1{
+        \def\bar##1{BAR #1 ##1}
+        \def\barx{\bar{BRO}}
+    }
+    \foo{hello}
+    \barx
+    """.strip()
+
+    expander.set_text(text)
+    out = expander.process()
+    assert expander.macros.get("foo")
+    assert expander.macros.get("bar")
+    assert expander.macros.get("barx")
+
+    strip_whitespace(out)
+    assert out == [
+        TextNode("BAR hello BRO"),
+    ]
+
+
+def test_gdef():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    {
+        \def\foo{FOO}
+        \gdef\bar#1{\foo #1}
+    }
+    \foo\bar{3}
+    """.strip()
+    expander.set_text(text)
+    out = expander.process()
+    assert not expander.macros.get("foo")
+    assert expander.macros.get("bar")  # global \gdef
+
+    strip_whitespace(out)
+    assert out == [
+        CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
+        CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
+        TextNode(" 3"),
+    ]
+
+
 # def test_edef():
 #     expander = ExpanderCore()
 #     register_def(expander)
@@ -292,30 +341,6 @@ def test_def_redefine():
 #     strip_whitespace(out)
 #     assert out == [
 #         TextNode("FOO 4"),
-#     ]
-
-
-# def test_gdef():
-#     expander = ExpanderCore()
-#     register_def(expander)
-
-#     text = r"""
-#     {
-#         \def\foo{FOO}
-#         \gdef\bar#1{\foo #1}
-#     }
-#     \foo\bar{3}
-#     """.strip()
-#     expander.set_text(text)
-#     out = expander.process()
-#     assert not expander.macros.get("foo")
-#     assert expander.macros.get("bar")  # global \gdef
-
-#     strip_whitespace(out)
-#     assert out == [
-#         CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
-#         CommandNode(r"\foo"),  # unresolved since \foo does not exist outside scope
-#         TextNode(" 3"),
 #     ]
 
 
