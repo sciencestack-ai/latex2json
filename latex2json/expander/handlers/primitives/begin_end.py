@@ -5,18 +5,13 @@ from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
 
 
-def convert_str_to_tokens(text: str) -> List[Token]:
-    out = []
-    for c in text:
-        out.append(Token(TokenType.CHARACTER, c, catcode=Catcode.LETTER))
-    return out
-
-
-def return_begin_end_tokens(prefix: str, name: str) -> List[Token]:
+def return_begin_end_tokens(
+    expander: ExpanderCore, prefix: str, name: str
+) -> List[Token]:
     return [
         Token(TokenType.CONTROL_SEQUENCE, prefix),
         BEGIN_BRACE_TOKEN.copy(),
-        *convert_str_to_tokens(name),
+        *expander.convert_str_to_tokens(name),
         END_BRACE_TOKEN.copy(),
     ]
 
@@ -36,7 +31,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     if macro is None:
         expander.logger.warning(f"Warning: Could not find environment \\{name}")
         # return as raw token
-        return return_begin_end_tokens("begin", name)
+        return return_begin_end_tokens(expander, "begin", name)
 
     return macro.handler(expander, token)
 
@@ -56,7 +51,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     if macro is None:
         expander.logger.warning(f"Warning: Could not find environment {prefix}{name}")
         # return as raw token
-        return return_begin_end_tokens("end", name)
+        return return_begin_end_tokens(expander, "end", name)
 
     return macro.handler(expander, token)
 

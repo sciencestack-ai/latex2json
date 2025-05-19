@@ -74,3 +74,5 @@ END_BRACE_TOKEN = Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP)
 
 BEGIN_BRACKET_TOKEN = Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER)
 END_BRACKET_TOKEN = Token(TokenType.CHARACTER, "]", catcode=Catcode.OTHER)
+
+BACK_TICK_TOKEN = Token(TokenType.CHARACTER, "`", catcode=Catcode.OTHER)

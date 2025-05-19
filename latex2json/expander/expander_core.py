@@ -1,6 +1,7 @@
 from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Type
 
+
 from latex2json.expander.macro_registry import (
     Handler,
     Macro,
@@ -12,6 +13,7 @@ from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,
 )
+from latex2json.tokens.types import BACK_TICK_TOKEN
 from latex2json.tokens.utils import (
     is_1_to_9_token,
     is_begin_bracket_token,
@@ -341,6 +343,40 @@ class ExpanderCore:
         name = "".join(t.value for t in name)
 
         return name
+
+    def parse_char_for_catcode(self) -> Optional[str]:
+        if self.peek() == BACK_TICK_TOKEN:
+            self.consume()
+        else:
+            return None
+
+        # check for controlsequence
+        tok = self.peek()
+        cmd_name: str | None = None
+        if tok.type == TokenType.CONTROL_SEQUENCE:
+            cmd_name = tok.value
+            self.consume()
+        else:
+            self.logger.warning(
+                f"WARNING: \\catcode expected control sequence, but found {tok.value}"
+            )
+            return None
+
+        char = cmd_name
+        if len(char) > 1:
+            char = char[0]
+            self.logger.warning(
+                f"WARNING: \\catcode only takes one character, using {char}"
+            )
+
+        return char
+
+    def convert_str_to_tokens(self, text: str) -> List[Token]:
+        out = []
+        for c in text:
+            catcode = self.get_catcode(ord(c))
+            out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
+        return out
 
 
 if __name__ == "__main__":
