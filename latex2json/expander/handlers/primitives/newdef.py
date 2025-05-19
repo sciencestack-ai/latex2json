@@ -91,7 +91,8 @@ class DefMacro(Macro):
             expander.stream.push_tokens(subbed)
             return []
 
-        expander.register_handler(out.name, handler, is_global=self.is_global)
+        macro = Macro(out.name, handler, out.definition)
+        expander.register_macro(out.name, macro, is_global=self.is_global)
 
         return []
 
@@ -116,7 +117,7 @@ def get_def_usage_pattern_and_definition(
 def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
     expander.skip_whitespace()
     cmd = expander.peek()
-    if cmd.type != TokenType.CONTROL_SEQUENCE:
+    if not cmd or cmd.type != TokenType.CONTROL_SEQUENCE:
         expander.logger.warning(
             f"Warning: \\def expects a command node, but found {cmd}"
         )

@@ -24,6 +24,9 @@ def catcode_handler(
         cmd_name = tok.value
         expander.consume()
     else:
+        expander.logger.warning(
+            f"WARNING: \\catcode expected control sequence, but found {tok.value}"
+        )
         return None
 
     char = cmd_name

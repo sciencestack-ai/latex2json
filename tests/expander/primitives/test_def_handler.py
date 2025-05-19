@@ -190,7 +190,7 @@ def test_def_handler():
 
     def test1():
         assert not expander.macros.get("test")
-        expander.expand(r"\def\test[#1:#2]{TEST #1:#2 ENDTEST}")
+        expander.expand(r"\def \test[#1:#2]{TEST #1:#2 ENDTEST}")
         assert expander.macros.get("test")
 
         out = expander.expand(r"\test[HELLO:world]")
@@ -234,6 +234,31 @@ def test_def_redefine():
     assert expander.macros.get("bar")
 
     assert_token_sequence(expander.expand(r"\bar"), expander.expand("BAR"))
+
+
+def test_def_with_global():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    # not exist due to scope
+    text = r"""{ \def\foo{FOO} }"""
+
+    expander.expand(text)
+    assert not expander.macros.get("foo")
+    assert_token_sequence(
+        expander.expand(r"\foo"), [Token(TokenType.CONTROL_SEQUENCE, "foo")]
+    )
+
+    # now test with global
+    text = r"""{ \global\def\foo{FOO} }"""
+    expander.expand(text)
+    assert expander.macros.get("foo")
+    assert_token_sequence(expander.expand(r"\foo"), expander.expand("FOO"))
+
+    # ensure \global is not persisting...
+    text = r"""{ \def\bar{BAR} }"""
+    expander.expand(text)
+    assert not expander.macros.get("bar")
 
 
 def test_nested_defs():
@@ -370,3 +395,24 @@ def test_nested_defs():
     expander.expand(r"\def\bar{BAR}")
     assert expander.macros.get("bar")
     assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR{BRO}"))
+
+
+def test_more_defs():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\numberone{ONE}
+    \def \numbertwo{TWO}
+    \def\XXint#1#2#3{1) #1 2) #2 3) #3 4)#4} % 4th arg is ignored
+    \def\Xint#1{\XXint\numberone\numbertwo{#1}}
+    \Xint{THREE}
+    """.strip()
+
+    expander.expand(text)
+    assert expander.macros.get("XXint")
+    assert expander.macros.get("Xint")
+
+    assert_token_sequence(
+        expander.expand(r"\Xint{THREE}"), expander.expand("1) ONE 2) TWO 3) THREE 4)")
+    )

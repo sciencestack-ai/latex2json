@@ -15,9 +15,11 @@ class Macro:
         self,
         name: str,
         handler: Optional[Handler] = None,
+        definition: List[Token] = [],
     ):
         self.name = name
         self.handler = handler
+        self.definition = definition
 
 
 class MacroRegistry:

@@ -45,15 +45,25 @@ class ExpanderCore:
         self.state = ExpanderState(tokenizer)  # The stack of state layers
         self.logger = logger
 
+        self._init_state_macros()
+
     @property
     def macros(self) -> MacroRegistry:
         return self.state.current.macro_registry
 
+    def _init_state_macros(self):
+        def global_handler(expander: "ExpanderCore", token: Token):
+            expander.state.pending_global = True
+            return []
+
+        self.register_handler("\\global", global_handler, is_global=True)
+
     def register_macro(self, name: str, macro: Macro, is_global: bool = False):
-        self.macros.set(name, macro, is_global=is_global)
+        self.state.set_macro(name, macro, is_global=is_global)
 
     def register_handler(self, name: str, handler: Handler, is_global: bool = False):
-        self.macros.register_handler(name, handler, is_global=is_global)
+        macro = Macro(name, handler)
+        self.state.set_macro(name, macro, is_global=is_global)
 
     def set_text(self, text: str):
         self.stream.set_text(text)
@@ -110,15 +120,17 @@ class ExpanderCore:
         if tok is None:
             return None
 
-        if is_begin_group_token(tok):
-            self.push_scope()
-        elif is_end_group_token(tok):
-            self.pop_scope()
-        elif tok.type == TokenType.CONTROL_SEQUENCE:
-            macro = self.macros.get(tok.value)
+        if tok.type == TokenType.CONTROL_SEQUENCE:
+            macro = self.state.get_macro(tok.value)
             if macro:
                 processed = macro.handler(self, tok)
                 return processed
+        else:
+            self.state.pending_global = False
+            if is_begin_group_token(tok):
+                self.push_scope()
+            elif is_end_group_token(tok):
+                self.pop_scope()
         return [tok]
 
     def parse_token(self) -> Optional[Token]:
@@ -208,7 +220,7 @@ class ExpanderCore:
         if not tok:
             return None
         if not is_param_token(tok):
-            print(
+            self.logger.warning(
                 f"WARNING: parse_parameter_sequence called without current Catcode.PARAMETER: {tok}"
             )
             return None  # Not the start of a parameter sequence
@@ -220,7 +232,7 @@ class ExpanderCore:
         tok = self.peek()
 
         if tok is None:
-            print(
+            self.logger.error(
                 "Error: Unexpected end of input after '#'. Expected a digit (1-9) or another '#'."
             )
             return None  # Syntax error: incomplete sequence
@@ -236,7 +248,7 @@ class ExpanderCore:
             return Token(TokenType.PARAMETER, tok.value)
 
         # Case 3: # followed by something else (error in definition)
-        print(
+        self.logger.error(
             f"Error: Illegal parameter number or escape sequence after '#'. "
             f"Found '{tok.value}' (type: {tok.type}, catcode: {tok.catcode.name})."
         )
@@ -268,7 +280,9 @@ class ExpanderCore:
 
             if current_token is None:
                 # Error: Reached the end of the input stream before finding a matching closing brace.
-                print("Unmatched braces: Reached end of stream within a definition.")
+                self.logger.warning(
+                    "Unmatched braces: Reached end of stream within a definition."
+                )
                 # Depending on your error handling strategy, you might raise an exception here
                 # or return the partially collected tokens.
                 break  # Exit loop due to error

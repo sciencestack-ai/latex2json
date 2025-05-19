@@ -128,6 +128,7 @@ class ExpanderState:
         # Initialize with the base global state layer
         self._stack: List[StateLayer] = [StateLayer()]
         self.tokenizer = tokenizer
+        self.pending_global = False
 
     def get_root(self) -> StateLayer:
         """Get the root state layer (the first layer in the stack)."""
@@ -165,7 +166,8 @@ class ExpanderState:
 
     def set_macro(self, name: str, definition: Macro, is_global: bool = False):
         """Set a macro in the current scope."""
-        self.registry.set(name, definition, is_global)
+        self.registry.set(name, definition, is_global or self.pending_global)
+        self.pending_global = False
 
     def get_macro(self, name: str) -> Optional[Macro]:
         """Get a macro from the current scope."""
