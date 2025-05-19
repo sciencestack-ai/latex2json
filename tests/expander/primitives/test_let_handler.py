@@ -39,6 +39,9 @@ def test_let():
         expander.expand(r"\greet"), expander.expand("Hello Universe!")
     )
 
+
+def test_let_single_token():
+    expander = Expander()
     # \let for single token/char
     text = r"""
     \let\greet344 % note that '3' is \greet, 44 is not part of it 
@@ -55,6 +58,21 @@ def test_let():
     out = expander.expand(text)
     assert_token_sequence(out, expander.expand("344 "))
     assert_token_sequence(expander.expand(r"\greet"), expander.expand(" "))
+
+    # test also works with arbitrary tokens e.g. {}
+    expander.expand(r"\let\open={  \let\close=}")
+    assert_token_sequence(expander.expand(r"\open"), expander.expand("{"))
+    assert_token_sequence(expander.expand(r"\close"), expander.expand("}"))
+
+    # this becomes a brace that is scoped
+    text = r"""
+    \open
+    \let\foo=3
+    \close
+""".strip()
+    out = expander.expand(text)
+    # scoped
+    assert not expander.macros.get("foo")
 
 
 def test_let_scope():

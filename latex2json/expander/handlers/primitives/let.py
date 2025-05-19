@@ -46,7 +46,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[LetResult]:
 
     expander.skip_whitespace()
     expander.parse_equals()
-    definition = expander.parse_immediate_token()
+    definition = expander.consume()
 
     if not definition:
         expander.logger.warning(
@@ -55,7 +55,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[LetResult]:
         return None
 
     # copies the definition as is, without expanding it
-    final_definition = expander.copy_macro_definitions(definition)
+    final_definition = expander.copy_macro_definitions([definition])
 
     return LetResult(
         name=name,
