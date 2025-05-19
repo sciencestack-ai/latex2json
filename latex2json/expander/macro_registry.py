@@ -1,11 +1,12 @@
-from typing import List, Callable, Optional, Any, Dict, Tuple, TYPE_CHECKING
-from latex2json.nodes import ASTNode, CommandNode
+from typing import Dict, List, Callable, Optional, TYPE_CHECKING
+
+from latex2json.tokens.types import Token
 
 if TYPE_CHECKING:
     from latex2json.expander.expander_core import ExpanderCore
 
 
-Handler = Callable[["ExpanderCore", CommandNode], Optional[List[ASTNode]]]
+Handler = Callable[["ExpanderCore", Token], Optional[List[Token]]]
 
 
 # Base class for command definitions (Primitives and Macros)

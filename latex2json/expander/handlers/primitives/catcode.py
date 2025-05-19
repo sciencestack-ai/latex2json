@@ -11,8 +11,6 @@ BACK_TICK_TOKEN = Token(TokenType.CHARACTER, value="`", catcode=Catcode.OTHER)
 def catcode_handler(
     expander: ExpanderCore, node: CommandNode
 ) -> Optional[List[ASTNode]]:
-    parser = expander.parser
-
     """need check for `"""
     if expander.peek() == BACK_TICK_TOKEN:
         expander.consume()
@@ -20,11 +18,11 @@ def catcode_handler(
         return None
 
     # check for controlsequence
-    tok = parser.peek()
+    tok = expander.peek()
     cmd_name: str | None = None
     if tok.type == TokenType.CONTROL_SEQUENCE:
         cmd_name = tok.value
-        parser.consume()
+        expander.consume()
     else:
         return None
 
@@ -36,11 +34,11 @@ def catcode_handler(
         )
 
     expander.skip_whitespace()
-    if not parser.parse_equals():
+    if not expander.parse_equals():
         return []
 
     expander.skip_whitespace()
-    new_catcode_int = parser.parse_integer()
+    new_catcode_int = expander.parse_integer()
     if new_catcode_int is None:
         return []
 

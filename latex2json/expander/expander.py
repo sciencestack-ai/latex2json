@@ -1,12 +1,15 @@
-from typing import List
+from logging import Logger
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.nodes.base import ASTNode
-from latex2json.parser.parser_core import ParserCore
+from latex2json.tokens.tokenizer import Tokenizer
 
 
 class Expander(ExpanderCore):
-    def __init__(self, parser: ParserCore = ParserCore()):
-        super().__init__(parser)
+    def __init__(
+        self,
+        tokenizer: Tokenizer = Tokenizer(),
+        logger: Logger = Logger("expander"),
+    ):
+        super().__init__(tokenizer, logger)
 
         self._init_primitives()
 

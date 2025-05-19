@@ -1,7 +1,5 @@
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
-    BEGIN_BRACKET_TOKEN,
-    END_BRACKET_TOKEN,
     Token,
     TokenType,
 )
@@ -10,12 +8,18 @@ from latex2json.tokens.types import (
 def is_text_token(tok: Token) -> bool:
     # a-z, A-Z, 0-9, punctuation etc.
     # These are regular characters that form text.
-    return (
-        tok.type == TokenType.CHARACTER
-        and tok.catcode in [Catcode.LETTER, Catcode.OTHER]
-        and tok != BEGIN_BRACKET_TOKEN
-        and tok != END_BRACKET_TOKEN
-    )
+    return tok.type == TokenType.CHARACTER and tok.catcode in [
+        Catcode.LETTER,
+        Catcode.OTHER,
+    ]
+
+
+def is_begin_group_token(tok: Token) -> bool:
+    return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.BEGIN_GROUP
+
+
+def is_end_group_token(tok: Token) -> bool:
+    return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.END_GROUP
 
 
 def is_whitespace_token(tok: Token) -> bool:
@@ -28,15 +32,11 @@ def is_integer_token(tok: Token) -> bool:
     return is_digit_token(tok) and tok.value != "."
 
 
-# 1-9
-one_to_nine = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
-
-
 def is_1_to_9_token(tok: Token) -> bool:
     return (
         tok.type == TokenType.CHARACTER
         and tok.catcode == Catcode.OTHER
-        and tok.value in one_to_nine
+        and "1" <= tok.value <= "9"
     )
 
 

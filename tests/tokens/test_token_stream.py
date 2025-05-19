@@ -23,12 +23,14 @@ def assert_stream_sequence(
     assert i == len(expected_tokens)
 
 
-def test_token_stream(stream: BaseTokenStream = BaseTokenStream(tokenizer=Tokenizer())):
+def test_token_stream():
     text = r"""
     \Hello, % world!
     BRO
     \\
     """.strip()
+
+    stream = TokenStream(Tokenizer())
     stream.set_text(text)
 
     bro_start = text.find("BRO")
@@ -66,7 +68,7 @@ def test_skip_ignored():
     tokenizer.set_catcode(ord("~"), Catcode.IGNORED)
 
     text = r"~ Hi there ~ [}"
-    stream = BaseTokenStream(tokenizer=tokenizer)
+    stream = TokenStream(tokenizer=tokenizer)
     stream.set_text(text)
 
     expected_tokens = [
@@ -95,8 +97,6 @@ def test_skip_ignored():
 def test_token_stream_with_buffer():
     tokenizer = Tokenizer()
     stream = TokenStream(tokenizer=tokenizer)
-
-    test_token_stream(stream)
 
     text = r"123   456"
     stream.set_text(text)
@@ -166,10 +166,13 @@ def test_token_stream_with_buffer():
     # back to base stream pos
     assert stream.get_pos() == (text.find("6"), 0)
 
+    stream.clear()
+    assert stream.eof()
+
 
 def test_multi_tokenizer_stream():
     tokenizer = Tokenizer()
-    stream = BaseTokenStream(tokenizer=tokenizer)
+    stream = TokenStream(tokenizer=tokenizer)
     stream.set_text(r"123")
     multi_stream = MultiTokenStream([stream])
     assert multi_stream.peek() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
@@ -233,14 +236,11 @@ def test_multi_tokenizer_stream():
     # finish
     assert multi_stream.eof()
 
-    # now finally, test the multi-tokenizer stream
-    test_token_stream(multi_stream)
-
 
 def test_multi_tokenizer_stream():
-    stream = BaseTokenStream(tokenizer=Tokenizer())
+    stream = TokenStream(tokenizer=Tokenizer())
     stream.set_text(r"123")
-    stream2 = BaseTokenStream(tokenizer=Tokenizer())
+    stream2 = TokenStream(tokenizer=Tokenizer())
     stream2.set_text(r"456")
     multi_stream = MultiTokenStream([stream, stream2])
     assert multi_stream.consume() == Token(
@@ -266,7 +266,7 @@ def test_multi_tokenizer_stream():
 
 def test_multi_stream_skip_whitespace():
     tokenizer = Tokenizer()
-    stream = BaseTokenStream(tokenizer=tokenizer)
+    stream = TokenStream(tokenizer=tokenizer)
     stream.set_text(r"1  2  3")
     multi_stream = MultiTokenStream([stream])
 
