@@ -82,7 +82,10 @@ class ExpanderCore:
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         self.stream.push_tokens(tokens + [STOP_TOKEN])
-        return self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
+        out = self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
+        if self.peek() is STOP_TOKEN:
+            self.consume()  # consume the STOP_TOKEN
+        return out
 
     def process(self, stop_token_logic: Optional[TokenPredicate] = None) -> List[Token]:
         """
@@ -97,7 +100,6 @@ class ExpanderCore:
             if current_token is None:  # Should be caught by eof(), but defensive check
                 break
             if stop_token_logic and stop_token_logic(current_token):
-                self.consume()
                 break
 
             processed = self._expand_next()
@@ -321,7 +323,8 @@ class ExpanderCore:
     def get_catcode(self, char_ord: int) -> Catcode:
         return self.state.get_catcode(char_ord)
 
-    def copy_macro_definitions(self, definition: List[Token]) -> List[Token]:
+    # converts a list of tokens into their associated macro definitions if exists
+    def convert_to_macro_definitions(self, definition: List[Token]) -> List[Token]:
         final_definition = []
         for tok in definition:
             if tok.type == TokenType.CONTROL_SEQUENCE:
@@ -377,6 +380,15 @@ class ExpanderCore:
             catcode = self.get_catcode(ord(c))
             out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
         return out
+
+    @staticmethod
+    def check_tokens_equal(a: List[Token], b: List[Token]) -> bool:
+        if len(a) != len(b):
+            return False
+        for a_tok, b_tok in zip(a, b):
+            if a_tok != b_tok:
+                return False
+        return True
 
 
 if __name__ == "__main__":

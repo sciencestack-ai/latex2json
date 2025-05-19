@@ -44,3 +44,19 @@ def test_def():
     expander.expand(r"\def\test{test}")
     assert expander.macros.get("test")
     assert_token_sequence(expander.expand(r"\test"), expander.expand("test"))
+
+
+def test_redefine_primitives():
+    expander = Expander()
+
+    assert expander.get_macro("\\newcommand")
+    assert expander.get_macro("\\def")
+
+    # let's try to redefine \newcommand
+    text = r"""
+    \def\newcommand{NEWCOMMAND}
+    """
+    expander.expand(text)
+    assert_token_sequence(
+        expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
+    )
