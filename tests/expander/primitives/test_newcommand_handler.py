@@ -64,13 +64,14 @@ def test_newcommand_with_default():
     expander.expand(text)
     assert expander.macros.get("\\greet")
     assert_token_sequence(
-        expander.expand(r"\greet{Alice}{Bob}"),
+        expander.expand(r"\greet  {Alice}{Bob}"),
         expander.expand("Hello, default and Alice!{Bob}"),
     )
 
     # Test with [] argument
     assert_token_sequence(
-        expander.expand(r"\greet[Alice]{Bob}"), expander.expand("Hello, Alice and Bob!")
+        expander.expand(r"\greet [Alice] {Bob}"),
+        expander.expand("Hello, Alice and Bob!"),
     )
 
     # test with 3 args
@@ -90,7 +91,7 @@ def test_newcommand_redefinition():
 
     # Define command
     text = r"""
-    \newcommand{\greeting}{Hello}
+    \newcommand{\greeting} {Hello}
     """.strip()
     expander.expand(text)
 
@@ -105,7 +106,7 @@ def test_newcommand_redefinition():
 
     # Redefine with \renewcommand should work
     text = r"""
-    \renewcommand{\greeting}{Hi}
+    \renewcommand* {\greeting} {Hi}
     """.strip()
     expander.expand(text)
     assert_token_sequence(expander.expand(r"\greeting"), expander.expand("Hi"))

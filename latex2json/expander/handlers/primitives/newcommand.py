@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
@@ -15,13 +15,14 @@ class NewCommandResult:
     default_arg: Optional[List[Token]] = None
 
 
-def get_parsed_args_from_newcommand_result(
-    expander: ExpanderCore, result: NewCommandResult
+def get_parsed_args_from_newcommand(
+    expander: ExpanderCore, num_args: int, default_arg: Optional[List[Token]] = None
 ) -> List[List[Token]]:
+    if num_args > 0:
+        # e.g. \cmd {arg}
+        expander.skip_whitespace()
     args: List[List[Token]] = []
-    num_args = result.num_args
 
-    default_arg = result.default_arg
     if default_arg:
         tok = expander.peek()
         # if the next token is a begin bracket, replace the default arg with the parsed bracket
@@ -32,6 +33,7 @@ def get_parsed_args_from_newcommand_result(
         num_args -= 1
 
     for i in range(num_args):
+        expander.skip_whitespace()
         tokens = expander.parse_immediate_token()
         if tokens is None:
             expander.logger.warning(
@@ -56,7 +58,11 @@ class NewCommandMacro(Macro):
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             # Parse exactly num_args arguments
-            args = get_parsed_args_from_newcommand_result(expander, out)
+            args = get_parsed_args_from_newcommand(
+                expander, out.num_args, out.default_arg
+            )
+            if args is None:
+                return None
 
             subbed = substitute_token_args(out.definition, args, math_mode=False)
             expander.stream.push_tokens(subbed)
@@ -68,9 +74,7 @@ class NewCommandMacro(Macro):
         return []
 
 
-def newcommand_handler(
-    expander: ExpanderCore, token: Token, allow_redefine: bool
-) -> Optional[NewCommandResult]:
+def get_newcommand_name(expander: ExpanderCore) -> Optional[str]:
     expander.parse_asterisk()
     expander.skip_whitespace()
 
@@ -89,13 +93,12 @@ def newcommand_handler(
 
     name = cmd[0].value
 
-    # Check if command already exists
-    if not allow_redefine and expander.state.get_macro(name):
-        expander.logger.warning(
-            f"Warning: command {name} already exists. Use \\renewcommand to redefine"
-        )
-        return None
+    return name
 
+
+def get_newcommand_args_and_definition(
+    expander: ExpanderCore,
+) -> Tuple[int, Optional[List[Token]], List[Token]]:
     # Parse optional number of arguments [n]
     num_args = 0
     default_arg = None
@@ -123,8 +126,31 @@ def newcommand_handler(
     definition = expander.parse_brace_as_tokens()
 
     if definition is None:
-        expander.logger.warning(f"Warning: \\newcommand expects a definition in braces")
+        expander.logger.warning(f"Warning: expects a definition in braces")
         return None
+
+    return (num_args, default_arg, definition)
+
+
+def newcommand_handler(
+    expander: ExpanderCore, token: Token, allow_redefine: bool
+) -> Optional[NewCommandResult]:
+    name = get_newcommand_name(expander)
+    if name is None:
+        return None
+
+    # Check if command already exists
+    if not allow_redefine and expander.state.get_macro(name):
+        expander.logger.warning(
+            f"Warning: command {name} already exists. Use \\renewcommand to redefine"
+        )
+        return None
+
+    out = get_newcommand_args_and_definition(expander)
+    if out is None:
+        return None
+
+    num_args, default_arg, definition = out
 
     return NewCommandResult(
         name=name, definition=definition, num_args=num_args, default_arg=default_arg

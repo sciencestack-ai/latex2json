@@ -58,6 +58,9 @@ class ExpanderCore:
 
         self.register_handler("\\global", global_handler, is_global=True)
 
+    def get_macro(self, name: str) -> Optional[Macro]:
+        return self.state.get_macro(name)
+
     def register_macro(self, name: str, macro: Macro, is_global: bool = False):
         self.state.set_macro(name, macro, is_global=is_global)
 
@@ -326,6 +329,18 @@ class ExpanderCore:
                     continue
             final_definition.append(tok)
         return final_definition
+
+    def parse_environment_name(self) -> Optional[str]:
+        self.skip_whitespace()
+
+        tok = self.peek()
+        if not tok or not is_begin_group_token(tok):
+            return None
+
+        name = self.parse_brace_as_tokens()
+        name = "".join(t.value for t in name)
+
+        return name
 
 
 if __name__ == "__main__":

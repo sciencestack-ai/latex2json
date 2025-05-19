@@ -1,11 +1,15 @@
 from latex2json.expander.expander_core import ExpanderCore
 
+from latex2json.expander.handlers.primitives.begin_end import register_begin_end
 from latex2json.expander.handlers.primitives.let import register_let
 from latex2json.expander.handlers.primitives.makeat import register_makeat
 from latex2json.expander.handlers.primitives.bgroup import register_bgroup
 from latex2json.expander.handlers.primitives.catcode import register_catcode
 from latex2json.expander.handlers.primitives.newcommand import register_newcommand
 from latex2json.expander.handlers.primitives.newdef import register_def
+from latex2json.expander.handlers.primitives.newenvironment import (
+    register_newenvironment,
+)
 
 
 def register_primitives(expander: ExpanderCore):
@@ -15,3 +19,5 @@ def register_primitives(expander: ExpanderCore):
     register_def(expander)
     register_let(expander)
     register_newcommand(expander)
+    register_newenvironment(expander)
+    register_begin_end(expander)

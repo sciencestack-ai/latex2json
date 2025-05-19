@@ -49,6 +49,9 @@ class Token:
         else:
             return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r}"
 
+    def copy(self) -> "Token":
+        return Token(self.type, self.value, self.position, self.catcode)
+
     def __repr__(self) -> str:
         return self.__str__()
 

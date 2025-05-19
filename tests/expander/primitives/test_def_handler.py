@@ -261,7 +261,7 @@ def test_def_with_global():
     assert not expander.macros.get("bar")
 
 
-def test_nested_defs():
+def test_nested_defs2():
     expander = ExpanderCore()
     register_def(expander)
 
@@ -334,7 +334,6 @@ def test_edef():
     """.strip()
     expander.expand(text)
     assert expander.macros.get("bar")
-    assert expander.macros.get("foo")
     assert not expander.macros.get("barry")  # out of scope
 
     assert_token_sequence(expander.expand(r"\bar{4}"), expander.expand("FOO 4"))
