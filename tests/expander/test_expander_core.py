@@ -1,6 +1,6 @@
 import pytest
 
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import (
@@ -231,6 +231,43 @@ def test_parse_int_float_arguments():
     expander.set_text(".23fe")
     assert expander.parse_float() == 0.23
 
+    # test with \relax\empty
+    expander.set_text(r"0.23\relax44")
+    assert expander.parse_float() == 0.23
+
+    expander.set_text(r"0.23\empty44")
+    assert expander.parse_float() == 0.2344
+
+    # test with \relax\empty
+    expander.set_text(r"123\relax4")
+    assert expander.parse_integer() == 123
+
+    expander.set_text(r"123\empty4")
+    assert expander.parse_integer() == 1234
+
+    expander.set_text(r"123\empty 4")
+    assert expander.parse_integer() == 123
+
+    expander.set_text(r"123\unknown 4")
+    assert expander.parse_integer() == 123
+
+    # also works with \commands
+    tokens_11 = expander.expand("11")
+    expander.register_handler(r"\eleven", lambda x, y: tokens_11)
+    expander.set_text(r"\eleven")
+    assert expander.parse_integer() == 11
+
+    tokens_12_relax = expander.expand(r"1\relax2")
+    expander.register_handler(r"\twelverelax", lambda x, y: tokens_12_relax)
+    expander.set_text(r"\twelverelax")
+    assert expander.parse_integer() == 1  # relax token stops and is consumed
+    assert expander.parse_integer() == 2
+
+    tokens_13_empty = expander.expand(r"1\empty3")
+    expander.register_handler(r"\thirteenempty", lambda x, y: tokens_13_empty)
+    expander.set_text(r"\thirteenempty")
+    assert expander.parse_integer() == 13
+
 
 def test_equality_ops():
     expander = ExpanderCore()
@@ -278,3 +315,11 @@ def test_parse_asterisk():
     expander.set_text("*1")
     assert expander.parse_asterisk()
     assert expander.parse_integer() == 1
+
+
+def test_empty_and_relax():
+    expander = ExpanderCore()
+    assert_token_sequence(expander.expand(r"\empty"), [])
+    assert_token_sequence(expander.expand(r"\relax"), [RELAX_TOKEN])
+
+    assert_token_sequence(expander.expand_tokens([RELAX_TOKEN]), [RELAX_TOKEN])

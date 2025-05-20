@@ -27,8 +27,13 @@ from latex2json.tokens.utils import (
 
 # arbitrary character that is not a valid token
 STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
+RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 
 TokenPredicate = Callable[[Token], bool]
+
+
+def is_relax_token(token: Token) -> bool:
+    return token.type == TokenType.CONTROL_SEQUENCE and token.value == "relax"
 
 
 class ExpanderCore:
@@ -60,10 +65,19 @@ class ExpanderCore:
 
         class EmptyMacro(Macro):
             def __init__(self):
-                super().__init__("\\empty", lambda expander, token: [], [])
+                super().__init__("\\empty", lambda expander, token: [], definition=[])
+
+        class RelaxMacro(Macro):
+            def __init__(self):
+                super().__init__(
+                    "\\relax",
+                    lambda expander, token: [token],  # return the \relax token itself
+                    definition=[RELAX_TOKEN.copy()],
+                )
 
         self.register_handler("\\global", global_handler, is_global=True)
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
+        self.register_macro("\\relax", RelaxMacro(), is_global=True)
 
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.state.get_macro(name)
@@ -166,12 +180,25 @@ class ExpanderCore:
     ) -> bool:
         return self.stream.match(token_type, value, catcode)
 
-    def _combine_sequence_as_str(self, predicate: Callable[[Token], bool]):
+    def _expand_and_combine_as_str(self, predicate: Callable[[Token], bool]):
         tok = self.peek()
         out = ""
-        while tok and predicate(tok):
-            out += tok.value
-            self.consume()
+
+        while tok:
+            if predicate(tok):
+                self.consume()
+                out += tok.value
+            elif tok.type == TokenType.CONTROL_SEQUENCE:
+                self.consume()
+                if is_relax_token(tok):
+                    return out
+                exp = self.expand_tokens([tok])
+                if not self.check_tokens_equal(exp, [tok]):
+                    self.stream.push_tokens(exp)
+                else:
+                    return out
+            else:
+                break
             tok = self.peek()
         return out
 
@@ -185,13 +212,13 @@ class ExpanderCore:
         return [self.consume()]
 
     def parse_integer(self) -> int:
-        sequence = self._combine_sequence_as_str(is_integer_token)
+        sequence = self._expand_and_combine_as_str(is_integer_token)
         if not sequence:
             return None
         return int(sequence)
 
     def parse_float(self) -> float:
-        sequence = self._combine_sequence_as_str(is_digit_token)
+        sequence = self._expand_and_combine_as_str(is_digit_token)
         if not sequence:
             return None
         return float(sequence)
@@ -400,13 +427,5 @@ if __name__ == "__main__":
 
     expander = ExpanderCore()
 
-    text = r"""
-    {
-        Outer
-        {
-            Inner
-        }
-        Post
-    }
-    """.strip()
-    expander.set_text(text)
+    expander.set_text(r"123\empty4")
+    out = expander.parse_integer()

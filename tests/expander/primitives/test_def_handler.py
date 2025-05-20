@@ -1,6 +1,6 @@
 import pytest
 
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.handlers.primitives.newdef import (
     get_def_usage_pattern_and_definition,
     get_parsed_args_from_usage_pattern,
@@ -337,6 +337,19 @@ def test_edef():
     assert not expander.macros.get("barry")  # out of scope
 
     assert_token_sequence(expander.expand(r"\bar{4}"), expander.expand("FOO 4"))
+
+    # test edef with \relax (preserve \relax token)
+    text = r"""
+    \def\foo{FOO\relax}
+    \edef\bar{\relax\foo\empty}
+    """.strip()
+    expander.expand(text)
+    expected = [
+        RELAX_TOKEN,
+        *expander.expand("FOO"),
+        RELAX_TOKEN,
+    ]
+    assert_token_sequence(expander.expand(r"\bar"), expected)
 
 
 def test_xdef():
