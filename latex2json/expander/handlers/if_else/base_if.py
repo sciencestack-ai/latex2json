@@ -43,3 +43,38 @@ def process_if_else_block(
         return block1
 
     return block2
+
+
+def if_true_false_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[List[Token]]:
+    is_true = token.value == "iftrue"
+
+    return process_if_else_block(expander, is_true)
+
+
+def register_if_true_false(expander: ExpanderCore):
+    expander.register_handler("\\iftrue", if_true_false_handler, is_global=True)
+    expander.register_handler("\\iffalse", if_true_false_handler, is_global=True)
+
+
+if __name__ == "__main__":
+    from latex2json.expander.expander import Expander
+    from latex2json.tokens.utils import strip_whitespace_tokens
+
+    expander = Expander()
+    text = r"""
+    \iftrue
+        TRUE
+        \iffalse
+            INNER TRUE
+        \else
+            INNER FALSE
+        \fi
+    \else
+        FALSE
+    \fi
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    print(out)

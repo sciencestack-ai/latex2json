@@ -4,7 +4,27 @@ from latex2json.expander.handlers.if_else.base_if import process_if_else_block
 from latex2json.tokens.types import Token, TokenType
 
 
-def check_ifx_equals(expander: ExpanderCore) -> bool | None:
+def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
+    if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
+        # check if undefined
+        undefined_a = not expander.get_macro(a.value)
+        undefined_b = not expander.get_macro(b.value)
+        if undefined_a and undefined_b:
+            # both undefined, so they are equal in \ifx
+            return True
+        elif undefined_a or undefined_b:
+            # one is undefined, so they are different in \ifx
+            return False
+
+        definition_of_a = expander.convert_to_macro_definitions([a])
+        definition_of_b = expander.convert_to_macro_definitions([b])
+
+        return ExpanderCore.check_tokens_equal(definition_of_a, definition_of_b)
+
+    return ExpanderCore.check_tokens_equal([a], [b])
+
+
+def ifx_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
     a = expander.consume()
     if a is None:
@@ -17,14 +37,7 @@ def check_ifx_equals(expander: ExpanderCore) -> bool | None:
         expander.logger.warning("Warning: \\ifx expects a 2nd token")
         return None
 
-    definition_of_a = expander.convert_to_macro_definitions([a])
-    definition_of_b = expander.convert_to_macro_definitions([b])
-
-    return ExpanderCore.check_tokens_equal(definition_of_a, definition_of_b)
-
-
-def ifx_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    is_equal = check_ifx_equals(expander)
+    is_equal = check_ifx_equals(a, b, expander)
     if is_equal is None:
         return None
 
@@ -52,7 +65,7 @@ if __name__ == "__main__":
     \def\c{BAR}
     \def\d{BAR}
 
-    \ifx\a\c
+    \ifx \a   \c
         SAME AB
         \ifx\a\c
             SAME AC
@@ -61,7 +74,7 @@ if __name__ == "__main__":
         \fi
     \else
         DIFFERENT AC
-        \ifx\b\d
+        \ifx\b \d
             SAME BD
         \else
             DIFFERENT BD
