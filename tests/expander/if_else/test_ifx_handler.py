@@ -218,3 +218,23 @@ def test_ifx_with_one_undefined_one_defined_macro():
     expected = expander.expand("DIFFERENT")
     expected = strip_whitespace_tokens(expected)
     assert Expander.check_tokens_equal(out, expected)
+
+
+def test_ifx_empty():
+    expander = Expander()
+    text = r"""
+    \def\a{}
+    \def\b{\empty}
+    \ifx\empty\a
+        EMPTY A
+    \fi
+
+    \ifx\b\empty % NOT SAME since \b->[\empty] != \empty->[]
+        EMPTY B
+    \fi
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert Expander.check_tokens_equal(out, expander.expand("EMPTY A"))
+    # assert_tokens_startwith(out, expander.expand("EMPTY A"))
+    # assert_tokens_endwith(out, expander.expand("EMPTY B"))

@@ -4,13 +4,6 @@ from latex2json.expander.handlers.if_else.base_if import process_if_else_block
 from latex2json.tokens.types import Token, TokenType
 
 
-def check_ifcat_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
-    if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
-        return True
-
-    return a.catcode == b.catcode
-
-
 def ifcat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
     a = expander.consume()
@@ -18,21 +11,21 @@ def ifcat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         expander.logger.warning("Warning: \\ifcat expects a token")
         return None
 
-    comparison_output = expander.expand_tokens([a])
+    output = expander.expand_tokens([a])
 
-    if len(comparison_output) < 2:
+    if len(output) < 2:
         # no skipwhitespace!
         b = expander.consume()
         if b is None:
             expander.logger.warning("Warning: \\ifcat expects a 2nd token")
             return None
-        comparison_output.extend(expander.expand_tokens([b]))
+        output.extend(expander.expand_tokens([b]))
 
     is_equal = False
-    if len(comparison_output) >= 2:
-        is_equal = comparison_output[0].catcode == comparison_output[1].catcode
+    if len(output) >= 2:
+        is_equal = output[0].catcode == output[1].catcode
         # push the remaining tokens into the stream
-        expander.stream.push_tokens(comparison_output[2:])
+        expander.stream.push_tokens(output[2:])
 
     tok = expander.peek()
     if tok is None:
