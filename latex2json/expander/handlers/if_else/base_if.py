@@ -80,10 +80,16 @@ def if_true_false_handler(
     return process_if_else_block(expander, is_true)
 
 
-def register_if_true_false(expander: ExpanderCore):
+def if_eof_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    # TODO: can expander.eof() be used here?
+    return process_if_else_block(expander, expander.eof())
+
+
+def register_base_ifs(expander: ExpanderCore):
     expander.register_handler("\\if", base_if_handler, is_global=True)
     expander.register_handler("\\iftrue", if_true_false_handler, is_global=True)
     expander.register_handler("\\iffalse", if_true_false_handler, is_global=True)
+    expander.register_handler("\\ifeof", if_eof_handler, is_global=True)
 
 
 if __name__ == "__main__":

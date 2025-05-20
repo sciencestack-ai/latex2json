@@ -7,6 +7,16 @@ from tests.test_utils import assert_tokens_endwith, assert_tokens_startwith
 
 def test_if_handler():
     expander = Expander()
+
+    # single line asserts
+    assert Expander.check_tokens_equal(
+        expander.expand(r"\if 11TRUE\fi"), expander.expand("TRUE")
+    )
+    assert Expander.check_tokens_equal(expander.expand(r"\if ab TRUE \fi"), [])
+    assert Expander.check_tokens_equal(
+        expander.expand(r"\if abTRUE\else{FALSE}\empty\fi"), expander.expand("{FALSE}")
+    )
+
     text = r"""
     \if aa
         TRUE
