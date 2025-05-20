@@ -58,7 +58,12 @@ class ExpanderCore:
             expander.state.pending_global = True
             return []
 
+        class EmptyMacro(Macro):
+            def __init__(self):
+                super().__init__("\\empty", lambda expander, token: [], [])
+
         self.register_handler("\\global", global_handler, is_global=True)
+        self.register_macro("\\empty", EmptyMacro(), is_global=True)
 
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.state.get_macro(name)

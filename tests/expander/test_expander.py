@@ -60,3 +60,8 @@ def test_redefine_primitives():
     assert_token_sequence(
         expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
     )
+
+
+def test_empty():
+    expander = Expander()
+    assert_token_sequence(expander.expand(r"\empty"), [])

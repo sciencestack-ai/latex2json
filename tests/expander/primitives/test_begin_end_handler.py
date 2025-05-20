@@ -75,7 +75,7 @@ def test_error_cases():
 def test_environment_without_content():
     expander = Expander()
 
-    expander.expand(r"\newenvironment{empty}{START}{END}")
+    expander.expand(r"\renewenvironment{empty}{START}{END}")
 
     # Test environment with no content
     out = expander.expand(r"\begin{empty}\end{empty}")

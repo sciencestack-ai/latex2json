@@ -23,7 +23,7 @@ def test_ifx_simple_same_tokens():
 
     # test single characters
     text = r"""
-    \ifx a a
+    \ifx aa
         SAME
     \else
         DIFFERENT

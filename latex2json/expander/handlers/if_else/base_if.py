@@ -45,15 +45,43 @@ def process_if_else_block(
     return block2
 
 
+def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
+    definition_of_a = expander.convert_to_macro_definitions([a])
+    definition_of_b = expander.convert_to_macro_definitions([b])
+
+    # if both are control sequences, only checks the first token of the output
+    if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
+        return ExpanderCore.check_tokens_equal(definition_of_a[:1], definition_of_b[:1])
+
+    return ExpanderCore.check_tokens_equal(definition_of_a, definition_of_b)
+
+
+def base_if_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    a = expander.consume()
+    if a is None:
+        expander.logger.warning("Warning: \\if expects a token")
+        return None
+
+    expander.skip_whitespace()
+    b = expander.consume()
+    if b is None:
+        expander.logger.warning("Warning: \\if expects a 2nd token")
+        return None
+
+    is_equal = check_if_equals(a, b, expander)
+    return process_if_else_block(expander, is_equal)
+
+
 def if_true_false_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[List[Token]]:
     is_true = token.value == "iftrue"
-
     return process_if_else_block(expander, is_true)
 
 
 def register_if_true_false(expander: ExpanderCore):
+    expander.register_handler("\\if", base_if_handler, is_global=True)
     expander.register_handler("\\iftrue", if_true_false_handler, is_global=True)
     expander.register_handler("\\iffalse", if_true_false_handler, is_global=True)
 
