@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Callable, List, Any, Dict, Optional, Type, Union
+from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
 from latex2json.expander.macro_registry import (
@@ -21,7 +21,7 @@ from latex2json.tokens.utils import (
     is_begin_group_token,
     is_end_bracket_token,
     is_end_group_token,
-    is_integer_token,
+    is_signed_integer_token,
     is_digit_token,
     is_param_token,
 )
@@ -45,12 +45,18 @@ class ExpanderCore:
 
     def __init__(
         self,
-        tokenizer: Tokenizer = Tokenizer(),
+        tokenizer: Optional[Tokenizer] = None,
         logger: Logger = Logger("expander"),
     ):
-        self.tokenizer = tokenizer
-        self.stream = TokenStream(tokenizer)
-        self.state = ExpanderState(tokenizer)  # The stack of state layers
+        """Initialize the expander core.
+
+        Args:
+            tokenizer: Optional tokenizer instance. If None, creates a new one with fresh catcodes.
+            logger: Logger instance for debugging.
+        """
+        self.tokenizer = tokenizer if tokenizer is not None else Tokenizer()
+        self.stream = TokenStream(self.tokenizer)
+        self.state = ExpanderState(self.tokenizer)
         self.logger = logger
 
         self._init_state_macros()
@@ -220,7 +226,9 @@ class ExpanderCore:
     ) -> bool:
         return self.stream.match(token_type, value, catcode)
 
-    def _expand_and_combine_as_str(self, predicate: Callable[[Token], bool]):
+    def _expand_and_combine_as_str(
+        self, predicate: Callable[[Token], bool]
+    ) -> Tuple[str, bool]:
         tok = self.peek()
         out = ""
 
@@ -231,18 +239,18 @@ class ExpanderCore:
             elif tok.type == TokenType.CONTROL_SEQUENCE:
                 if is_relax_token(tok):
                     self.consume()
-                    return out
+                    return out, True
                 exp = self.expand_tokens([tok])
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
                     self.consume()
                     self.stream.push_tokens(exp)
                 else:
-                    return out
+                    break
             else:
                 break
             tok = self.peek()
-        return out
+        return out, False
 
     def parse_immediate_token(self) -> List[Token] | None:
         tok = self.peek()
@@ -254,16 +262,38 @@ class ExpanderCore:
         return [self.consume()]
 
     def parse_integer(self) -> int:
-        sequence = self._expand_and_combine_as_str(is_integer_token)
+        sequence, relax = self._expand_and_combine_as_str(is_signed_integer_token)
         if not sequence:
             return None
         return int(sequence)
 
     def parse_float(self) -> float:
-        sequence = self._expand_and_combine_as_str(is_digit_token)
+        sequence, relax = self._expand_and_combine_as_str(is_digit_token)
         if not sequence:
             return None
         return float(sequence)
+
+    def parse_dimensions(self) -> Optional[Tuple[float, str]]:
+        """
+        Parses a sequence of digits followed by an optional unit.
+        Returns a tuple (float, str) where the float is the number and the str is the unit.
+        e.g. 15 pt
+        """
+        digits, relax = self._expand_and_combine_as_str(is_digit_token)
+        if not digits:
+            return None
+        digits = float(digits)
+        if relax:
+            return digits, ""
+
+        self.skip_whitespace()
+        if is_relax_token(self.peek()):
+            self.consume()
+            return digits, ""
+        unit, relax = self._expand_and_combine_as_str(
+            lambda tok: tok.catcode == Catcode.LETTER
+        )
+        return digits, unit
 
     def parse_equals(self) -> bool:
         if self.match(value="=", catcode=Catcode.OTHER):
@@ -466,8 +496,12 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
+    from latex2json.expander.registers import set_register_handler
 
     expander = ExpanderCore()
 
-    expander.set_text(r"123\empty4")
-    out = expander.parse_integer()
+    expander.set_text(r"\count0=10")
+    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "count")
+    assert expander.consume() == Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER)
+    assert expander.peek().value == "="
+    assert set_register_handler(expander, RegisterType.COUNT, "0")

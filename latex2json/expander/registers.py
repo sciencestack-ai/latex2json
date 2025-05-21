@@ -3,6 +3,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional, Union, List
 
 from latex2json.expander.macro_registry import Handler, Macro
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Token
 
 if TYPE_CHECKING:
@@ -31,23 +32,45 @@ class RegisterType(Enum):
             return cls.OTHER
 
 
-def register_macro_handler(
-    expander: "ExpanderCore", register_type: RegisterType, name: str
-) -> Optional[List[Token]]:
+def set_register_handler(
+    expander: "ExpanderCore", register_type: RegisterType, reg_id: Union[int, str]
+) -> bool:
     if expander.parse_equals():
         # if = is found, it's an assignment
         expander.skip_whitespace()
-        value = expander.parse_integer()  # TODO
-        expander.set_register(register_type, name, value)
+        if register_type == RegisterType.COUNT:
+            value = expander.parse_integer()
+        elif register_type == RegisterType.DIMEN:
+            value = expander.parse_dimensions()
+            if value:
+                value = dimension_to_scaled_points(value[0], value[1])
+        else:
+            raise NotImplementedError(f"Setting {register_type} is not implemented")
+
+        if value is None:
+            expander.logger.warning(
+                f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
+            )
+            return False
+        expander.set_register(register_type, reg_id, value)
+        return True
+    return False
+
+
+def registertype_macro_handler(
+    expander: "ExpanderCore", register_type: RegisterType, reg_id: Union[int, str]
+) -> Optional[List[Token]]:
+    if set_register_handler(expander, register_type, reg_id):
         return []
-    return expander.get_register_value_as_tokens(register_type, name)
+    return expander.get_register_value_as_tokens(register_type, reg_id)
 
 
 class RegisterMacro(Macro):
-    def __init__(self, register_type: RegisterType, name: str):
-        handler: Handler = lambda expander, token: register_macro_handler(
-            expander, register_type, name
+    def __init__(self, register_type: RegisterType, reg_id: Union[int, str]):
+        handler: Handler = lambda expander, token: registertype_macro_handler(
+            expander, register_type, reg_id
         )
+        name = f"{reg_id}"
         super().__init__(name, handler, [])
         self.register_type = register_type
 
@@ -162,6 +185,8 @@ class TexRegisters:
     ):
         """Internal helper to get register value by type and ID"""
         reg_type = RegisterType.from_str(reg_type)
+        if isinstance(reg_id, str) and reg_id.isdigit():
+            reg_id = int(reg_id)
         if isinstance(reg_id, int):
             if not 0 <= reg_id < 256:
                 return None
@@ -178,6 +203,8 @@ class TexRegisters:
     ) -> None:
         """Internal helper to set register value by type and ID"""
         reg_type = RegisterType.from_str(reg_type)
+        if isinstance(reg_id, str) and reg_id.isdigit():
+            reg_id = int(reg_id)
         if isinstance(reg_id, int):
             if not 0 <= reg_id < 256:
                 return None

@@ -2,6 +2,7 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
 
@@ -59,4 +60,23 @@ def test_redefine_primitives():
     expander.expand(text)
     assert_token_sequence(
         expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
+    )
+
+
+def test_counts():
+    expander = Expander()
+    text = r"""
+    \newcount\mycounter
+    \mycounter = 100
+    """
+    expander.expand(text)
+    assert expander.check_tokens_equal(
+        expander.expand(r"\the\mycounter"), expander.expand("100")
+    )
+
+    # now redefine mycounter
+    expander.expand(r"\def\mycounter{MYCOUNTER}")
+    assert_token_sequence(expander.expand(r"\mycounter"), expander.expand("MYCOUNTER"))
+    assert not expander.check_tokens_equal(
+        expander.expand(r"\the\mycounter"), expander.expand("100")
     )

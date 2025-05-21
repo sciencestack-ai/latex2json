@@ -272,6 +272,29 @@ def test_parse_int_float_arguments():
     assert expander.parse_integer() == 13
 
 
+def test_parse_dimensions():
+    expander = ExpanderCore()
+
+    expander.set_text("15pt")
+    assert expander.parse_dimensions() == (15, "pt")
+
+    expander.set_text("2 in")
+    assert expander.parse_dimensions() == (2, "in")
+
+    # test with \relax
+    expander.set_text(r"2 \relax in")
+    assert expander.parse_dimensions() == (2, "")
+
+    expander.set_text(r"\relax")
+    assert not expander.parse_dimensions()
+
+    expander.set_text(r"0.2\relax33")
+    assert expander.parse_dimensions() == (0.2, "")
+
+    expander.set_text(r"1234 i\relax n")
+    assert expander.parse_dimensions() == (1234, "i")
+
+
 def test_equality_ops():
     expander = ExpanderCore()
 

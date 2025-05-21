@@ -20,9 +20,7 @@ class Tokenizer:
         """
         # The catcode table used by this tokenizer instance
         # Stores mapping from integer character code to Catcode enum member
-        self._catcodes: Dict[int, Catcode] = (
-            catcodes if catcodes is not None else get_default_catcodes()
-        )
+        self._catcodes = catcodes if catcodes is not None else get_default_catcodes()
         self.text = ""
         self.position = 0  # Current reading position
 
