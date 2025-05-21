@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.registers.count_handlers import CountHandler
 from latex2json.tokens.types import Token, TokenType
 
 from latex2json.expander.handlers.primitives.catcode import CatcodeHandler
@@ -21,6 +22,8 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 
     if name == "catcode":
         return CatcodeHandler.getter(expander, token)
+    elif name == "count":
+        return CountHandler.getter(expander, token)
 
     return []
 

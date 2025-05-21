@@ -189,9 +189,9 @@ def test_def_handler():
     register_def(expander)
 
     def test1():
-        assert not expander.macros.get("test")
+        assert not expander.get_macro("test")
         expander.expand(r"\def \test[#1:#2]{TEST #1:#2 ENDTEST}")
-        assert expander.macros.get("test")
+        assert expander.get_macro("test")
 
         out = expander.expand(r"\test[HELLO:world]")
         expected = expander.expand("TEST HELLO:world ENDTEST")
@@ -200,8 +200,8 @@ def test_def_handler():
     def test2():
         text = r"\def\foo(e#1{BAR #1 BAR} \def\hi{HI}"
         expander.expand(text)
-        assert expander.macros.get("foo")
-        assert expander.macros.get("hi")
+        assert expander.get_macro("foo")
+        assert expander.get_macro("hi")
 
         out = expander.expand(r"\foo(e{33}")
         expected = expander.expand("BAR 33 BAR")
@@ -230,8 +230,8 @@ def test_def_redefine():
     """.strip()
 
     expander.expand(text)
-    assert expander.macros.get("foo")
-    assert expander.macros.get("bar")
+    assert expander.get_macro("foo")
+    assert expander.get_macro("bar")
 
     assert_token_sequence(expander.expand(r"\bar"), expander.expand("BAR"))
 
@@ -244,7 +244,7 @@ def test_def_with_global():
     text = r"""{ \def\foo{FOO} }"""
 
     expander.expand(text)
-    assert not expander.macros.get("foo")
+    assert not expander.get_macro("foo")
     assert_token_sequence(
         expander.expand(r"\foo"), [Token(TokenType.CONTROL_SEQUENCE, "foo")]
     )
@@ -252,13 +252,13 @@ def test_def_with_global():
     # now test with global
     text = r"""{ \global\def\foo{FOO} }"""
     expander.expand(text)
-    assert expander.macros.get("foo")
+    assert expander.get_macro("foo")
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("FOO"))
 
     # ensure \global is not persisting...
     text = r"""{ \def\bar{BAR} }"""
     expander.expand(text)
-    assert not expander.macros.get("bar")
+    assert not expander.get_macro("bar")
 
 
 def test_nested_defs2():
@@ -274,9 +274,9 @@ def test_nested_defs2():
     """.strip()
 
     expander.expand(text)
-    assert expander.macros.get("foo")
-    assert expander.macros.get("bar")
-    assert expander.macros.get("barx")
+    assert expander.get_macro("foo")
+    assert expander.get_macro("bar")
+    assert expander.get_macro("barx")
 
     assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR hello BRO"))
 
@@ -293,8 +293,8 @@ def test_gdef():
     """.strip()
 
     expander.expand(text)
-    assert not expander.macros.get("foo")
-    assert expander.macros.get("bar")  # global \gdef
+    assert not expander.get_macro("foo")
+    assert expander.get_macro("bar")  # global \gdef
 
     # unresolved since \foo does not exist outside scope
     assert_token_sequence(
@@ -303,7 +303,7 @@ def test_gdef():
 
     # now define \foo
     expander.expand(r"\def\foo{FOO}")
-    assert expander.macros.get("foo")
+    assert expander.get_macro("foo")
     assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
 
 
@@ -319,8 +319,8 @@ def test_edef():
     \bar{3}
 """
     expander.expand(text)
-    assert expander.macros.get("bar")
-    assert expander.macros.get("foo")
+    assert expander.get_macro("bar")
+    assert expander.get_macro("foo")
 
     assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
 
@@ -333,8 +333,8 @@ def test_edef():
     \bar{4} % STILL FOO due to scope (from above)
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("bar")
-    assert not expander.macros.get("barry")  # out of scope
+    assert expander.get_macro("bar")
+    assert not expander.get_macro("barry")  # out of scope
 
     assert_token_sequence(expander.expand(r"\bar{4}"), expander.expand("FOO 4"))
 
@@ -366,8 +366,8 @@ def test_xdef():
     """.strip()
 
     expander.expand(text)
-    assert not expander.macros.get("foo")
-    assert expander.macros.get("bar")  # global \xdef
+    assert not expander.get_macro("foo")
+    assert expander.get_macro("bar")  # global \xdef
 
     assert_token_sequence(expander.expand(r"\bar{3}"), expander.expand("FOO 3"))
 
@@ -388,9 +388,9 @@ def test_nested_defs():
     """.strip()
 
     expander.expand(text)
-    assert expander.macros.get("foo")
-    assert expander.macros.get("barx")
-    assert not expander.macros.get("bar")
+    assert expander.get_macro("foo")
+    assert expander.get_macro("barx")
+    assert not expander.get_macro("bar")
 
     # Since \bar is not defined in scope, \barx expands literally
     expected = [
@@ -405,7 +405,7 @@ def test_nested_defs():
 
     # Now define \bar in scope
     expander.expand(r"\def\bar{BAR}")
-    assert expander.macros.get("bar")
+    assert expander.get_macro("bar")
     assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR{BRO}"))
 
 
@@ -422,8 +422,8 @@ def test_more_defs():
     """.strip()
 
     expander.expand(text)
-    assert expander.macros.get("XXint")
-    assert expander.macros.get("Xint")
+    assert expander.get_macro("XXint")
+    assert expander.get_macro("Xint")
 
     assert_token_sequence(
         expander.expand(r"\Xint{THREE}"), expander.expand("1) ONE 2) TWO 3) THREE 4)")

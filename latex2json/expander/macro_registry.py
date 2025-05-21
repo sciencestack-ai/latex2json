@@ -84,7 +84,7 @@ class MacroRegistry:
         # We use set with is_global=True to ensure it goes to the root if called on a child.
         self.set(name, macro_def, is_global=is_global)
 
-    def get_all_macros(self) -> List[Macro]:
+    def get_all_macros(self) -> Dict[str, Macro]:
         """Returns all macros in this registry and its parents."""
         all_macros = {}
         current = self

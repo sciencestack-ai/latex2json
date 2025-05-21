@@ -248,8 +248,11 @@ def test_parse_int_float_arguments():
     expander.set_text(r"123\empty 4")
     assert expander.parse_integer() == 123
 
-    expander.set_text(r"123\unknown 4")
+    expander.set_text(r"123\unknown4")
     assert expander.parse_integer() == 123
+    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "unknown")
+    assert expander.parse_integer() == 4
+    assert expander.eof()
 
     # also works with \commands
     tokens_11 = expander.expand("11")

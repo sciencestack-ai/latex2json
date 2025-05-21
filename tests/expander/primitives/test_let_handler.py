@@ -14,9 +14,9 @@ def test_let():
     \let\foox\foo % maintains a BAR
 """
     expander.expand(text)
-    assert expander.macros.get("foo")
-    assert expander.macros.get("bar")
-    assert expander.macros.get("foox")
+    assert expander.get_macro("foo")
+    assert expander.get_macro("bar")
+    assert expander.get_macro("foox")
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("BAR"))
     assert_token_sequence(expander.expand(r"\foox"), expander.expand("BAR"))
 
@@ -30,9 +30,9 @@ def test_let():
     """.strip()
 
     expander.expand(text)
-    assert expander.macros.get("greet")
-    assert expander.macros.get("message")
-    assert expander.macros.get("world")
+    assert expander.get_macro("greet")
+    assert expander.get_macro("message")
+    assert expander.get_macro("world")
 
     assert_token_sequence(expander.expand(r"\message"), expander.expand("NEW MESSAGE"))
     assert_token_sequence(
@@ -72,7 +72,7 @@ def test_let_single_token():
 """.strip()
     out = expander.expand(text)
     # scoped
-    assert not expander.macros.get("foo")
+    assert not expander.get_macro("foo")
 
 
 def test_let_scope():
@@ -83,7 +83,7 @@ def test_let_scope():
     }
     """.strip()
     expander.expand(text)
-    assert not expander.macros.get("foo")
+    assert not expander.get_macro("foo")
 
     # now with \global
     text = r"""
@@ -92,5 +92,5 @@ def test_let_scope():
     }
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("foo")
+    assert expander.get_macro("foo")
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("3"))

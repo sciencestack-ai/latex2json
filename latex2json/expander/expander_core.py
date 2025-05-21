@@ -79,8 +79,12 @@ class ExpanderCore:
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
 
+    # MACROS
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.state.get_macro(name)
+
+    def get_all_macros(self) -> Dict[str, Macro]:
+        return self.state.get_all_macros()
 
     def register_macro(self, name: str, macro: Macro, is_global: bool = False):
         self.state.set_macro(name, macro, is_global=is_global)
@@ -88,6 +92,19 @@ class ExpanderCore:
     def register_handler(self, name: str, handler: Handler, is_global: bool = False):
         macro = Macro(name, handler)
         self.state.set_macro(name, macro, is_global=is_global)
+
+    # REGISTERS
+    def get_register_value(self, name: str) -> Optional[Any]:
+        return self.state.get_register(name)
+
+    def get_register_value_as_tokens(self, name: str) -> Optional[List[Token]]:
+        value = self.get_register_value(name)
+        if value is None:
+            return None
+        return self.convert_str_to_tokens(str(value))
+
+    def set_register(self, name: str, value: Any, is_global: bool = False):
+        self.state.set_register(name, value, is_global=is_global)
 
     def set_text(self, text: str):
         self.stream.set_text(text)
@@ -189,11 +206,13 @@ class ExpanderCore:
                 self.consume()
                 out += tok.value
             elif tok.type == TokenType.CONTROL_SEQUENCE:
-                self.consume()
                 if is_relax_token(tok):
+                    self.consume()
                     return out
                 exp = self.expand_tokens([tok])
+                # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
+                    self.consume()
                     self.stream.push_tokens(exp)
                 else:
                     return out

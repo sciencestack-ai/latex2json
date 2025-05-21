@@ -6,12 +6,6 @@ from latex2json.expander.macro_registry import Macro, MacroRegistry
 from latex2json.tokens import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 
-# --- Assume Placeholder Definitions from MacroRegistry code are available ---
-# Token, TokenType, Catcode, ASTNode, CommandNode, TextNode, BraceNode, EnvironmentNode
-# MacroRegistry, CommandDefinition, PrimitiveDefinition, MacroDefinition
-
-# --- Placeholder State Components ---
-
 
 class ProcessingMode(enum.Enum):
     TEXT = 1
@@ -19,26 +13,15 @@ class ProcessingMode(enum.Enum):
     # ... other modes
 
 
-@dataclasses.dataclass
-class ConditionalState:
-    # Tracks the state of \if...\fi conditionals (e.g., stack of boolean states)
-    # This is a simplified placeholder. Real conditional state is complex.
-    is_true: bool = True  # Are we currently in a 'true' branch?
-    # Add stack for nested conditionals, tracking if we are skipping content etc.
-
-    def copy(self) -> "ConditionalState":
-        # Return a copy for new state layers
-        return ConditionalState(is_true=self.is_true)  # Simplified copy
-
-
-# --- StateLayer Class ---
-
-
 class StateLayer:
     """Represents the state for a single scope layer."""
 
     def __init__(self, parent: Optional["StateLayer"] = None):
         self._parent = parent
+
+        # --- State that might not be strictly layered but is part of the scope ---
+        # Mode: Often copied, but changes are local
+        self.mode: ProcessingMode = parent.mode if parent else ProcessingMode.TEXT
 
         # --- Scoped State ---
         # Macro Registry: Layered lookup
@@ -52,38 +35,8 @@ class StateLayer:
             parent.catcode_table.copy() if parent else get_default_catcodes()
         )
 
-        # Local Register Assignments: Track assignments made in this scope
-        # This is a simplified model. TeX's register assignment is complex (\global).
-        # A real implementation might have a global register bank, and StateLayer
-        # just tracks assignments that are local to this scope.
-        self.local_register_assignments: Dict[str, Any] = {}  # e.g., {"count0": 10}
-
-        # --- State that might not be strictly layered but is part of the scope ---
-        # Mode: Often copied, but changes are local
-        self.mode: ProcessingMode = parent.mode if parent else ProcessingMode.TEXT
-
-        # Conditional State: Often needs its own stack or complex logic within the layer
-        # Changes to conditional state are local to the group they occur in.
-        self.conditional_state: ConditionalState = (
-            parent.conditional_state.copy() if parent else ConditionalState()
-        )
-
-        # # Parameter Values: Copied, local changes don't affect parent
-        # self.parameter_values: Dict[str, Any] = (
-        #     parent.parameter_values.copy()
-        #     if parent
-        #     else self._initialize_default_parameters()
-        # )
-
-        # # Font Information: Copied, local changes don't affect parent
-        # self.font_information: Any = (
-        #     parent.font_information if parent else self._initialize_default_font()
-        # )
-
-        # # Language Settings: Copied, local changes don't affect parent
-        # self.language_settings: Any = (
-        #     parent.language_settings if parent else self._initialize_default_language()
-        # )
+        # Initialize registers dict to store local register values
+        self.registers: Dict[str, Any] = {}  # e.g., {"count0": 10}
 
     def get_catcode(self, char_ord: int) -> Catcode:
         """Get the catcode for a character from this layer's table."""
@@ -95,21 +48,25 @@ class StateLayer:
         """Set the catcode for a character in this layer's table."""
         self.catcode_table[char_ord] = catcode
 
-    # def _initialize_default_parameters(self) -> Dict[str, Any]:
-    #     # Initialize with default TeX parameter values
-    #     return {
-    #         "parindent": 15.0,  # Example dimension value
-    #         "baselineskip": 12.0,  # Example dimension value
-    #         # ... other parameters
-    #     }
+    def get_register(self, name: str) -> Any:
+        if name in self.registers:
+            return self.registers[name]
+        if self._parent:
+            return self._parent.get_register(name)
+        return None
 
-    # def _initialize_default_font(self) -> Any:
-    #     # Placeholder for default font information
-    #     return "default_font"
+    def set_register(self, name: str, value: Any, is_global: bool = False):
+        if is_global and self._parent:
+            # Traverse to root layer for global assignments
+            self._parent.set_register(name, value, is_global=True)
+        else:
+            self.registers[name] = value
 
-    # def _initialize_default_language(self) -> Any:
-    #     # Placeholder for default language settings
-    #     return "english"
+    def get_macro(self, name: str) -> Optional[Macro]:
+        return self.macro_registry.get(name)
+
+    def set_macro(self, name: str, definition: Macro, is_global: bool = False):
+        self.macro_registry.set(name, definition, is_global)
 
     # # --- Methods to access/modify state within this layer ---
 
@@ -157,21 +114,15 @@ class ExpanderState:
         self._stack.pop()
         self.tokenizer.set_catcode_table(self.current.catcode_table)
 
-    # --- Convenience methods to access state from the current layer ---
+    def get_macro(self, name: str) -> Optional[Macro]:
+        return self.current.get_macro(name)
 
-    @property
-    def registry(self) -> MacroRegistry:
-        """Get the macro registry for the current scope."""
-        return self.current.macro_registry
+    def get_all_macros(self) -> Dict[str, Macro]:
+        return self.current.macro_registry.get_all_macros()
 
     def set_macro(self, name: str, definition: Macro, is_global: bool = False):
-        """Set a macro in the current scope."""
-        self.registry.set(name, definition, is_global or self.pending_global)
+        self.current.set_macro(name, definition, is_global or self.pending_global)
         self.pending_global = False
-
-    def get_macro(self, name: str) -> Optional[Macro]:
-        """Get a macro from the current scope."""
-        return self.registry.get(name)
 
     def set_catcode(self, char_ord: int, catcode: Catcode):
         """Set the catcode for a character in the current scope."""
@@ -191,11 +142,13 @@ class ExpanderState:
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
-    @property
-    def conditional_state(self) -> ConditionalState:
-        return self.current.conditional_state
+    def get_register(self, name: str) -> Any:
+        return self.current.get_register(name)
+
+    def set_register(self, name: str, value: Any, is_global: bool = False):
+        self.current.set_register(name, value, is_global or self.pending_global)
+        self.pending_global = False
 
     # Add methods to get/set register values, parameter values, etc.,
     # which would interact with the current layer's state and potentially global state.
     # Example: get_register(name), set_register(name, value, is_global)
-    # Example: get_parameter(name), set_parameter(name, value, is_global)

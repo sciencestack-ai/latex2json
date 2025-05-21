@@ -42,7 +42,7 @@ def test_makeatletter_makeatother():
 def test_def():
     expander = Expander()
     expander.expand(r"\def\test{test}")
-    assert expander.macros.get("test")
+    assert expander.get_macro("test")
     assert_token_sequence(expander.expand(r"\test"), expander.expand("test"))
 
 

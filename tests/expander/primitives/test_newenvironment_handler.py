@@ -13,8 +13,8 @@ def test_basic_newenvironment():
     \newenvironment*{hello} {HELLO} {BYE}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\hello")
-    assert expander.macros.get("\\endhello")
+    assert expander.get_macro("\\hello")
+    assert expander.get_macro("\\endhello")
 
     out = expander.expand(r"\hello MIDDLE \endhello")
     assert_token_sequence(out, expander.expand("HELLO MIDDLE BYE"))

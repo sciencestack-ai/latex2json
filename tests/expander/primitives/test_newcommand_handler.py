@@ -13,7 +13,7 @@ def test_basic_newcommand():
     \newcommand{\hello}{Hello, world!}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\hello")
+    assert expander.get_macro("\\hello")
     assert_token_sequence(expander.expand(r"\hello"), expander.expand("Hello, world!"))
 
     # Command with arguments
@@ -21,7 +21,7 @@ def test_basic_newcommand():
     \newcommand{\greet}[2]{Hello #2 and #1!}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\greet")
+    assert expander.get_macro("\\greet")
     assert_token_sequence(
         expander.expand(r"\greet{Alice}{Bob}"), expander.expand("Hello Bob and Alice!")
     )
@@ -40,7 +40,7 @@ def test_newcommand_with_default():
     \newcommand{\welcome}[1][friend]{Hello, #1!}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\welcome")
+    assert expander.get_macro("\\welcome")
 
     # Test with default argument
     assert_token_sequence(
@@ -62,7 +62,7 @@ def test_newcommand_with_default():
     \newcommand{\greet}[2][default]{Hello, #1 and #2!}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\greet")
+    assert expander.get_macro("\\greet")
     assert_token_sequence(
         expander.expand(r"\greet  {Alice}{Bob}"),
         expander.expand("Hello, default and Alice!{Bob}"),
@@ -123,7 +123,7 @@ def test_newcommand_scope():
     """.strip()
     expander.expand(text)
     # newcommand is global
-    assert expander.macros.get("\\local")
+    assert expander.get_macro("\\local")
 
 
 def test_newcommand_expansion():
@@ -156,21 +156,21 @@ def test_newcommand_errors():
     \newcommand{\bad}[x]{Error}
     """.strip()
     expander.expand(text)
-    assert not expander.macros.get("\\bad")
+    assert not expander.get_macro("\\bad")
 
     # Missing definition
     text = r"""
     \newcommand{\bad}[1]
     """.strip()
     expander.expand(text)
-    assert not expander.macros.get("\\bad")
+    assert not expander.get_macro("\\bad")
 
     # Invalid command name
     text = r"""
     \newcommand{bad}{Error}
     """.strip()
     expander.expand(text)
-    assert not expander.macros.get("bad")
+    assert not expander.get_macro("bad")
 
 
 def test_newcommand_star():
@@ -181,7 +181,7 @@ def test_newcommand_star():
     \newcommand*{\star}{Star}
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\star")
+    assert expander.get_macro("\\star")
     assert_token_sequence(expander.expand(r"\star"), expander.expand("Star"))
 
 
@@ -199,15 +199,15 @@ def test_nested_newcommands():
     }
     """.strip()
     expander.expand(text)
-    assert expander.macros.get("\\outer")
+    assert expander.get_macro("\\outer")
     # inner and last not created yet
-    assert not expander.macros.get("\\inner")
-    assert not expander.macros.get("\\last")
+    assert not expander.get_macro("\\inner")
+    assert not expander.get_macro("\\last")
 
     expander.expand(r"\outer{123}")
     # inner and last created
-    assert expander.macros.get("\\inner")
-    assert expander.macros.get("\\last")
+    assert expander.get_macro("\\inner")
+    assert expander.get_macro("\\last")
 
     out = expander.expand(r"\last{456}")
     strip_whitespace_tokens(out)
