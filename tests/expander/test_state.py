@@ -71,24 +71,32 @@ def test_state_scopes():
 
     def test_register_scopes():
         # test registers
-        state.set_register("count0", 10)
-        assert state.get_register("count0") == 10
+        state.set_register("count", 0, 10)
+        assert state.get_register("count", 0) == 10
 
         state.push_scope()
-        assert state.get_register("count0") == 10
+        assert state.get_register("count", 0) == 10
 
-        state.set_register("count0", 20)
-        assert state.get_register("count0") == 20
-        state.set_register("count1", 30)
-        assert state.get_register("count1") == 30
-        # global
-        state.set_register("globalcount0", 100, is_global=True)
-        assert state.get_register("globalcount0") == 100
+        # set to 20
+        state.set_register("count", 0, 20)
+        assert state.get_register("count", 0) == 20
+        state.set_register("count", 0, 30)
+        assert state.get_register("count", 0) == 30
+
+        # set \count1 to 30
+        state.set_register("count", 1, 30)
+        assert state.get_register("count", 1) == 30
 
         state.pop_scope()
-        assert state.get_register("count0") == 10
-        assert not state.get_register("count1")
-        assert state.get_register("globalcount0") == 100
+        assert state.get_register("count", 0) == 10  # original pre-scope
+        assert state.get_register("count", 1) == 0  # default to 0
+
+        # test global
+        state.push_scope()
+        state.set_register("count", 0, 100, is_global=True)
+        assert state.get_register("count", 0) == 100
+        state.pop_scope()
+        assert state.get_register("count", 0) == 100
 
     test_macro_scopes()
     test_catcode_scopes()

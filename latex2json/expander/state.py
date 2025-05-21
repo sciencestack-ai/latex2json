@@ -3,6 +3,7 @@ import dataclasses
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
+from latex2json.expander.registers import TexRegisters
 from latex2json.tokens import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 
@@ -35,8 +36,7 @@ class StateLayer:
             parent.catcode_table.copy() if parent else get_default_catcodes()
         )
 
-        # Initialize registers dict to store local register values
-        self.registers: Dict[str, Any] = {}  # e.g., {"count0": 10}
+        self.register_old_values: List[Tuple[str, Union[int, str], Any]] = []
 
     def get_catcode(self, char_ord: int) -> Catcode:
         """Get the catcode for a character from this layer's table."""
@@ -47,20 +47,6 @@ class StateLayer:
     def set_catcode(self, char_ord: int, catcode: Catcode):
         """Set the catcode for a character in this layer's table."""
         self.catcode_table[char_ord] = catcode
-
-    def get_register(self, name: str) -> Any:
-        if name in self.registers:
-            return self.registers[name]
-        if self._parent:
-            return self._parent.get_register(name)
-        return None
-
-    def set_register(self, name: str, value: Any, is_global: bool = False):
-        if is_global and self._parent:
-            # Traverse to root layer for global assignments
-            self._parent.set_register(name, value, is_global=True)
-        else:
-            self.registers[name] = value
 
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.macro_registry.get(name)
@@ -87,6 +73,27 @@ class ExpanderState:
         self.tokenizer = tokenizer
         self.pending_global = False
 
+        self.registers = TexRegisters()
+
+    @property
+    def mode(self) -> ProcessingMode:
+        return self.current.mode
+
+    def get_register(self, name: str, reg_id: Union[int, str]) -> Any:
+        return self.registers.get_register(name, reg_id)
+
+    def set_register(
+        self, name: str, reg_id: Union[int, str], value: Any, is_global: bool = False
+    ):
+        is_global = self.pending_global or is_global
+        cur_value = self.registers.get_register(name, reg_id)
+        if cur_value is not None:
+            if not is_global:
+                # store changes
+                self.current.register_old_values.append((name, reg_id, cur_value))
+            self.registers.set_register(name, reg_id, value)
+        self.pending_global = False
+
     def get_root(self) -> StateLayer:
         """Get the root state layer (the first layer in the stack)."""
         return self._stack[0]
@@ -111,8 +118,11 @@ class ExpanderState:
             # Cannot pop the base global scope
             print("[WARNING]: Cannot pop the base ExpanderState scope!")
             return
-        self._stack.pop()
+        last_state = self._stack.pop()
         self.tokenizer.set_catcode_table(self.current.catcode_table)
+        # setback the old values
+        for change in reversed(last_state.register_old_values):
+            self.registers.set_register(*change)
 
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.current.get_macro(name)
@@ -136,19 +146,3 @@ class ExpanderState:
     def set_mode(self, mode: ProcessingMode):
         """Set the mode for the current scope."""
         self.current.mode = mode
-
-    # Add convenience properties/methods for other current state (mode, conditionals, etc.)
-    @property
-    def mode(self) -> ProcessingMode:
-        return self.current.mode
-
-    def get_register(self, name: str) -> Any:
-        return self.current.get_register(name)
-
-    def set_register(self, name: str, value: Any, is_global: bool = False):
-        self.current.set_register(name, value, is_global or self.pending_global)
-        self.pending_global = False
-
-    # Add methods to get/set register values, parameter values, etc.,
-    # which would interact with the current layer's state and potentially global state.
-    # Example: get_register(name), set_register(name, value, is_global)

@@ -187,6 +187,8 @@ class TokenStream(BaseTokenStream):
         return self.tokenizer.get_next_token()
 
     def _peek_base(self, n: int) -> Optional[Token]:
+        if n < 0:
+            raise NotImplementedError("negative n not supported")
         start_pos = self.tokenizer.pos
         i = 0
         out = None

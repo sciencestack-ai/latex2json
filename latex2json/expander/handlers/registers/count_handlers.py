@@ -4,8 +4,6 @@ from latex2json.tokens.types import Token
 
 
 class CountHandler:
-    COUNT_PREFIX = "count/"
-
     @staticmethod
     def setter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         count_name = expander.parse_integer()
@@ -29,7 +27,7 @@ class CountHandler:
             )
             return None
 
-        expander.set_register(CountHandler.COUNT_PREFIX + str(count_name), count_value)
+        expander.set_register("count", count_name, count_value)
         return []
 
     @staticmethod
@@ -41,9 +39,7 @@ class CountHandler:
             )
             return None
 
-        return expander.get_register_value_as_tokens(
-            CountHandler.COUNT_PREFIX + str(count_name)
-        )
+        return expander.get_register_value_as_tokens("count", count_name)
 
 
 def register_count_handlers(expander: ExpanderCore):
@@ -55,4 +51,4 @@ if __name__ == "__main__":
 
     expander = Expander()
     expander.expand(r"\count10=100")
-    print(expander.state.get_register("count/10"))
+    print(expander.state.get_register("count", 10))

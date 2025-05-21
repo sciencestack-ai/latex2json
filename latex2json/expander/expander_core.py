@@ -1,5 +1,5 @@
 from logging import Logger
-from typing import Callable, List, Any, Dict, Optional, Type
+from typing import Callable, List, Any, Dict, Optional, Type, Union
 
 
 from latex2json.expander.macro_registry import (
@@ -94,17 +94,21 @@ class ExpanderCore:
         self.state.set_macro(name, macro, is_global=is_global)
 
     # REGISTERS
-    def get_register_value(self, name: str) -> Optional[Any]:
-        return self.state.get_register(name)
+    def get_register_value(self, name: str, reg_id: Union[int, str]) -> Optional[Any]:
+        return self.state.get_register(name, reg_id)
 
-    def get_register_value_as_tokens(self, name: str) -> Optional[List[Token]]:
-        value = self.get_register_value(name)
+    def get_register_value_as_tokens(
+        self, name: str, reg_id: Union[int, str]
+    ) -> Optional[List[Token]]:
+        value = self.get_register_value(name, reg_id)
         if value is None:
             return None
         return self.convert_str_to_tokens(str(value))
 
-    def set_register(self, name: str, value: Any, is_global: bool = False):
-        self.state.set_register(name, value, is_global=is_global)
+    def set_register(
+        self, name: str, reg_id: Union[int, str], value: Any, is_global: bool = False
+    ):
+        self.state.set_register(name, reg_id, value, is_global=is_global)
 
     def set_text(self, text: str):
         self.stream.set_text(text)
@@ -138,7 +142,7 @@ class ExpanderCore:
             if stop_token_logic and stop_token_logic(current_token):
                 break
 
-            processed = self._expand_next()
+            processed = self.expand_next()
             if processed:
                 final_expanded_tokens.extend(processed)
 
@@ -150,8 +154,8 @@ class ExpanderCore:
     def pop_scope(self):
         self.state.pop_scope()
 
-    def peek(self) -> Optional[Token]:
-        return self.stream.peek()
+    def peek(self, offset: int = 0) -> Optional[Token]:
+        return self.stream.peek(offset)
 
     def consume(self) -> Optional[Token]:
         return self.stream.consume()
@@ -160,7 +164,7 @@ class ExpanderCore:
         return self.stream.skip_whitespace()
 
     # main parsing logic
-    def _expand_next(self) -> Optional[List[Token]]:
+    def expand_next(self) -> Optional[List[Token]]:
         tok = self.parse_token()
         if tok is None:
             return None
