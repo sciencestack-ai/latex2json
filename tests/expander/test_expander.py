@@ -61,22 +61,3 @@ def test_redefine_primitives():
     assert_token_sequence(
         expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
     )
-
-
-def test_counts():
-    expander = Expander()
-    text = r"""
-    \newcount\mycounter
-    \mycounter = 100
-    """
-    expander.expand(text)
-    assert expander.check_tokens_equal(
-        expander.expand(r"\the\mycounter"), expander.expand("100")
-    )
-
-    # now redefine mycounter
-    expander.expand(r"\def\mycounter{MYCOUNTER}")
-    assert_token_sequence(expander.expand(r"\mycounter"), expander.expand("MYCOUNTER"))
-    assert not expander.check_tokens_equal(
-        expander.expand(r"\the\mycounter"), expander.expand("100")
-    )

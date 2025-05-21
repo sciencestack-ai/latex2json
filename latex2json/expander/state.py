@@ -92,7 +92,9 @@ class ExpanderState:
         self.set_register(register_type, reg_id, default_value, is_global=is_global)
         # also create a macro for it # e.g. \newcount\mycounter -> \mycounter
         self.set_macro(
-            reg_id, RegisterMacro(register_type, reg_id), is_global=is_global
+            reg_id,
+            RegisterMacro(register_type, reg_id, is_named=True),
+            is_global=is_global,
         )
 
     def set_register(

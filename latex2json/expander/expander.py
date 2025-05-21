@@ -1,4 +1,5 @@
 from logging import Logger
+from typing import Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.tokenizer import Tokenizer
 
@@ -6,7 +7,7 @@ from latex2json.tokens.tokenizer import Tokenizer
 class Expander(ExpanderCore):
     def __init__(
         self,
-        tokenizer: Tokenizer = Tokenizer(),
+        tokenizer: Optional[Tokenizer] = None,
         logger: Logger = Logger("expander"),
     ):
         super().__init__(tokenizer, logger)

@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional, Union, List
+from typing import TYPE_CHECKING, Any, Optional, Tuple, Union, List
 
 from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Token
+from latex2json.tokens.types import TokenType
 
 if TYPE_CHECKING:
     from latex2json.expander.expander_core import ExpanderCore
@@ -32,47 +33,149 @@ class RegisterType(Enum):
             return cls.OTHER
 
 
-def set_register_handler(
-    expander: "ExpanderCore", register_type: RegisterType, reg_id: Union[int, str]
-) -> bool:
-    if expander.parse_equals():
-        # if = is found, it's an assignment
-        expander.skip_whitespace()
-        if register_type == RegisterType.COUNT:
-            value = expander.parse_integer()
-        elif register_type == RegisterType.DIMEN:
-            value = expander.parse_dimensions()
-            if value:
-                value = dimension_to_scaled_points(value[0], value[1])
-        else:
-            raise NotImplementedError(f"Setting {register_type} is not implemented")
+def get_register_handler(
+    expander: "ExpanderCore", token: Token
+) -> Optional[Tuple[RegisterType, Union[int, str]]]:
+    macro = expander.get_macro(token.value)
+    if isinstance(macro, RegisterMacro):
+        if expander.peek() == token:
+            expander.consume()
+        register_type = macro.register_type
+        reg_id = macro.name
 
-        if value is None:
-            expander.logger.warning(
-                f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
-            )
-            return False
-        expander.set_register(register_type, reg_id, value)
-        return True
-    return False
+        if not macro.is_named:
+            if register_type == RegisterType.OTHER:
+                raise NotImplementedError(
+                    f"Getting register:{register_type} is not implemented"
+                )
+            else:
+                tok = expander.peek()
+                reg_id = expander.parse_integer()
+                if reg_id is None:
+                    expander.logger.warning(
+                        f"Register:{register_type} invalid register id, tok: {tok}"
+                    )
+                    return None
+        return register_type, reg_id
+    return None
+
+
+def parse_registertype_value(
+    expander: "ExpanderCore", register_type: RegisterType
+) -> Optional[int]:
+    value = None
+    if register_type == RegisterType.COUNT:
+        return expander.parse_integer()
+    elif register_type == RegisterType.DIMEN:
+        value = expander.parse_dimensions()
+        if value:
+            value = dimension_to_scaled_points(value[0], value[1])
+    else:
+        raise NotImplementedError(f"Setting {register_type} is not implemented")
+
+    return value
+
+
+def set_register_value_handler(
+    expander: "ExpanderCore",
+    register_type: RegisterType,
+    reg_id: Union[int, str],
+    check_equals=True,
+) -> bool:
+    if check_equals and not expander.parse_equals():
+        return False
+
+    # if = is found, it's an assignment
+    expander.skip_whitespace()
+    value = parse_registertype_value(expander, register_type)
+
+    if value is None:
+        expander.logger.warning(
+            f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
+        )
+        return False
+    expander.set_register(register_type, reg_id, value)
+    return True
 
 
 def registertype_macro_handler(
-    expander: "ExpanderCore", register_type: RegisterType, reg_id: Union[int, str]
+    expander: "ExpanderCore",
+    token: Token,
+    is_named_register: bool = False,
 ) -> Optional[List[Token]]:
-    if set_register_handler(expander, register_type, reg_id):
+    parsed = get_register_handler(expander, token)
+    if not parsed:
+        return [token]
+    register_type, reg_id = parsed
+    if set_register_value_handler(expander, register_type, reg_id):
         return []
-    return expander.get_register_value_as_tokens(register_type, reg_id)
+    # don't expand by default # expander.get_register_value_as_tokens(register_type, reg_id)
+    # return the token itself instead since it is technically non-expandable
+    if not is_named_register:
+        return [token] + expander.convert_str_to_tokens(str(reg_id))
+    return [token]
 
 
 class RegisterMacro(Macro):
-    def __init__(self, register_type: RegisterType, reg_id: Union[int, str]):
+    def __init__(self, register_type: RegisterType, command_name: str, is_named=False):
         handler: Handler = lambda expander, token: registertype_macro_handler(
-            expander, register_type, reg_id
+            expander, token, is_named
         )
-        name = f"{reg_id}"
-        super().__init__(name, handler, [])
+        super().__init__(command_name, handler, [])
         self.register_type = register_type
+        self.is_named = is_named
+
+
+class NewRegisterMacro(Macro):
+    def __init__(self, register_type: RegisterType, command_name: str):
+
+        handler: Handler = lambda expander, token: new_register_macro_handler(
+            expander, token, register_type
+        )
+        super().__init__(command_name, handler, [])
+        self.register_type = register_type
+
+
+def new_register_macro_handler(
+    expander: "ExpanderCore",
+    token: Token,
+    register_type: RegisterType,
+) -> Optional[List[Token]]:
+    tok = expander.peek()
+    if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+        expander.logger.warning(f"Warning: \\newcount expects a \name, but found {tok}")
+        return None
+    count_name = tok.value
+    expander.consume()
+
+    default_value = 0
+    if register_type == RegisterType.SKIP:
+        default_value = Glue(0, 0, 0)
+    elif register_type == RegisterType.BOX:
+        default_value = None  # Box([])
+    elif register_type == RegisterType.TOKS:
+        default_value = []
+
+    expander.create_register(register_type, count_name, default_value, is_global=True)
+
+    return []
+
+
+def register_all_register_macros(expander: "ExpanderCore"):
+    for register_type in RegisterType:
+        cmd_name = register_type.value
+        expander.register_macro(
+            cmd_name,
+            RegisterMacro(register_type, cmd_name),
+            is_global=True,
+        )
+
+        new_register_name = f"new{cmd_name}"
+        expander.register_macro(
+            new_register_name,
+            NewRegisterMacro(register_type, new_register_name),
+            is_global=True,
+        )
 
 
 @dataclass

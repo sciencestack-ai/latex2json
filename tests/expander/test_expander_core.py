@@ -268,8 +268,8 @@ def test_parse_int_float_arguments():
 
     tokens_13_empty = expander.expand(r"1\empty3")
     expander.register_handler(r"\thirteenempty", lambda x, y: tokens_13_empty)
-    expander.set_text(r"\thirteenempty")
-    assert expander.parse_integer() == 13
+    expander.set_text(r"-\thirteenempty")
+    assert expander.parse_integer() == -13
 
 
 def test_parse_dimensions():
@@ -282,8 +282,8 @@ def test_parse_dimensions():
     assert expander.parse_dimensions() == (2, "in")
 
     # test with \relax
-    expander.set_text(r"2 \relax in")
-    assert expander.parse_dimensions() == (2, "")
+    expander.set_text(r"-2 \relax in")
+    assert expander.parse_dimensions() == (-2, "")
 
     expander.set_text(r"\relax")
     assert not expander.parse_dimensions()

@@ -17,3 +17,10 @@ def test_the_catcode():
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
     assert_token_sequence(expander.expand(r"\the\catcode`\@"), expander.expand("12"))
+
+
+def test_registers():
+    expander = Expander()
+    expander.expand(r"\newcount\mycount")
+    expander.expand(r"\mycount=10")
+    assert_token_sequence(expander.expand(r"\the\mycount"), expander.expand("10"))

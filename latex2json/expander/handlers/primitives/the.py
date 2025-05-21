@@ -1,7 +1,5 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.registers.count_handlers import CountHandler
-from latex2json.expander.handlers.registers.dimen_handlers import DimenHandler
 from latex2json.tokens.types import Token, TokenType
 
 from latex2json.expander.handlers.primitives.catcode import CatcodeHandler
@@ -18,19 +16,16 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         )
         return None
 
-    expander.consume()
     name = tok.value
 
     if name == "catcode":
+        expander.consume()
         return CatcodeHandler.getter(expander, token)
-    elif name == "count":
-        return CountHandler.getter(expander, token)
-    elif name == "dimen":
-        return DimenHandler.getter(expander, token)
     else:
         # just expand the token
-        exp = expander.expand_tokens([tok])
-        return exp
+        parsed = expander.parse_register()
+        if parsed:
+            return expander.get_register_value_as_tokens(parsed[0], parsed[1])
 
     return []
 

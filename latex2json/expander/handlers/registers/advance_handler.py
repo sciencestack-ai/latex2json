@@ -1,9 +1,10 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.registers import RegisterType
+from latex2json.expander.registers import (
+    RegisterType,
+    parse_registertype_value,
+)
 from latex2json.tokens.types import Token, TokenType
-from latex2json.expander.handlers.registers.count_handlers import CountHandler
-from latex2json.tokens.utils import is_whitespace_token
 
 
 class AdvanceHandler:
@@ -12,15 +13,14 @@ class AdvanceHandler:
         # Skip any whitespace after \advance
         expander.skip_whitespace()
 
-        # Get the register name/number
-        tok = expander.peek()
-        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+        parsed = expander.parse_register()
+        if not parsed:
             expander.logger.warning(
-                f"Warning: \\advance expects a register name, but found {tok}"
+                f"Warning: \\advance expects a register, but found {expander.peek()}"
             )
             return None
-        register_name = tok.value
-        expander.consume()
+
+        register_type, register_name = parsed
 
         # Skip whitespace before "by"
         expander.skip_whitespace()
@@ -42,25 +42,20 @@ class AdvanceHandler:
             )
             return None
 
-        # # Get the increment value
-        # increment = expander.parse_integer()
-        # if increment is None:
-        #     expander.logger.warning(
-        #         f"Warning: \\advance expects a number after 'by', but found {expander.peek()}"
-        #     )
-        #     return None
+        value = parse_registertype_value(expander, register_type)
+        if value is None:
+            expander.logger.warning(
+                f"Warning: \\advance\\{register_name} [by] expects a value, but found {tok}"
+            )
+            return None
 
-        # # Get the current value and add the increment
-        # register_name = CountHandler.COUNT_PREFIX + str(count_name)
-        # current_value = expander.get_register_value(register_name)
+        cur_value = expander.get_register_value(register_type, register_name)
+        if cur_value is None:
+            cur_value = 0
 
-        # if current_value is None:
-        #     current_value = 0  # Initialize to 0 if register doesn't exist
+        new_value = cur_value + value
 
-        # new_value = current_value + increment
-
-        # # Set the new value
-        # expander.set_register(register_name, new_value)
+        expander.set_register(register_type, register_name, new_value)
 
         return []
 
@@ -73,5 +68,13 @@ if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    expander.expand(r"\advance\count1 by 10")
-    print(expander.get_register_value(RegisterType.COUNT, 1))
+    register_advance_handler(expander)
+
+    # expander.expand(r"\def\cnter{\count} \def\one{1}")
+    # expander.expand(r"\advance\count1 by 10")
+    # expander.expand(r"\advance\cnter\one by 20")
+    # print(expander.get_register_value(RegisterType.COUNT, 1))
+
+    expander.expand(r"\newcount\mycount")
+    expander.expand(r"\advance\mycount by 10")
+    print(expander.expand(r"\the\mycount"))

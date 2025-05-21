@@ -8,7 +8,11 @@ from latex2json.expander.macro_registry import (
     MacroRegistry,
 )
 
-from latex2json.expander.registers import RegisterType
+from latex2json.expander.registers import (
+    RegisterMacro,
+    RegisterType,
+    get_register_handler,
+)
 from latex2json.expander.state import ExpanderState
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
@@ -27,7 +31,6 @@ from latex2json.tokens.utils import (
 )
 
 # arbitrary character that is not a valid token
-STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 
 TokenPredicate = Callable[[Token], bool]
@@ -66,6 +69,10 @@ class ExpanderCore:
         return self.state.current.macro_registry
 
     def _init_state_macros(self):
+        from latex2json.expander.registers import register_all_register_macros
+
+        register_all_register_macros(self)
+
         def global_handler(expander: "ExpanderCore", token: Token):
             expander.state.pending_global = True
             return []
@@ -146,6 +153,7 @@ class ExpanderCore:
         return self.process()
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
+        STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
         self.stream.push_tokens(tokens + [STOP_TOKEN])
         out = self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
         if self.peek() is STOP_TOKEN:
@@ -261,17 +269,34 @@ class ExpanderCore:
             return self.parse_brace_as_tokens()
         return [self.consume()]
 
-    def parse_integer(self) -> int:
+    def parse_integer(self) -> Optional[int]:
         sequence, relax = self._expand_and_combine_as_str(is_signed_integer_token)
         if not sequence:
             return None
         return int(sequence)
 
-    def parse_float(self) -> float:
+    def parse_float(self) -> Optional[float]:
         sequence, relax = self._expand_and_combine_as_str(is_digit_token)
         if not sequence:
             return None
         return float(sequence)
+
+    def parse_register(self) -> Optional[Tuple[RegisterType, Union[int, str]]]:
+        tok = self.peek()
+        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+            return None
+
+        macro = self.get_macro(tok.value)
+        if macro and isinstance(macro, RegisterMacro):
+            return get_register_handler(self, tok)
+
+        # expand in case
+        exp = self.expand_next()
+        self.stream.push_tokens(exp)
+        tok = self.peek()
+        if tok is None:
+            return None
+        return get_register_handler(self, tok)
 
     def parse_dimensions(self) -> Optional[Tuple[float, str]]:
         """
@@ -496,12 +521,9 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    from latex2json.expander.registers import set_register_handler
+    from latex2json.expander.registers import set_register_value_handler
 
     expander = ExpanderCore()
 
     expander.set_text(r"\count0=10")
-    assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "count")
-    assert expander.consume() == Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER)
-    assert expander.peek().value == "="
-    assert set_register_handler(expander, RegisterType.COUNT, "0")
+    print(expander.parse_register())
