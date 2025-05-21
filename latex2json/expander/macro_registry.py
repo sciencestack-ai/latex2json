@@ -1,4 +1,4 @@
-from typing import Dict, List, Callable, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, Callable, Optional, TYPE_CHECKING
 
 from latex2json.tokens.types import Token
 

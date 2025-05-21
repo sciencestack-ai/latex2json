@@ -24,6 +24,10 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         return CatcodeHandler.getter(expander, token)
     elif name == "count":
         return CountHandler.getter(expander, token)
+    else:
+        # just expand the token
+        exp = expander.expand_tokens([tok])
+        return exp
 
     return []
 

@@ -8,6 +8,7 @@ from latex2json.expander.macro_registry import (
     MacroRegistry,
 )
 
+from latex2json.expander.registers import RegisterType
 from latex2json.expander.state import ExpanderState
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
@@ -65,12 +66,12 @@ class ExpanderCore:
 
         class EmptyMacro(Macro):
             def __init__(self):
-                super().__init__("\\empty", lambda expander, token: [], definition=[])
+                super().__init__("empty", lambda expander, token: [], definition=[])
 
         class RelaxMacro(Macro):
             def __init__(self):
                 super().__init__(
-                    "\\relax",
+                    "relax",
                     lambda expander, token: [token],  # return the \relax token itself
                     definition=[RELAX_TOKEN.copy()],
                 )
@@ -94,22 +95,40 @@ class ExpanderCore:
         self.state.set_macro(name, macro, is_global=is_global)
 
     # REGISTERS
-    def get_register_value(self, name: str, reg_id: Union[int, str]) -> Optional[Any]:
-        return self.state.get_register(name, reg_id)
+    def get_register_value(
+        self, register_type: RegisterType, reg_id: Union[int, str]
+    ) -> Optional[Any]:
+        return self.state.get_register(register_type, reg_id)
 
     def get_register_value_as_tokens(
-        self, name: str, reg_id: Union[int, str]
+        self, register_type: RegisterType, reg_id: Union[int, str]
     ) -> Optional[List[Token]]:
-        value = self.get_register_value(name, reg_id)
+        value = self.get_register_value(register_type, reg_id)
         if value is None:
             return None
         return self.convert_str_to_tokens(str(value))
 
-    def set_register(
-        self, name: str, reg_id: Union[int, str], value: Any, is_global: bool = False
+    def create_register(
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        default_value: Any,
+        is_global=False,
     ):
-        self.state.set_register(name, reg_id, value, is_global=is_global)
+        self.state.create_register(
+            register_type, reg_id, default_value, is_global=is_global
+        )
 
+    def set_register(
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        value: Any,
+        is_global: bool = False,
+    ):
+        self.state.set_register(register_type, reg_id, value, is_global=is_global)
+
+    # PROCESSING
     def set_text(self, text: str):
         self.stream.set_text(text)
 
@@ -171,7 +190,7 @@ class ExpanderCore:
 
         if tok.type == TokenType.CONTROL_SEQUENCE:
             macro = self.state.get_macro(tok.value)
-            if macro:
+            if macro and macro.handler:
                 processed = macro.handler(self, tok)
                 return processed
         else:

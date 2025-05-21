@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.registers import RegisterType
 from latex2json.tokens.types import Token, TokenType
 from latex2json.expander.handlers.registers.count_handlers import CountHandler
 from latex2json.tokens.utils import is_whitespace_token
@@ -73,4 +74,4 @@ if __name__ == "__main__":
 
     expander = Expander()
     expander.expand(r"\advance\count1 by 10")
-    print(expander.get_register_value("count", 1))
+    print(expander.get_register_value(RegisterType.COUNT, 1))

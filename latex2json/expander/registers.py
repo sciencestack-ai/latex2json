@@ -1,8 +1,55 @@
-from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Optional, Union, List
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Optional, Union, List
 
+from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.tokens import Token
+
+if TYPE_CHECKING:
+    from latex2json.expander.expander_core import ExpanderCore
+
+
+class RegisterType(Enum):
+    COUNT = "count"
+    DIMEN = "dimen"
+    SKIP = "skip"
+    TOKS = "toks"
+    BOX = "box"
+    OTHER = "other"
+
+    def __str__(self):
+        return self.value
+
+    @classmethod
+    def from_str(cls, value: Union[str, "RegisterType"]) -> "RegisterType":
+        """Convert string to RegisterType if needed"""
+        if isinstance(value, cls):
+            return value
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.OTHER
+
+
+def register_macro_handler(
+    expander: "ExpanderCore", register_type: RegisterType, name: str
+) -> Optional[List[Token]]:
+    if expander.parse_equals():
+        # if = is found, it's an assignment
+        expander.skip_whitespace()
+        value = expander.parse_integer()  # TODO
+        expander.set_register(register_type, name, value)
+        return []
+    return expander.get_register_value_as_tokens(register_type, name)
+
+
+class RegisterMacro(Macro):
+    def __init__(self, register_type: RegisterType, name: str):
+        handler: Handler = lambda expander, token: register_macro_handler(
+            expander, register_type, name
+        )
+        super().__init__(name, handler, [])
+        self.register_type = register_type
 
 
 @dataclass
@@ -46,91 +93,103 @@ class TexRegisters:
 
         # A mapping for quick lookup in generic internal helpers
         self._register_pools = {
-            "count": self._counts,
-            "dimen": self._dimens_sp,
-            "skip": self._skips,
-            "toks": self._toks,
-            "box": self._boxes,
+            RegisterType.COUNT: self._counts,
+            RegisterType.DIMEN: self._dimens_sp,
+            RegisterType.SKIP: self._skips,
+            RegisterType.TOKS: self._toks,
+            RegisterType.BOX: self._boxes,
         }
         self._named_register_pools = {
-            "count": self._named_counts,
-            "dimen": self._named_dimens_sp,
-            "skip": self._named_skips,
-            "toks": self._named_toks,
-            "box": self._named_boxes,
+            RegisterType.COUNT: self._named_counts,
+            RegisterType.DIMEN: self._named_dimens_sp,
+            RegisterType.SKIP: self._named_skips,
+            RegisterType.TOKS: self._named_toks,
+            RegisterType.BOX: self._named_boxes,
         }
 
     def get_count(self, reg_id: Union[int, str]) -> int:
         """Get the value of a count register"""
-        return self._get_generic_register("count", reg_id)
+        return self._get_generic_register(RegisterType.COUNT, reg_id)
 
     def set_count(self, reg_id: Union[int, str], value: int) -> None:
         """Set the value of a count register"""
-        self._set_generic_register("count", reg_id, value)
+        self._set_generic_register(RegisterType.COUNT, reg_id, value)
 
     def get_dimen(self, reg_id: Union[int, str]) -> int:
         """Get the value of a dimension register in scaled points"""
-        return self._get_generic_register("dimen", reg_id)
+        return self._get_generic_register(RegisterType.DIMEN, reg_id)
 
     def set_dimen(self, reg_id: Union[int, str], value: int) -> None:
         """Set the value of a dimension register in scaled points"""
-        self._set_generic_register("dimen", reg_id, value)
+        self._set_generic_register(RegisterType.DIMEN, reg_id, value)
 
     def get_skip(self, reg_id: Union[int, str]) -> Glue:
         """Get the value of a skip register"""
-        return self._get_generic_register("skip", reg_id)
+        return self._get_generic_register(RegisterType.SKIP, reg_id)
 
     def set_skip(self, reg_id: Union[int, str], value: Glue) -> None:
         """Set the value of a skip register"""
-        self._set_generic_register("skip", reg_id, value)
+        self._set_generic_register(RegisterType.SKIP, reg_id, value)
 
     def get_toks(self, reg_id: Union[int, str]) -> List[Token]:
         """Get the value of a token register"""
-        return self._get_generic_register("toks", reg_id)
+        return self._get_generic_register(RegisterType.TOKS, reg_id)
 
     def set_toks(self, reg_id: Union[int, str], value: List[Token]) -> None:
         """Set the value of a token register"""
-        self._set_generic_register("toks", reg_id, value)
+        self._set_generic_register(RegisterType.TOKS, reg_id, value)
 
     def get_box(self, reg_id: Union[int, str]) -> Optional[Box]:
         """Get the value of a box register"""
-        return self._get_generic_register("box", reg_id)
+        return self._get_generic_register(RegisterType.BOX, reg_id)
 
     def set_box(self, reg_id: Union[int, str], value: Optional[Box]) -> None:
         """Set the value of a box register"""
-        self._set_generic_register("box", reg_id, value)
+        self._set_generic_register(RegisterType.BOX, reg_id, value)
 
-    def get_register(self, reg_name: str, reg_id: Union[int, str]):
-        return self._get_generic_register(reg_name, reg_id)
+    def get_register(self, reg_type: RegisterType, reg_id: Union[int, str]):
+        return self._get_generic_register(reg_type, reg_id)
 
-    def set_register(self, reg_name: str, reg_id: Union[int, str], value: Any):
-        self._set_generic_register(reg_name, reg_id, value)
+    def set_register(self, reg_type: RegisterType, reg_id: Union[int, str], value: Any):
+        self._set_generic_register(reg_type, reg_id, value)
 
-    def _get_generic_register(self, reg_name: str, reg_id: Union[int, str]):
+    def delete_register(self, reg_type: RegisterType, reg_id: str):
+        if reg_id in self._named_register_pools.get(reg_type, {}):
+            del self._named_register_pools[reg_type][reg_id]
+
+    def _get_generic_register(
+        self, reg_type: Union[str, RegisterType], reg_id: Union[int, str]
+    ):
         """Internal helper to get register value by type and ID"""
+        reg_type = RegisterType.from_str(reg_type)
         if isinstance(reg_id, int):
             if not 0 <= reg_id < 256:
                 return None
-            return self._register_pools[reg_name][reg_id]
+            return self._register_pools[reg_type][reg_id]
         elif isinstance(reg_id, str):
             try:
-                return self._named_register_pools[reg_name][reg_id]
+                return self._named_register_pools[reg_type][reg_id]
             except KeyError:
                 return None
         return None
 
     def _set_generic_register(
-        self, reg_type_str: str, reg_id: Union[int, str], value: Any
+        self, reg_type: Union[str, RegisterType], reg_id: Union[int, str], value: Any
     ) -> None:
         """Internal helper to set register value by type and ID"""
+        reg_type = RegisterType.from_str(reg_type)
         if isinstance(reg_id, int):
             if not 0 <= reg_id < 256:
                 return None
-            self._register_pools[reg_type_str][reg_id] = value
+            self._register_pools[reg_type][reg_id] = value
         elif isinstance(reg_id, str):
-            self._named_register_pools[reg_type_str][reg_id] = value
+            self._named_register_pools[reg_type][reg_id] = value
         return None
 
-    def copy(self):
-        """Copy the state manager"""
-        return deepcopy(self)
+
+if __name__ == "__main__":
+    reg = TexRegisters()
+    reg.set_register(RegisterType.COUNT, "newcounter", 0)
+    print(reg.get_count(0))
+    reg.delete_register(RegisterType.COUNT, "newcounter")
+    print(reg.get_count(0))
