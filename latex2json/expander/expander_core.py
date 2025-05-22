@@ -235,7 +235,7 @@ class ExpanderCore:
         return self.stream.match(token_type, value, catcode)
 
     def _expand_and_combine_as_str(
-        self, predicate: Callable[[Token], bool]
+        self, predicate: Callable[[Token], bool], expand_registers=False
     ) -> Tuple[str, bool]:
         tok = self.peek()
         out = ""
@@ -248,6 +248,18 @@ class ExpanderCore:
                 if is_relax_token(tok):
                     self.consume()
                     return out, True
+                exp = []
+                if expand_registers:
+                    # parse register value literal i.e. without any expanding
+                    reg_out = self.parse_register_value(expand=False)
+                    if reg_out is not None:
+                        self.stream.push_tokens(
+                            self.convert_str_to_tokens(str(reg_out))
+                        )
+                        tok = self.peek()
+                        continue
+
+                # expand and continue loop
                 exp = self.expand_tokens([tok])
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
@@ -270,18 +282,24 @@ class ExpanderCore:
         return [self.consume()]
 
     def parse_integer(self) -> Optional[int]:
-        sequence, relax = self._expand_and_combine_as_str(is_signed_integer_token)
+        sequence, relax = self._expand_and_combine_as_str(
+            is_signed_integer_token, expand_registers=True
+        )
         if not sequence:
             return None
         return int(sequence)
 
     def parse_float(self) -> Optional[float]:
-        sequence, relax = self._expand_and_combine_as_str(is_digit_token)
+        sequence, relax = self._expand_and_combine_as_str(
+            is_digit_token, expand_registers=True
+        )
         if not sequence:
             return None
         return float(sequence)
 
-    def parse_register(self) -> Optional[Tuple[RegisterType, Union[int, str]]]:
+    def parse_register(
+        self, expand=True
+    ) -> Optional[Tuple[RegisterType, Union[int, str]]]:
         tok = self.peek()
         if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
             return None
@@ -290,13 +308,28 @@ class ExpanderCore:
         if macro and isinstance(macro, RegisterMacro):
             return get_register_handler(self, tok)
 
-        # expand in case
-        exp = self.expand_next()
-        self.stream.push_tokens(exp)
+        if expand:
+            # expand in case
+            exp = self.expand_next()
+            self.stream.push_tokens(exp)
+            start_pos = self.skip_whitespace()
+            tok = self.peek()
+            if tok is None:
+                return None
+            out = get_register_handler(self, tok)
+            if out is None:
+                self.stream.set_pos(*start_pos)
+            return out
+        return None
+
+    def parse_register_value(self, expand=True) -> Optional[Any]:
         tok = self.peek()
         if tok is None:
             return None
-        return get_register_handler(self, tok)
+        out = self.parse_register(expand=expand)
+        if out is None:
+            return None
+        return self.get_register_value(out[0], out[1])
 
     def parse_dimensions(self) -> Optional[Tuple[float, str]]:
         """

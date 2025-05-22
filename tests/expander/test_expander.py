@@ -2,6 +2,7 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -61,3 +62,24 @@ def test_redefine_primitives():
     assert_token_sequence(
         expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
     )
+
+
+def test_edef_with_counters():
+    expander = Expander()
+
+    text = r"""
+    \count0=123
+    \edef\foo{\count0}  % → literally expands to "\count0", NOT "123"
+    \edef\bar{\the\count0}  % → expands to "123"
+""".strip()
+    expander.expand(text)
+    foo = expander.expand(r"\foo")
+    bar = expander.expand(r"\bar")
+    assert_token_sequence(
+        foo,
+        [
+            Token(TokenType.CONTROL_SEQUENCE, "count"),
+            Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER),
+        ],
+    )
+    assert_token_sequence(bar, expander.expand("123"))

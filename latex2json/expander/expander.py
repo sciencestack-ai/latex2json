@@ -26,9 +26,10 @@ if __name__ == "__main__":
     expander = Expander()
 
     text = r"""
-    \def\foo#1{
-        \def\bar##1{BAR #1 ##1}
-        \gdef\barx{\bar{BRO}}
-    }
+    \count0=123
+    \edef\foo{\count0}  % → literally expands to "\count0", NOT "123"
+    \edef\bar{\the\count0}  % → expands to "123"
 """.strip()
-    print(expander.expand(text))
+    expander.expand(text)
+    out1 = expander.expand(r"\foo")
+    out2 = expander.expand(r"\bar")

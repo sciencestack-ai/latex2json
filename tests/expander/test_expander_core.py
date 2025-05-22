@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.registers import RegisterType
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import (
@@ -293,6 +294,21 @@ def test_parse_dimensions():
 
     expander.set_text(r"1234 i\relax n")
     assert expander.parse_dimensions() == (1234, "i")
+
+
+def test_parse_register():
+    expander = ExpanderCore()
+
+    expander.set_text(r"\count100")
+    assert expander.parse_register() == (RegisterType.COUNT, 100)
+
+    # setting
+    expander.expand(r"\count100=123")
+    assert expander.get_register_value(RegisterType.COUNT, 100) == 123
+
+    # test parse floats with registers
+    expander.set_text(r"\count100")
+    assert expander.parse_integer() == 123
 
 
 def test_equality_ops():
