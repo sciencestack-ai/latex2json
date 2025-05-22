@@ -26,10 +26,9 @@ if __name__ == "__main__":
     expander = Expander()
 
     text = r"""
-    \count0=123
-    \edef\foo{\count0}  % → literally expands to "\count0", NOT "123"
-    \edef\bar{\the\count0}  % → expands to "123"
+    \def\neg#1{-#1}
 """.strip()
     expander.expand(text)
-    out1 = expander.expand(r"\foo")
-    out2 = expander.expand(r"\bar")
+
+    expander.set_text(r"\neg{123}")
+    print(expander.parse_integer())

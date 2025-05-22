@@ -66,3 +66,16 @@ def test_advance_handler():
     expander.expand(text)
     assert_token_sequence(expander.expand(r"\the\cntx"), expander.expand("10"))
     assert_token_sequence(expander.expand(r"\the\count100"), expander.expand("100"))
+
+    # test advanceby with register themselves as increment
+    expander.expand(r"\advanceby\count100->{ -\count100 }")
+    assert_token_sequence(expander.expand(r"\the\count100"), expander.expand("0"))
+
+    # slightly more complex nestings
+    text = r"""
+    \count2=100
+    \def\neg#1{-#1}
+    \advanceby\count2->-\neg{\count2} % → --200 = +200
+    """
+    expander.expand(text)
+    assert_token_sequence(expander.expand(r"\the\count2"), expander.expand("200"))

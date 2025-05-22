@@ -14,6 +14,7 @@ from latex2json.expander.registers import (
     get_register_handler,
 )
 from latex2json.expander.state import ExpanderState
+from latex2json.expander.utils import parse_number_str_to_float
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,
@@ -38,6 +39,20 @@ TokenPredicate = Callable[[Token], bool]
 
 def is_relax_token(token: Token) -> bool:
     return token.type == TokenType.CONTROL_SEQUENCE and token.value == "relax"
+
+
+class EmptyMacro(Macro):
+    def __init__(self):
+        super().__init__("empty", lambda expander, token: [], definition=[])
+
+
+class RelaxMacro(Macro):
+    def __init__(self):
+        super().__init__(
+            "relax",
+            lambda expander, token: [token],  # return the \relax token itself
+            definition=[RELAX_TOKEN.copy()],
+        )
 
 
 class ExpanderCore:
@@ -76,18 +91,6 @@ class ExpanderCore:
         def global_handler(expander: "ExpanderCore", token: Token):
             expander.state.pending_global = True
             return []
-
-        class EmptyMacro(Macro):
-            def __init__(self):
-                super().__init__("empty", lambda expander, token: [], definition=[])
-
-        class RelaxMacro(Macro):
-            def __init__(self):
-                super().__init__(
-                    "relax",
-                    lambda expander, token: [token],  # return the \relax token itself
-                    definition=[RELAX_TOKEN.copy()],
-                )
 
         self.register_handler("\\global", global_handler, is_global=True)
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
@@ -245,9 +248,13 @@ class ExpanderCore:
                 self.consume()
                 out += tok.value
             elif tok.type == TokenType.CONTROL_SEQUENCE:
-                if is_relax_token(tok):
-                    self.consume()
+                # check \relax token and that it is RelaxMacro i.e. has not been redefined
+                if is_relax_token(tok) and isinstance(
+                    self.get_macro(tok.value), RelaxMacro
+                ):
+                    self.consume()  # consume \relax token itself
                     return out, True
+
                 exp = []
                 if expand_registers:
                     # parse register value literal i.e. without any expanding
@@ -260,12 +267,13 @@ class ExpanderCore:
                         continue
 
                 # expand and continue loop
-                exp = self.expand_tokens([tok])
+                exp = self.expand_next()
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
-                    self.consume()
                     self.stream.push_tokens(exp)
                 else:
+                    # push original token back onto stream
+                    self.stream.push_tokens([tok])
                     break
             else:
                 break
@@ -287,7 +295,7 @@ class ExpanderCore:
         )
         if not sequence:
             return None
-        return int(sequence)
+        return int(parse_number_str_to_float(sequence))
 
     def parse_float(self) -> Optional[float]:
         sequence, relax = self._expand_and_combine_as_str(
@@ -295,7 +303,7 @@ class ExpanderCore:
         )
         if not sequence:
             return None
-        return float(sequence)
+        return parse_number_str_to_float(sequence)
 
     def parse_register(
         self, expand=True
