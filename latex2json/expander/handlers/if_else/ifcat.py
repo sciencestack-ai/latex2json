@@ -1,15 +1,16 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.if_else.base_if import process_if_else_block
+from latex2json.expander.handlers.if_else.base_if import IfMacro
 from latex2json.tokens.types import Token, TokenType
 
 
-def ifcat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+def evaluate_ifcat(
+    expander: ExpanderCore, token: Token
+) -> tuple[bool | None, str | None]:
     expander.skip_whitespace()
     a = expander.consume()
     if a is None:
-        expander.logger.warning("Warning: \\ifcat expects a token")
-        return None
+        return None, "\\ifcat expects a token"
 
     output = expander.expand_tokens([a])
 
@@ -17,26 +18,21 @@ def ifcat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         # no skipwhitespace!
         b = expander.consume()
         if b is None:
-            expander.logger.warning("Warning: \\ifcat expects a 2nd token")
-            return None
+            return None, "\\ifcat expects a 2nd token"
         output.extend(expander.expand_tokens([b]))
 
-    is_equal = False
-    if len(output) >= 2:
-        is_equal = output[0].catcode == output[1].catcode
-        # push the remaining tokens into the stream
-        expander.push_tokens(output[2:])
+    if len(output) < 2:
+        return None, "\\ifcat could not expand to two tokens"
 
-    tok = expander.peek()
-    if tok is None:
-        expander.logger.warning("Warning: No more tokens after \\ifcat{a}{b}")
-        return None
+    is_equal = output[0].catcode == output[1].catcode
+    # push the remaining tokens into the stream
+    expander.push_tokens(output[2:])
 
-    return process_if_else_block(expander, is_equal)
+    return is_equal, None
 
 
 def register_ifcat(expander: ExpanderCore):
-    expander.register_handler("\\ifcat", ifcat_handler)
+    expander.register_macro("\\ifcat", IfMacro("ifcat", evaluate_ifcat), is_global=True)
 
 
 if __name__ == "__main__":

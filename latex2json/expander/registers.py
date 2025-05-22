@@ -17,6 +17,7 @@ class RegisterType(Enum):
     SKIP = "skip"
     TOKS = "toks"
     BOX = "box"
+    BOOL = "bool"
     OTHER = "other"
 
     def __str__(self):
@@ -153,6 +154,8 @@ def new_register_macro_handler(
         default_value = None  # Box([])
     elif register_type == RegisterType.TOKS:
         default_value = []
+    elif register_type == RegisterType.BOOL:
+        default_value = False
 
     expander.create_register(register_type, count_name, default_value, is_global=True)
 
@@ -214,6 +217,7 @@ class TexRegisters:
         self._named_skips: dict[str, Glue] = {}
         self._named_toks: dict[str, list[Token]] = {}
         self._named_boxes: dict[str, Optional[Box]] = {}
+        self._named_bools: dict[str, bool] = {}
 
         # A mapping for quick lookup in generic internal helpers
         self._register_pools = {
@@ -229,47 +233,8 @@ class TexRegisters:
             RegisterType.SKIP: self._named_skips,
             RegisterType.TOKS: self._named_toks,
             RegisterType.BOX: self._named_boxes,
+            RegisterType.BOOL: self._named_bools,
         }
-
-    def get_count(self, reg_id: Union[int, str]) -> int:
-        """Get the value of a count register"""
-        return self._get_generic_register(RegisterType.COUNT, reg_id)
-
-    def set_count(self, reg_id: Union[int, str], value: int) -> None:
-        """Set the value of a count register"""
-        self._set_generic_register(RegisterType.COUNT, reg_id, value)
-
-    def get_dimen(self, reg_id: Union[int, str]) -> int:
-        """Get the value of a dimension register in scaled points"""
-        return self._get_generic_register(RegisterType.DIMEN, reg_id)
-
-    def set_dimen(self, reg_id: Union[int, str], value: int) -> None:
-        """Set the value of a dimension register in scaled points"""
-        self._set_generic_register(RegisterType.DIMEN, reg_id, value)
-
-    def get_skip(self, reg_id: Union[int, str]) -> Glue:
-        """Get the value of a skip register"""
-        return self._get_generic_register(RegisterType.SKIP, reg_id)
-
-    def set_skip(self, reg_id: Union[int, str], value: Glue) -> None:
-        """Set the value of a skip register"""
-        self._set_generic_register(RegisterType.SKIP, reg_id, value)
-
-    def get_toks(self, reg_id: Union[int, str]) -> List[Token]:
-        """Get the value of a token register"""
-        return self._get_generic_register(RegisterType.TOKS, reg_id)
-
-    def set_toks(self, reg_id: Union[int, str], value: List[Token]) -> None:
-        """Set the value of a token register"""
-        self._set_generic_register(RegisterType.TOKS, reg_id, value)
-
-    def get_box(self, reg_id: Union[int, str]) -> Optional[Box]:
-        """Get the value of a box register"""
-        return self._get_generic_register(RegisterType.BOX, reg_id)
-
-    def set_box(self, reg_id: Union[int, str], value: Optional[Box]) -> None:
-        """Set the value of a box register"""
-        self._set_generic_register(RegisterType.BOX, reg_id, value)
 
     def get_register(self, reg_type: RegisterType, reg_id: Union[int, str]):
         return self._get_generic_register(reg_type, reg_id)

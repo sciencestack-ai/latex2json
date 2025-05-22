@@ -1,6 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.if_else.base_if import process_if_else_block
+from latex2json.expander.handlers.if_else.base_if import IfMacro
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -24,33 +24,28 @@ def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
     return ExpanderCore.check_tokens_equal([a], [b])
 
 
-def ifx_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+def evaluate_ifx(
+    expander: ExpanderCore, token: Token
+) -> tuple[bool | None, str | None]:
     expander.skip_whitespace()
     a = expander.consume()
     if a is None:
-        expander.logger.warning("Warning: \\ifx expects a token")
-        return None
+        return None, "\\ifx expects a token"
 
     expander.skip_whitespace()
     b = expander.consume()
     if b is None:
-        expander.logger.warning("Warning: \\ifx expects a 2nd token")
-        return None
+        return None, "\\ifx expects a 2nd token"
 
     is_equal = check_ifx_equals(a, b, expander)
     if is_equal is None:
-        return None
+        return None, "Could not compare tokens"
 
-    tok = expander.peek()
-    if tok is None:
-        expander.logger.warning("Warning: No more tokens after \\ifx{a}{b}")
-        return None
-
-    return process_if_else_block(expander, is_equal)
+    return is_equal, None
 
 
 def register_ifx(expander: ExpanderCore):
-    expander.register_handler("\\ifx", ifx_handler)
+    expander.register_macro("\\ifx", IfMacro("ifx", evaluate_ifx), is_global=True)
 
 
 if __name__ == "__main__":

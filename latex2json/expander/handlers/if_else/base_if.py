@@ -1,6 +1,38 @@
-from typing import List, Optional
+from typing import List, Optional, Protocol
+from latex2json.expander.macro_registry import Macro
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token, TokenType
+
+
+class ConditionEvaluator(Protocol):
+    """Protocol for condition evaluation functions"""
+
+    def __call__(
+        self, expander: ExpanderCore, token: Token
+    ) -> tuple[bool | None, str | None]: ...
+
+
+class IfMacro(Macro):
+    """Base class for if-type macros that follow the pattern:
+    1. Evaluate some condition
+    2. Process if/else block based on condition
+    """
+
+    def __init__(self, name: str, evaluate_condition: ConditionEvaluator):
+        super().__init__(name)
+        self.evaluate_condition = evaluate_condition
+        self.handler = lambda expander, token: self.expand(expander, token)
+
+    def expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        # Evaluate the condition
+        is_true, error = self.evaluate_condition(expander, token)
+
+        if is_true is None:
+            if error:
+                expander.logger.warning(f"Warning: {error}")
+            return None
+
+        return process_if_else_block(expander, is_true)
 
 
 def is_else_command(token: Token) -> bool:
@@ -56,40 +88,41 @@ def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
     return ExpanderCore.check_tokens_equal(definition_of_a, definition_of_b)
 
 
-def base_if_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+def evaluate_base_if(
+    expander: ExpanderCore, token: Token
+) -> tuple[bool | None, str | None]:
     expander.skip_whitespace()
     a = expander.consume()
     if a is None:
-        expander.logger.warning("Warning: \\if expects a token")
-        return None
+        return None, "\\if expects a token"
 
     expander.skip_whitespace()
     b = expander.consume()
     if b is None:
-        expander.logger.warning("Warning: \\if expects a 2nd token")
-        return None
+        return None, "\\if expects a 2nd token"
 
-    is_equal = check_if_equals(a, b, expander)
-    return process_if_else_block(expander, is_equal)
+    return check_if_equals(a, b, expander), None
 
 
-def if_true_false_handler(
+def evaluate_eof(
     expander: ExpanderCore, token: Token
-) -> Optional[List[Token]]:
-    is_true = token.value == "iftrue"
-    return process_if_else_block(expander, is_true)
-
-
-def if_eof_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    # TODO: can expander.eof() be used here?
-    return process_if_else_block(expander, expander.eof())
+) -> tuple[bool | None, str | None]:
+    return expander.eof(), None
 
 
 def register_base_ifs(expander: ExpanderCore):
-    expander.register_handler("\\if", base_if_handler, is_global=True)
-    expander.register_handler("\\iftrue", if_true_false_handler, is_global=True)
-    expander.register_handler("\\iffalse", if_true_false_handler, is_global=True)
-    expander.register_handler("\\ifeof", if_eof_handler, is_global=True)
+    expander.register_macro("\\if", IfMacro("if", evaluate_base_if), is_global=True)
+    expander.register_macro(
+        "\\iftrue",
+        IfMacro("iftrue", lambda expander, token: (True, None)),
+        is_global=True,
+    )
+    expander.register_macro(
+        "\\iffalse",
+        IfMacro("iffalse", lambda expander, token: (False, None)),
+        is_global=True,
+    )
+    expander.register_macro("\\ifeof", IfMacro("ifeof", evaluate_eof), is_global=True)
 
 
 if __name__ == "__main__":

@@ -1,43 +1,34 @@
 from typing import List, Optional
 from latex2json.tokens.types import Token
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.if_else.base_if import process_if_else_block
+from latex2json.expander.handlers.if_else.base_if import IfMacro
 from latex2json.tokens.utils import strip_whitespace_tokens
 
 
-def ifnum_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    r"""
-    Handles \ifnum command which compares two numbers.
-    Format: \ifnum num1 <relation> num2
-    where relation is <, =, or >
-    """
+def evaluate_ifnum(
+    expander: ExpanderCore, token: Token
+) -> tuple[bool | None, str | None]:
     # Parse first number
     expander.skip_whitespace()
     num1 = expander.parse_integer()
     if num1 is None:
-        expander.logger.warning(
-            f"Warning: \\ifnum expects a number, found {expander.peek()}"
-        )
-        return None
+        return None, f"\\ifnum expects a number, found {expander.peek()}"
 
     # Parse relation operator
     expander.skip_whitespace()
     tok = expander.consume()  # greedy consume (not peek)
     if tok is None:
-        expander.logger.warning("Warning: \\ifnum expects a relation operator")
-        return None
+        return None, "\\ifnum expects a relation operator"
 
     relation = tok.value
     if relation not in ["<", "=", ">"]:
-        expander.logger.warning("Warning: \\ifnum expects <, =, or > operator")
-        return None
+        return None, "\\ifnum expects <, =, or > operator"
 
     # Parse second number
     expander.skip_whitespace()
     num2 = expander.parse_integer()
     if num2 is None:
-        expander.logger.warning("Warning: \\ifnum expects a second number")
-        return None
+        return None, "\\ifnum expects a second number"
 
     # Compare numbers based on relation
     is_true = False
@@ -48,11 +39,11 @@ def ifnum_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     else:  # >
         is_true = num1 > num2
 
-    return process_if_else_block(expander, is_true)
+    return is_true, None
 
 
 def register_ifnum(expander: ExpanderCore):
-    expander.register_handler("\\ifnum", ifnum_handler, is_global=True)
+    expander.register_macro("\\ifnum", IfMacro("ifnum", evaluate_ifnum), is_global=True)
 
 
 if __name__ == "__main__":
