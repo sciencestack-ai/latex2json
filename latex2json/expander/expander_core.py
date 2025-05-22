@@ -157,7 +157,7 @@ class ExpanderCore:
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
-        self.stream.push_tokens(tokens + [STOP_TOKEN])
+        self.push_tokens(tokens + [STOP_TOKEN])
         out = self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
         if self.peek() is STOP_TOKEN:
             self.consume()  # consume the STOP_TOKEN
@@ -190,6 +190,9 @@ class ExpanderCore:
     def pop_scope(self):
         self.state.pop_scope()
 
+    def push_tokens(self, tokens: List[Token]):
+        self.stream.push_tokens(tokens)
+
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)
 
@@ -217,6 +220,13 @@ class ExpanderCore:
             elif is_end_group_token(tok):
                 self.pop_scope()
         return [tok]
+
+    def next_non_expandable_tokens(self) -> Optional[List[Token]]:
+        while not self.eof():
+            out = self.expand_next()
+            if out and len(out) > 0:
+                return out
+        return None
 
     def parse_token(self) -> Optional[Token]:
         tok = self.peek()
@@ -260,9 +270,7 @@ class ExpanderCore:
                     # parse register value literal i.e. without any expanding
                     reg_out = self.parse_register_value(expand=False)
                     if reg_out is not None:
-                        self.stream.push_tokens(
-                            self.convert_str_to_tokens(str(reg_out))
-                        )
+                        self.push_tokens(self.convert_str_to_tokens(str(reg_out)))
                         tok = self.peek()
                         continue
 
@@ -270,10 +278,10 @@ class ExpanderCore:
                 exp = self.expand_next()
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
-                    self.stream.push_tokens(exp)
+                    self.push_tokens(exp)
                 else:
                     # push original token back onto stream
-                    self.stream.push_tokens([tok])
+                    self.push_tokens([tok])
                     break
             else:
                 break
@@ -319,7 +327,7 @@ class ExpanderCore:
         if expand:
             # expand in case
             exp = self.expand_next()
-            self.stream.push_tokens(exp)
+            self.push_tokens(exp)
             start_pos = self.skip_whitespace()
             tok = self.peek()
             if tok is None:

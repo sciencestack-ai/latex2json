@@ -88,7 +88,7 @@ class DefMacro(Macro):
                 expander, out.usage_pattern
             )
             subbed = substitute_token_args(out.definition, parsed_args, math_mode=False)
-            expander.stream.push_tokens(subbed)
+            expander.push_tokens(subbed)
             return []
 
         macro = Macro(out.name, handler, out.definition)

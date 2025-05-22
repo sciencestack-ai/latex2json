@@ -22,7 +22,7 @@ class LetMacro(Macro):
             return None
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-            expander.stream.push_tokens(out.definition)
+            expander.push_tokens(out.definition)
             return []
 
         macro = Macro(out.name, handler, out.definition)

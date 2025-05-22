@@ -2,6 +2,7 @@ from logging import Logger
 from typing import Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.tokenizer import Tokenizer
+from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 
 
 class Expander(ExpanderCore):
@@ -26,9 +27,20 @@ if __name__ == "__main__":
     expander = Expander()
 
     text = r"""
-    \def\neg#1{-#1}
+    \count0=123
+    \edef\foo{\count0}  % → literally expands to "\count0", NOT "123"
+    \edef\bar{\the\count0}  % → expands to "123"
+    BAR
+    \bar
+    \count0
+    
 """.strip()
-    expander.expand(text)
+    expander.set_text(text)
 
-    expander.set_text(r"\neg{123}")
-    print(expander.parse_integer())
+    while not expander.eof():
+        next_tokens = expander.next_non_expandable_tokens()
+        if not next_tokens:
+            break
+        stripped = strip_whitespace_tokens(next_tokens)
+        if stripped:
+            print(stripped)

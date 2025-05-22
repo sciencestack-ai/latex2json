@@ -25,7 +25,7 @@ def ifcat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     if len(output) >= 2:
         is_equal = output[0].catcode == output[1].catcode
         # push the remaining tokens into the stream
-        expander.stream.push_tokens(output[2:])
+        expander.push_tokens(output[2:])
 
     tok = expander.peek()
     if tok is None:

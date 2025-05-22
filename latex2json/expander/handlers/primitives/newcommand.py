@@ -65,7 +65,7 @@ class NewCommandMacro(Macro):
                 return None
 
             subbed = substitute_token_args(out.definition, args, math_mode=False)
-            expander.stream.push_tokens(subbed)
+            expander.push_tokens(subbed)
             return []
 
         macro = Macro(out.name, handler, out.definition)

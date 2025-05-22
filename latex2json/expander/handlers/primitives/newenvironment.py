@@ -44,12 +44,12 @@ class NewEnvironmentMacro(Macro):
                 return None
 
             subbed = substitute_token_args(out.begin_definition, args, math_mode=False)
-            expander.stream.push_tokens(subbed)
+            expander.push_tokens(subbed)
             return []
 
         def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             subbed = substitute_token_args(out.end_definition, [], math_mode=False)
-            expander.stream.push_tokens(subbed)
+            expander.push_tokens(subbed)
             return []
 
         # Register both \begin{name} and \end{name} macros
