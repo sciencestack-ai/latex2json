@@ -2,6 +2,7 @@ from typing import List, Optional
 from latex2json.tokens.types import Token
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import process_if_else_block
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 
 def ifnum_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -14,7 +15,9 @@ def ifnum_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     expander.skip_whitespace()
     num1 = expander.parse_integer()
     if num1 is None:
-        expander.logger.warning("Warning: \\ifnum expects a number")
+        expander.logger.warning(
+            f"Warning: \\ifnum expects a number, found {expander.peek()}"
+        )
         return None
 
     # Parse relation operator
@@ -56,5 +59,17 @@ if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    out = expander.expand(r"\ifnum 1 < 0 TRUE \else FALSE \fi")
-    print(out)
+    out = expander.expand(r"\ifnum\ifnum 1 > 0 1 \else 0 \fi > 0 TRUE \else FALSE \fi")
+    # print(out)
+
+    test_nested = r"""
+    \ifnum 1 > 0
+        \ifnum 1 > 0 
+            TRUE
+        \else
+            FALSE
+        \fi
+    \fi
+    """.strip()
+    out = expander.expand(test_nested)
+    out = strip_whitespace_tokens(out)

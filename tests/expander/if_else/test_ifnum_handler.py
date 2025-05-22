@@ -2,6 +2,11 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.utils import strip_whitespace_tokens
+from tests.test_utils import (
+    assert_token_sequence,
+    assert_tokens_startwith,
+    assert_tokens_endwith,
+)
 
 
 def test_ifnum_handler():
@@ -165,3 +170,26 @@ def test_ifnum_handler_errors():
         out = strip_whitespace_tokens(expander.expand(test))
         # Should return empty list for invalid cases
         assert len(out) == 0
+
+
+def test_nested_ifnum():
+    expander = Expander()
+
+    # inline conditionals
+    out = expander.expand(r"\ifnum\ifnum 1 > 0 1 \else 0 \fi > 0 TRUE \else FALSE \fi")
+    out = strip_whitespace_tokens(out)
+    assert_token_sequence(out, expander.expand("TRUE"))
+
+    # classic nested
+    test_nested = r"""
+    \ifnum 1 > 0
+        \ifnum 1 > 0 
+            TRUE
+        \else
+            FALSE
+        \fi
+    \fi
+    """.strip()
+    out = expander.expand(test_nested)
+    out = strip_whitespace_tokens(out)
+    assert_token_sequence(out, expander.expand("TRUE"))

@@ -30,6 +30,7 @@ from latex2json.tokens.utils import (
     is_signed_integer_token,
     is_digit_token,
     is_param_token,
+    is_whitespace_token,
 )
 
 # arbitrary character that is not a valid token
@@ -249,7 +250,10 @@ class ExpanderCore:
         return self.stream.match(token_type, value, catcode)
 
     def _expand_and_combine_as_str(
-        self, predicate: Callable[[Token], bool], expand_registers=False
+        self,
+        predicate: Callable[[Token], bool],
+        expand_registers=False,
+        skip_whitespace=True,
     ) -> Tuple[str, bool]:
         tok = self.peek()
         out = ""
@@ -258,6 +262,11 @@ class ExpanderCore:
             if predicate(tok):
                 self.consume()
                 out += tok.value
+            elif skip_whitespace and is_whitespace_token(tok) and len(out) == 0:
+                # if whitespace and no output yet, consume and continue
+                self.consume()
+                tok = self.peek()
+                continue
             elif tok.type == TokenType.CONTROL_SEQUENCE:
                 # check \relax token and that it is RelaxMacro i.e. has not been redefined
                 if is_relax_token(tok) and isinstance(
@@ -266,7 +275,6 @@ class ExpanderCore:
                     self.consume()  # consume \relax token itself
                     return out, True
 
-                exp = []
                 if expand_registers:
                     # parse register value literal i.e. without any expanding
                     reg_out = self.parse_register_value(expand=False)

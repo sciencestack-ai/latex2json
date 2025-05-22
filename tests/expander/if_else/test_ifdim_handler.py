@@ -191,3 +191,22 @@ def test_nested_ifdim():
     out = strip_whitespace_tokens(out)
     assert_tokens_startwith(out, expander.expand("TRUE"))
     assert_tokens_endwith(out, expander.expand("INNER FALSE"))
+
+    # test inline conditionals
+
+    text = r"""
+    \newdimen\mydim
+    \mydim=800pt
+    \newdimen\maxdimen
+    \maxdimen=1000pt
+
+    \ifdim\ifdim\mydim>615pt\mydim\else\maxdimen\fi<650pt\relax
+    in range%
+    \else
+    out of range%
+    \fi
+    """
+
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert expander.check_tokens_equal(out, expander.expand("out of range"))
