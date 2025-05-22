@@ -92,23 +92,14 @@ if __name__ == "__main__":
 
     expander = Expander()
     text = r"""
-    \newif\ifouter
-    \newif\ifinner
-    \outertrue
-    \innertrue
-    \ifouter
-        \ifinner
-            BOTH_TRUE
-        \else
-            OUTER_ONLY
-        \fi
-    \else
-        \ifinner
-            INNER_ONLY
-        \else
-            BOTH_FALSE
-        \fi
-    \fi
+\newif\ifcool
+\cooltrue
+
+\ifnum\ifcool 1 \else 0 \fi>0
+  Cool is true
+\else
+  Cool is false
+\fi
     """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

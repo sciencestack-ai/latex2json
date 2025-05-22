@@ -451,7 +451,7 @@ class ExpanderCore:
         # Case 3: # followed by something else (error in definition)
         self.logger.error(
             f"Error: Illegal parameter number or escape sequence after '#'. "
-            f"Found '{tok.value}' (type: {tok.type}, catcode: {tok.catcode.name})."
+            f"Found '{tok})."
         )
         return None  # Indicate an error for the parser to handle
 
@@ -535,9 +535,10 @@ class ExpanderCore:
             return None
 
         name = self.parse_brace_as_tokens()
-        name = "".join(t.value for t in name)
+        expanded_name = self.expand_tokens(name)
+        out_name = self.convert_tokens_to_str(expanded_name)
 
-        return name
+        return out_name
 
     def parse_char_for_catcode(self) -> Optional[str]:
         if self.peek() == BACK_TICK_TOKEN:
@@ -572,6 +573,10 @@ class ExpanderCore:
             catcode = self.get_catcode(ord(c))
             out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
         return out
+
+    @staticmethod
+    def convert_tokens_to_str(tokens: List[Token]) -> str:
+        return "".join(t.to_str() for t in tokens)
 
     @staticmethod
     def check_tokens_equal(a: List[Token], b: List[Token]) -> bool:

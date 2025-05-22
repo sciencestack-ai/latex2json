@@ -1,0 +1,66 @@
+from typing import List, Optional
+from latex2json.expander.expander_core import ExpanderCore
+from latex2json.tokens.types import Token
+from latex2json.tokens.utils import strip_whitespace_tokens
+
+
+def noexpand_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""Handler for \noexpand primitive.
+
+    \noexpand prevents the expansion of the next token in the input stream.
+    Returns the next token unexpanded.
+    """
+    expander.skip_whitespace()
+    return [expander.consume()]
+
+
+def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""Handler for \expandafter primitive.
+
+    \expandafter expands the token after the next token before the next token.
+    The sequence \expandafter<token1><token2> will expand <token2> first,
+    then process <token1>.
+    """
+    expander.skip_whitespace()
+    tok1 = expander.consume()
+    if tok1 is None:
+        expander.logger.warning("Warning: \\expandafter expects 2 tokens")
+        return None
+    expander.skip_whitespace()
+    tok2 = expander.peek()
+    if tok2 is None:
+        expander.logger.warning("Warning: \\expandafter expects 2 tokens")
+        return None
+
+    # expand tok2
+    expanded2 = expander.expand_next()
+    # then put back tok1 and expanded2
+    expander.push_tokens([tok1, *expanded2])
+    return []
+
+
+def register_expand_handlers(expander: ExpanderCore):
+    """Register expansion-related primitive handlers."""
+    expander.register_handler("\\noexpand", noexpand_handler, is_global=True)
+    expander.register_handler("\\expandafter", expandafter_handler, is_global=True)
+
+
+if __name__ == "__main__":
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    out = expander.expand(r"\def\foo{FOO}\noexpand\foo")
+    # print(out)
+
+    text = r"""
+\def\a#1{Result: #1}
+\def\b{\ifnum1>0 Y\else N\fi}
+\expandafter\a\b
+
+\edef\eager{\noexpand\a BB}
+""".strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+
+    expander.set_text(r"\eager")
+    out = expander.next_non_expandable_tokens()

@@ -141,3 +141,23 @@ def test_scope_undefined_environment():
     assert not expander.get_macro("\\foo")
     assert expander.get_macro("\\bar")  # since global
     assert expander.get_macro("\\baz")  # since global
+
+
+def test_begin_end_with_csname():
+    expander = Expander()
+
+    # Define an environment
+    expander.expand(r"\newenvironment{test}{START}{END}")
+
+    # Test using csname to create begin/end tokens
+    out = expander.expand(
+        r"\csname begin\endcsname{test}CONTENT\csname end\endcsname{test}"
+    )
+    assert_token_sequence(out, expander.expand("STARTCONTENTEND"))
+
+    # Test nested csname with environment name
+    expander.expand(r"\def\envname{test}")
+    out = expander.expand(
+        r"\begin{\csname envname\endcsname}CONTENT\end{\csname envname\endcsname}"
+    )
+    assert_token_sequence(out, expander.expand("STARTCONTENTEND"))

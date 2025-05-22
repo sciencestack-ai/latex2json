@@ -32,7 +32,10 @@ class IfMacro(Macro):
                 expander.logger.warning(f"Warning: {error}")
             return None
 
-        return process_if_else_block(expander, is_true)
+        block = process_if_else_block(expander, is_true)
+        if block:
+            expander.push_tokens(block)
+        return []
 
 
 def is_else_command(token: Token) -> bool:

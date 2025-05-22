@@ -49,6 +49,11 @@ class Token:
         else:
             return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r}"
 
+    def to_str(self) -> str:
+        if self.type == TokenType.CONTROL_SEQUENCE:
+            return f"\\{self.value}"
+        return self.value
+
     def copy(self) -> "Token":
         return Token(self.type, self.value, self.position, self.catcode)
 
