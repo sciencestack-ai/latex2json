@@ -33,7 +33,9 @@ def is_dimension_unit(unit: str) -> bool:
     return unit in LATEX_DIMENSION_UNITS
 
 
-def dimension_to_scaled_points(value: float, unit: str) -> Optional[int]:
+def dimension_to_scaled_points(
+    value: float, unit: Optional[str] = None
+) -> Optional[int]:
     """Convert a dimension value from given unit to scaled points.
 
     Args:
@@ -46,6 +48,8 @@ def dimension_to_scaled_points(value: float, unit: str) -> Optional[int]:
     Raises:
         KeyError: If the unit is not a valid LaTeX dimension unit
     """
+    if unit is None:
+        return int(value)
     if not is_dimension_unit(unit):
         return None
     return int(value * LATEX_DIMENSION_UNITS[unit])

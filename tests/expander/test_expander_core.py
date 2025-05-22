@@ -2,6 +2,7 @@ import pytest
 
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.registers import RegisterType
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import (
@@ -277,23 +278,23 @@ def test_parse_dimensions():
     expander = ExpanderCore()
 
     expander.set_text("15pt")
-    assert expander.parse_dimensions() == (15, "pt")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(15, "pt")
 
     expander.set_text("2 in")
-    assert expander.parse_dimensions() == (2, "in")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(2, "in")
 
     # test with \relax
     expander.set_text(r"-2 \relax in")
-    assert expander.parse_dimensions() == (-2, "")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(-2)
 
     expander.set_text(r"\relax")
     assert not expander.parse_dimensions()
 
     expander.set_text(r"0.2\relax33")
-    assert expander.parse_dimensions() == (0.2, "")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(0.2)
 
     expander.set_text(r"1234 i\relax n")
-    assert expander.parse_dimensions() == (1234, "i")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(1234, "i")
 
 
 def test_parse_register():

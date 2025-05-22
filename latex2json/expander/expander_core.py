@@ -15,6 +15,7 @@ from latex2json.expander.registers import (
 )
 from latex2json.expander.state import ExpanderState
 from latex2json.expander.utils import parse_number_str_to_float
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,
@@ -347,27 +348,32 @@ class ExpanderCore:
             return None
         return self.get_register_value(out[0], out[1])
 
-    def parse_dimensions(self) -> Optional[Tuple[float, str]]:
+    def parse_dimensions(self) -> Optional[int]:
         """
         Parses a sequence of digits followed by an optional unit.
         Returns a tuple (float, str) where the float is the number and the str is the unit.
         e.g. 15 pt
         """
+        register_value = self.parse_register_value(expand=True)
+        if register_value is not None:
+            return register_value
+
         digits, relax = self._expand_and_combine_as_str(is_digit_token)
         if not digits:
             return None
         digits = float(digits)
-        if relax:
-            return digits, ""
 
-        self.skip_whitespace()
-        if is_relax_token(self.peek()):
-            self.consume()
-            return digits, ""
-        unit, relax = self._expand_and_combine_as_str(
-            lambda tok: tok.catcode == Catcode.LETTER
-        )
-        return digits, unit
+        unit = None
+        if not relax:
+            self.skip_whitespace()
+
+            if is_relax_token(self.peek()):
+                self.consume()
+            else:
+                unit, relax = self._expand_and_combine_as_str(
+                    lambda tok: tok.catcode == Catcode.LETTER
+                )
+        return dimension_to_scaled_points(digits, unit)
 
     def parse_equals(self) -> bool:
         if self.match(value="=", catcode=Catcode.OTHER):

@@ -67,9 +67,7 @@ def parse_registertype_value(
     if register_type == RegisterType.COUNT:
         return expander.parse_integer()
     elif register_type == RegisterType.DIMEN:
-        value = expander.parse_dimensions()
-        if value:
-            value = dimension_to_scaled_points(value[0], value[1])
+        return expander.parse_dimensions()
     else:
         raise NotImplementedError(f"Setting {register_type} is not implemented")
 
