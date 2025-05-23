@@ -9,6 +9,11 @@ def test_noexpand_basic():
 
     # Test noexpand prevents macro expansion
     expander.expand(r"\def\foo{BAR}")
+
+    # normally expands to BAR
+    assert_token_sequence(expander.expand(r"\foo"), expander.expand("BAR"))
+
+    # noexpand prevents expansion
     out = expander.expand(r"\noexpand\foo")
     assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
 
@@ -16,14 +21,38 @@ def test_noexpand_basic():
 def test_noexpand_with_csname():
     expander = Expander()
 
-    # # Test noexpand with csname
-    # expander.expand(r"\def\test{RESULT}")
-    # out = expander.expand(r"\noexpand\csname test\endcsname")
-    # assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "csname")])
+    out = expander.expand(r"\noexpand\csname1foo")
+    expected = [Token(TokenType.CONTROL_SEQUENCE, "csname")] + expander.expand("1foo")
+    assert_token_sequence(out, expected)
 
-    # # Test that csname still works after noexpand is done
-    # out = expander.expand(r"\expandafter\noexpand\csname test\endcsname")
-    # assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "test")])
+
+def test_noexpand_with_edef():
+    expander = Expander()
+
+    text = r"""
+    \def\foo{FOO}
+    \def\dnofoo{\noexpand\foo} % expands to \foo control sequence
+    \edef\efoo{\foo} % expands to FOO
+    \edef\enofoo{\noexpand\foo} % edef still expands to FOO, but the macro definition is \foo
+    """
+    expander.expand(text)
+    assert_token_sequence(
+        expander.expand(r"\dnofoo"), [Token(TokenType.CONTROL_SEQUENCE, "foo")]
+    )
+    assert_token_sequence(expander.expand(r"\enofoo"), expander.expand("FOO"))
+    assert_token_sequence(expander.expand(r"\enofoo"), expander.expand(r"\efoo"))
+
+    # but lets check how the edef macro itself stores the token definition
+    efoo_macro = expander.get_macro(r"\efoo")
+    enofoo_macro = expander.get_macro(r"\enofoo")
+    assert efoo_macro is not None
+    assert enofoo_macro is not None
+    # efoo definition is FOO
+    assert_token_sequence(efoo_macro.definition, expander.expand("FOO"))
+    # enofoo definition is \foo
+    assert_token_sequence(
+        enofoo_macro.definition, [Token(TokenType.CONTROL_SEQUENCE, "foo")]
+    )
 
 
 def test_expandafter_with_csname_and_def():
@@ -56,7 +85,8 @@ def test_expandafter_with_csname_and_def():
         expander.expand(r"\csname \foo\bar\endcsname"), expander.expand("FUUBAR")
     )
     assert_token_sequence(
-        expander.expand(r"\csname \foo bar\endcsname"), expander.expand(r"\foobar")
+        expander.expand(r"\csname \foo bar\endcsname"),
+        [Token(TokenType.CONTROL_SEQUENCE, "foobar")],
     )
 
 
@@ -67,7 +97,11 @@ def test_expandafter_edge_cases():
     out = expander.expand(r"\expandafter")
     assert_token_sequence(out, [])  # Should handle gracefully
 
-    # # Test expandafter with single token
-    # expander.expand(r"\def\foo{BAR}")
-    # out = expander.expand(r"\expandafter\foo")
-    # assert_token_sequence(out, expander.expand("BAR"))  # Should handle gracefully
+    # Test expandafter with single token
+    expander = Expander()
+    text = r"""
+    \def\expandafterbar{\expandafter\bar} % \expandafter doesnt strictly need 2 tokens
+    \def\bar{BAR}
+    """
+    expander.expand(text)
+    assert_token_sequence(expander.expand(r"\expandafterbar"), expander.expand("BAR"))

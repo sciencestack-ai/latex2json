@@ -29,8 +29,10 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     expander.skip_whitespace()
     tok2 = expander.peek()
     if tok2 is None:
-        expander.logger.warning("Warning: \\expandafter expects 2 tokens")
-        return None
+        # \expandafter doesnt strictly need 2 tokens
+        # put back tok1
+        expander.push_tokens([tok1])
+        return []
 
     # expand tok2
     expanded2 = expander.expand_next()
@@ -53,14 +55,9 @@ if __name__ == "__main__":
     # print(out)
 
     text = r"""
-\def\a#1{Result: #1}
-\def\b{\ifnum1>0 Y\else N\fi}
-\expandafter\a\b
-
-\edef\eager{\noexpand\a BB}
+    \def\expandafterbar{\expandafter\bar}
+    \def\bar{BAR}
 """.strip()
-    out = expander.expand(text)
-    out = strip_whitespace_tokens(out)
+    expander.expand(text)
 
-    expander.set_text(r"\eager")
-    out = expander.next_non_expandable_tokens()
+    out = expander.expand(r"\expandafterbar")
