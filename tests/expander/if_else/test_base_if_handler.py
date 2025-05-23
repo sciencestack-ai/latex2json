@@ -116,16 +116,27 @@ def test_nested_if_true_false_handler():
     assert_tokens_endwith(out, expander.expand("INNER FALSE"))
 
 
-def test_if_block_expands_content_inside():
+def test_nopremature_expansion_inside_blocks():
     expander = Expander()
     text = r"""
-    \def\abc{ABC}
-    \def\defabc{\abc}
+    \count0=10
+    \def\defabc{ABC}
+
     \iftrue
+        \def\atrue{a}
         \defabc
     \else
-        \defabc
-    \fi""".strip()
+        % ensure this doesnt run
+        \def\bfalse{b}
+        \count0=20
+    \fi
+    """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert_tokens_startwith(out, expander.expand("ABC"))
+
+    assert expander.get_macro("atrue")
+    assert not expander.get_macro("bfalse")
+    assert expander.check_tokens_equal(
+        expander.expand(r"\the\count0"), expander.expand("10")
+    )

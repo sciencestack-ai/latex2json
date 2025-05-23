@@ -1,7 +1,7 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -12,12 +12,12 @@ def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
     if a.type == TokenType.CONTROL_SEQUENCE:
         a_macro = expander.get_macro(a.value)
         # if a is a \let, we need to get the first token in the definition
-        if a_macro and a_macro.type == "let" and len(a_macro.definition) > 0:
+        if a_macro and a_macro.type == MacroType.CHAR and len(a_macro.definition) > 0:
             a = a_macro.definition[0]
 
     if b.type == TokenType.CONTROL_SEQUENCE:
         b_macro = expander.get_macro(b.value)
-        if b_macro and b_macro.type == "let" and len(b_macro.definition) > 0:
+        if b_macro and b_macro.type == MacroType.CHAR and len(b_macro.definition) > 0:
             b = b_macro.definition[0]
 
     if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:

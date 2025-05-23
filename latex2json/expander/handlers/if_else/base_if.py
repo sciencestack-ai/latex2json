@@ -1,5 +1,5 @@
 from typing import List, Optional, Protocol
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token, TokenType
 
@@ -19,7 +19,7 @@ class IfMacro(Macro):
     """
 
     def __init__(self, name: str, evaluate_condition: ConditionEvaluator):
-        super().__init__(name)
+        super().__init__(name, type=MacroType.IF)
         self.evaluate_condition = evaluate_condition
         self.handler = lambda expander, token: self.expand(expander, token)
 
@@ -39,11 +39,18 @@ class IfMacro(Macro):
 
 
 def is_else_command(token: Token) -> bool:
-    return token.type == TokenType.CONTROL_SEQUENCE and token.value == "else"
+    if token.type == TokenType.CONTROL_SEQUENCE:
+        if token.value == "else":
+            return True
+        is_if_macro = isinstance(expander.get_macro(token.value), IfMacro)
+
+    return False
 
 
 def is_fi_command(token: Token) -> bool:
-    return token.type == TokenType.CONTROL_SEQUENCE and token.value == "fi"
+    if token.type == TokenType.CONTROL_SEQUENCE:
+        return token.value == "fi"
+    return False
 
 
 def is_else_or_fi_command(token: Token) -> bool:
@@ -58,26 +65,44 @@ def process_if_else_block(
     if tok is None:
         return None
 
-    block1 = expander.process(is_else_or_fi_command)
-    tok = expander.peek()
-    if tok is None:
-        if is_equal:
-            return block1
-        return []
+    dummy_if_token = Token(TokenType.CONTROL_SEQUENCE, "___if___")
 
-    block2 = []
-    if is_else_command(tok):
-        expander.consume()  # consume the \else
-        block2 = expander.process(is_fi_command)
+    def is_if_command(token: Token) -> bool:
+        if token == dummy_if_token:
+            return True
+        if token.type == TokenType.CONTROL_SEQUENCE:
+            macro = expander.get_macro(token.value)
+            return macro and macro.type == MacroType.IF
+        return False
 
-    tok = expander.peek()
-    if is_fi_command(tok):
-        expander.consume()  # consume the \fi
+    # parse out the entire \if ... \fi block as RAW TOKENS (DONT PROCESS)
+
+    # add dummy \if token to the beginning of the block to match nesting levels
+    expander.push_tokens([dummy_if_token])
+    block = expander.parse_begin_end_as_tokens(is_if_command, is_fi_command)
+    if block is None:
+        return None
+
+    # Find the position of \else in the block
+    else_pos = None
+    nested_level = 0
+    for i, token in enumerate(block):
+        if token.type == TokenType.CONTROL_SEQUENCE:
+            if is_if_command(token):
+                nested_level += 1
+            elif token.value == "fi":
+                nested_level -= 1
+            elif token.value == "else" and nested_level == 0:
+                else_pos = i
+                break
+
+    true_block = block[:else_pos] if else_pos is not None else block
+    false_block = block[else_pos + 1 :] if else_pos is not None else []
 
     if is_equal:
-        return block1
+        return true_block
 
-    return block2
+    return false_block
 
 
 def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
@@ -144,7 +169,8 @@ if __name__ == "__main__":
     \else
         FALSE
     \fi
-    """
+    POSTIF
+    """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     print(out)

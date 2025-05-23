@@ -102,11 +102,11 @@ def get_def_usage_pattern_and_definition(
 ) -> Tuple[List[Token], List[Token]]:
     raw_usage_pattern_tokens: List[Token] = []
 
-    tok = expander.peek()
-    while tok and not is_begin_group_token(tok):
-        raw_usage_pattern_tokens.append(expander.parse_token())
-        tok = expander.peek()
+    raw_usage_pattern_tokens = expander.parse_tokens_until(
+        lambda tok: is_begin_group_token(tok)
+    )
 
+    tok = expander.peek()
     if is_begin_group_token(tok):
         definition_tokens = expander.parse_brace_as_tokens()
         return raw_usage_pattern_tokens, definition_tokens

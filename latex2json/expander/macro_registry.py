@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, List, Callable, Optional, TYPE_CHECKING
 
 from latex2json.tokens.types import Token
@@ -9,6 +10,20 @@ if TYPE_CHECKING:
 Handler = Callable[["ExpanderCore", Token], Optional[List[Token]]]
 
 
+class MacroType(Enum):
+    MACRO = "macro"
+    CHAR = "char"
+    IF = "if"
+
+    def __str__(self) -> str:
+        return self.value
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
+
+
 # Base class for command definitions (Primitives and Macros)
 class Macro:
     def __init__(
@@ -16,7 +31,7 @@ class Macro:
         name: str,
         handler: Optional[Handler] = None,
         definition: List[Token] = [],
-        type: str = "macro",  # "macro" or "let" (since \let is a single character token and treated differently for \ifx etc)
+        type: MacroType = MacroType.MACRO,  # "macro" or "char" (e.g. \let \bgroup etc are single character tokens and treated differently for \ifx etc)
     ):
         self.name = name  # usually the command name e.g. \foo
 

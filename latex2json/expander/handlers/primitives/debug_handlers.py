@@ -129,12 +129,40 @@ if __name__ == "__main__":
 
     expander = Expander(logger=logger)
 
-    # expander.expand(r"\the\catcode`\@")
+    text = r"""
 
-    # expander.expand(r"\def\foo{FOO}")
-    # expander.expand(r"\show\foo")
+\makeatletter
 
-    # print(expander.expand(r"\typeout{Hello, world!}"))
+% 1. Generic lookahead function
+\def\lookahead{\futurelet\next\@check}
 
-    out = expander.expand(r"\string a")
-    print(out)
+% 2. Dispatch logic
+\def\@check{%
+  \ifx\next\bgroup
+    \typeout{[lookahead] Next token is a group!}%
+  \else
+    \ifx\next\somecmd
+      \typeout{[lookahead] Next token is \string\somecmd!}%
+    \else
+      \typeout{[lookahead] Next token is something else.}%
+    \fi
+  \fi
+}
+
+% 3. Dummy macro for testing
+\def\somecmd{This is a macro.}
+
+% ----- Test runs -----
+% A: Peek a brace
+\lookahead{123}
+
+% B: Peek a macro
+\lookahead\somecmd
+
+% C: Peek a character
+\lookahead!
+
+\makeatother
+""".strip()
+    out = expander.expand(text)
+    # print(out)

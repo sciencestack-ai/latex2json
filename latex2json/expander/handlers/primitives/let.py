@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -34,7 +34,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.push_tokens(final_definition)
         return []
 
-    macro = Macro(name, handler, final_definition, type="let")
+    macro = Macro(name, handler, final_definition, type=MacroType.CHAR)
     expander.register_macro(name, macro, is_global=False)
 
     return []
@@ -81,7 +81,7 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
     expander.register_macro(
         temp_name,
-        Macro(temp_name, temp_macro_handler, [next_token], type="let"),
+        Macro(temp_name, temp_macro_handler, [next_token], type=MacroType.CHAR),
         is_global=False,
     )
 

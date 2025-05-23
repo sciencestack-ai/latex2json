@@ -41,13 +41,6 @@ def test_makeatletter_makeatother():
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
 
-def test_def():
-    expander = Expander()
-    expander.expand(r"\def\test{test}")
-    assert expander.get_macro("test")
-    assert_token_sequence(expander.expand(r"\test"), expander.expand("test"))
-
-
 def test_redefine_primitives():
     expander = Expander()
 
@@ -83,3 +76,49 @@ def test_edef_with_counters():
         ],
     )
     assert_token_sequence(bar, expander.expand("123"))
+
+
+def test_makeatletter_futurelet_ifx_lookahead():
+    expander = Expander()
+
+    text = r"""
+
+\makeatletter
+
+% 1. Generic lookahead function
+\def\lookahead{\futurelet\next\@check}
+
+% 2. Dispatch logic
+\def\@check{%
+  \ifx\next\bgroup
+    [lookahead] Next token is a group!%
+  \else
+    \ifx\next\somecmd
+      [lookahead] Next token is \string\somecmd!%
+    \else
+      [lookahead] Next token is something else.
+    \fi
+  \fi
+}
+
+% 3. Dummy macro for testing
+\def\somecmd{This is a macro.}
+""".strip()
+    expander.expand(text)
+
+    input_expstart_expend = [
+        (r"\lookahead{123}", r"[lookahead] Next token is a group!", r"{123}"),
+        (
+            r"\lookahead\somecmd",
+            r"[lookahead] Next token is \somecmd!",
+            r"This is a macro.",
+        ),
+        (r"\lookahead!", r"[lookahead] Next token is something else.", r"!"),
+    ]
+
+    for input, exp_start, exp_end in input_expstart_expend:
+        out = expander.expand(input)
+        out = strip_whitespace_tokens(out)
+        out_as_str = expander.convert_tokens_to_str(out)
+        assert out_as_str.startswith(exp_start)
+        assert out_as_str.endswith(exp_end)
