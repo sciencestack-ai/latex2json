@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.tokens.catcodes import CATCODE_MEANINGS, Catcode
 from latex2json.tokens.types import Token, TokenType
 
 from latex2json.expander.handlers.primitives.catcode import CatcodeHandler
@@ -69,10 +70,53 @@ def typeout_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     return []
 
 
+def meaning_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    tok = expander.peek()
+    if not tok:
+        return None
+
+    tok = expander.consume()
+    if not tok:
+        return None
+
+    out_tokens: List[Token] = [tok]
+    if tok.type == TokenType.CONTROL_SEQUENCE:
+        macro = expander.get_macro(tok.value)
+        if not macro:
+            out_tokens = expander.convert_str_to_tokens("undefined")
+        else:
+            out_tokens = expander.convert_str_to_tokens("macro:->") + macro.definition
+    else:
+        # in tex there is a mapping of immediate tokens to their meaning
+        # e.g. '{' -> begin-group character, catcode 12 is the character, etc
+        meaning_str = CATCODE_MEANINGS[tok.catcode]
+        meaning_str += " " + tok.value
+        out_tokens = expander.convert_str_to_tokens(meaning_str)
+
+    # expander.logger.debug(f"\\meaning: {out_tokens}")
+    return out_tokens
+
+
+def string_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    tok = expander.peek()
+    if not tok:
+        return None
+
+    tok = expander.consume()
+    if not tok:
+        return None
+
+    return [tok]
+
+
 def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\the", the_handler, is_global=True)
     expander.register_handler("\\show", show_handler, is_global=True)
     expander.register_handler("\\typeout", typeout_handler, is_global=True)
+    expander.register_handler("\\meaning", meaning_handler, is_global=True)
+    expander.register_handler("\\string", string_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -85,9 +129,12 @@ if __name__ == "__main__":
 
     expander = Expander(logger=logger)
 
-    expander.expand(r"\the\catcode`\@")
+    # expander.expand(r"\the\catcode`\@")
 
-    expander.expand(r"\def\foo{FOO}")
-    expander.expand(r"\show\foo")
+    # expander.expand(r"\def\foo{FOO}")
+    # expander.expand(r"\show\foo")
 
-    print(expander.expand(r"\typeout{Hello, world!}"))
+    # print(expander.expand(r"\typeout{Hello, world!}"))
+
+    out = expander.expand(r"\string a")
+    print(out)

@@ -59,3 +59,24 @@ for char in ".,:;!?-+/=()[]<>|`'*\"":
 
 def get_default_catcodes() -> Dict[int, Catcode]:
     return DEFAULT_CATCODES.copy()
+
+
+# Mapping of catcodes to their LaTeX \meaning string representations (might not be fully accurate)
+CATCODE_MEANINGS: Dict[Catcode, str] = {
+    Catcode.ESCAPE: "the escape character",
+    Catcode.BEGIN_GROUP: "begin-group character",
+    Catcode.END_GROUP: "end-group character",
+    Catcode.MATH_SHIFT: "math shift character",
+    Catcode.ALIGNMENT_TAB: "alignment tab character",
+    Catcode.END_OF_LINE: "the end of line",
+    Catcode.PARAMETER: "macro parameter character",
+    Catcode.SUPERSCRIPT: "superscript character",
+    Catcode.SUBSCRIPT: "subscript character",
+    Catcode.IGNORED: "ignored character",
+    Catcode.SPACE: "blank space",
+    Catcode.LETTER: "the letter",
+    Catcode.OTHER: "the character",
+    Catcode.ACTIVE: "active character",
+    Catcode.COMMENT: "comment character",
+    Catcode.INVALID: "invalid character",
+}

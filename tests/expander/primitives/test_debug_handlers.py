@@ -1,7 +1,8 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.catcodes import CATCODE_MEANINGS, Catcode
+from latex2json.tokens.types import Token, TokenType
 from tests.test_utils import assert_token_sequence
 
 
@@ -48,3 +49,50 @@ def test_show():
     assert expander.check_tokens_equal(
         expander.expand(r"\show\count0"), expander.expand("0")
     )
+
+
+def test_meaning():
+    expander = Expander()
+
+    out = expander.expand(r"\meaning a")
+    expected = expander.convert_str_to_tokens(CATCODE_MEANINGS[Catcode.LETTER] + " a")
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\meaning 1")
+    expected = expander.convert_str_to_tokens(CATCODE_MEANINGS[Catcode.OTHER] + " 1")
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\meaning{")
+    expected = expander.convert_str_to_tokens(
+        CATCODE_MEANINGS[Catcode.BEGIN_GROUP] + " {"
+    )
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\meaning #")
+    expected = expander.convert_str_to_tokens(
+        CATCODE_MEANINGS[Catcode.PARAMETER] + " #"
+    )
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\meaning\foo")
+    expected = expander.convert_str_to_tokens("undefined")
+    assert_token_sequence(out, expected)
+
+    expander.expand(r"\def\foo{FOO}")
+    out = expander.expand(r"\meaning\foo")
+    expected = expander.convert_str_to_tokens("macro:->FOO")
+    assert_token_sequence(out, expected)
+
+
+def test_string():
+    expander = Expander()
+    out = expander.expand(r"\string a")
+    expected = expander.convert_str_to_tokens("a")
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\string{aaa")
+    expected = expander.convert_str_to_tokens("{aaa")
+    assert_token_sequence(out, expected)
+
+    out = expander.expand(r"\string\foo")
+    assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
