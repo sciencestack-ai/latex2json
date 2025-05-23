@@ -14,6 +14,20 @@ def noexpand_handler(expander: ExpanderCore, token: Token) -> Optional[List[Toke
     return [expander.consume()]
 
 
+def unexpanded_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""Handler for \unexpanded primitive.
+
+    \unexpanded expands the next token in the input stream.
+    Returns the next token unexpanded.
+    """
+    expander.skip_whitespace()
+    brace = expander.parse_brace_as_tokens()
+    if brace is None:
+        expander.logger.warning("Warning: \\unexpanded expects a brace")
+        return None
+    return brace
+
+
 def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handler for \expandafter primitive.
 
@@ -45,6 +59,7 @@ def register_expand_handlers(expander: ExpanderCore):
     """Register expansion-related primitive handlers."""
     expander.register_handler("\\noexpand", noexpand_handler, is_global=True)
     expander.register_handler("\\expandafter", expandafter_handler, is_global=True)
+    expander.register_handler("\\unexpanded", unexpanded_handler, is_global=True)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import pytest
 from latex2json.expander.expander import Expander
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from tests.test_utils import assert_token_sequence
 
@@ -52,6 +53,27 @@ def test_noexpand_with_edef():
     # enofoo definition is \foo
     assert_token_sequence(
         enofoo_macro.definition, [Token(TokenType.CONTROL_SEQUENCE, "foo")]
+    )
+
+    # test unexpanded with def
+    text = r"""
+    \def\bar{BAR}
+    \edef\eunexpandednofoo{\unexpanded{\foo \bar}}
+    """
+    expander.expand(text)
+    eunexpandednofoo_macro = expander.get_macro(r"\eunexpandednofoo")
+    assert eunexpandednofoo_macro is not None
+    assert_token_sequence(
+        eunexpandednofoo_macro.definition,
+        [
+            Token(TokenType.CONTROL_SEQUENCE, "foo"),
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.CONTROL_SEQUENCE, "bar"),
+        ],
+    )
+
+    assert_token_sequence(
+        expander.expand(r"\eunexpandednofoo"), expander.expand("FOO BAR")
     )
 
 
@@ -134,3 +156,29 @@ def test_ea_expands_content_inside():
     expander.expand(text)
     out = expander.expand(r"\ratio33:44")
     assert_token_sequence(out, expander.expand("RATIO 33:44"))
+
+
+def test_unexpanded_basic():
+    expander = Expander()
+
+    # Test basic unexpanded functionality
+    expander.expand(r"\def\foo{BAR}")
+
+    # Without unexpanded, \foo expands to BAR
+    assert_token_sequence(expander.expand(r"\foo"), expander.expand("BAR"))
+
+    # With unexpanded, the tokens inside the braces remain unexpanded
+    out = expander.expand(r"\unexpanded{\foo}")
+    assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
+
+    # Test unexpanded with multiple tokens
+    expander.expand(r"\def\bar{BAZ}")
+    out = expander.expand(r"\unexpanded{\foo \bar}")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.CONTROL_SEQUENCE, "foo"),
+            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
+            Token(TokenType.CONTROL_SEQUENCE, "bar"),
+        ],
+    )
