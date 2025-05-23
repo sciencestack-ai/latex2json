@@ -37,7 +37,7 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     # expand tok2
     expanded2 = expander.expand_next()
     # then put back tok1 and expanded2
-    expander.push_tokens([tok1, *expanded2])
+    expander.push_tokens([tok1] + expanded2)
     return []
 
 
@@ -55,9 +55,10 @@ if __name__ == "__main__":
     # print(out)
 
     text = r"""
-    \def\expandafterbar{\expandafter\bar}
-    \def\bar{BAR}
+    \def\ea{\expandafter}
+    \ea\def\csname afoo\endcsname{AFOO}
+    \afoo
 """.strip()
     expander.expand(text)
 
-    out = expander.expand(r"\expandafterbar")
+    out = expander.expand(r"\afoo")

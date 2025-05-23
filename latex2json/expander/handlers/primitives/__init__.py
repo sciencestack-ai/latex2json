@@ -14,7 +14,9 @@ from latex2json.expander.handlers.primitives.newdef import register_def
 from latex2json.expander.handlers.primitives.newenvironment import (
     register_newenvironment,
 )
-from latex2json.expander.handlers.primitives.the import register_the
+from latex2json.expander.handlers.primitives.debug_handlers import (
+    register_debug_handlers,
+)
 
 
 def register_primitives(expander: ExpanderCore):
@@ -26,6 +28,6 @@ def register_primitives(expander: ExpanderCore):
     register_newcommand(expander)
     register_newenvironment(expander)
     register_begin_end(expander)
-    register_the(expander)
+    register_debug_handlers(expander)
     register_expand_handlers(expander)
     register_csname_handlers(expander)

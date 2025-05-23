@@ -66,7 +66,7 @@ class ExpanderCore:
     def __init__(
         self,
         tokenizer: Optional[Tokenizer] = None,
-        logger: Logger = Logger("expander"),
+        logger: Optional[Logger] = None,
     ):
         """Initialize the expander core.
 
@@ -77,7 +77,7 @@ class ExpanderCore:
         self.tokenizer = tokenizer if tokenizer is not None else Tokenizer()
         self.stream = TokenStream(self.tokenizer)
         self.state = ExpanderState(self.tokenizer)
-        self.logger = logger
+        self.logger = logger if logger is not None else Logger("expander")
 
         self._init_state_macros()
 

@@ -24,3 +24,27 @@ def test_registers():
     expander.expand(r"\newcount\mycount")
     expander.expand(r"\mycount=10")
     assert_token_sequence(expander.expand(r"\the\mycount"), expander.expand("10"))
+
+
+def test_typeout():
+    expander = Expander()
+
+    # typeout consumes immediate token
+    assert expander.expand(r"\typeout{Hello, world!}") == []
+    assert expander.expand(r"\typeout\foo") == []
+    assert expander.check_tokens_equal(
+        # consumes immediate token i.e. 1 only
+        expander.expand(r"\typeout123"),
+        expander.expand("23"),
+    )
+
+
+def test_show():
+    # \show mostly used for macros
+    expander = Expander()
+    assert expander.expand(r"\show\foo") == []
+
+    # \show\count0 -> \show only consumes immediate control sequence i.e. \count. '0' is not consumed
+    assert expander.check_tokens_equal(
+        expander.expand(r"\show\count0"), expander.expand("0")
+    )

@@ -17,8 +17,16 @@ class Macro:
         handler: Optional[Handler] = None,
         definition: List[Token] = [],
     ):
-        self.name = name
+        self.name = name  # usually the command name e.g. \foo
+
+        # handler: Controls how tokens are processed during macro expansion
+        # - To have tokens continue expanding: use expander.push_tokens() in handler and return []
+        # - To prevent further expansion: return the tokens directly from the handler. Example usecase: preserving braces {} so that they don't get expanded
         self.handler = handler
+
+        # definition: Raw tokens that define this macro's replacement text
+        # These tokens will be expanded when the macro is called.
+        # Useful for inspecting macro definitions ie debugging or copying macro definitions directly without expanding the stream
         self.definition = definition
 
 

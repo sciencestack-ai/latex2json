@@ -9,7 +9,7 @@ class Expander(ExpanderCore):
     def __init__(
         self,
         tokenizer: Optional[Tokenizer] = None,
-        logger: Logger = Logger("expander"),
+        logger: Optional[Logger] = None,
     ):
         super().__init__(tokenizer, logger)
 

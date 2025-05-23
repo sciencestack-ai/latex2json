@@ -105,3 +105,32 @@ def test_expandafter_edge_cases():
     """
     expander.expand(text)
     assert_token_sequence(expander.expand(r"\expandafterbar"), expander.expand("BAR"))
+
+
+def test_ea_expands_content_inside():
+    expander = Expander()
+    text = r"""
+    \def\ea#1{\expandafter#1}
+    \ea{\def\csname afoo\endcsname{AFOO}}
+    """
+    expander.expand(text)
+    out = expander.expand(r"\afoo")
+    assert_token_sequence(out, expander.expand("AFOO"))
+
+    # also works like
+    text = r"""
+    \ea{\def}\csname afoo\endcsname{AFOO2}
+"""
+    expander.expand(text)
+    out = expander.expand(r"\afoo")
+    assert_token_sequence(out, expander.expand("AFOO2"))
+
+    text = r"""
+\newcommand\eadef[1]{
+    \expandafter\def\csname #1\endcsname##1:##2{RATIO ##1:##2}
+}
+\eadef{ratio}
+""".strip()
+    expander.expand(text)
+    out = expander.expand(r"\ratio33:44")
+    assert_token_sequence(out, expander.expand("RATIO 33:44"))

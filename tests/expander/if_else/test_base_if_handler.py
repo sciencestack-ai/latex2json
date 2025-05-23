@@ -114,3 +114,18 @@ def test_nested_if_true_false_handler():
     out = strip_whitespace_tokens(out)
     assert_tokens_startwith(out, expander.expand("TRUE"))
     assert_tokens_endwith(out, expander.expand("INNER FALSE"))
+
+
+def test_if_block_expands_content_inside():
+    expander = Expander()
+    text = r"""
+    \def\abc{ABC}
+    \def\defabc{\abc}
+    \iftrue
+        \defabc
+    \else
+        \defabc
+    \fi""".strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert_tokens_startwith(out, expander.expand("ABC"))
