@@ -31,6 +31,10 @@
 │   │   ├── __init__.py
 │   │   └── font_selection_handlers.py  # For \font, \selectfont, \fam etc.
 │   │
+│   ├── text_transforms/
+│   │   ├── __init__.py
+│   │   └── case_handlers.py  # For \uppercase, \lowercase
+│   │
 │   └── misc_primitives/
 │       ├── __init__.py
 │       ├── expansion_control_handlers.py # For \expandafter, \noexpand, \csname, \string

@@ -22,6 +22,7 @@ class Macro:
         # handler: Controls how tokens are processed during macro expansion
         # - To have tokens continue expanding: use expander.push_tokens() in handler and return []
         # - To prevent further expansion: return the tokens directly from the handler. Example usecase: preserving braces {} so that they don't get expanded, or \meaning output the raw tokens
+        # Case: see \expandafter (push tokens back to stream, return []) vs \noexpand (return [token] directly)
         self.handler = handler
 
         # definition: Raw tokens that define this macro's replacement text

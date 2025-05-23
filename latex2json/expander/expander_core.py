@@ -457,7 +457,7 @@ class ExpanderCore:
 
     def parse_begin_end_as_tokens(
         self, begin_predicate: TokenPredicate, end_predicate: TokenPredicate
-    ) -> List[Token]:
+    ) -> Optional[List[Token]]:
         """
         Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
         The outermost braces are NOT included in the returned list.
@@ -501,10 +501,10 @@ class ExpanderCore:
 
         return out_tokens
 
-    def parse_brace_as_tokens(self) -> List[Token]:
+    def parse_brace_as_tokens(self) -> Optional[List[Token]]:
         return self.parse_begin_end_as_tokens(is_begin_group_token, is_end_group_token)
 
-    def parse_bracket_as_tokens(self) -> List[Token]:
+    def parse_bracket_as_tokens(self) -> Optional[List[Token]]:
         return self.parse_begin_end_as_tokens(
             is_begin_bracket_token, is_end_bracket_token
         )
