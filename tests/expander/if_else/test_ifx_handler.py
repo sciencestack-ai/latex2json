@@ -238,3 +238,24 @@ def test_ifx_empty():
     assert Expander.check_tokens_equal(out, expander.expand("EMPTY A"))
     # assert_tokens_startwith(out, expander.expand("EMPTY A"))
     # assert_tokens_endwith(out, expander.expand("EMPTY B"))
+
+
+def test_ifx_for_let():
+    expander = Expander()
+
+    # \let differs from \def for \ifx, since \def is a macro while \let is usually a single character token
+    text = r"""
+    \let\letcolon=:
+    \def\defcolon{:}
+
+    \ifx\letcolon: % true! 
+        LET COLON
+        \ifx\defcolon: % false! 
+            DEF COLON
+        \fi
+    \fi
+
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert Expander.check_tokens_equal(out, expander.expand("LET COLON"))

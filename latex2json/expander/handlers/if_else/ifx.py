@@ -1,14 +1,29 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro
+from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import Token, TokenType
 
 
 def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
+    a_macro: Macro | None = None
+    b_macro: Macro | None = None
+
+    if a.type == TokenType.CONTROL_SEQUENCE:
+        a_macro = expander.get_macro(a.value)
+        # if a is a \let, we need to get the first token in the definition
+        if a_macro and a_macro.type == "let" and len(a_macro.definition) > 0:
+            a = a_macro.definition[0]
+
+    if b.type == TokenType.CONTROL_SEQUENCE:
+        b_macro = expander.get_macro(b.value)
+        if b_macro and b_macro.type == "let" and len(b_macro.definition) > 0:
+            b = b_macro.definition[0]
+
     if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
         # check if undefined
-        undefined_a = not expander.get_macro(a.value)
-        undefined_b = not expander.get_macro(b.value)
+        undefined_a = a_macro is None
+        undefined_b = b_macro is None
         if undefined_a and undefined_b:
             # both undefined, so they are equal in \ifx
             return True
@@ -54,28 +69,16 @@ if __name__ == "__main__":
 
     expander = Expander()
     text = r"""
-    \def\foo{FOO}
-    \def\a{\foo}
-    \def\b{\foo}
-    \def\c{BAR}
-    \def\d{BAR}
+    \let\letcolon=:
+    \def\defcolon{:}
 
-    \ifx \a   \c
-        SAME AB
-        \ifx\a\c
-            SAME AC
-        \else
-            DIFFERENT AC
-        \fi
-    \else
-        DIFFERENT AC
-        \ifx\b \d
-            SAME BD
-        \else
-            DIFFERENT BD
+    \ifx\letcolon: % true! 
+        LET COLON
+        \ifx\defcolon: % false! 
+            DEF COLON
         \fi
     \fi
-""".strip()
+
+    """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
-    # print(out)

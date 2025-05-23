@@ -1,7 +1,12 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from tests.test_utils import assert_token_sequence
+from latex2json.tokens.utils import strip_whitespace_tokens
+from tests.test_utils import (
+    assert_token_sequence,
+    assert_tokens_endwith,
+    assert_tokens_startwith,
+)
 
 
 def test_let():
@@ -94,3 +99,25 @@ def test_let_scope():
     expander.expand(text)
     assert expander.get_macro("foo")
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("3"))
+
+
+def test_futurelet():
+    expander = Expander()
+    text = r"""
+    \def\lookahead{
+        \futurelet\next\checkcolon
+    }
+
+    \def\checkcolon{%
+        \ifx\next:
+            COLON
+        \else
+            NOT COLON
+        \fi
+    }
+    \lookahead :  % trailing : is in there
+""".strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert_tokens_startwith(out, expander.expand("COLON"))
+    assert_tokens_endwith(out, expander.expand(" :"))

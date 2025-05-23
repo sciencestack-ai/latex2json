@@ -16,6 +16,7 @@ class Macro:
         name: str,
         handler: Optional[Handler] = None,
         definition: List[Token] = [],
+        type: str = "macro",  # "macro" or "let" (since \let is a single character token and treated differently for \ifx etc)
     ):
         self.name = name  # usually the command name e.g. \foo
 
@@ -29,6 +30,7 @@ class Macro:
         # These tokens will be expanded when the macro is called.
         # Useful for inspecting macro definitions ie debugging or copying macro definitions directly without expanding the stream
         self.definition = definition
+        self.type = type
 
 
 class MacroRegistry:
