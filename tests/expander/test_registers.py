@@ -1,42 +1,66 @@
 import pytest
 
-from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.registers import (
     Glue,
     RegisterType,
     TexRegisters,
+    Box,
 )
-from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.tokens.types import Token, TokenType
 
 
-# def test_get_register_handler():
-#     expander = ExpanderCore()
+def test_count_register():
+    registers = TexRegisters()
 
-#     expander.register_macro(r"\count", RegisterMacro(RegisterType.COUNT, "count"))
-#     expander.set_text(r"\count3")
+    # Test numeric register
+    registers.set_register(RegisterType.COUNT, 5, 42)
+    assert registers.get_register(RegisterType.COUNT, 5) == 42
 
-#     tok = expander.consume()
-#     assert tok == Token(TokenType.CONTROL_SEQUENCE, "count")
-#     assert get_register_handler(expander, tok) == (RegisterType.COUNT, 3)
-#     assert expander.eof()
+    # Test named register
+    registers.set_register(RegisterType.COUNT, "mycounter", 100)
+    assert registers.get_register(RegisterType.COUNT, "mycounter") == 100
 
 
-# def test_register_assignment():
-#     expander = ExpanderCore()
+def test_dimen_register():
+    registers = TexRegisters()
 
-#     expander.set_text(r"\count0=10")
-#     assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "count")
-#     assert expander.consume() == Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER)
-#     assert expander.peek().value == "="
-#     assert set_register_value_handler(expander, RegisterType.COUNT, 0)
-#     assert expander.get_register_value(RegisterType.COUNT, 0) == 10
+    # Test numeric register (dimensions in scaled points)
+    registers.set_register(RegisterType.DIMEN, 1, 65536)  # 1pt = 65536sp
+    assert registers.get_register(RegisterType.DIMEN, 1) == 65536
 
-#     # test dimensions
-#     expander.set_text(r"\dimen9=10pt")
-#     assert expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "dimen")
-#     assert expander.consume() == Token(TokenType.CHARACTER, "9", catcode=Catcode.OTHER)
-#     assert expander.peek().value == "="
-#     assert set_register_value_handler(expander, RegisterType.DIMEN, 9)
-#     assert expander.get_register_value(RegisterType.DIMEN, 9) > 0
+    # Test named register
+    registers.set_register(RegisterType.DIMEN, "mywidth", 32768)
+    assert registers.get_register(RegisterType.DIMEN, "mywidth") == 32768
+
+
+def test_skip_register():
+    registers = TexRegisters()
+
+    glue = Glue(width=65536, stretch=32768, shrink=16384)
+    registers.set_register(RegisterType.SKIP, "myskip", glue)
+
+    result = registers.get_register(RegisterType.SKIP, "myskip")
+    assert isinstance(result, Glue)
+    assert result.width == 65536
+    assert result.stretch == 32768
+    assert result.shrink == 16384
+
+
+def test_delete_register():
+    registers = TexRegisters()
+
+    # Set and then delete a named register
+    registers.set_register(RegisterType.COUNT, "temp", 42)
+    assert registers.get_register(RegisterType.COUNT, "temp") == 42
+
+    registers.delete_register(RegisterType.COUNT, "temp")
+    assert registers.get_register(RegisterType.COUNT, "temp") is None
+
+
+def test_invalid_register_access():
+    registers = TexRegisters()
+
+    # Test out of bounds numeric register
+    assert registers.get_register(RegisterType.COUNT, 300) is None
+
+    # Test non-existent named register
+    assert registers.get_register(RegisterType.COUNT, "nonexistent") is None
