@@ -3,7 +3,7 @@ import dataclasses
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
-from latex2json.expander.registers import RegisterType, TexRegisters, RegisterMacro
+from latex2json.expander.registers import RegisterType, TexRegisters
 from latex2json.tokens import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 
@@ -81,21 +81,6 @@ class ExpanderState:
 
     def get_register(self, name: str, reg_id: Union[int, str]) -> Any:
         return self.registers.get_register(name, reg_id)
-
-    def create_register(
-        self,
-        register_type: RegisterType,
-        reg_id: Union[int, str],
-        default_value: Any,
-        is_global=False,
-    ):
-        self.set_register(register_type, reg_id, default_value, is_global=is_global)
-        # also create a macro for it # e.g. \newcount\mycounter -> \mycounter
-        self.set_macro(
-            reg_id,
-            RegisterMacro(register_type, reg_id, is_named=True),
-            is_global=is_global,
-        )
 
     def set_register(
         self,

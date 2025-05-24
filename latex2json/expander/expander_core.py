@@ -6,12 +6,11 @@ from latex2json.expander.macro_registry import (
     Handler,
     Macro,
     MacroRegistry,
+    MacroType,
 )
 
 from latex2json.expander.registers import (
-    RegisterMacro,
     RegisterType,
-    get_register_handler,
 )
 from latex2json.expander.state import ExpanderState
 from latex2json.expander.utils import parse_number_str_to_float
@@ -86,10 +85,6 @@ class ExpanderCore:
         return self.state.current.macro_registry
 
     def _init_state_macros(self):
-        from latex2json.expander.registers import register_all_register_macros
-
-        register_all_register_macros(self)
-
         def global_handler(expander: "ExpanderCore", token: Token):
             expander.state.pending_global = True
             return []
@@ -125,17 +120,6 @@ class ExpanderCore:
         if value is None:
             return None
         return self.convert_str_to_tokens(str(value))
-
-    def create_register(
-        self,
-        register_type: RegisterType,
-        reg_id: Union[int, str],
-        default_value: Any,
-        is_global=False,
-    ):
-        self.state.create_register(
-            register_type, reg_id, default_value, is_global=is_global
-        )
 
     def set_register(
         self,
@@ -335,12 +319,18 @@ class ExpanderCore:
     def parse_register(
         self, expand=True
     ) -> Optional[Tuple[RegisterType, Union[int, str]]]:
+
+        # Import here to avoid circular dependency with register handlers
+        from latex2json.expander.handlers.registers.base_register_handlers import (
+            get_register_handler,
+        )
+
         tok = self.peek()
         if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
             return None
 
         macro = self.get_macro(tok.value)
-        if macro and isinstance(macro, RegisterMacro):
+        if macro and macro.type == MacroType.REGISTER:
             return get_register_handler(self, tok)
 
         if expand:

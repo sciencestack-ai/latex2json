@@ -14,6 +14,7 @@ class MacroType(Enum):
     MACRO = "macro"
     CHAR = "char"
     IF = "if"
+    REGISTER = "register"
 
     def __str__(self) -> str:
         return self.value

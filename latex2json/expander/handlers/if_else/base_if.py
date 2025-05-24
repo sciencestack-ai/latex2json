@@ -38,23 +38,10 @@ class IfMacro(Macro):
         return []
 
 
-def is_else_command(token: Token) -> bool:
-    if token.type == TokenType.CONTROL_SEQUENCE:
-        if token.value == "else":
-            return True
-        is_if_macro = isinstance(expander.get_macro(token.value), IfMacro)
-
-    return False
-
-
 def is_fi_command(token: Token) -> bool:
     if token.type == TokenType.CONTROL_SEQUENCE:
         return token.value == "fi"
     return False
-
-
-def is_else_or_fi_command(token: Token) -> bool:
-    return is_else_command(token) or is_fi_command(token)
 
 
 # returns the block to execute if the condition is true/false
