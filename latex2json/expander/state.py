@@ -79,8 +79,13 @@ class ExpanderState:
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
-    def get_register(self, name: str, reg_id: Union[int, str]) -> Any:
-        return self.registers.get_register(name, reg_id)
+    def get_register(
+        self, reg_type: RegisterType, reg_id: Union[int, str], return_default=False
+    ) -> Any:
+        out = self.registers.get_register_value(reg_type, reg_id)
+        if out is None and return_default:
+            return RegisterType.get_default_value(reg_type)
+        return out
 
     def set_register(
         self,
@@ -91,13 +96,24 @@ class ExpanderState:
     ):
         is_global = self.pending_global or is_global
         if not is_global:
-            cur_value = self.registers.get_register(
-                register_type, reg_id
-            )  # could be None
-            # store changes
-            self.current.register_old_values.append((register_type, reg_id, cur_value))
+            self._store_register_old_value(register_type, reg_id)
         self.registers.set_register(register_type, reg_id, value)
         self.pending_global = False
+
+    def increment_register(
+        self, register_type: RegisterType, reg_id: Union[int, str], increment: Any
+    ):
+        # apparently all incr actions are global in latex, so no need to check global/old value
+        self.registers.increment_register(register_type, reg_id, increment)
+
+    def _store_register_old_value(
+        self, register_type: RegisterType, reg_id: Union[int, str]
+    ):
+        cur_value = self.registers.get_register_value(
+            register_type, reg_id
+        )  # could be None
+        # store changes (None means delete when undoing)
+        self.current.register_old_values.append((register_type, reg_id, cur_value))
 
     def get_root(self) -> StateLayer:
         """Get the root state layer (the first layer in the stack)."""

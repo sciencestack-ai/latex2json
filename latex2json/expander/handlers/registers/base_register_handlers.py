@@ -17,7 +17,7 @@ def get_register_handler(
         register_type = macro.register_type
         reg_id = macro.name
 
-        if macro.is_primitive:
+        if macro.is_id_integer:
             if register_type == RegisterType.OTHER:
                 raise NotImplementedError(
                     f"Getting register:{register_type} is not implemented"
@@ -78,14 +78,14 @@ def registertype_macro_handler(
 
 class RegisterMacro(Macro):
     def __init__(
-        self, register_type: RegisterType, command_name: str, is_primitive=True
+        self, register_type: RegisterType, command_name: str, is_id_integer=True
     ):
         handler: Handler = lambda expander, token: registertype_macro_handler(
-            expander, token, is_primitive
+            expander, token, is_id_integer
         )
         super().__init__(command_name, handler, [], type=MacroType.REGISTER)
         self.register_type = register_type
-        self.is_primitive = is_primitive
+        self.is_id_integer = is_id_integer
 
 
 class NewRegisterMacro(Macro):
@@ -112,21 +112,13 @@ def new_register_macro_handler(
     count_name = tok.value
     expander.consume()
 
-    default_value = 0
-    if register_type == RegisterType.SKIP:
-        default_value = Glue(0, 0, 0)
-    elif register_type == RegisterType.BOX:
-        default_value = None  # Box([])
-    elif register_type == RegisterType.TOKS:
-        default_value = []
-    elif register_type == RegisterType.BOOL:
-        default_value = False
+    default_value = register_type.get_default_value()
 
     expander.set_register(register_type, count_name, default_value, is_global=True)
     # create a macro for the register
     expander.register_macro(
         count_name,
-        RegisterMacro(register_type, count_name, is_primitive=False),
+        RegisterMacro(register_type, count_name, is_id_integer=False),
         is_global=True,
     )
 

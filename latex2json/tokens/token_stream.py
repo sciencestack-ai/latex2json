@@ -77,6 +77,9 @@ class BaseTokenStream:
     def peek(self, n: int = 0) -> Optional[Token]:
         while self._buffer:
             tokens, idx = self._buffer[-1]
+            if tokens is None:
+                self._buffer.pop()
+                continue
             if idx + n < len(tokens):
                 return tokens[idx + n]
             else:

@@ -30,6 +30,23 @@ class RegisterType(Enum):
         except ValueError:
             return cls.OTHER
 
+    def get_default_value(self) -> Any:
+        """Get the default value for this register type"""
+        if self == RegisterType.COUNT:
+            return 0
+        elif self == RegisterType.DIMEN:
+            return 0
+        elif self == RegisterType.SKIP:
+            return Glue(0, 0, 0)
+        elif self == RegisterType.TOKS:
+            return []
+        elif self == RegisterType.BOX:
+            return None
+        elif self == RegisterType.BOOL:
+            return False
+        else:
+            return None
+
 
 def parse_registertype_value(
     expander: "ExpanderCore", register_type: RegisterType
@@ -102,8 +119,8 @@ class TexRegisters:
             RegisterType.BOOL: self._named_bools,
         }
 
-    def get_register(self, reg_type: RegisterType, reg_id: Union[int, str]):
-        return self._get_generic_register(reg_type, reg_id)
+    def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):
+        return self._get_generic_register_value(reg_type, reg_id)
 
     def set_register(self, reg_type: RegisterType, reg_id: Union[int, str], value: Any):
         self._set_generic_register(reg_type, reg_id, value)
@@ -112,7 +129,7 @@ class TexRegisters:
         if reg_id in self._named_register_pools.get(reg_type, {}):
             del self._named_register_pools[reg_type][reg_id]
 
-    def _get_generic_register(
+    def _get_generic_register_value(
         self, reg_type: Union[str, RegisterType], reg_id: Union[int, str]
     ):
         """Internal helper to get register value by type and ID"""
@@ -144,6 +161,40 @@ class TexRegisters:
         elif isinstance(reg_id, str):
             self._named_register_pools[reg_type][reg_id] = value
         return None
+
+    def increment_register(
+        self, reg_type: RegisterType, reg_id: Union[int, str], increment: Any
+    ) -> None:
+        """Increment a register by the specified amount.
+
+        Args:
+            reg_type: Type of register (COUNT, DIMEN, etc.)
+            reg_id: Register identifier (number or name)
+            increment: Amount to increment by (type must match register type)
+        """
+        current_value = self.get_register_value(reg_type, reg_id)
+        if current_value is None:
+            current_value = reg_type.get_default_value()
+
+        if reg_type in (RegisterType.COUNT, RegisterType.DIMEN):
+            # For numeric registers, perform simple addition
+            new_value = current_value + increment
+        elif reg_type == RegisterType.SKIP:
+            # For glue registers, add each component separately
+            raise NotImplementedError(f"Incrementing {reg_type} is not implemented")
+            # if not isinstance(increment, Glue):
+            #     return None
+            # new_value = Glue(
+            #     width=current_value.width + increment.width,
+            #     stretch=current_value.stretch + increment.stretch,
+            #     shrink=current_value.shrink + increment.shrink,
+            # )
+        else:
+            raise NotImplementedError(f"Incrementing {reg_type} is not implemented")
+            # Other register types don't support increment operations
+            return None
+
+        self.set_register(reg_type, reg_id, new_value)
 
 
 if __name__ == "__main__":

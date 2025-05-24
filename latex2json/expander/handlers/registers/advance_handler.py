@@ -49,13 +49,7 @@ class AdvanceHandler:
             )
             return None
 
-        cur_value = expander.get_register_value(register_type, register_name)
-        if cur_value is None:
-            cur_value = 0
-
-        new_value = cur_value + value
-
-        expander.set_register(register_type, register_name, new_value)
+        expander.increment_register(register_type, register_name, value)
 
         return []
 

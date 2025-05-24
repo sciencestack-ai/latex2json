@@ -11,6 +11,7 @@ from latex2json.expander.macro_registry import (
 
 from latex2json.expander.registers import (
     RegisterType,
+    TexRegisters,
 )
 from latex2json.expander.state import ExpanderState
 from latex2json.expander.utils import parse_number_str_to_float
@@ -108,15 +109,25 @@ class ExpanderCore:
         self.state.set_macro(name, macro, is_global=is_global)
 
     # REGISTERS
+    @property
+    def registers(self) -> TexRegisters:
+        return self.state.registers
+
     def get_register_value(
-        self, register_type: RegisterType, reg_id: Union[int, str]
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        return_default=False,
     ) -> Optional[Any]:
-        return self.state.get_register(register_type, reg_id)
+        return self.state.get_register(register_type, reg_id, return_default)
 
     def get_register_value_as_tokens(
-        self, register_type: RegisterType, reg_id: Union[int, str]
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        return_default=False,
     ) -> Optional[List[Token]]:
-        value = self.get_register_value(register_type, reg_id)
+        value = self.get_register_value(register_type, reg_id, return_default)
         if value is None:
             return None
         return self.convert_str_to_tokens(str(value))
@@ -129,6 +140,14 @@ class ExpanderCore:
         is_global: bool = False,
     ):
         self.state.set_register(register_type, reg_id, value, is_global=is_global)
+
+    def increment_register(
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        increment: Any,
+    ):
+        self.state.increment_register(register_type, reg_id, increment)
 
     # PROCESSING
     def set_text(self, text: str):

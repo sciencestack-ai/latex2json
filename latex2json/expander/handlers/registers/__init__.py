@@ -6,8 +6,12 @@ from latex2json.expander.handlers.registers.advance_handler import (
 from latex2json.expander.handlers.registers.base_register_handlers import (
     register_base_register_macros,
 )
+from latex2json.expander.handlers.registers.counter_handlers import (
+    register_counter_handlers,
+)
 
 
 def register_register_handlers(expander: ExpanderCore):
     register_advance_handler(expander)
     register_base_register_macros(expander)
+    register_counter_handlers(expander)
