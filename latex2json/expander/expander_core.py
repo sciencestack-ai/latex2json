@@ -2,6 +2,7 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
+from latex2json.tokens.utils import substitute_token_args
 from latex2json.expander.macro_registry import (
     Handler,
     Macro,
@@ -9,10 +10,12 @@ from latex2json.expander.macro_registry import (
     MacroType,
 )
 
+from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.registers import (
     RegisterType,
     TexRegisters,
 )
+
 from latex2json.expander.state import ExpanderState
 from latex2json.expander.utils import parse_number_str_to_float
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
@@ -131,9 +134,7 @@ class ExpanderCore:
     def substitute_token_args(
         self, tokens: List[Token], args: List[List[Token]]
     ) -> List[Token]:
-        from latex2json.expander.handlers.utils import substitute_token_args
-
-        return substitute_token_args(tokens, args, math_mode=self.state.is_math_mode())
+        return substitute_token_args(tokens, args, math_mode=self.state.is_math_mode)
 
     # REGISTERS
     @property
@@ -639,6 +640,89 @@ class ExpanderCore:
             if a_tok != b_tok:
                 return False
         return True
+
+    def get_parsed_args(
+        self,
+        num_args: int,
+        default_arg: Optional[List[Token]] = None,
+        force_braces_for_req_args=False,
+    ) -> List[List[Token]]:
+        if num_args > 0:
+            # e.g. \cmd {arg}
+            self.skip_whitespace()
+        args: List[List[Token]] = []
+
+        if default_arg:
+            tok = self.peek()
+            # if the next token is a begin bracket, replace the default arg with the parsed bracket
+            if tok and is_begin_bracket_token(tok):
+                default_arg = self.parse_bracket_as_tokens()
+
+            args.append(default_arg)
+            num_args -= 1
+
+        for i in range(num_args):
+            self.skip_whitespace()
+            if force_braces_for_req_args:
+                tokens = self.parse_brace_as_tokens()
+            else:
+                tokens = self.parse_immediate_token()
+            if tokens is None:
+                self.logger.warning(
+                    f"Warning: expected argument {i+1} but found nothing"
+                )
+                return None
+            args.append(tokens)
+
+        return args
+
+    def register_environment(
+        self,
+        env_def: EnvironmentDefinition,
+        is_global: bool = True,
+    ) -> None:
+        """Register a new environment with begin/end handlers."""
+        env_name = env_def.name
+        self.state.set_environment_definition(env_name, env_def)
+
+        has_counter = env_def.step_counter
+        if has_counter:
+            self.state.new_counter(env_name)
+
+        # Register begin handler
+        begin_name = "\\" + env_def.name
+
+        def begin_handler(
+            expander: "ExpanderCore", token: Token
+        ) -> Optional[List[Token]]:
+            if has_counter:
+                expander.state.step_counter(env_name)
+
+            args = self.get_parsed_args(
+                env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
+            )
+            if args is None:
+                return None
+
+            subbed = expander.substitute_token_args(env_def.begin_definition, args)
+            subbed = expander.expand_tokens(subbed)
+            return [Token(TokenType.ENVIRONMENT_START, env_name)] + subbed
+
+        # Register end handler
+        end_name = "\\end" + env_def.name
+
+        def end_handler(
+            expander: "ExpanderCore", token: Token
+        ) -> Optional[List[Token]]:
+            subbed = expander.substitute_token_args(env_def.end_definition, [])
+            subbed = expander.expand_tokens(subbed)
+            return subbed + [Token(TokenType.ENVIRONMENT_END, env_name)]
+
+        begin_macro = Macro(begin_name, begin_handler, env_def.begin_definition)
+        end_macro = Macro(end_name, end_handler, env_def.end_definition)
+
+        self.register_macro(begin_name, begin_macro, is_global=is_global)
+        self.register_macro(end_name, end_macro, is_global=is_global)
 
 
 if __name__ == "__main__":

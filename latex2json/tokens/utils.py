@@ -76,3 +76,22 @@ def strip_whitespace_tokens(tokens: List[Token]) -> List[Token]:
     while tokens and is_whitespace_token(tokens[-1]):
         tokens.pop()
     return tokens
+
+
+def substitute_token_args(
+    definition: List[Token],
+    args: List[List[Token]],
+    math_mode: bool = False,
+) -> List[Token]:
+
+    out: List[Token] = []
+
+    for token in definition:
+        if token.type == TokenType.PARAMETER:
+            index = int(token.value) - 1
+            if index < len(args):
+                out.extend(args[index])
+        else:
+            out.append(token)
+
+    return out

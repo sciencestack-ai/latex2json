@@ -1,8 +1,8 @@
 import enum
-import dataclasses
-from typing import List, Optional, Dict, Any, Tuple, Callable, Union
+from typing import List, Optional, Dict, Any, Tuple, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
+from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
 from latex2json.tokens import Catcode, get_default_catcodes
@@ -79,12 +79,19 @@ class ExpanderState:
         # Add CounterManager instance
         self.counter_manager = CounterManager(self.registers)
 
+        self.environment_registry: Dict[str, EnvironmentDefinition] = {}
+
     @property
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
+    @property
     def is_math_mode(self) -> bool:
         return self.current.mode == ProcessingMode.MATH
+
+    @is_math_mode.setter
+    def is_math_mode(self, value: bool):
+        self.current.mode = ProcessingMode.MATH if value else ProcessingMode.TEXT
 
     def set_mode(self, mode: ProcessingMode):
         """Set the mode for the current scope."""
@@ -216,3 +223,13 @@ class ExpanderState:
     def counter_within(self, name: str, parent: Optional[str] = None) -> None:
         """Set the counter to be within the parent counter"""
         self.counter_manager.counter_within(name, parent)
+
+    # NEW: ENVIRONMENT DEFINITION MANAGEMENT
+    def get_environment_definition(self, name: str) -> Optional[EnvironmentDefinition]:
+        """Get a global environment definition."""
+        return self.environment_registry.get(name)
+
+    def set_environment_definition(self, name: str, definition: EnvironmentDefinition):
+        """Set a global environment definition (as newenvironment is global)."""
+        # No 'is_global' parameter here, as it's inherently global for environment definitions
+        self.environment_registry[name] = definition

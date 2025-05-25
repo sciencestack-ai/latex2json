@@ -1,6 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 
-from latex2json.expander.handlers.environment.environments import (
+from latex2json.expander.handlers.environment.environment_handlers import (
     register_base_environment_handlers,
 )
 

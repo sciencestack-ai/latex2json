@@ -1,8 +1,6 @@
-import pytest
-
-from latex2json.expander.handlers.utils import substitute_token_args
-from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.utils import substitute_token_args
 from tests.test_utils import assert_token_sequence
 
 

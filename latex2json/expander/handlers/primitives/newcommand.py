@@ -14,36 +14,6 @@ class NewCommandResult:
     default_arg: Optional[List[Token]] = None
 
 
-def get_parsed_args_from_newcommand(
-    expander: ExpanderCore, num_args: int, default_arg: Optional[List[Token]] = None
-) -> List[List[Token]]:
-    if num_args > 0:
-        # e.g. \cmd {arg}
-        expander.skip_whitespace()
-    args: List[List[Token]] = []
-
-    if default_arg:
-        tok = expander.peek()
-        # if the next token is a begin bracket, replace the default arg with the parsed bracket
-        if tok and is_begin_bracket_token(tok):
-            default_arg = expander.parse_bracket_as_tokens()
-
-        args.append(default_arg)
-        num_args -= 1
-
-    for i in range(num_args):
-        expander.skip_whitespace()
-        tokens = expander.parse_immediate_token()
-        if tokens is None:
-            expander.logger.warning(
-                f"Warning: expected argument {i+1} but found nothing"
-            )
-            return None
-        args.append(tokens)
-
-    return args
-
-
 class NewCommandMacro(Macro):
     def __init__(self, name: str, allow_redefine: bool = False):
         super().__init__(name)
@@ -57,9 +27,7 @@ class NewCommandMacro(Macro):
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             # Parse exactly num_args arguments
-            args = get_parsed_args_from_newcommand(
-                expander, out.num_args, out.default_arg
-            )
+            args = expander.get_parsed_args(out.num_args, out.default_arg)
             if args is None:
                 return None
 

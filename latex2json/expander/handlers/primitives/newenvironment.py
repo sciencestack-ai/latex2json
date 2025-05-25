@@ -1,21 +1,11 @@
-from dataclasses import dataclass
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.primitives.newcommand import (
     get_newcommand_args_and_definition,
-    get_parsed_args_from_newcommand,
 )
 from latex2json.expander.macro_registry import Macro
+from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import Token, TokenType
-
-
-@dataclass
-class NewEnvironmentResult:
-    name: str
-    begin_definition: List[Token]
-    end_definition: List[Token]
-    num_args: int
-    default_arg: Optional[List[Token]] = None
 
 
 class NewEnvironmentMacro(Macro):
@@ -25,85 +15,50 @@ class NewEnvironmentMacro(Macro):
         self.handler = lambda expander, node: self._expand(expander, node)
 
     def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        out = newenvironment_handler(expander, token, self.allow_redefine)
-        if out is None:
+        expander.parse_asterisk()
+        name = expander.parse_environment_name()
+        if name is None:
+            expander.logger.warning(
+                f"Warning: \\newenvironment expects an environment name, but found {token}"
+            )
             return None
 
-        env_name = out.name
-        begin_name = "\\" + env_name
-        end_name = "\\end" + env_name
-
-        def begin_handler(
-            expander: ExpanderCore, token: Token
-        ) -> Optional[List[Token]]:
-            args = get_parsed_args_from_newcommand(
-                expander, out.num_args, out.default_arg
+        # Check if environment already exists
+        if not self.allow_redefine and (
+            expander.state.get_macro("\\" + name)
+            or expander.state.get_macro("\\end" + name)
+        ):
+            expander.logger.warning(
+                f"Warning: environment {name} already exists. Use \\renewenvironment to redefine"
             )
-            if args is None:
-                return None
+            return None
 
-            subbed = expander.substitute_token_args(out.begin_definition, args)
-            subbed = expander.expand_tokens(subbed)
-            return [Token(TokenType.ENVIRONMENT_START, env_name)] + subbed
+        parsed = get_newcommand_args_and_definition(expander)
+        if parsed is None:
+            return None
 
-        def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-            subbed = expander.substitute_token_args(out.end_definition, [])
-            subbed = expander.expand_tokens(subbed)
-            return subbed + [Token(TokenType.ENVIRONMENT_END, env_name)]
+        num_args, default_arg, begin_definition = parsed
 
-        # Register both \begin{name} and \end{name} macros
-        begin_macro = Macro(begin_name, begin_handler, out.begin_definition)
-        end_macro = Macro(end_name, end_handler, out.end_definition)
+        # Parse end definition
+        expander.skip_whitespace()
+        end_definition = expander.parse_brace_as_tokens()
+        if end_definition is None:
+            expander.logger.warning(
+                f"Warning: \\newenvironment expects an end definition in braces"
+            )
+            return None
 
-        expander.register_macro(begin_name, begin_macro, is_global=True)
-        expander.register_macro(end_name, end_macro, is_global=True)
+        env_def = EnvironmentDefinition(
+            name=name,
+            begin_definition=begin_definition,
+            end_definition=end_definition,
+            num_args=num_args,
+            default_arg=default_arg,
+        )
+
+        expander.register_environment(env_def, is_global=True)
 
         return []
-
-
-def newenvironment_handler(
-    expander: ExpanderCore, token: Token, allow_redefine: bool = False
-) -> Optional[NewEnvironmentResult]:
-    expander.parse_asterisk()
-    name = expander.parse_environment_name()
-    if name is None:
-        expander.logger.warning(
-            f"Warning: \\newenvironment expects an environment name, but found {token}"
-        )
-        return None
-
-    # Check if environment already exists
-    if not allow_redefine and (
-        expander.state.get_macro("\\" + name)
-        or expander.state.get_macro("\\end" + name)
-    ):
-        expander.logger.warning(
-            f"Warning: environment {name} already exists. Use \\renewenvironment to redefine"
-        )
-        return None
-
-    parsed = get_newcommand_args_and_definition(expander)
-    if parsed is None:
-        return None
-
-    num_args, default_arg, begin_definition = parsed
-
-    # Parse end definition
-    expander.skip_whitespace()
-    end_definition = expander.parse_brace_as_tokens()
-    if end_definition is None:
-        expander.logger.warning(
-            f"Warning: \\newenvironment expects an end definition in braces"
-        )
-        return None
-
-    return NewEnvironmentResult(
-        name=name,
-        begin_definition=begin_definition,
-        end_definition=end_definition,
-        num_args=num_args,
-        default_arg=default_arg,
-    )
 
 
 def register_newenvironment(expander: ExpanderCore):
