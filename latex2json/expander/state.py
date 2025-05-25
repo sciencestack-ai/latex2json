@@ -4,8 +4,10 @@ from typing import List, Optional, Dict, Any, Tuple, Callable, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
 from latex2json.registers import RegisterType, TexRegisters
+from latex2json.registers.types import CounterFormat
 from latex2json.tokens import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
+from latex2json.registers.counters import CounterManager
 
 
 class ProcessingMode(enum.Enum):
@@ -74,11 +76,74 @@ class ExpanderState:
         self.pending_global = False
 
         self.registers = TexRegisters()
+        # Add CounterManager instance
+        self.counter_manager = CounterManager(self.registers)
 
     @property
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
+    def set_mode(self, mode: ProcessingMode):
+        """Set the mode for the current scope."""
+        self.current.mode = mode
+
+    # --- Stack Management ---
+    def get_root(self) -> StateLayer:
+        """Get the root state layer (the first layer in the stack)."""
+        return self._stack[0]
+
+    @property
+    def current(self) -> StateLayer:
+        """Get the currently active state layer (top of the stack)."""
+        if not self._stack:
+            raise RuntimeError("ExpanderState stack is empty!")
+        return self._stack[-1]
+
+    def push_scope(self):
+        """Pushes a new state layer onto the stack, starting a new scope."""
+        # Create a new layer, inheriting from the current layer
+        new_layer = StateLayer(parent=self.current)
+        self._stack.append(new_layer)
+        self.tokenizer.set_catcode_table(self.current.catcode_table)
+
+    def pop_scope(self):
+        """Pops the current state layer from the stack, ending the current scope."""
+        if len(self._stack) <= 1:
+            # Cannot pop the base global scope
+            print("[WARNING]: Cannot pop the base ExpanderState scope!")
+            return
+        last_state = self._stack.pop()
+        self.tokenizer.set_catcode_table(self.current.catcode_table)
+        # setback the old values
+        for change in reversed(last_state.register_old_values):
+            name, reg_id, value = change
+            if value is None:
+                self.registers.delete_register(name, reg_id)
+            else:
+                self.registers.set_register(name, reg_id, value)
+
+    # MACROS
+    def get_macro(self, name: str) -> Optional[Macro]:
+        return self.current.get_macro(name)
+
+    def get_all_macros(self) -> Dict[str, Macro]:
+        return self.current.macro_registry.get_all_macros()
+
+    def set_macro(self, name: str, definition: Macro, is_global: bool = False):
+        self.current.set_macro(name, definition, is_global or self.pending_global)
+        self.pending_global = False
+
+    # CATCODES
+    def set_catcode(self, char_ord: int, catcode: Catcode):
+        """Set the catcode for a character in the current scope."""
+        self.current.set_catcode(char_ord, catcode)
+        self.tokenizer.set_catcode(char_ord, catcode)
+
+    def get_catcode(self, char_ord: int) -> Catcode:
+        """Get the current catcode for a character."""
+        return self.current.get_catcode(char_ord)
+
+    # REGISTERS
     def get_register(
         self, reg_type: RegisterType, reg_id: Union[int, str], return_default=False
     ) -> Any:
@@ -115,59 +180,29 @@ class ExpanderState:
         # store changes (None means delete when undoing)
         self.current.register_old_values.append((register_type, reg_id, cur_value))
 
-    def get_root(self) -> StateLayer:
-        """Get the root state layer (the first layer in the stack)."""
-        return self._stack[0]
+    # COUNTERS
+    def new_counter(self, name: str, parent: Optional[str] = None) -> None:
+        """Create a new counter with optional parent relationship"""
+        self.counter_manager.new_counter(name, parent)
 
-    @property
-    def current(self) -> StateLayer:
-        """Get the currently active state layer (top of the stack)."""
-        if not self._stack:
-            raise RuntimeError("ExpanderState stack is empty!")
-        return self._stack[-1]
+    def step_counter(self, name: str) -> None:
+        """Increment counter by 1 and reset all children"""
+        self.counter_manager.step_counter(name)
 
-    def push_scope(self):
-        """Pushes a new state layer onto the stack, starting a new scope."""
-        # Create a new layer, inheriting from the current layer
-        new_layer = StateLayer(parent=self.current)
-        self._stack.append(new_layer)
-        self.tokenizer.set_catcode_table(self.current.catcode_table)
+    def set_counter(self, name: str, value: int) -> None:
+        """Set counter value"""
+        self.counter_manager.set_counter(name, value)
 
-    def pop_scope(self):
-        """Pops the current state layer from the stack, ending the current scope."""
-        if len(self._stack) <= 1:
-            # Cannot pop the base global scope
-            print("[WARNING]: Cannot pop the base ExpanderState scope!")
-            return
-        last_state = self._stack.pop()
-        self.tokenizer.set_catcode_table(self.current.catcode_table)
-        # setback the old values
-        for change in reversed(last_state.register_old_values):
-            name, reg_id, value = change
-            if value is None:
-                self.registers.delete_register(name, reg_id)
-            else:
-                self.registers.set_register(name, reg_id, value)
+    def add_to_counter(self, name: str, increment: int) -> None:
+        """Add to counter value"""
+        self.counter_manager.add_to_counter(name, increment)
 
-    def get_macro(self, name: str) -> Optional[Macro]:
-        return self.current.get_macro(name)
+    def get_counter_value(self, name: str) -> Optional[int]:
+        """Get current counter value"""
+        return self.counter_manager.get_counter_value(name)
 
-    def get_all_macros(self) -> Dict[str, Macro]:
-        return self.current.macro_registry.get_all_macros()
-
-    def set_macro(self, name: str, definition: Macro, is_global: bool = False):
-        self.current.set_macro(name, definition, is_global or self.pending_global)
-        self.pending_global = False
-
-    def set_catcode(self, char_ord: int, catcode: Catcode):
-        """Set the catcode for a character in the current scope."""
-        self.current.set_catcode(char_ord, catcode)
-        self.tokenizer.set_catcode(char_ord, catcode)
-
-    def get_catcode(self, char_ord: int) -> Catcode:
-        """Get the current catcode for a character."""
-        return self.current.get_catcode(char_ord)
-
-    def set_mode(self, mode: ProcessingMode):
-        """Set the mode for the current scope."""
-        self.current.mode = mode
+    def format_counter(
+        self, name: str, style: Union[str, CounterFormat] = CounterFormat.ARABIC
+    ) -> str:
+        """Format counter value according to style"""
+        return self.counter_manager.format_counter(name, style)

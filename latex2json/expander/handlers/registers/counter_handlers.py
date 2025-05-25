@@ -18,16 +18,16 @@ def _parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]
         return None
 
     counter_name = expander.convert_tokens_to_str(counter_name)
-    return f"c@{counter_name}"
+    return counter_name
 
 
 def _parse_counter_args(
     expander: ExpanderCore, command_name: str
 ) -> Optional[Tuple[str, int]]:
     """Parse counter name and value arguments for counter-related commands.
-    Returns tuple of (register_name, value) or None if parsing fails."""
-    register_name = _parse_counter_name(expander)
-    if register_name is None:
+    Returns tuple of (counter_name, value) or None if parsing fails."""
+    counter_name = _parse_counter_name(expander)
+    if counter_name is None:
         expander.logger.warning(rf"\{command_name}: Missing counter name argument")
         return None
 
@@ -39,7 +39,7 @@ def _parse_counter_args(
         return None
 
     value = int(expander.convert_tokens_to_str(value))
-    return register_name, value
+    return counter_name, value
 
 
 def setcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -48,8 +48,8 @@ def setcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     if result is None:
         return None
 
-    register_name, value = result
-    expander.set_register(RegisterType.COUNT, register_name, value, is_global=True)
+    counter_name, value = result
+    expander.state.set_counter(counter_name, value)
     return []
 
 
@@ -59,57 +59,56 @@ def addtocounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     if result is None:
         return None
 
-    register_name, value = result
-    expander.increment_register(RegisterType.COUNT, register_name, value)
+    counter_name, value = result
+    expander.state.add_to_counter(counter_name, value)
     return []
 
 
 def stepcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \stepcounter{counter_name} - increments counter by 1"""
-    register_name = _parse_counter_name(expander)
-    if register_name is None:
+    counter_name = _parse_counter_name(expander)
+    if counter_name is None:
         expander.logger.warning(rf"\{token.value}: Missing counter name argument")
         return None
 
-    expander.increment_register(RegisterType.COUNT, register_name, 1)
+    expander.state.step_counter(counter_name)
     return []
+
+
+def get_counter_value_as_tokens(
+    expander: ExpanderCore, counter_name: str
+) -> Optional[List[Token]]:
+    value = expander.state.get_counter_value(counter_name)
+    if value is None:
+        return None
+    return expander.convert_str_to_tokens(str(value))
 
 
 def value_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \value{counter_name} - returns the current value of the counter"""
-    register_name = _parse_counter_name(expander)
-    if register_name is None:
+    counter_name = _parse_counter_name(expander)
+    if counter_name is None:
         expander.logger.warning(r"\value: Missing counter name argument")
         return None
 
-    return expander.get_register_value_as_tokens(
-        RegisterType.COUNT, register_name, return_default=True
-    )
+    return get_counter_value_as_tokens(expander, counter_name)
 
 
 def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \newcounter{counter_name} - creates a new counter"""
-    register_name = _parse_counter_name(expander)
-    if register_name is None:
+    counter_name = _parse_counter_name(expander)
+    if counter_name is None:
         expander.logger.warning(r"\newcounter: Missing counter name argument")
         return None
 
-    expander.set_register(RegisterType.COUNT, register_name, 0, is_global=True)
-
     def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        return expander.get_register_value_as_tokens(
-            RegisterType.COUNT, register_name, return_default=True
-        )
+        return get_counter_value_as_tokens(expander, counter_name)
 
-    # creates \the{counter_name} handler e.g. \thesection
-    base_name = register_name.split("@")[1]  # c@section -> section
-    expander.register_handler("the" + base_name, the_handler, is_global=True)
+    expander.register_handler("the" + counter_name, the_handler, is_global=True)
 
     # check optional bracket [parent] arg
     parent_name = _parse_counter_name(expander, brackets=True)
-    if parent_name:
-        # TODO
-        pass
+    expander.state.new_counter(counter_name, parent_name)
 
     return []
 
@@ -167,7 +166,14 @@ if __name__ == "__main__":
     out = expander.expand(r"\the\value{section}")
 
     expander.expand(r"\newcounter {mysection}[section] \stepcounter{mysection}")
-    out = expander.expand(r"\themysection")
+    expander.expand(r"\setcounter{mysection}{10}")
+    # test that mysection counter is 10
+    out = expander.expand(r"\themysection")  # 10
+    # check stepcounter section
+    expander.expand(r"\stepcounter{section}")
+    out = expander.expand(r"\thesection")  # 17
+    # check that mysection is reset
+    out = expander.expand(r"\themysection")  # 0
 
     # test return 0 by default if value not exist
     expander.expand(r"\the\value{se22ctionsss}")

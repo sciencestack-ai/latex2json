@@ -45,6 +45,29 @@ class RegisterType(Enum):
             return None
 
 
+class CounterFormat(Enum):
+    """Enum for counter formatting styles"""
+
+    ARABIC = "arabic"  # 1, 2, 3
+    ROMAN = "roman"  # i, ii, iii
+    ROMAN_UPPER = "Roman"  # I, II, III
+    ALPHA = "alph"  # a, b, c
+    ALPHA_UPPER = "Alph"  # A, B, C
+
+    def __str__(self):
+        return self.value
+
+    @classmethod
+    def from_str(cls, value: Union[str, "CounterFormat"]) -> "CounterFormat":
+        """Convert string to CounterFormat if needed"""
+        if isinstance(value, cls):
+            return value
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.ARABIC
+
+
 @dataclass
 class Glue:
     """Represents TeX glue with natural width and stretch/shrink components"""

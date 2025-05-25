@@ -51,6 +51,9 @@ class TexRegisters:
         if reg_id in self._named_register_pools.get(reg_type, {}):
             del self._named_register_pools[reg_type][reg_id]
 
+    def get_register_pools(self):
+        return {"base": self._register_pools, "named": self._named_register_pools}
+
     def _get_generic_register_value(
         self, reg_type: Union[str, RegisterType], reg_id: Union[int, str]
     ):
