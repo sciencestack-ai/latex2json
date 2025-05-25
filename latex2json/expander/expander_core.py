@@ -79,11 +79,15 @@ class ExpanderCore:
         self.state = ExpanderState(self.tokenizer)
         self.logger = logger if logger is not None else Logger("expander")
 
-        self._init_state_macros()
+        self._init_macros()
 
     @property
     def macros(self) -> MacroRegistry:
         return self.state.current.macro_registry
+
+    def _init_macros(self):
+        self._init_state_macros()
+        self._init_counter_macros()
 
     def _init_state_macros(self):
         def global_handler(expander: "ExpanderCore", token: Token):
@@ -93,6 +97,20 @@ class ExpanderCore:
         self.register_handler("\\global", global_handler, is_global=True)
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
+
+    def _init_counter_macros(self):
+        for counter_name in self.state.counter_manager.counters:
+
+            def the_counter_handler(expander: "ExpanderCore", token: Token):
+                counter_name = token.value.lstrip("the")
+                value = expander.state.get_counter_value(counter_name)
+                if value is None:
+                    return None
+                return expander.convert_str_to_tokens(str(value))
+
+            self.register_handler(
+                f"\\the{counter_name}", the_counter_handler, is_global=True
+            )
 
     # MACROS
     def get_macro(self, name: str) -> Optional[Macro]:

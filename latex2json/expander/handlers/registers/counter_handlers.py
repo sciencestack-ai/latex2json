@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.macro_registry import Macro
-from latex2json.registers import RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
 

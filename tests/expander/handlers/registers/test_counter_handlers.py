@@ -36,6 +36,10 @@ def test_basic_counter_operations():
     assert expander.state.get_counter_value("section") == 18
     assert expander.state.get_counter_value("subsection") == 0
 
+    # test the
+    out = expander.expand(r"\thesection")
+    assert expander.convert_tokens_to_str(out) == "18"
+
 
 def test_new_counter():
     expander = ExpanderCore()
