@@ -1,7 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.registers import (
-    RegisterType,
+from latex2json.expander.handlers.registers.base_register_handlers import (
     parse_registertype_value,
 )
 from latex2json.tokens.types import Token, TokenType

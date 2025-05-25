@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.expander.macro_registry import Macro
+from latex2json.registers import RegisterType
 from latex2json.expander.state import ExpanderState, StateLayer, ProcessingMode
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.tokenizer import Tokenizer
@@ -71,32 +72,33 @@ def test_state_scopes():
 
     def test_register_scopes():
         # test registers
-        state.set_register("count", 0, 10)
-        assert state.get_register("count", 0) == 10
+        reg_type = RegisterType.COUNT
+        state.set_register(reg_type, 0, 10)
+        assert state.get_register(reg_type, 0) == 10
 
         state.push_scope()
-        assert state.get_register("count", 0) == 10
+        assert state.get_register(reg_type, 0) == 10
 
         # set to 20
-        state.set_register("count", 0, 20)
-        assert state.get_register("count", 0) == 20
-        state.set_register("count", 0, 30)
-        assert state.get_register("count", 0) == 30
+        state.set_register(reg_type, 0, 20)
+        assert state.get_register(reg_type, 0) == 20
+        state.set_register(reg_type, 0, 30)
+        assert state.get_register(reg_type, 0) == 30
 
         # set \count1 to 30
-        state.set_register("count", 1, 30)
-        assert state.get_register("count", 1) == 30
+        state.set_register(reg_type, 1, 30)
+        assert state.get_register(reg_type, 1) == 30
 
         state.pop_scope()
-        assert state.get_register("count", 0) == 10  # original pre-scope
-        assert state.get_register("count", 1) == 0  # default to 0
+        assert state.get_register(reg_type, 0) == 10  # original pre-scope
+        assert state.get_register(reg_type, 1) == 0  # default to 0
 
         # test global
         state.push_scope()
-        state.set_register("count", 0, 100, is_global=True)
-        assert state.get_register("count", 0) == 100
+        state.set_register(reg_type, 0, 100, is_global=True)
+        assert state.get_register(reg_type, 0) == 100
         state.pop_scope()
-        assert state.get_register("count", 0) == 100
+        assert state.get_register(reg_type, 0) == 100
 
     test_macro_scopes()
     test_catcode_scopes()

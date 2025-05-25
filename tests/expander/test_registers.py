@@ -1,6 +1,6 @@
 import pytest
 
-from latex2json.expander.registers import (
+from latex2json.registers import (
     Glue,
     RegisterType,
     TexRegisters,

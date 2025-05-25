@@ -9,7 +9,7 @@ from latex2json.expander.macro_registry import (
     MacroType,
 )
 
-from latex2json.expander.registers import (
+from latex2json.registers import (
     RegisterType,
     TexRegisters,
 )
@@ -608,7 +608,6 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    from latex2json.expander.registers import set_register_value_handler
 
     expander = ExpanderCore()
 

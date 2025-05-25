@@ -3,7 +3,7 @@ import dataclasses
 from typing import List, Optional, Dict, Any, Tuple, Callable, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
-from latex2json.expander.registers import RegisterType, TexRegisters
+from latex2json.registers import RegisterType, TexRegisters
 from latex2json.tokens import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 

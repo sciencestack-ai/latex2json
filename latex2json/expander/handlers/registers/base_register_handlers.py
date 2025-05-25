@@ -1,10 +1,24 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
-from latex2json.expander.registers import Glue, RegisterType, parse_registertype_value
+from latex2json.registers import Glue, RegisterType
 from latex2json.tokens import Token
 from latex2json.tokens.types import TokenType
 
 from latex2json.expander.expander_core import ExpanderCore
+
+
+def parse_registertype_value(
+    expander: ExpanderCore, register_type: RegisterType
+) -> Optional[int]:
+    value = None
+    if register_type == RegisterType.COUNT:
+        return expander.parse_integer()
+    elif register_type == RegisterType.DIMEN:
+        return expander.parse_dimensions()
+    else:
+        raise NotImplementedError(f"Setting {register_type} is not implemented")
+
+    return value
 
 
 def get_register_handler(

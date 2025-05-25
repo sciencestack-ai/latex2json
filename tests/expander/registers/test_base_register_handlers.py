@@ -2,7 +2,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     register_base_register_macros,
 )
-from latex2json.expander.registers import Glue, RegisterType
+from latex2json.registers import Glue, RegisterType
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 

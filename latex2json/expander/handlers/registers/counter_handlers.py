@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.macro_registry import Macro
-from latex2json.expander.registers import RegisterType
+from latex2json.registers import RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
 
@@ -108,6 +108,7 @@ def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     # check optional bracket [parent] arg
     parent_name = _parse_counter_name(expander, brackets=True)
     if parent_name:
+        # TODO
         pass
 
     return []
