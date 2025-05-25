@@ -20,6 +20,9 @@ class TokenType(Enum):
     # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
     INVALID = 15  # For invalid tokens or errors
 
+    ENVIRONMENT_START = 7
+    ENVIRONMENT_END = 8
+
 
 # --- Define the Token Class ---
 # A token will store its type, value, and original position.

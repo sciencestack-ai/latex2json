@@ -21,7 +21,7 @@ def test_basic_counter_operations():
     assert expander.state.get_counter_value("section") == 16
 
     # Test refstepcounter (should behave same as stepcounter)
-    expander.expand(r"\refstepcounter{section}")
+    expander.expand(r"\refstepcounter{ section}")
     assert expander.state.get_counter_value("section") == 17
 
     # Test value command
@@ -29,7 +29,7 @@ def test_basic_counter_operations():
     assert expander.convert_tokens_to_str(out) == "17"
 
     # test parent-child relationship and reset with stepcounter/refstepcounter
-    expander.expand(r"\refstepcounter{subsection}")
+    expander.expand(r"\refstepcounter{subsection }")
     assert expander.state.get_counter_value("subsection") == 1
 
     expander.expand(r"\refstepcounter{section}")
@@ -50,7 +50,7 @@ def test_new_counter():
     register_counter_handlers(expander)
 
     # Test counter with parent
-    expander.expand(r"\newcounter{mycounter}[section]")
+    expander.expand(r"\newcounter{ mycounter }[section]")
     assert expander.state.get_counter_value("mycounter") == 0
 
     # Set values and verify parent-child relationship
@@ -123,6 +123,7 @@ def test_counter_within_without():
     # Stepping chapter should reset figure
     expander.expand(r"\stepcounter{chapter}")
     assert expander.state.get_counter_value("figure") == 0
+    assert expander.state.get_counter_as_format("figure", hierarchy=True) == "1.0"
 
     # Test counterwithout - removes the dependency
     expander.expand(r"\counterwithout{figure}{chapter}")
@@ -131,6 +132,7 @@ def test_counter_within_without():
     # Now stepping chapter should not reset figure
     expander.expand(r"\stepcounter{chapter}")
     assert expander.state.get_counter_value("figure") == 5
+    assert expander.state.get_counter_as_format("figure", hierarchy=True) == "5"
 
     # Test the representation format after counterwithin
     expander.expand(r"\counterwithin{figure}{chapter}")

@@ -5,15 +5,15 @@ from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
 
 
-def return_begin_end_tokens(
-    expander: ExpanderCore, prefix: str, name: str
-) -> List[Token]:
-    return [
-        Token(TokenType.CONTROL_SEQUENCE, prefix),
-        BEGIN_BRACE_TOKEN.copy(),
-        *expander.convert_str_to_tokens(name),
-        END_BRACE_TOKEN.copy(),
-    ]
+# def return_begin_end_tokens(
+#     expander: ExpanderCore, prefix: str, name: str
+# ) -> List[Token]:
+#     return [
+#         Token(TokenType.CONTROL_SEQUENCE, prefix),
+#         BEGIN_BRACE_TOKEN.copy(),
+#         *expander.convert_str_to_tokens(name),
+#         END_BRACE_TOKEN.copy(),
+#     ]
 
 
 def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -27,13 +27,9 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         )
         return None
 
-    macro = expander.get_macro(f"\\{name}")
-    if macro is None:
-        expander.logger.warning(f"Warning: Could not find environment \\{name}")
-        # return as raw token
-        return return_begin_end_tokens(expander, "begin", name)
+    expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
 
-    return macro.handler(expander, token)
+    return []
 
 
 def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -47,13 +43,9 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         )
         return None
 
-    macro = expander.get_macro(f"{prefix}{name}")
-    if macro is None:
-        expander.logger.warning(f"Warning: Could not find environment {prefix}{name}")
-        # return as raw token
-        return return_begin_end_tokens(expander, "end", name)
+    expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "end" + name)])
 
-    return macro.handler(expander, token)
+    return []
 
 
 def register_begin_end(expander: ExpanderCore):

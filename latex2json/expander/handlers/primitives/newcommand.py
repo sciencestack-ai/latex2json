@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import is_begin_bracket_token
@@ -64,7 +63,7 @@ class NewCommandMacro(Macro):
             if args is None:
                 return None
 
-            subbed = substitute_token_args(out.definition, args, math_mode=False)
+            subbed = expander.substitute_token_args(out.definition, args)
             expander.push_tokens(subbed)
             return []
 

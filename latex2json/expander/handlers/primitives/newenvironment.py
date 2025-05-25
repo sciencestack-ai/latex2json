@@ -5,10 +5,8 @@ from latex2json.expander.handlers.primitives.newcommand import (
     get_newcommand_args_and_definition,
     get_parsed_args_from_newcommand,
 )
-from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import is_begin_bracket_token, is_begin_group_token
 
 
 @dataclass
@@ -31,8 +29,9 @@ class NewEnvironmentMacro(Macro):
         if out is None:
             return None
 
-        begin_name = "\\" + out.name
-        end_name = "\\end" + out.name
+        env_name = out.name
+        begin_name = "\\" + env_name
+        end_name = "\\end" + env_name
 
         def begin_handler(
             expander: ExpanderCore, token: Token
@@ -43,14 +42,14 @@ class NewEnvironmentMacro(Macro):
             if args is None:
                 return None
 
-            subbed = substitute_token_args(out.begin_definition, args, math_mode=False)
-            expander.push_tokens(subbed)
-            return []
+            subbed = expander.substitute_token_args(out.begin_definition, args)
+            subbed = expander.expand_tokens(subbed)
+            return [Token(TokenType.ENVIRONMENT_START, env_name)] + subbed
 
         def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-            subbed = substitute_token_args(out.end_definition, [], math_mode=False)
-            expander.push_tokens(subbed)
-            return []
+            subbed = expander.substitute_token_args(out.end_definition, [])
+            subbed = expander.expand_tokens(subbed)
+            return subbed + [Token(TokenType.ENVIRONMENT_END, env_name)]
 
         # Register both \begin{name} and \end{name} macros
         begin_macro = Macro(begin_name, begin_handler, out.begin_definition)

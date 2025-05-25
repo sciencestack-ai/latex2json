@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.utils import substitute_token_args
 from latex2json.expander.macro_registry import Macro
 from dataclasses import dataclass
 
@@ -87,7 +86,7 @@ class DefMacro(Macro):
             parsed_args = get_parsed_args_from_usage_pattern(
                 expander, out.usage_pattern
             )
-            subbed = substitute_token_args(out.definition, parsed_args, math_mode=False)
+            subbed = expander.substitute_token_args(out.definition, parsed_args)
             expander.push_tokens(subbed)
             return []
 

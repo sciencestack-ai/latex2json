@@ -4,7 +4,7 @@ from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import is_whitespace_token
 
 
-def is_csname_command(token: Token) -> bool:
+def is_endcsname_command(token: Token) -> bool:
     return token.type == TokenType.CONTROL_SEQUENCE and token.value == "endcsname"
 
 
@@ -15,7 +15,7 @@ def process_csname_block(
     if tok is None:
         return None
 
-    block1 = expander.process(is_csname_command)
+    block1 = expander.process(is_endcsname_command)
     block1 = [b for b in block1 if not is_whitespace_token(b)]
 
     return block1
@@ -34,7 +34,7 @@ def csname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
         return None
 
     tok = expander.peek()
-    if tok and is_csname_command(tok):
+    if tok and is_endcsname_command(tok):
         expander.consume()
 
     str_name = expander.convert_tokens_to_str(block)
@@ -59,6 +59,8 @@ if __name__ == "__main__":
     text = r"""
     \def\cmdbarx{barx}
 \def\bar{\cmdbarx}
-\expandafter\def\csname foo\bar\endcsname{BARXs}
+\def\ecs{\bar\endcsname}
+\def\ecsname{\ecs}
+\expandafter\def\csname foo\ecsname{BARXs}
 """
     expander.expand(text)

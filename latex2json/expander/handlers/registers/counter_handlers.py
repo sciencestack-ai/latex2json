@@ -17,7 +17,7 @@ def parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
         return None
 
     counter_name = expander.convert_tokens_to_str(counter_name)
-    return counter_name
+    return counter_name.strip()
 
 
 def parse_counter_args(
@@ -128,7 +128,6 @@ def counterwithin_handler(
 def counterwithout_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[List[Token]]:
-    r"""Handle \counterwithout{counter_name}{parent_counter_name} - sets the counter to be within the parent counter"""
     result = parse_counter_args(expander, "counterwithout")
     if result is None:
         return None

@@ -128,6 +128,13 @@ class ExpanderCore:
         macro = Macro(name, handler)
         self.state.set_macro(name, macro, is_global=is_global)
 
+    def substitute_token_args(
+        self, tokens: List[Token], args: List[List[Token]]
+    ) -> List[Token]:
+        from latex2json.expander.handlers.utils import substitute_token_args
+
+        return substitute_token_args(tokens, args, math_mode=self.state.is_math_mode())
+
     # REGISTERS
     @property
     def registers(self) -> TexRegisters:
@@ -584,7 +591,7 @@ class ExpanderCore:
         expanded_name = self.expand_tokens(name)
         out_name = self.convert_tokens_to_str(expanded_name)
 
-        return out_name
+        return out_name.strip()
 
     def parse_char_for_catcode(self) -> Optional[str]:
         if self.peek() == BACK_TICK_TOKEN:

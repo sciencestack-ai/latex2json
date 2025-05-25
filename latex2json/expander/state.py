@@ -83,6 +83,9 @@ class ExpanderState:
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
+    def is_math_mode(self) -> bool:
+        return self.current.mode == ProcessingMode.MATH
+
     def set_mode(self, mode: ProcessingMode):
         """Set the mode for the current scope."""
         self.current.mode = mode

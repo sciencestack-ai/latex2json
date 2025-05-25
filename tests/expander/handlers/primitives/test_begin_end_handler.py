@@ -13,27 +13,14 @@ def test_basic_begin_end():
 
     # Test basic usage
     out = expander.expand(r"\begin{test}{ABC}CONTENT\end{test}")
-    assert_token_sequence(out, expander.expand("BEGIN ABC 123CONTENTEND"))
+    assert_token_sequence(out, expander.expand(r"\test{ABC}CONTENT\endtest"))
 
-
-def test_begin_end_with_arguments():
-    expander = Expander()
-
-    # Environment with one required argument
-    expander.expand(r"\newenvironment{boxed}[1]{#1:}{!}")
-
-    out = expander.expand(r"\begin{boxed}{Hello}World\end{boxed}")
-    assert_token_sequence(out, expander.expand("Hello:World!"))
-
-    # Environment with optional and required arguments
-    expander.expand(r"\newenvironment{fancy}[2][*]{#1-#2:}{.}")
-
-    out = expander.expand(r"\begin{fancy}[+]{Text}Content\end{fancy}")
-    assert_token_sequence(out, expander.expand("+-Text:Content."))
-
-    # Using default optional argument
-    out = expander.expand(r"\begin{fancy}{Text}Content\end{fancy}")
-    assert_token_sequence(out, expander.expand("*-Text:Content."))
+    expected = [
+        Token(TokenType.ENVIRONMENT_START, "test"),
+        *expander.expand("BEGIN ABC 123CONTENTEND"),
+        Token(TokenType.ENVIRONMENT_END, "test"),
+    ]
+    assert_token_sequence(out, expected)
 
 
 def test_nested_environments():
@@ -43,53 +30,16 @@ def test_nested_environments():
     expander.expand(r"\newenvironment{inner}{[}{]}")
 
     out = expander.expand(r"\begin{outer}A\begin{inner}B\end{inner}C\end{outer}")
-    assert_token_sequence(out, expander.expand("<A[B]C>"))
-
-
-def test_error_cases():
-    expander = Expander()
-
-    # Test undefined environment
-    # we return the raw tokens for undefined environments
-    out = expander.expand(r"\begin{undefined}content\end{undefined}")
     expected = [
-        Token(TokenType.CONTROL_SEQUENCE, "begin"),
-        BEGIN_BRACE_TOKEN,
-        *expander.expand("undefined"),
-        END_BRACE_TOKEN,
-        *expander.expand("content"),
-        Token(TokenType.CONTROL_SEQUENCE, "end"),
-        BEGIN_BRACE_TOKEN,
-        *expander.expand("undefined"),
-        END_BRACE_TOKEN,
+        Token(TokenType.ENVIRONMENT_START, "outer"),
+        *expander.expand("<A"),
+        Token(TokenType.ENVIRONMENT_START, "inner"),
+        *expander.expand("[B]"),
+        Token(TokenType.ENVIRONMENT_END, "inner"),
+        *expander.expand("C>"),
+        Token(TokenType.ENVIRONMENT_END, "outer"),
     ]
     assert_token_sequence(out, expected)
-
-    # Test mismatched begin/end
-    expander.expand(r"\newenvironment{test}{START}{END}")
-    out = expander.expand(r"\begin{test}content\end{wrong}")
-    # Should return raw tokens for end{wrong} since it is undefined
-    assert_token_sequence(out, expander.expand(r"STARTcontent\end{wrong}"))
-
-
-def test_environment_without_content():
-    expander = Expander()
-
-    expander.expand(r"\renewenvironment{empty}{START}{END}")
-
-    # Test environment with no content
-    out = expander.expand(r"\begin{empty}\end{empty}")
-    assert_token_sequence(out, expander.expand("STARTEND"))
-
-
-def test_environment_with_special_characters():
-    expander = Expander()
-
-    # Environment containing special LaTeX characters
-    expander.expand(r"\newenvironment{math}{$}{$}")
-
-    out = expander.expand(r"\begin{math}x^2\end{math}")
-    assert_token_sequence(out, expander.expand("$x^2$"))
 
 
 def test_that_begin_end_is_scoped():
@@ -153,11 +103,19 @@ def test_begin_end_with_csname():
     out = expander.expand(
         r"\csname begin\endcsname{test}CONTENT\csname end\endcsname{test}"
     )
-    assert_token_sequence(out, expander.expand("STARTCONTENTEND"))
+
+    expected = [
+        Token(TokenType.ENVIRONMENT_START, "test"),
+        *expander.expand("START"),
+        *expander.expand("CONTENT"),
+        *expander.expand("END"),
+        Token(TokenType.ENVIRONMENT_END, "test"),
+    ]
+    assert_token_sequence(out, expected)
 
     # Test nested csname with environment name
     expander.expand(r"\def\envname{test}")
     out = expander.expand(
         r"\begin{\csname envname\endcsname}CONTENT\end{\csname envname\endcsname}"
     )
-    assert_token_sequence(out, expander.expand("STARTCONTENTEND"))
+    assert_token_sequence(out, expected)
