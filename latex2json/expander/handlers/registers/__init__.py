@@ -9,9 +9,13 @@ from latex2json.expander.handlers.registers.base_register_handlers import (
 from latex2json.expander.handlers.registers.counter_handlers import (
     register_counter_handlers,
 )
+from latex2json.expander.handlers.registers.counter_format_handlers import (
+    register_counter_format_handlers,
+)
 
 
 def register_register_handlers(expander: ExpanderCore):
     register_advance_handler(expander)
     register_base_register_macros(expander)
     register_counter_handlers(expander)
+    register_counter_format_handlers(expander)

@@ -493,21 +493,28 @@ class ExpanderCore:
         return None  # Indicate an error for the parser to handle
 
     def parse_begin_end_as_tokens(
-        self, begin_predicate: TokenPredicate, end_predicate: TokenPredicate
+        self,
+        begin_predicate: TokenPredicate,
+        end_predicate: TokenPredicate,
+        check_first_token: bool = True,
     ) -> Optional[List[Token]]:
         """
         Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
         The outermost braces are NOT included in the returned list.
         Handles nested braces correctly.
+
+        check_first_token = False is useful if the first token is already consumed and we want to move on
         """
         # 1. Peek at the very first token to check for the opening brace
         first_token = self.peek()
 
-        if not first_token or not begin_predicate(first_token):
+        if not first_token:
             return None
 
-        # 2. Consume the opening brace itself
-        self.consume()
+        if check_first_token:
+            if not begin_predicate(first_token):
+                return None
+            self.consume()
 
         out_tokens: List[Token] = []
         brace_depth = 1  # We've consumed one opening brace, so depth starts at 1

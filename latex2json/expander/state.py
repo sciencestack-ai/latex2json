@@ -201,8 +201,11 @@ class ExpanderState:
         """Get current counter value"""
         return self.counter_manager.get_counter_value(name)
 
-    def format_counter(
-        self, name: str, style: Union[str, CounterFormat] = CounterFormat.ARABIC
+    def get_counter_as_format(
+        self,
+        name: str,
+        style: Union[str, CounterFormat] = CounterFormat.ARABIC,
+        hierarchy: bool = False,
     ) -> str:
         """Format counter value according to style"""
-        return self.counter_manager.format_counter(name, style)
+        return self.counter_manager.get_counter_as_format(name, style, hierarchy)

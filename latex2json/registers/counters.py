@@ -11,15 +11,46 @@ from latex2json.registers.utils import int_to_roman, int_to_alpha
 
 @dataclass
 class CounterInfo:
-    """Information about a LaTeX counter"""
+    """Information about a LaTeX counter implemented as a tree node"""
 
     name: str
-    parent: Optional[str] = None
-    children: List[str] = None
+    _parent: Optional["CounterInfo"] = None
+    _children: List["CounterInfo"] = None
 
     def __post_init__(self):
-        if self.children is None:
-            self.children = []
+        if self._children is None:
+            self._children = []
+
+    @property
+    def parent(self) -> Optional["CounterInfo"]:
+        return self._parent
+
+    @parent.setter
+    def parent(self, new_parent: Optional["CounterInfo"]) -> None:
+        # Remove from old parent's children
+        if self._parent is not None:
+            self._parent._children.remove(self)
+
+        # Set new parent
+        self._parent = new_parent
+
+        # Add to new parent's children
+        if new_parent is not None:
+            new_parent._children.append(self)
+
+    @property
+    def children(self) -> List["CounterInfo"]:
+        return self._children.copy()  # Return copy to prevent direct modification
+
+    def add_child(self, child: "CounterInfo") -> None:
+        """Add a child node, handling parent relationship"""
+        if child not in self._children:
+            child.parent = self  # This will handle both sides of the relationship
+
+    def remove_child(self, child: "CounterInfo") -> None:
+        """Remove a child node, handling parent relationship"""
+        if child in self._children:
+            child.parent = None  # This will handle both sides of the relationship
 
 
 class CounterManager:
@@ -67,21 +98,17 @@ class CounterManager:
         if name in self.counters:
             self.logger.warning(f"Counter '{name}' already exists")
             return
-            # raise ValueError(f"Counter '{name}' already exists")
-
-        # Validate parent exists
-        if parent and parent not in self.counters:
-            self.logger.warning(f"Parent counter '{parent}' does not exist")
-            return
-            # raise ValueError(f"Parent counter '{parent}' does not exist")
 
         # Create counter info
-        counter_info = CounterInfo(name=name, parent=parent)
+        counter_info = CounterInfo(name=name)
         self.counters[name] = counter_info
 
-        # Add to parent's children list
+        # Set up parent relationship if specified
         if parent:
-            self.counters[parent].children.append(name)
+            if parent not in self.counters:
+                self.logger.warning(f"Parent counter '{parent}' does not exist")
+                return
+            self.counters[parent].add_child(counter_info)
 
         # Initialize the actual register storage
         self.registers.set_register(
@@ -121,12 +148,12 @@ class CounterManager:
         """Recursively reset all child counters to 0"""
         counter_info = self.counters[parent_name]
 
-        for child_name in counter_info.children:
+        for child in counter_info.children:
             # Reset the child counter
-            self.set_counter(child_name, 0)
+            self.set_counter(child.name, 0)
 
             # Recursively reset grandchildren
-            self._reset_children(child_name)
+            self._reset_children(child.name)
 
     def get_counter_value(self, name: str) -> Optional[int]:
         """Get current counter value"""
@@ -144,12 +171,12 @@ class CounterManager:
             return []
 
         hierarchy = []
-        current = name
+        current = self.counters[name]
 
         # Build hierarchy from bottom up
         while current:
-            hierarchy.insert(0, current)
-            current = self.counters[current].parent
+            hierarchy.insert(0, current.name)
+            current = current.parent
 
         return hierarchy
 
@@ -159,33 +186,54 @@ class CounterManager:
             return set()
 
         descendants = set()
+        counter = self.counters[name]
 
-        def collect_descendants(parent: str):
-            for child in self.counters[parent].children:
-                descendants.add(child)
+        def collect_descendants(node: CounterInfo):
+            for child in node.children:
+                descendants.add(child.name)
                 collect_descendants(child)
 
-        collect_descendants(name)
+        collect_descendants(counter)
         return descendants
 
-    def format_counter(
-        self, name: str, style: Union[str, CounterFormat] = CounterFormat.ARABIC
+    def get_counter_as_format(
+        self,
+        name: str,
+        style: Union[str, CounterFormat] = CounterFormat.ARABIC,
+        hierarchy: bool = False,
     ) -> str:
-        """Format counter value according to style"""
-        value = self.get_counter_value(name)
+        """Format counter value according to style
+
+        Args:
+            name: Counter name to format
+            style: Style to format the counter value
+            hierarchy: If True, include parent counter values (e.g. 2.1.3)
+        """
         format_type = CounterFormat.from_str(style)
 
-        match format_type:
-            case CounterFormat.ARABIC:
-                return str(value)
-            case CounterFormat.ROMAN:
-                return int_to_roman(value, lowercase=True)
-            case CounterFormat.ROMAN_UPPER:
-                return int_to_roman(value, lowercase=False)
-            case CounterFormat.ALPHA:
-                return int_to_alpha(value, lowercase=True)
-            case CounterFormat.ALPHA_UPPER:
-                return int_to_alpha(value, lowercase=False)
+        if hierarchy:
+            # Get full hierarchy path from root to this counter
+            hierarchy_path = self.get_counter_hierarchy(name)
+            hierarchy_values: List[int] = []
+            # Format each counter value in the hierarchy
+            for counter in hierarchy_path:
+                value = self.get_counter_value(counter)
+                if value is not None:
+                    if value == 0 and len(hierarchy_values) == 0:
+                        # skip 0 values if no existing values yet
+                        continue
+                    hierarchy_values.append(value)
+
+            if len(hierarchy_values) == 0:
+                return self.get_counter_as_format(name, style, hierarchy=False)
+
+            formatted_values = ".".join(
+                [format_type.format_value(v) for v in hierarchy_values]
+            )
+            return formatted_values
+
+        value = self.get_counter_value(name)
+        return format_type.format_value(value) if value is not None else ""
 
     def debug_hierarchy(self) -> str:
         """Generate a debug representation of the counter hierarchy"""
@@ -201,12 +249,33 @@ class CounterManager:
 
             # Print children
             for child in self.counters[name].children:
-                print_counter(child, indent + 1)
+                print_counter(child.name, indent + 1)
 
         for root in sorted(roots):
             print_counter(root)
 
         return "\n".join(lines)
+
+    def counter_within(self, counter: str, parent: Optional[str] = None) -> None:
+        r"""Make counter subordinate to parent or remove parent relationship (like \counterwithin and \counterwithout)
+
+        Args:
+            counter: The counter to modify
+            parent: The new parent counter, or None to remove from current parent
+        """
+        if counter not in self.counters:
+            self.logger.warning(f"Counter '{counter}' does not exist")
+            return
+
+        if parent is not None and parent not in self.counters:
+            self.logger.warning(f"Parent counter '{parent}' does not exist")
+            return
+
+        counter_node = self.counters[counter]
+        parent_node = self.counters[parent] if parent is not None else None
+
+        # The parent setter will handle all the relationship updates
+        counter_node.parent = parent_node
 
 
 # Demo of the hierarchy in action

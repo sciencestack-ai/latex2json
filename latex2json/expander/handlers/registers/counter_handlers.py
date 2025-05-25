@@ -4,7 +4,7 @@ from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
 
 
-def _parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
+def parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
     """Parse a counter name from braces and return its register name.
     Returns None if parsing fails."""
     expander.skip_whitespace()
@@ -25,8 +25,8 @@ def _parse_counter_args(
 ) -> Optional[Tuple[str, int]]:
     """Parse counter name and value arguments for counter-related commands.
     Returns tuple of (counter_name, value) or None if parsing fails."""
-    counter_name = _parse_counter_name(expander)
-    if counter_name is None:
+    counter_name = parse_counter_name(expander)
+    if not counter_name:
         expander.logger.warning(rf"\{command_name}: Missing counter name argument")
         return None
 
@@ -65,8 +65,8 @@ def addtocounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
 
 def stepcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \stepcounter{counter_name} - increments counter by 1"""
-    counter_name = _parse_counter_name(expander)
-    if counter_name is None:
+    counter_name = parse_counter_name(expander)
+    if not counter_name:
         expander.logger.warning(rf"\{token.value}: Missing counter name argument")
         return None
 
@@ -85,8 +85,8 @@ def get_counter_value_as_tokens(
 
 def value_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \value{counter_name} - returns the current value of the counter"""
-    counter_name = _parse_counter_name(expander)
-    if counter_name is None:
+    counter_name = parse_counter_name(expander)
+    if not counter_name:
         expander.logger.warning(r"\value: Missing counter name argument")
         return None
 
@@ -95,8 +95,8 @@ def value_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
 
 def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \newcounter{counter_name} - creates a new counter"""
-    counter_name = _parse_counter_name(expander)
-    if counter_name is None:
+    counter_name = parse_counter_name(expander)
+    if not counter_name:
         expander.logger.warning(r"\newcounter: Missing counter name argument")
         return None
 
@@ -106,7 +106,7 @@ def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     expander.register_handler("the" + counter_name, the_handler, is_global=True)
 
     # check optional bracket [parent] arg
-    parent_name = _parse_counter_name(expander, brackets=True)
+    parent_name = parse_counter_name(expander, brackets=True)
     expander.state.new_counter(counter_name, parent_name)
 
     return []

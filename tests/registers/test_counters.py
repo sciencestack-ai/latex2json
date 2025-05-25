@@ -51,8 +51,55 @@ def test_counter_formatting():
     manager.new_counter("test")
     manager.set_counter("test", 12)
 
-    assert manager.format_counter("test", CounterFormat.ARABIC) == "12"
-    assert manager.format_counter("test", CounterFormat.ROMAN) == "xii"
-    assert manager.format_counter("test", CounterFormat.ROMAN_UPPER) == "XII"
-    assert manager.format_counter("test", CounterFormat.ALPHA) == "l"
-    assert manager.format_counter("test", CounterFormat.ALPHA_UPPER) == "L"
+    assert manager.get_counter_as_format("test", CounterFormat.ARABIC) == "12"
+    assert manager.get_counter_as_format("test", CounterFormat.ROMAN) == "xii"
+    assert manager.get_counter_as_format("test", CounterFormat.ROMAN_UPPER) == "XII"
+    assert manager.get_counter_as_format("test", CounterFormat.ALPHA) == "l"
+    assert manager.get_counter_as_format("test", CounterFormat.ALPHA_UPPER) == "L"
+
+    # test hierarchy formatting
+    manager.set_counter("section", 1)
+    manager.set_counter("subsection", 3)
+    assert (
+        manager.get_counter_as_format("subsection", CounterFormat.ARABIC, True) == "1.3"
+    )
+    assert (
+        manager.get_counter_as_format("subsection", CounterFormat.ROMAN, True)
+        == "i.iii"
+    )
+
+
+def test_counter_within():
+    registers = TexRegisters()
+    manager = CounterManager(registers)
+
+    # Create test counters
+    manager.new_counter("parent1")
+    manager.new_counter("parent2")
+    manager.new_counter("child")
+
+    # Test making child subordinate to parent1
+    manager.counter_within("child", "parent1")
+    assert "child" in manager.get_all_children("parent1")
+    assert manager.get_counter_hierarchy("child") == ["parent1", "child"]
+
+    # Test moving child to parent2
+    manager.counter_within("child", "parent2")
+    assert "child" not in manager.get_all_children("parent1")
+    assert "child" in manager.get_all_children("parent2")
+    assert manager.get_counter_hierarchy("child") == ["parent2", "child"]
+
+    # Test removing parent relationship
+    manager.counter_within("child", None)
+    assert "child" not in manager.get_all_children("parent2")
+    assert manager.get_counter_hierarchy("child") == ["child"]
+
+    # Test counter resetting behavior
+    manager.counter_within("child", "parent1")
+    manager.set_counter("child", 5)
+    manager.step_counter("parent1")
+    assert manager.get_counter_value("child") == 0
+
+    # Test error cases
+    manager.counter_within("nonexistent", "parent1")  # Should log warning
+    manager.counter_within("child", "nonexistent")  # Should log warning

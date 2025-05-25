@@ -52,11 +52,7 @@ def process_if_else_block(
     if tok is None:
         return None
 
-    dummy_if_token = Token(TokenType.CONTROL_SEQUENCE, "___if___")
-
     def is_if_command(token: Token) -> bool:
-        if token == dummy_if_token:
-            return True
         if token.type == TokenType.CONTROL_SEQUENCE:
             macro = expander.get_macro(token.value)
             return macro and macro.type == MacroType.IF
@@ -65,8 +61,9 @@ def process_if_else_block(
     # parse out the entire \if ... \fi block as RAW TOKENS (DONT PROCESS)
 
     # add dummy \if token to the beginning of the block to match nesting levels
-    expander.push_tokens([dummy_if_token])
-    block = expander.parse_begin_end_as_tokens(is_if_command, is_fi_command)
+    block = expander.parse_begin_end_as_tokens(
+        is_if_command, is_fi_command, check_first_token=False
+    )
     if block is None:
         return None
 

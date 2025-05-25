@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Optional, Union, List
 
 from latex2json.tokens.types import Token
+from latex2json.registers.utils import int_to_roman, int_to_alpha
 
 
 class RegisterType(Enum):
@@ -66,6 +67,20 @@ class CounterFormat(Enum):
             return cls(value)
         except ValueError:
             return cls.ARABIC
+
+    def format_value(self, value: int) -> str:
+        """Format an integer value according to this format style"""
+        match self:
+            case CounterFormat.ARABIC:
+                return str(value)
+            case CounterFormat.ROMAN:
+                return int_to_roman(value, lowercase=True)
+            case CounterFormat.ROMAN_UPPER:
+                return int_to_roman(value, lowercase=False)
+            case CounterFormat.ALPHA:
+                return int_to_alpha(value, lowercase=True)
+            case CounterFormat.ALPHA_UPPER:
+                return int_to_alpha(value, lowercase=False)
 
 
 @dataclass
