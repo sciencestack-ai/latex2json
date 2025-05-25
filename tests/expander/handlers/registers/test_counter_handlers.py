@@ -1,11 +1,11 @@
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander import Expander
 from latex2json.expander.handlers.registers.counter_handlers import (
     register_counter_handlers,
 )
 
 
 def test_basic_counter_operations():
-    expander = ExpanderCore()
+    expander = Expander()
     register_counter_handlers(expander)
 
     # Test setcounter
@@ -40,9 +40,13 @@ def test_basic_counter_operations():
     out = expander.expand(r"\thesection")
     assert expander.convert_tokens_to_str(out) == "18"
 
+    expander.expand(r"\stepcounter{subsection}")
+    out = expander.expand(r"\thesubsection")
+    assert expander.convert_tokens_to_str(out) == "1"
+
 
 def test_new_counter():
-    expander = ExpanderCore()
+    expander = Expander()
     register_counter_handlers(expander)
 
     # Test counter with parent
@@ -59,7 +63,7 @@ def test_new_counter():
 
 
 def test_counter_the_command():
-    expander = ExpanderCore()
+    expander = Expander()
     register_counter_handlers(expander)
 
     # Create counter and test \the<counter> command
@@ -69,9 +73,13 @@ def test_counter_the_command():
     out = expander.expand(r"\themycounter")
     assert expander.convert_tokens_to_str(out) == "42"
 
+    # also test with \the\value
+    out = expander.expand(r"\the\value{mycounter}")
+    assert expander.convert_tokens_to_str(out) == "42"
+
 
 def test_counter_error_cases():
-    expander = ExpanderCore()
+    expander = Expander()
     register_counter_handlers(expander)
 
     # Test missing counter name
@@ -88,7 +96,7 @@ def test_counter_error_cases():
 
 
 def test_counter_scope():
-    expander = ExpanderCore()
+    expander = Expander()
     register_counter_handlers(expander)
 
     # Test that counter operations are global (not affected by scope)

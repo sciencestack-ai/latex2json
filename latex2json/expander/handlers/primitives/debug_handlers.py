@@ -23,7 +23,7 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.consume()
         return CatcodeHandler.getter(expander, token)
     else:
-        # just expand the token
+        # try to parse as a register
         parsed = expander.parse_register()
         if parsed:
             return expander.get_register_value_as_tokens(parsed[0], parsed[1])
