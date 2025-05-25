@@ -209,3 +209,7 @@ class ExpanderState:
     ) -> str:
         """Format counter value according to style"""
         return self.counter_manager.get_counter_as_format(name, style, hierarchy)
+
+    def counter_within(self, name: str, parent: Optional[str] = None) -> None:
+        """Set the counter to be within the parent counter"""
+        self.counter_manager.counter_within(name, parent)

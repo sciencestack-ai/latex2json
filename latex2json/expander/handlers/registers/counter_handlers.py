@@ -20,7 +20,7 @@ def parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
     return counter_name
 
 
-def _parse_counter_args(
+def parse_counter_args(
     expander: ExpanderCore, command_name: str
 ) -> Optional[Tuple[str, int]]:
     """Parse counter name and value arguments for counter-related commands.
@@ -37,29 +37,29 @@ def _parse_counter_args(
         expander.logger.warning(rf"\{command_name}: Missing or invalid value argument")
         return None
 
-    value = int(expander.convert_tokens_to_str(value))
+    value = expander.convert_tokens_to_str(value)
     return counter_name, value
 
 
 def setcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \setcounter{counter_name}{value}"""
-    result = _parse_counter_args(expander, "setcounter")
+    result = parse_counter_args(expander, "setcounter")
     if result is None:
         return None
 
     counter_name, value = result
-    expander.state.set_counter(counter_name, value)
+    expander.state.set_counter(counter_name, int(value))
     return []
 
 
 def addtocounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \addtocounter{counter_name}{value}"""
-    result = _parse_counter_args(expander, "addtocounter")
+    result = parse_counter_args(expander, "addtocounter")
     if result is None:
         return None
 
     counter_name, value = result
-    expander.state.add_to_counter(counter_name, value)
+    expander.state.add_to_counter(counter_name, int(value))
     return []
 
 
@@ -77,7 +77,7 @@ def stepcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 def get_counter_value_as_tokens(
     expander: ExpanderCore, counter_name: str
 ) -> Optional[List[Token]]:
-    value = expander.state.get_counter_value(counter_name)
+    value = expander.state.get_counter_as_format(counter_name, hierarchy=True)
     if value is None:
         return None
     return expander.convert_str_to_tokens(str(value))
@@ -109,6 +109,32 @@ def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     parent_name = parse_counter_name(expander, brackets=True)
     expander.state.new_counter(counter_name, parent_name)
 
+    return []
+
+
+def counterwithin_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[List[Token]]:
+    r"""Handle \counterwithin{counter_name}{parent_counter_name} - sets the counter to be within the parent counter"""
+    result = parse_counter_args(expander, "counterwithin")
+    if result is None:
+        return None
+
+    counter_name, parent_name = result
+    expander.state.counter_within(counter_name, parent_name)
+    return []
+
+
+def counterwithout_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[List[Token]]:
+    r"""Handle \counterwithout{counter_name}{parent_counter_name} - sets the counter to be within the parent counter"""
+    result = parse_counter_args(expander, "counterwithout")
+    if result is None:
+        return None
+
+    counter_name, parent_name = result
+    expander.state.counter_within(counter_name, None)
     return []
 
 
@@ -144,6 +170,17 @@ def register_counter_handlers(expander: ExpanderCore):
     expander.register_macro(
         "newcounter",
         Macro("newcounter", newcounter_handler, []),
+        is_global=True,
+    )
+
+    expander.register_macro(
+        "counterwithin",
+        Macro("counterwithin", counterwithin_handler, []),
+        is_global=True,
+    )
+    expander.register_macro(
+        "counterwithout",
+        Macro("counterwithout", counterwithout_handler, []),
         is_global=True,
     )
 

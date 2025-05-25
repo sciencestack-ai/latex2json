@@ -44,6 +44,12 @@ def is_fi_command(token: Token) -> bool:
     return False
 
 
+def is_else_command(token: Token) -> bool:
+    if token.type == TokenType.CONTROL_SEQUENCE:
+        return token.value == "else"
+    return False
+
+
 # returns the block to execute if the condition is true/false
 def process_if_else_block(
     expander: ExpanderCore, is_equal: bool
@@ -59,8 +65,6 @@ def process_if_else_block(
         return False
 
     # parse out the entire \if ... \fi block as RAW TOKENS (DONT PROCESS)
-
-    # add dummy \if token to the beginning of the block to match nesting levels
     block = expander.parse_begin_end_as_tokens(
         is_if_command, is_fi_command, check_first_token=False
     )
@@ -74,9 +78,9 @@ def process_if_else_block(
         if token.type == TokenType.CONTROL_SEQUENCE:
             if is_if_command(token):
                 nested_level += 1
-            elif token.value == "fi":
+            elif is_fi_command(token):
                 nested_level -= 1
-            elif token.value == "else" and nested_level == 0:
+            elif is_else_command(token) and nested_level == 0:
                 else_pos = i
                 break
 

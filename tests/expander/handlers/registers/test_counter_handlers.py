@@ -42,7 +42,7 @@ def test_basic_counter_operations():
 
     expander.expand(r"\stepcounter{subsection}")
     out = expander.expand(r"\thesubsection")
-    assert expander.convert_tokens_to_str(out) == "1"
+    assert expander.convert_tokens_to_str(out) == "18.1"
 
 
 def test_new_counter():
@@ -105,3 +105,37 @@ def test_counter_scope():
     expander.pop_scope()
 
     assert expander.state.get_counter_value("section") == 10
+
+
+def test_counter_within_without():
+    expander = Expander()
+    register_counter_handlers(expander)
+
+    # Create test counters
+    expander.expand(r"\newcounter{chapter}")
+    expander.expand(r"\newcounter{figure}")
+
+    # Test counterwithin - makes figure reset when chapter changes
+    expander.expand(r"\counterwithin{figure}{chapter}")
+    expander.expand(r"\setcounter{figure}{5}")
+    assert expander.state.get_counter_value("figure") == 5
+
+    # Stepping chapter should reset figure
+    expander.expand(r"\stepcounter{chapter}")
+    assert expander.state.get_counter_value("figure") == 0
+
+    # Test counterwithout - removes the dependency
+    expander.expand(r"\counterwithout{figure}{chapter}")
+    expander.expand(r"\setcounter{figure}{5}")
+
+    # Now stepping chapter should not reset figure
+    expander.expand(r"\stepcounter{chapter}")
+    assert expander.state.get_counter_value("figure") == 5
+
+    # Test the representation format after counterwithin
+    expander.expand(r"\counterwithin{figure}{chapter}")
+    expander.expand(r"\setcounter{chapter}{2}")
+    expander.expand(r"\setcounter{figure}{3}")
+
+    out = expander.expand(r"\thefigure")
+    assert expander.convert_tokens_to_str(out) == "2.3"  # Should show as chapter.figure

@@ -103,7 +103,9 @@ class ExpanderCore:
 
             def the_counter_handler(expander: "ExpanderCore", token: Token):
                 counter_name = token.value.lstrip("the")
-                value = expander.state.get_counter_value(counter_name)
+                value = expander.state.get_counter_as_format(
+                    counter_name, hierarchy=True
+                )
                 if value is None:
                     return None
                 return expander.convert_str_to_tokens(str(value))
