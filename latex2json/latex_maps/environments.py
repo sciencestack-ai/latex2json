@@ -16,8 +16,9 @@ class EnvironmentDefinition:
         end_definition: List[Token] = [],
         num_args: int = 0,
         default_arg: Optional[List[Token]] = None,
-        step_counter: bool = False,
-        is_math: bool = False,
+        step_counter: bool = False,  # whether to increment counter for the env in begin block each time
+        assign_counter: bool = True,  # whether to assign counter for the env in begin block. For table/figure, this should be False since captions are assigned counters
+        is_math: bool = False,  # e.g, align, equation, etc.
         has_direct_command: bool = True,  # e.g. \begin{document} -> \document + \enddocument
     ):
         self.name = name
@@ -26,6 +27,7 @@ class EnvironmentDefinition:
         self.num_args = num_args
         self.default_arg = default_arg
         self.step_counter = step_counter
+        self.assign_counter = assign_counter
         self.is_math = is_math
         self.has_direct_command = has_direct_command
 
@@ -39,16 +41,29 @@ class EnvironmentDefinition:
                 self.default_arg.copy() if self.default_arg is not None else None
             ),
             step_counter=self.step_counter,
+            assign_counter=self.assign_counter,
             is_math=self.is_math,
             has_direct_command=self.has_direct_command,
         )
 
     def __str__(self) -> str:
-        out = f"EnvironmentDefinition(name={self.name}, begin_definition={self.begin_definition}, end_definition={self.end_definition}, num_args={self.num_args}, default_arg={self.default_arg}"
+        out = f"EnvDef('{self.name}'"
+        if self.num_args:
+            out += f", num_args={self.num_args}"
+        if self.default_arg is not None:
+            out += f", default_arg={self.default_arg}"
+        if self.begin_definition:
+            out += f", begin_definition={self.begin_definition}"
+        if self.end_definition:
+            out += f", end_definition={self.end_definition}"
         if self.is_math:
             out += ", is_math=True"
         if self.step_counter:
             out += ", step_counter=True"
+        if self.assign_counter:
+            out += ", assign_counter=True"
+        if self.has_direct_command:
+            out += ", has_direct_command=True"
         return out + ")"
 
     def __repr__(self) -> str:
@@ -80,13 +95,24 @@ LAYOUT_ENVIRONMENTS = {
 
 FIGURE_ENVIRONMENTS = {
     # figures
-    "figure": EnvironmentDefinition("figure", num_args=1, default_arg=[]),
-    "subfigure": EnvironmentDefinition("subfigure", default_arg=[], num_args=2),
-    "wrapfigure": EnvironmentDefinition("wrapfigure", default_arg=[], num_args=3),
+    # assign_counter is False because captions are assigned counters
+    "figure": EnvironmentDefinition(
+        "figure", num_args=1, default_arg=[], assign_counter=False
+    ),
+    "subfigure": EnvironmentDefinition(
+        "subfigure", num_args=2, default_arg=[], assign_counter=False
+    ),
+    "wrapfigure": EnvironmentDefinition(
+        "wrapfigure", num_args=3, default_arg=[], assign_counter=False
+    ),
 }
 
 TABLE_ENVIRONMENTS = {
-    "table": EnvironmentDefinition("table", num_args=1, default_arg=[]),
+    # tables
+    # assign_counter is False because captions are assigned counters
+    "table": EnvironmentDefinition(
+        "table", num_args=1, default_arg=[], assign_counter=False
+    ),
     "tabular": EnvironmentDefinition("tabular", num_args=1),
     "tabularx": EnvironmentDefinition("tabularx", num_args=2, has_direct_command=False),
     "tabulary": EnvironmentDefinition("tabulary", num_args=1, has_direct_command=False),

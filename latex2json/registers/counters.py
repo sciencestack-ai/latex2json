@@ -80,7 +80,9 @@ class CounterManager:
         self.new_counter("equation")
         self.new_counter("footnote")
         self.new_counter("figure")
+        self.new_counter("subfigure", parent="figure")
         self.new_counter("table")
+        # self.new_counter("table")
 
         # Enumerate counters (nested lists)
         self.new_counter("enumi")

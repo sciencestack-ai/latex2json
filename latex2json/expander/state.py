@@ -81,6 +81,8 @@ class ExpanderState:
 
         self.environment_registry: Dict[str, EnvironmentDefinition] = {}
 
+        self._env_stack: List[str] = []
+
     @property
     def mode(self) -> ProcessingMode:
         return self.current.mode
@@ -112,6 +114,20 @@ class ExpanderState:
         if not self._stack:
             raise RuntimeError("ExpanderState stack is empty!")
         return self._stack[-1]
+
+    @property
+    def current_env(self) -> Optional[str]:
+        """Get the current environment stack."""
+        return self._env_stack[-1] if self._env_stack else None
+
+    def push_env_stack(self, env_name: str):
+        """Pushes a new environment stack onto the stack, starting a new scope."""
+        self._env_stack.append(env_name)
+
+    def pop_env_stack(self):
+        """Pops the current environment stack from the stack, ending the current scope."""
+        if self._env_stack:
+            self._env_stack.pop()
 
     def push_scope(self):
         """Pushes a new state layer onto the stack, starting a new scope."""

@@ -128,3 +128,22 @@ def test_newenvironment_with_specialchars():
     assert not expander.check_tokens_equal(
         out, get_environment_tokens(expander, "1337", "HELLO MIDDLE BYE")
     )
+
+
+def test_newenvironment_with_counter():
+    expander = Expander()
+
+    text = r"""
+    \newcounter{myenv}
+    \newenvironment{myenv}{\stepcounter{myenv}}{}
+    """.strip()
+    out = expander.expand(text)
+    assert expander.state.get_counter_value("myenv") == 0
+
+    out = expander.expand(r"\begin{myenv}Hello\end{myenv}")
+    assert out[0] == Token(TokenType.ENVIRONMENT_START, "myenv", numbering="1")
+    assert expander.state.get_counter_value("myenv") == 1
+
+    out = expander.expand(r"\begin{myenv}Hello\end{myenv}")
+    assert out[0] == Token(TokenType.ENVIRONMENT_START, "myenv", numbering="2")
+    assert expander.state.get_counter_value("myenv") == 2

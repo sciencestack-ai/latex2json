@@ -652,13 +652,13 @@ class ExpanderCore:
             self.skip_whitespace()
         args: List[List[Token]] = []
 
-        if default_arg:
+        if default_arg is not None:
             tok = self.peek()
             # if the next token is a begin bracket, replace the default arg with the parsed bracket
             if tok and is_begin_bracket_token(tok):
                 default_arg = self.parse_bracket_as_tokens()
 
-            args.append(default_arg)
+            args.append(default_arg.copy())
             num_args -= 1
 
         for i in range(num_args):
@@ -686,8 +686,8 @@ class ExpanderCore:
         self.state.set_environment_definition(env_name, env_def)
 
         is_math = env_def.is_math
-        has_counter = env_def.step_counter
-        if has_counter:
+        force_stepcounter = env_def.step_counter
+        if force_stepcounter:
             self.state.new_counter(env_name)
 
         prev_mode: ProcessingMode = self.state.mode
@@ -697,9 +697,10 @@ class ExpanderCore:
         ) -> Optional[List[Token]]:
             begin_token = Token(TokenType.ENVIRONMENT_START, env_name)
             state = expander.state
-            if state.has_counter(env_name):
+            if force_stepcounter:
                 state.step_counter(env_name)
-                begin_token.numbering = state.get_counter_as_format(env_name)
+
+            state.push_env_stack(env_name)
 
             nonlocal prev_mode  # Access the outer variable
             prev_mode = state.mode  # Store current mode
@@ -709,17 +710,24 @@ class ExpanderCore:
             args = expander.get_parsed_args(
                 env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
             )
-            if args is None:
-                return None
 
-            subbed = expander.substitute_token_args(env_def.begin_definition, args)
-            subbed = expander.expand_tokens(subbed)
+            subbed = []
+            if args is not None:
+                subbed = expander.substitute_token_args(env_def.begin_definition, args)
+                subbed = expander.expand_tokens(subbed)
+
+            # evaluate the counter post begin definition expansion
+            # e.g. some newenvironment definitions place \refstepcounter in the begin definition
+            if env_def.assign_counter and state.has_counter(env_name):
+                begin_token.numbering = state.get_counter_as_format(env_name)
             return [begin_token] + subbed
 
         def end_handler(
             expander: "ExpanderCore", token: Token
         ) -> Optional[List[Token]]:
             end_token = Token(TokenType.ENVIRONMENT_END, env_name)
+
+            expander.state.pop_env_stack()
 
             nonlocal prev_mode
             expander.state.mode = prev_mode  # Restore the previous mode

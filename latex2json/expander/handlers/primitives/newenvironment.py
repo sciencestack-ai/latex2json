@@ -54,6 +54,7 @@ class NewEnvironmentMacro(Macro):
             end_definition=end_definition,
             num_args=num_args,
             default_arg=default_arg,
+            has_direct_command=name.isalpha(),
         )
 
         expander.register_environment(env_def, is_global=True)
