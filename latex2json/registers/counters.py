@@ -92,6 +92,9 @@ class CounterManager:
         """Convert a user-facing counter name to internal register name"""
         return f"{self._counter_prefix}{counter_name}"
 
+    def has_counter(self, name: str) -> bool:
+        return name in self.counters
+
     def new_counter(self, name: str, parent: Optional[str] = None) -> None:
         """Create a new counter with optional parent relationship"""
         if name in self.counters:

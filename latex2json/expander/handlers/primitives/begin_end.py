@@ -9,14 +9,12 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     prefix = "\\begin"
     expander.push_scope()
 
-    out = expander.parse_environment_name()
-    if out is None:
+    name = expander.parse_environment_name()
+    if name is None:
         expander.logger.warning(
             f"Warning: {prefix} expects an environment name, but found {expander.peek()}"
         )
         return None
-
-    name, has_asterisk = out
 
     env_def = expander.state.get_environment_definition(name)
     if not env_def:
@@ -24,28 +22,30 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
             f"{prefix}{{{name}}} not found, returning default environment start token"
         )
     elif env_def.begin_handler:
-        return env_def.begin_handler(expander, token, has_asterisk=has_asterisk)
+        return env_def.begin_handler(expander, token)
     else:
         # env is defined but has no begin handler
         expander.logger.info(
             f"Warning: {prefix}{{{name}}} has no begin handler, returning default environment start token"
         )
 
-    return [Token(TokenType.ENVIRONMENT_START, name, has_asterisk=has_asterisk)]
+    begin_token = Token(TokenType.ENVIRONMENT_START, name)
+    if expander.state.has_counter(name):
+        begin_token.numbering = expander.state.get_counter_as_format(name)
+
+    return [begin_token]
 
 
 def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     prefix = "\\end"
     expander.pop_scope()
 
-    out = expander.parse_environment_name()
-    if out is None:
+    name = expander.parse_environment_name()
+    if name is None:
         expander.logger.warning(
             f"Warning: {prefix} expects an environment name, but found {expander.peek()}"
         )
         return None
-
-    name, has_asterisk = out
 
     env_def = expander.state.get_environment_definition(name)
     if not env_def:
@@ -53,14 +53,14 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             f"{prefix}{{{name}}} not found, returning default environment end token"
         )
     elif env_def.end_handler:
-        return env_def.end_handler(expander, token, has_asterisk=has_asterisk)
+        return env_def.end_handler(expander, token)
     else:
         # env is defined but has no end handler
         expander.logger.info(
             f"Warning: {prefix}{{{name}}} has no end handler, returning default environment end token"
         )
 
-    return [Token(TokenType.ENVIRONMENT_END, name, has_asterisk=has_asterisk)]
+    return [Token(TokenType.ENVIRONMENT_END, name)]
 
 
 def register_begin_end(expander: ExpanderCore):

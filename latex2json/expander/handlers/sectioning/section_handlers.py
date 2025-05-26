@@ -20,11 +20,10 @@ def section_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     content = expander.parse_brace_as_tokens()
 
     cmd_name = token.value
-    if not has_asterisk:
-        expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
-
     out_token = token.copy()
-    out_token.has_asterisk = has_asterisk
+    if not has_asterisk and expander.state.has_counter(cmd_name):
+        expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
+        out_token.numbering = expander.state.get_counter_as_format(cmd_name)
 
     output_tokens: List[Token] = [out_token]  # e.g. \section
     if opt_arg is not None:

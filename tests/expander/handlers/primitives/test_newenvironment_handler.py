@@ -101,3 +101,30 @@ def test_nested_environments():
         *expander.expand(" POST"),
     ]
     assert_token_sequence(out, expected)
+
+
+def test_newenvironment_with_specialchars():
+    expander = Expander()
+
+    text = r"""
+    \newenvironment{ 1337 }{HELLO}{BYE}
+    """.strip()
+    expander.expand(text)
+    # special char environments are valid but not registered as macros
+    assert not expander.get_macro("\\1337")
+    assert not expander.get_macro("\\end1337")
+
+    # space sensitive!
+    assert expander.state.get_environment_definition(" 1337 ")
+    assert not expander.state.get_environment_definition("1337")
+
+    out = expander.expand(r"\begin{ 1337 } MIDDLE \end{ 1337 }")
+    assert_token_sequence(
+        out, get_environment_tokens(expander, " 1337 ", "HELLO MIDDLE BYE")
+    )
+
+    # space sensitive! this will not work
+    out = expander.expand(r"\begin{1337} MIDDLE \end{1337}")
+    assert not expander.check_tokens_equal(
+        out, get_environment_tokens(expander, "1337", "HELLO MIDDLE BYE")
+    )

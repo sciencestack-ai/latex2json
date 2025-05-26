@@ -106,9 +106,7 @@ class ExpanderCore:
 
             def the_counter_handler(expander: "ExpanderCore", token: Token):
                 counter_name = token.value.lstrip("the")
-                value = expander.state.get_counter_as_format(
-                    counter_name, hierarchy=True
-                )
+                value = expander.state.get_counter_as_format(counter_name)
                 if value is None:
                     return None
                 return expander.convert_str_to_tokens(str(value))
@@ -581,7 +579,7 @@ class ExpanderCore:
             final_definition.append(tok)
         return final_definition
 
-    def parse_environment_name(self) -> Optional[Tuple[str, bool]]:
+    def parse_environment_name(self) -> Optional[str]:
         self.skip_whitespace()
 
         tok = self.peek()
@@ -590,13 +588,11 @@ class ExpanderCore:
 
         name = self.parse_brace_as_tokens()
         expanded_name = self.expand_tokens(name)
-        out_name = self.convert_tokens_to_str(expanded_name).strip()
+        out_name = self.convert_tokens_to_str(
+            expanded_name
+        )  # don't strip, env names are literal
 
-        has_asterisk = out_name.endswith("*")
-        if has_asterisk:
-            out_name = out_name[:-1]
-
-        return out_name, has_asterisk
+        return out_name
 
     def parse_char_for_catcode(self) -> Optional[str]:
         if self.peek() == BACK_TICK_TOKEN:
@@ -697,17 +693,20 @@ class ExpanderCore:
         prev_mode: ProcessingMode = self.state.mode
 
         def begin_handler(
-            expander: "ExpanderCore", token: Token, has_asterisk=False
+            expander: "ExpanderCore", token: Token
         ) -> Optional[List[Token]]:
-            if has_counter and not has_asterisk:
-                expander.state.step_counter(env_name)
+            begin_token = Token(TokenType.ENVIRONMENT_START, env_name)
+            state = expander.state
+            if state.has_counter(env_name):
+                state.step_counter(env_name)
+                begin_token.numbering = state.get_counter_as_format(env_name)
 
             nonlocal prev_mode  # Access the outer variable
-            prev_mode = expander.state.mode  # Store current mode
-            if is_math and not expander.state.is_math_mode:
-                expander.state.is_math_mode = True
+            prev_mode = state.mode  # Store current mode
+            if is_math and not state.is_math_mode:
+                state.is_math_mode = True
 
-            args = self.get_parsed_args(
+            args = expander.get_parsed_args(
                 env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
             )
             if args is None:
@@ -715,27 +714,25 @@ class ExpanderCore:
 
             subbed = expander.substitute_token_args(env_def.begin_definition, args)
             subbed = expander.expand_tokens(subbed)
-            return [
-                Token(TokenType.ENVIRONMENT_START, env_name, has_asterisk=has_asterisk)
-            ] + subbed
+            return [begin_token] + subbed
 
         def end_handler(
-            expander: "ExpanderCore", token: Token, has_asterisk=False
+            expander: "ExpanderCore", token: Token
         ) -> Optional[List[Token]]:
+            end_token = Token(TokenType.ENVIRONMENT_END, env_name)
+
             nonlocal prev_mode
             expander.state.mode = prev_mode  # Restore the previous mode
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             subbed = expander.expand_tokens(subbed)
-            return subbed + [
-                Token(TokenType.ENVIRONMENT_END, env_name, has_asterisk=has_asterisk)
-            ]
+            return subbed + [end_token]
 
         # attach the handlers to the envdef instance
         env_def.begin_handler = begin_handler
         env_def.end_handler = end_handler
 
-        if env_def.has_direct_command:
+        if env_def.has_direct_command and env_name.isalpha():
             self.register_macro(
                 env_name,
                 Macro(env_name, begin_handler, env_def.begin_definition),

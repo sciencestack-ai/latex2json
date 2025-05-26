@@ -37,19 +37,19 @@ class Token:
         value: str,  # Can be a string (command name) or a character
         position: int = -1,
         catcode: Optional[Catcode] = None,  # Use the Catcode enum for type hinting
-        has_asterisk: bool = False,
+        numbering: Optional[str] = None,
     ):
         self.type = type
         self.value = value
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
 
-        self.has_asterisk = has_asterisk  # usually for controlsequence or environment types e.g. \section*, \begin{equation*}
+        self.numbering = numbering  # usually for controlsequence or environment types e.g. \section 1.2, \begin{equation*} -> 2.3
 
     def __str__(self) -> str:
         value = self.value
-        if self.has_asterisk:
-            value += "*"
+        if self.numbering:
+            value += f" ({self.numbering})"
 
         if self.type == TokenType.CONTROL_SEQUENCE:
             return f"Pos {self.position:3}: {self.type.name:18} -> \\{value!r}"
@@ -66,7 +66,9 @@ class Token:
         return self.value
 
     def copy(self) -> "Token":
-        return Token(self.type, self.value, self.position, self.catcode)
+        return Token(
+            self.type, self.value, self.position, self.catcode, numbering=self.numbering
+        )
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -77,7 +79,7 @@ class Token:
             and self.value == other.value
             # and self.position == other.position
             and self.catcode == other.catcode
-            and self.has_asterisk == other.has_asterisk
+            and self.numbering == other.numbering
         )
 
 

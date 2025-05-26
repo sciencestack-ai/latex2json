@@ -151,3 +151,32 @@ COMMON_ENVIRONMENTS = {
     **MATH_ENVIRONMENTS,
     # **THEOREM_ENVIRONMENTS,
 }
+
+STAR_VARIANTS = [
+    "equation",
+    "align",
+    "gather",
+    "multline",
+    "eqnarray",  # though deprecated
+    "flalign",
+    "alignat",
+    "dmath",
+    "figure",
+    "table",
+    "tabular",
+    "tabularx",
+    "longtable",
+    "theorem",  # when using amsthm package
+    "lemma",  # when using amsthm package
+    "proof",  # when using amsthm package
+]
+
+for env in STAR_VARIANTS:
+    env_def = COMMON_ENVIRONMENTS.get(env)
+    if not env_def:
+        continue
+    env_star = env_def.copy()
+    env_star.name = env_star.name + "*"
+    env_star.has_direct_command = False
+    env_star.step_counter = False
+    COMMON_ENVIRONMENTS[env_star.name] = env_star

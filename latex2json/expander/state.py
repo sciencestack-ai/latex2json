@@ -195,6 +195,9 @@ class ExpanderState:
         self.current.register_old_values.append((register_type, reg_id, cur_value))
 
     # COUNTERS
+    def has_counter(self, name: str) -> bool:
+        return self.counter_manager.has_counter(name)
+
     def new_counter(self, name: str, parent: Optional[str] = None) -> None:
         """Create a new counter with optional parent relationship"""
         self.counter_manager.new_counter(name, parent)
@@ -219,7 +222,7 @@ class ExpanderState:
         self,
         name: str,
         style: Union[str, CounterFormat] = CounterFormat.ARABIC,
-        hierarchy: bool = False,
+        hierarchy: bool = True,
     ) -> str:
         """Format counter value according to style"""
         return self.counter_manager.get_counter_as_format(name, style, hierarchy)
