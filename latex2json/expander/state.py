@@ -32,23 +32,13 @@ class StateLayer:
             parent=parent.macro_registry if parent else None
         )
 
-        # Catcode Table: Copied, local changes don't affect parent
-        # Use a copy of the parent's table, or a default if no parent
-        self.catcode_table: Dict[int, Catcode] = (
-            parent.catcode_table.copy() if parent else get_default_catcodes()
-        )
+        self.catcode_old_values: List[Tuple[int, Catcode]] = []
 
         self.register_old_values: List[Tuple[str, Union[int, str], Any]] = []
 
-    def get_catcode(self, char_ord: int) -> Catcode:
-        """Get the catcode for a character from this layer's table."""
-        return self.catcode_table.get(
-            char_ord, Catcode.OTHER
-        )  # Default to OTHER if not found
-
-    def set_catcode(self, char_ord: int, catcode: Catcode):
-        """Set the catcode for a character in this layer's table."""
-        self.catcode_table[char_ord] = catcode
+    def store_catcode_old_value(self, char_ord: int, old_value: Catcode):
+        """Store the old catcode value before modification."""
+        self.catcode_old_values.append((char_ord, old_value))
 
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.macro_registry.get(name)
@@ -56,14 +46,18 @@ class StateLayer:
     def set_macro(self, name: str, definition: Macro, is_global: bool = False):
         self.macro_registry.set(name, definition, is_global)
 
-    # # --- Methods to access/modify state within this layer ---
+    def apply_old_values_to_state(self, state: "ExpanderState"):
+        # Restore old catcode values
+        for char_ord, old_value in reversed(self.catcode_old_values):
+            state.tokenizer.set_catcode(char_ord, old_value)
 
-    # Add methods for getting/setting other state (registers, parameters, mode, etc.)
-    # These methods would interact with self.local_register_assignments, self.parameter_values, etc.
-    # and potentially delegate to parent layers or a global store for non-local state.
-
-
-# --- ExpanderState Class (The Stack Manager) ---
+        # Restore old register values
+        for change in reversed(self.register_old_values):
+            name, reg_id, value = change
+            if value is None:
+                state.registers.delete_register(name, reg_id)
+            else:
+                state.registers.set_register(name, reg_id, value)
 
 
 class ExpanderState:
@@ -83,6 +77,8 @@ class ExpanderState:
 
         self._env_stack: List[str] = []
 
+        self._catcode_text_mode_values: List[Tuple[int, Catcode]] = []
+
     @property
     def mode(self) -> ProcessingMode:
         return self.current.mode
@@ -97,11 +93,32 @@ class ExpanderState:
 
     @is_math_mode.setter
     def is_math_mode(self, value: bool):
-        self.current.mode = ProcessingMode.MATH if value else ProcessingMode.TEXT
+        self.set_mode(ProcessingMode.MATH if value else ProcessingMode.TEXT)
 
     def set_mode(self, mode: ProcessingMode):
         """Set the mode for the current scope."""
-        self.current.mode = mode
+        is_same = mode == self.current.mode
+        if not is_same:
+            if mode == ProcessingMode.MATH:
+                self._set_math_catcode_values()
+            else:
+                self._unset_math_catcode_values()
+            self.current.mode = mode
+
+    def _set_math_catcode_values(self):
+        # Store original catcodes and set to ACTIVE
+        for chars in ["_", "^", "&"]:
+            char_ord = ord(chars)
+            old_catcode = self.get_catcode(char_ord)
+            # Only store and change if not already ACTIVE
+            if old_catcode != Catcode.ACTIVE:
+                self._catcode_text_mode_values.append((char_ord, old_catcode))
+                self.tokenizer.set_catcode(char_ord, Catcode.ACTIVE)
+
+    def _unset_math_catcode_values(self):
+        for ord_char, old_catcode in self._catcode_text_mode_values:
+            self.tokenizer.set_catcode(ord_char, old_catcode)
+        self._catcode_text_mode_values.clear()  # Clear the list after restoring values
 
     # --- Stack Management ---
     def get_root(self) -> StateLayer:
@@ -134,7 +151,6 @@ class ExpanderState:
         # Create a new layer, inheriting from the current layer
         new_layer = StateLayer(parent=self.current)
         self._stack.append(new_layer)
-        self.tokenizer.set_catcode_table(self.current.catcode_table)
 
     def pop_scope(self):
         """Pops the current state layer from the stack, ending the current scope."""
@@ -143,14 +159,7 @@ class ExpanderState:
             print("[WARNING]: Cannot pop the base ExpanderState scope!")
             return
         last_state = self._stack.pop()
-        self.tokenizer.set_catcode_table(self.current.catcode_table)
-        # setback the old values
-        for change in reversed(last_state.register_old_values):
-            name, reg_id, value = change
-            if value is None:
-                self.registers.delete_register(name, reg_id)
-            else:
-                self.registers.set_register(name, reg_id, value)
+        last_state.apply_old_values_to_state(self)
 
     # MACROS
     def get_macro(self, name: str) -> Optional[Macro]:
@@ -165,13 +174,13 @@ class ExpanderState:
 
     # CATCODES
     def set_catcode(self, char_ord: int, catcode: Catcode):
-        """Set the catcode for a character in the current scope."""
-        self.current.set_catcode(char_ord, catcode)
+        if not self.pending_global:
+            self.current.store_catcode_old_value(char_ord, self.get_catcode(char_ord))
         self.tokenizer.set_catcode(char_ord, catcode)
+        self.pending_global = False
 
     def get_catcode(self, char_ord: int) -> Catcode:
-        """Get the current catcode for a character."""
-        return self.current.get_catcode(char_ord)
+        return self.tokenizer.get_catcode(char_ord)
 
     # REGISTERS
     def get_register(

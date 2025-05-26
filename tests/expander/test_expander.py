@@ -28,6 +28,24 @@ def test_catcode():
     expander.expand(r"\catcode`\]=3")
     assert expander.get_catcode(ord("]")) == 3
 
+    # test on scopes and global
+    text = r"""
+    {
+    \catcode`\]=4 % local to scope
+    }
+    """
+    expander.expand(text)
+    assert expander.get_catcode(ord("]")) == 3
+
+    # now let's test with \global
+    text = r"""
+    {
+    \global\catcode`\]=5
+    }
+    """
+    expander.expand(text)
+    assert expander.get_catcode(ord("]")) == 5
+
 
 def test_makeatletter_makeatother():
     expander = Expander()

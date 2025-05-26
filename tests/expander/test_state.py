@@ -104,3 +104,39 @@ def test_state_scopes():
     test_catcode_scopes()
     test_mode_scopes()
     test_register_scopes()
+
+
+def test_math_mode_catcodes():
+    tokenizer = Tokenizer()
+    state = ExpanderState(tokenizer)
+
+    # Check initial catcodes
+    assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
+    assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
+    assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
+
+    # Enter math mode
+    state.set_mode(ProcessingMode.MATH)
+
+    # Check math mode catcodes
+    assert state.get_catcode(ord("_")) == Catcode.ACTIVE
+    assert state.get_catcode(ord("^")) == Catcode.ACTIVE
+    assert state.get_catcode(ord("&")) == Catcode.ACTIVE
+
+    # Exit math mode
+    state.set_mode(ProcessingMode.TEXT)
+
+    # Check catcodes are restored
+    assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
+    assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
+    assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
+
+    # Test nested scopes with math mode
+    state.set_catcode(ord("_"), 5)
+    state.push_scope()
+    state.set_mode(ProcessingMode.MATH)
+    assert state.get_catcode(ord("_")) == Catcode.ACTIVE
+
+    state.set_mode(ProcessingMode.TEXT)
+    state.pop_scope()
+    assert state.get_catcode(ord("_")) == 5
