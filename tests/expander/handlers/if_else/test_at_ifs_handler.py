@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.expander.handlers.if_else.ifstar import register_ifstar
+from latex2json.expander.handlers.if_else.at_ifs import register_atifs
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import (
     assert_tokens_endwith,
@@ -12,7 +12,7 @@ from tests.test_utils import (
 
 def test_ifstar_handler():
     expander = Expander()
-    register_ifstar(expander)
+    register_atifs(expander)
     test_with_star = r"""
     \makeatletter
     \def\cmd{\@ifstar{star}{nostar}}
@@ -27,7 +27,7 @@ def test_ifstar_handler():
 
 def test_nested_ifstar():
     expander = Expander()
-    register_ifstar(expander)
+    register_atifs(expander)
     nested_test = r"""
     \makeatletter
     \def\outer{\@ifstar{\inner*}{\inner}}
@@ -50,7 +50,7 @@ def test_nested_ifstar():
 
 def test_ifstar_inside_iftrue():
     expander = Expander()
-    register_ifstar(expander)
+    register_atifs(expander)
     test_code = r"""
     \makeatletter
     \def\cmd{\iftrue\@ifstar{star}{nostar}\fi}  % this is always nostar since \fi is right after \@ifstar block

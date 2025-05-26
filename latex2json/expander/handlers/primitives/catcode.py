@@ -1,13 +1,41 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import BACK_TICK_TOKEN, Token, TokenType
+
+
+def parse_char_for_catcode(expander: ExpanderCore) -> Optional[str]:
+    if expander.peek() == BACK_TICK_TOKEN:
+        expander.consume()
+    else:
+        return None
+
+    # check for controlsequence
+    tok = expander.peek()
+    cmd_name: str | None = None
+    if tok.type == TokenType.CONTROL_SEQUENCE:
+        cmd_name = tok.value
+        expander.consume()
+    else:
+        expander.logger.warning(
+            f"WARNING: \\catcode expected control sequence, but found {tok.value}"
+        )
+        return None
+
+    char = cmd_name
+    if len(char) > 1:
+        char = char[0]
+        expander.logger.warning(
+            f"WARNING: \\catcode only takes one character, using {char}"
+        )
+
+    return char
 
 
 class CatcodeHandler:
     @staticmethod
     def setter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        char = expander.parse_char_for_catcode()
+        char = parse_char_for_catcode(expander)
         if char is None:
             return None
 
@@ -31,7 +59,7 @@ class CatcodeHandler:
 
     @staticmethod
     def getter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        char = expander.parse_char_for_catcode()
+        char = parse_char_for_catcode(expander)
         if char is None:
             return None
 

@@ -23,7 +23,6 @@ from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,
 )
-from latex2json.tokens.types import BACK_TICK_TOKEN
 from latex2json.tokens.utils import (
     is_1_to_9_token,
     is_begin_bracket_token,
@@ -567,6 +566,15 @@ class ExpanderCore:
     def get_catcode(self, char_ord: int) -> Catcode:
         return self.state.get_catcode(char_ord)
 
+    def convert_token_to_char_token(self, token: Token) -> Optional[Token]:
+        if token.type == TokenType.CONTROL_SEQUENCE:
+            macro = self.get_macro(token.value)
+            if macro and macro.type == MacroType.CHAR and len(macro.definition) > 0:
+                # example \let\a=3, \bgroup -> {, \egroup -> }, etc
+                return macro.definition[0]
+            return None
+        return token
+
     # converts a list of tokens into their associated macro definitions if exists
     def convert_to_macro_definitions(self, definition: List[Token]) -> List[Token]:
         final_definition = []
@@ -593,33 +601,6 @@ class ExpanderCore:
         )  # don't strip, env names are literal
 
         return out_name
-
-    def parse_char_for_catcode(self) -> Optional[str]:
-        if self.peek() == BACK_TICK_TOKEN:
-            self.consume()
-        else:
-            return None
-
-        # check for controlsequence
-        tok = self.peek()
-        cmd_name: str | None = None
-        if tok.type == TokenType.CONTROL_SEQUENCE:
-            cmd_name = tok.value
-            self.consume()
-        else:
-            self.logger.warning(
-                f"WARNING: \\catcode expected control sequence, but found {tok.value}"
-            )
-            return None
-
-        char = cmd_name
-        if len(char) > 1:
-            char = char[0]
-            self.logger.warning(
-                f"WARNING: \\catcode only takes one character, using {char}"
-            )
-
-        return char
 
     def convert_str_to_tokens(self, text: str) -> List[Token]:
         out = []
@@ -756,10 +737,10 @@ class ExpanderCore:
         blocks = []
         for _ in range(N_blocks):
             self.skip_whitespace()
-            true_block = self.parse_brace_as_tokens()
-            if true_block is None:
+            block = self.parse_brace_as_tokens()
+            if block is None:
                 break
-            blocks.append(true_block)
+            blocks.append(block)
 
         return blocks
 

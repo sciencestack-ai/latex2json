@@ -6,24 +6,18 @@ from latex2json.tokens.types import Token, TokenType
 
 
 def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
-    a_macro: Macro | None = None
-    b_macro: Macro | None = None
+    a_char = expander.convert_token_to_char_token(a)
+    b_char = expander.convert_token_to_char_token(b)
 
-    if a.type == TokenType.CONTROL_SEQUENCE:
-        a_macro = expander.get_macro(a.value)
-        # if a is a \let, we need to get the first token in the definition
-        if a_macro and a_macro.type == MacroType.CHAR and len(a_macro.definition) > 0:
-            a = a_macro.definition[0]
-
-    if b.type == TokenType.CONTROL_SEQUENCE:
-        b_macro = expander.get_macro(b.value)
-        if b_macro and b_macro.type == MacroType.CHAR and len(b_macro.definition) > 0:
-            b = b_macro.definition[0]
+    if a_char:
+        a = a_char
+    if b_char:
+        b = b_char
 
     if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
         # check if undefined
-        undefined_a = a_macro is None
-        undefined_b = b_macro is None
+        undefined_a = expander.get_macro(a.value) is None
+        undefined_b = expander.get_macro(b.value) is None
         if undefined_a and undefined_b:
             # both undefined, so they are equal in \ifx
             return True

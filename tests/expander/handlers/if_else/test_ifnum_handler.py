@@ -193,3 +193,22 @@ def test_nested_ifnum():
     out = expander.expand(test_nested)
     out = strip_whitespace_tokens(out)
     assert_token_sequence(out, expander.expand("TRUE"))
+
+
+def test_with_value():
+    text = r"""
+    \ifnum\value{page}>10
+        A
+    \else
+        B
+    \fi
+    """.strip()
+    expander = Expander()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert_token_sequence(out, expander.expand("B"))
+
+    expander.expand(r"\setcounter{page}{11}")
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert_token_sequence(out, expander.expand("A"))
