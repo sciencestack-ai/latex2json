@@ -20,10 +20,15 @@ def test_counter_manager_basics():
     manager.set_counter("child", 5)
     assert manager.get_counter_value("child") == 5
 
-    # Test stepping counter (should reset children)
+    manager.new_counter("subchild", parent="child")
+    manager.set_counter("subchild", 10)
+    assert manager.get_counter_value("subchild") == 10
+
+    # Test stepping counter (should reset children recursively)
     manager.step_counter("mycounter")
     assert manager.get_counter_value("mycounter") == 43
     assert manager.get_counter_value("child") == 0
+    assert manager.get_counter_value("subchild") == 0
 
     manager.add_to_counter("mycounter", -3)
     assert manager.get_counter_value("mycounter") == 40

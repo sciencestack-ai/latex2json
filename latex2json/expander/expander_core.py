@@ -752,6 +752,17 @@ class ExpanderCore:
                 is_global=is_global,
             )
 
+    def parse_braced_blocks(self, N_blocks: int = 2) -> List[List[Token]]:
+        blocks = []
+        for _ in range(N_blocks):
+            self.skip_whitespace()
+            true_block = self.parse_brace_as_tokens()
+            if true_block is None:
+                break
+            blocks.append(true_block)
+
+        return blocks
+
 
 if __name__ == "__main__":
 

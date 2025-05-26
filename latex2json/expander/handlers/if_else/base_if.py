@@ -34,7 +34,9 @@ class IfMacro(Macro):
 
         block = process_if_else_block(expander, is_true)
         if block:
-            expander.push_tokens(block)
+            expanded = expander.expand_tokens(block)
+            # expander.push_tokens(block)
+            return expanded
         return []
 
 
