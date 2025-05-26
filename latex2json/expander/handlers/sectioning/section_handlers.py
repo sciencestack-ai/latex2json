@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Callable
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.sections import SECTIONS
@@ -11,45 +11,54 @@ from latex2json.tokens.types import (
 )
 
 
-def section_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    has_asterisk = expander.parse_asterisk()
-    expander.skip_whitespace()
-    opt_arg = expander.parse_bracket_as_tokens()
+def make_section_handler(
+    cmd_name: Optional[str] = None,
+) -> Callable[[ExpanderCore, Token], Optional[List[Token]]]:
+    def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        has_asterisk = expander.parse_asterisk()
+        expander.skip_whitespace()
+        opt_arg = expander.parse_bracket_as_tokens()
 
-    expander.skip_whitespace()
-    content = expander.parse_brace_as_tokens()
+        expander.skip_whitespace()
+        content = expander.parse_brace_as_tokens()
 
-    cmd_name = token.value
-    out_token = token.copy()
-    if not has_asterisk and expander.state.has_counter(cmd_name):
-        expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
-        out_token.numbering = expander.state.get_counter_as_format(cmd_name)
+        out_token = token.copy()
+        if cmd_name and not has_asterisk and expander.state.has_counter(cmd_name):
+            expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
+            out_token.numbering = expander.state.get_counter_as_format(cmd_name)
 
-    output_tokens: List[Token] = [out_token]  # e.g. \section
-    if opt_arg is not None:
-        expanded_opt_arg = expander.expand_tokens(opt_arg)
-        output_tokens.extend(
-            [BEGIN_BRACKET_TOKEN.copy(), *expanded_opt_arg, END_BRACKET_TOKEN.copy()]
-        )
+        output_tokens: List[Token] = [out_token]  # e.g. \section
+        if opt_arg is not None:
+            expanded_opt_arg = expander.expand_tokens(opt_arg)
+            output_tokens.extend(
+                [
+                    BEGIN_BRACKET_TOKEN.copy(),
+                    *expanded_opt_arg,
+                    END_BRACKET_TOKEN.copy(),
+                ]
+            )
 
-    if content is not None:
-        expanded_content = expander.expand_tokens(content)
-        output_tokens.extend(
-            [
-                BEGIN_BRACE_TOKEN.copy(),
-                *expanded_content,
-                END_BRACE_TOKEN.copy(),
-            ]
-        )
+        if content is not None:
+            expanded_content = expander.expand_tokens(content)
+            output_tokens.extend(
+                [
+                    BEGIN_BRACE_TOKEN.copy(),
+                    *expanded_content,
+                    END_BRACE_TOKEN.copy(),
+                ]
+            )
 
-    return output_tokens
+        return output_tokens
+
+    return handler
 
 
 def register_section_handlers(expander: ExpanderCore):
     for cmd_name in SECTIONS:
+        handler = make_section_handler(cmd_name)
         expander.register_macro(
             cmd_name,
-            Macro(cmd_name, section_handler, []),
+            Macro(cmd_name, handler, []),
             is_global=True,
         )
 

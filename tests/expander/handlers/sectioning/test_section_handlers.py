@@ -26,10 +26,14 @@ def mock_section_token(
     out_tokens = [section_token]
     if opt_arg:
         out_tokens.extend(
-            [BEGIN_BRACKET_TOKEN] + expander.expand(opt_arg) + [END_BRACKET_TOKEN]
+            [BEGIN_BRACKET_TOKEN]
+            + expander.convert_str_to_tokens(opt_arg)
+            + [END_BRACKET_TOKEN]
         )
     out_tokens.extend(
-        [BEGIN_BRACE_TOKEN] + expander.expand(content) + [END_BRACE_TOKEN]
+        [BEGIN_BRACE_TOKEN]
+        + expander.convert_str_to_tokens(content)
+        + [END_BRACE_TOKEN]
     )
     return out_tokens
 
