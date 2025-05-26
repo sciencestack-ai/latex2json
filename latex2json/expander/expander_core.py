@@ -16,7 +16,7 @@ from latex2json.registers import (
     TexRegisters,
 )
 
-from latex2json.expander.state import ExpanderState
+from latex2json.expander.state import ExpanderState, ProcessingMode
 from latex2json.expander.utils import parse_number_str_to_float
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
@@ -581,7 +581,7 @@ class ExpanderCore:
             final_definition.append(tok)
         return final_definition
 
-    def parse_environment_name(self) -> Optional[str]:
+    def parse_environment_name(self) -> Optional[Tuple[str, bool]]:
         self.skip_whitespace()
 
         tok = self.peek()
@@ -590,9 +590,13 @@ class ExpanderCore:
 
         name = self.parse_brace_as_tokens()
         expanded_name = self.expand_tokens(name)
-        out_name = self.convert_tokens_to_str(expanded_name)
+        out_name = self.convert_tokens_to_str(expanded_name).strip()
 
-        return out_name.strip()
+        has_asterisk = out_name.endswith("*")
+        if has_asterisk:
+            out_name = out_name[:-1]
+
+        return out_name, has_asterisk
 
     def parse_char_for_catcode(self) -> Optional[str]:
         if self.peek() == BACK_TICK_TOKEN:
@@ -685,18 +689,23 @@ class ExpanderCore:
         env_name = env_def.name
         self.state.set_environment_definition(env_name, env_def)
 
+        is_math = env_def.is_math
         has_counter = env_def.step_counter
         if has_counter:
             self.state.new_counter(env_name)
 
-        # Register begin handler
-        begin_name = "\\" + env_def.name
+        prev_mode: ProcessingMode = self.state.mode
 
         def begin_handler(
-            expander: "ExpanderCore", token: Token
+            expander: "ExpanderCore", token: Token, has_asterisk=False
         ) -> Optional[List[Token]]:
-            if has_counter:
+            if has_counter and not has_asterisk:
                 expander.state.step_counter(env_name)
+
+            nonlocal prev_mode  # Access the outer variable
+            prev_mode = expander.state.mode  # Store current mode
+            if is_math and not expander.state.is_math_mode:
+                expander.state.is_math_mode = True
 
             args = self.get_parsed_args(
                 env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
@@ -706,23 +715,37 @@ class ExpanderCore:
 
             subbed = expander.substitute_token_args(env_def.begin_definition, args)
             subbed = expander.expand_tokens(subbed)
-            return [Token(TokenType.ENVIRONMENT_START, env_name)] + subbed
-
-        # Register end handler
-        end_name = "\\end" + env_def.name
+            return [
+                Token(TokenType.ENVIRONMENT_START, env_name, has_asterisk=has_asterisk)
+            ] + subbed
 
         def end_handler(
-            expander: "ExpanderCore", token: Token
+            expander: "ExpanderCore", token: Token, has_asterisk=False
         ) -> Optional[List[Token]]:
+            nonlocal prev_mode
+            expander.state.mode = prev_mode  # Restore the previous mode
+
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             subbed = expander.expand_tokens(subbed)
-            return subbed + [Token(TokenType.ENVIRONMENT_END, env_name)]
+            return subbed + [
+                Token(TokenType.ENVIRONMENT_END, env_name, has_asterisk=has_asterisk)
+            ]
 
-        begin_macro = Macro(begin_name, begin_handler, env_def.begin_definition)
-        end_macro = Macro(end_name, end_handler, env_def.end_definition)
+        # attach the handlers to the envdef instance
+        env_def.begin_handler = begin_handler
+        env_def.end_handler = end_handler
 
-        self.register_macro(begin_name, begin_macro, is_global=is_global)
-        self.register_macro(end_name, end_macro, is_global=is_global)
+        if env_def.has_direct_command:
+            self.register_macro(
+                env_name,
+                Macro(env_name, begin_handler, env_def.begin_definition),
+                is_global=is_global,
+            )
+            self.register_macro(
+                "end" + env_name,
+                Macro("end" + env_name, end_handler, env_def.end_definition),
+                is_global=is_global,
+            )
 
 
 if __name__ == "__main__":

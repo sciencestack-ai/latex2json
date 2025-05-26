@@ -15,11 +15,12 @@ class TokenType(Enum):
     )
     MATH_SHIFT = 3  # Simulate Catcode.Mathshift=3
     END_OF_LINE = 5  # Simulate Catcode.END_OF_LINE=5
-    PARAMETER = 6  # Simulate Catcode.PARAMETER=6
     # Add other potential types if needed, though character/control sequence are primary
     # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
     INVALID = 15  # For invalid tokens or errors
 
+    # PARSED types during expander i.e. not seen in tokenizer, only after expansion
+    PARAMETER = 6  # Simulate Catcode.PARAMETER=6
     ENVIRONMENT_START = 7
     ENVIRONMENT_END = 8
 
@@ -36,21 +37,28 @@ class Token:
         value: str,  # Can be a string (command name) or a character
         position: int = -1,
         catcode: Optional[Catcode] = None,  # Use the Catcode enum for type hinting
+        has_asterisk: bool = False,
     ):
         self.type = type
         self.value = value
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
 
+        self.has_asterisk = has_asterisk  # usually for controlsequence or environment types e.g. \section*, \begin{equation*}
+
     def __str__(self) -> str:
+        value = self.value
+        if self.has_asterisk:
+            value += "*"
+
         if self.type == TokenType.CONTROL_SEQUENCE:
-            return f"Pos {self.position:3}: {self.type.name:18} -> \\{self.value!r}"
+            return f"Pos {self.position:3}: {self.type.name:18} -> \\{value!r}"
         elif self.type == TokenType.CHARACTER:
-            return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r} (Catcode {self.catcode.name if self.catcode else 'None'})"  # Print enum name
+            return f"Pos {self.position:3}: {self.type.name:18} -> {value!r} (Catcode {self.catcode.name if self.catcode else 'None'})"  # Print enum name
         elif self.type == TokenType.PARAMETER:
-            return f"Token(PARAM='{self.value}')"
+            return f"Token(PARAM='{value}')"
         else:
-            return f"Pos {self.position:3}: {self.type.name:18} -> {self.value!r}"
+            return f"Pos {self.position:3}: {self.type.name:18} -> {value!r}"
 
     def to_str(self) -> str:
         if self.type == TokenType.CONTROL_SEQUENCE:
@@ -69,6 +77,7 @@ class Token:
             and self.value == other.value
             # and self.position == other.position
             and self.catcode == other.catcode
+            and self.has_asterisk == other.has_asterisk
         )
 
 

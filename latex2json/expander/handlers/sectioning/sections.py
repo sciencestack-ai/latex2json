@@ -11,6 +11,7 @@ from latex2json.tokens.types import (
 
 
 def section_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    has_asterisk = expander.parse_asterisk()
     expander.skip_whitespace()
     opt_arg = expander.parse_bracket_as_tokens()
 
@@ -18,9 +19,13 @@ def section_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     content = expander.parse_brace_as_tokens()
 
     cmd_name = token.value
-    expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
+    if not has_asterisk:
+        expander.state.step_counter(cmd_name)  # e.g. section/subsection.. +1
 
-    output_tokens: List[Token] = [token]  # e.g. \section
+    out_token = token.copy()
+    out_token.has_asterisk = has_asterisk
+
+    output_tokens: List[Token] = [out_token]  # e.g. \section
     if opt_arg is not None:
         expanded_opt_arg = expander.expand_tokens(opt_arg)
         output_tokens.extend(
@@ -62,4 +67,4 @@ if __name__ == "__main__":
 
     expander = Expander()
     register_section_handlers(expander)
-    out = expander.expand(r"\def\xxx{XXX} \section [BRO] {Hello \xxx \def\yyy{YYY}}")
+    out = expander.expand(r"\def\xxx{XXX} \section*[BRO] {Hello \xxx \def\yyy{YYY}}")

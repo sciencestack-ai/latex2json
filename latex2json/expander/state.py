@@ -85,6 +85,10 @@ class ExpanderState:
     def mode(self) -> ProcessingMode:
         return self.current.mode
 
+    @mode.setter
+    def mode(self, value: ProcessingMode):
+        self.current.mode = value
+
     @property
     def is_math_mode(self) -> bool:
         return self.current.mode == ProcessingMode.MATH

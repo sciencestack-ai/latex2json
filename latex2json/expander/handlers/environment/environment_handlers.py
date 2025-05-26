@@ -1,7 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.latex_maps.environments import (
-    EnvironmentDefinition,
     COMMON_ENVIRONMENTS,
 )
 
@@ -26,9 +25,9 @@ if __name__ == "__main__":
     1+1
     \end{equation}
 
-    \begin{equation}
+    \begin{equation*}
     1+1
-    \end{equation}
+    \end{equation*}
 """
     out = expander.expand(text)
     print(expander.state.get_counter_as_format("equation", hierarchy=True))
