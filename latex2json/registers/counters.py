@@ -4,6 +4,7 @@ from typing import Dict, List, Set, Optional, Any, Union
 from dataclasses import dataclass
 from enum import Enum
 
+from latex2json.latex_maps.sections import SECTIONS
 from latex2json.registers.types import RegisterType, CounterFormat
 from latex2json.registers.registers import TexRegisters
 from latex2json.registers.utils import int_to_roman, int_to_alpha
@@ -67,21 +68,19 @@ class CounterManager:
 
     def _init_builtin_counters(self):
         """Initialize common LaTeX counters"""
+        # Sectioning hierarchy
+        for i, section in enumerate(SECTIONS):
+            if i > 0:
+                self.new_counter(section, parent=SECTIONS[i - 1])
+            else:
+                self.new_counter(section)
+
         # Independent counters
         self.new_counter("page")
         self.new_counter("equation")
         self.new_counter("footnote")
         self.new_counter("figure")
         self.new_counter("table")
-
-        # Sectioning hierarchy
-        self.new_counter("part")
-        self.new_counter("chapter", parent="part")
-        self.new_counter("section", parent="chapter")
-        self.new_counter("subsection", parent="section")
-        self.new_counter("subsubsection", parent="subsection")
-        self.new_counter("paragraph", parent="subsubsection")
-        self.new_counter("subparagraph", parent="paragraph")
 
         # Enumerate counters (nested lists)
         self.new_counter("enumi")

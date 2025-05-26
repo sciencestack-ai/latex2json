@@ -1,5 +1,7 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.sectioning.sections import register_section_handlers
+from latex2json.expander.handlers.sectioning.section_handlers import (
+    register_section_handlers,
+)
 
 
 def register_sectioning_handlers(expander: ExpanderCore):

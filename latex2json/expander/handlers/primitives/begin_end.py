@@ -23,12 +23,6 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         expander.logger.info(
             f"{prefix}{{{name}}} not found, returning default environment start token"
         )
-    elif env_def.has_direct_command:
-        # if has asterisk, use begin_handler directly
-        if has_asterisk and env_def.begin_handler:
-            return env_def.begin_handler(expander, token, has_asterisk=True)
-        expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
-        return []
     elif env_def.begin_handler:
         return env_def.begin_handler(expander, token, has_asterisk=has_asterisk)
     else:
@@ -58,11 +52,6 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.logger.info(
             f"{prefix}{{{name}}} not found, returning default environment end token"
         )
-    elif env_def.has_direct_command:
-        if has_asterisk and env_def.end_handler:
-            return env_def.end_handler(expander, token, has_asterisk=True)
-        expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "end" + name)])
-        return []
     elif env_def.end_handler:
         return env_def.end_handler(expander, token, has_asterisk=has_asterisk)
     else:

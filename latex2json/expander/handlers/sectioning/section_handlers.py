@@ -1,6 +1,7 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
+from latex2json.latex_maps.sections import SECTIONS
 from latex2json.tokens.types import (
     Token,
     BEGIN_BRACKET_TOKEN,
@@ -46,15 +47,7 @@ def section_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
 
 
 def register_section_handlers(expander: ExpanderCore):
-    for cmd_name in [
-        "part",
-        "chapter",
-        "section",
-        "subsection",
-        "subsubsection",
-        "paragraph",
-        "subparagraph",
-    ]:
+    for cmd_name in SECTIONS:
         expander.register_macro(
             cmd_name,
             Macro(cmd_name, section_handler, []),
