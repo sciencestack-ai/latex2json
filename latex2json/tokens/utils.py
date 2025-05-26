@@ -23,6 +23,13 @@ def is_end_group_token(tok: Token) -> bool:
     return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.END_GROUP
 
 
+def is_mathshift_token(tok: Token) -> bool:
+    return (
+        tok.type == TokenType.MATH_SHIFT_INLINE
+        or tok.type == TokenType.MATH_SHIFT_DISPLAY
+    )
+
+
 def is_begin_bracket_token(tok: Token) -> bool:
     return (
         tok.type == TokenType.CHARACTER

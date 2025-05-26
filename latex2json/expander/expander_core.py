@@ -2,7 +2,7 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
-from latex2json.tokens.utils import substitute_token_args
+from latex2json.tokens.utils import is_mathshift_token, substitute_token_args
 from latex2json.expander.macro_registry import (
     Handler,
     Macro,
@@ -249,6 +249,13 @@ class ExpanderCore:
                 self.push_scope()
             elif is_end_group_token(tok):
                 self.pop_scope()
+            elif is_mathshift_token(tok):
+                mode_type = (
+                    ProcessingMode.MATH_INLINE
+                    if tok.type == TokenType.MATH_SHIFT_INLINE
+                    else ProcessingMode.MATH_DISPLAY
+                )
+                self.state.toggle_math_mode(mode_type)
         return [tok]
 
     def next_non_expandable_tokens(self) -> Optional[List[Token]]:
@@ -671,8 +678,6 @@ class ExpanderCore:
         if force_stepcounter:
             self.state.new_counter(env_name)
 
-        prev_mode: ProcessingMode = self.state.mode
-
         def begin_handler(
             expander: "ExpanderCore", token: Token
         ) -> Optional[List[Token]]:
@@ -683,10 +688,8 @@ class ExpanderCore:
 
             state.push_env_stack(env_name)
 
-            nonlocal prev_mode  # Access the outer variable
-            prev_mode = state.mode  # Store current mode
-            if is_math and not state.is_math_mode:
-                state.is_math_mode = True
+            if is_math:
+                state.push_mode(ProcessingMode.MATH_DISPLAY)
 
             args = expander.get_parsed_args(
                 env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
@@ -710,8 +713,8 @@ class ExpanderCore:
 
             expander.state.pop_env_stack()
 
-            nonlocal prev_mode
-            expander.state.mode = prev_mode  # Restore the previous mode
+            if is_math:
+                expander.state.pop_mode()
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             subbed = expander.expand_tokens(subbed)
@@ -749,5 +752,5 @@ if __name__ == "__main__":
 
     expander = ExpanderCore()
 
-    expander.set_text(r"\count0=10")
-    print(expander.parse_register())
+    # expander.set_text(r"$$")
+    expander.expand(r"$$")

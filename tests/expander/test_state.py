@@ -61,14 +61,14 @@ def test_state_scopes():
 
     def test_mode_scopes():
         # test modes
-        state.set_mode(ProcessingMode.MATH)
-        assert state.mode == ProcessingMode.MATH
+        state.push_mode(ProcessingMode.MATH_INLINE)
+        assert state.mode == ProcessingMode.MATH_INLINE
 
         state.push_scope()
-        assert state.mode == ProcessingMode.MATH
+        assert state.mode == ProcessingMode.MATH_INLINE
 
         state.pop_scope()
-        assert state.mode == ProcessingMode.MATH
+        assert state.mode == ProcessingMode.MATH_INLINE
 
     def test_register_scopes():
         # test registers
@@ -116,7 +116,7 @@ def test_math_mode_catcodes():
     assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
 
     # Enter math mode
-    state.set_mode(ProcessingMode.MATH)
+    state.push_mode(ProcessingMode.MATH_INLINE)
 
     # Check math mode catcodes
     assert state.get_catcode(ord("_")) == Catcode.ACTIVE
@@ -124,7 +124,7 @@ def test_math_mode_catcodes():
     assert state.get_catcode(ord("&")) == Catcode.ACTIVE
 
     # Exit math mode
-    state.set_mode(ProcessingMode.TEXT)
+    state.pop_mode()
 
     # Check catcodes are restored
     assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
@@ -134,9 +134,9 @@ def test_math_mode_catcodes():
     # Test nested scopes with math mode
     state.set_catcode(ord("_"), 5)
     state.push_scope()
-    state.set_mode(ProcessingMode.MATH)
+    state.push_mode(ProcessingMode.MATH_INLINE)
     assert state.get_catcode(ord("_")) == Catcode.ACTIVE
 
-    state.set_mode(ProcessingMode.TEXT)
+    state.pop_mode()
     state.pop_scope()
     assert state.get_catcode(ord("_")) == 5

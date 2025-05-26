@@ -4,9 +4,10 @@ from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     register_base_register_macros,
 )
+from latex2json.expander.state import ProcessingMode
 from latex2json.registers import RegisterType
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
-from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.catcodes import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
@@ -116,7 +117,7 @@ def test_parse_immediate_token():
         (r"\cmd sss", [Token(TokenType.CONTROL_SEQUENCE, "cmd")]),
         ("abc", [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)]),
         ("123", [Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)]),
-        ("$333$", [Token(TokenType.MATH_SHIFT, "$")]),
+        ("$333$", [Token(TokenType.MATH_SHIFT_INLINE, "$")]),
     ]
 
     for text, expected in test_sequence_pairs:
@@ -370,3 +371,81 @@ def test_empty_and_relax():
     assert_token_sequence(expander.expand(r"\relax"), [RELAX_TOKEN])
 
     assert_token_sequence(expander.expand_tokens([RELAX_TOKEN]), [RELAX_TOKEN])
+
+
+def test_math_shift_and_mode():
+    expander = ExpanderCore()
+
+    def check_math_catcodes():
+        for char in ["_", "^", "&"]:
+            assert expander.get_catcode(ord(char)) == Catcode.ACTIVE
+
+    default_catcodes = get_default_catcodes()
+
+    def check_text_catcodes():
+        for char in ["_", "^", "&"]:
+            assert expander.get_catcode(ord(char)) == default_catcodes[ord(char)]
+
+    base_mode = expander.state.mode
+    check_text_catcodes()
+
+    expander.expand(r"$$")
+    assert expander.state.is_math_mode
+    assert expander.state.mode == ProcessingMode.MATH_DISPLAY
+    check_math_catcodes()
+
+    expander.expand(r"$$")
+    assert not expander.state.is_math_mode
+    assert expander.state.mode == base_mode
+
+    check_text_catcodes()
+
+    expander.expand(r"$")
+    assert expander.state.is_math_mode
+    assert expander.state.mode == ProcessingMode.MATH_INLINE
+
+    check_math_catcodes()
+
+    expander.expand(r"$")
+    assert not expander.state.is_math_mode
+    assert expander.state.mode == base_mode
+
+    check_text_catcodes()
+
+    # test one whole $...$
+    out = expander.expand(r"$1^1$")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.MATH_SHIFT_INLINE, "$", 0),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_INLINE, "$"),
+        ],
+    )
+
+    # check that mathmode is popped
+    assert not expander.state.is_math_mode
+    assert expander.state.mode == base_mode
+
+    check_text_catcodes()
+
+    # test one whole $$...$$
+    out = expander.expand(r"$$1_1$$")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 0),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "_", catcode=Catcode.ACTIVE),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        ],
+    )
+
+    # check that mathmode is popped
+    assert not expander.state.is_math_mode
+    assert expander.state.mode == base_mode
+
+    check_text_catcodes()

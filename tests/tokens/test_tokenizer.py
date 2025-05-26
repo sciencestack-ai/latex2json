@@ -116,9 +116,9 @@ def test_math():
     tokenizer = Tokenizer()
     text = r"$e$"
     expected_tokens = [
-        Token(TokenType.MATH_SHIFT, "$", 0),
+        Token(TokenType.MATH_SHIFT_INLINE, "$", 0),
         Token(TokenType.CHARACTER, "e", 1, Catcode.LETTER),
-        Token(TokenType.MATH_SHIFT, "$", 2),
+        Token(TokenType.MATH_SHIFT_INLINE, "$", 2),
     ]
     assert_tokenizer_sequence(tokenizer, text, expected_tokens)
 
@@ -130,3 +130,11 @@ def test_math():
         Token(TokenType.CHARACTER, "$", 2, Catcode.LETTER),
     ]
     assert_tokenizer_sequence(tokenizer, text, expected_tokens2)
+
+    # test display math
+    text = r"$$e$$"
+    expected_tokens3 = [
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 0),
+        Token(TokenType.CHARACTER, "e", 2, Catcode.LETTER),
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 3),
+    ]

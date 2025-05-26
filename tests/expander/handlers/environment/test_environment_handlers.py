@@ -1,5 +1,7 @@
 import pytest
 from latex2json.expander.expander import Expander
+from latex2json.expander.state import ProcessingMode
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
     Token,
     TokenType,
@@ -169,3 +171,23 @@ def test_mock_env_token():
     # actual = expander.expand(r"\begin{env}{req1}{req2}Content\end{env}")
     # expected = mock_env_token(expander, "env", "Content", req_args=["req1", "req2"])
     # assert_token_sequence(actual, expected)
+
+
+def test_math_environments():
+    expander = Expander()
+
+    assert not expander.state.is_math_mode
+    base_mode = expander.state.mode
+
+    expander.expand(r"\begin{align}")
+    assert expander.state.mode == ProcessingMode.MATH_DISPLAY
+    assert expander.state.is_math_mode
+
+    out = expander.expand(r"1^1")
+    assert out[0] == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+    assert out[1] == Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE)
+    assert out[2] == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+
+    expander.expand(r"\end{align}")
+    assert expander.state.mode == base_mode
+    assert not expander.state.is_math_mode

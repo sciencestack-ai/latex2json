@@ -13,16 +13,18 @@ class TokenType(Enum):
     CHARACTER = (
         2  # A character with a specific catcode (e.g., 'a' catcode 11, '{' catcode 1)
     )
-    MATH_SHIFT = 3  # Simulate Catcode.Mathshift=3
+    MATH_SHIFT_INLINE = 3  # Simulate Catcode.Mathshift=3
+    MATH_SHIFT_DISPLAY = 4
     END_OF_LINE = 5  # Simulate Catcode.END_OF_LINE=5
-    # Add other potential types if needed, though character/control sequence are primary
-    # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
-    INVALID = 15  # For invalid tokens or errors
 
     # PARSED types during expander i.e. not seen in tokenizer, only after expansion
     PARAMETER = 6  # Simulate Catcode.PARAMETER=6
     ENVIRONMENT_START = 7
     ENVIRONMENT_END = 8
+
+    # Add other potential types if needed, though character/control sequence are primary
+    # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
+    INVALID = 15  # For invalid tokens or errors
 
 
 # --- Define the Token Class ---

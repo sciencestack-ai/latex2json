@@ -5,14 +5,15 @@ from latex2json.expander.macro_registry import Macro, MacroRegistry
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
-from latex2json.tokens import Catcode, get_default_catcodes
+from latex2json.tokens import Catcode, get_default_catcodes, TokenType
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.registers.counters import CounterManager
 
 
 class ProcessingMode(enum.Enum):
     TEXT = 1
-    MATH = 2
+    MATH_INLINE = 3  # Simulate Catcode.Mathshift=3 / TokenType.MATH_SHIFT_INLINE
+    MATH_DISPLAY = 4  # Simulate TokenType.MATH_SHIFT_DISPLAY
     # ... other modes
 
 
@@ -24,7 +25,7 @@ class StateLayer:
 
         # --- State that might not be strictly layered but is part of the scope ---
         # Mode: Often copied, but changes are local
-        self.mode: ProcessingMode = parent.mode if parent else ProcessingMode.TEXT
+        # self.mode: ProcessingMode = parent.mode if parent else ProcessingMode.TEXT
 
         # --- Scoped State ---
         # Macro Registry: Layered lookup
@@ -79,31 +80,45 @@ class ExpanderState:
 
         self._catcode_text_mode_values: List[Tuple[int, Catcode]] = []
 
+        self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
+
     @property
     def mode(self) -> ProcessingMode:
-        return self.current.mode
-
-    @mode.setter
-    def mode(self, value: ProcessingMode):
-        self.current.mode = value
+        return self._mode_stack[-1]
 
     @property
     def is_math_mode(self) -> bool:
-        return self.current.mode == ProcessingMode.MATH
+        return self.check_is_math_mode(self.mode)
 
-    @is_math_mode.setter
-    def is_math_mode(self, value: bool):
-        self.set_mode(ProcessingMode.MATH if value else ProcessingMode.TEXT)
+    @staticmethod
+    def check_is_math_mode(mode: ProcessingMode) -> bool:
+        return mode in [ProcessingMode.MATH_INLINE, ProcessingMode.MATH_DISPLAY]
 
-    def set_mode(self, mode: ProcessingMode):
-        """Set the mode for the current scope."""
-        is_same = mode == self.current.mode
-        if not is_same:
-            if mode == ProcessingMode.MATH:
-                self._set_math_catcode_values()
-            else:
-                self._unset_math_catcode_values()
-            self.current.mode = mode
+    def push_mode(self, mode: ProcessingMode):
+        """Push a new mode onto the stack."""
+        self._set_mode_values(mode)
+        self._mode_stack.append(mode)
+
+    def pop_mode(self):
+        """Pop the current mode and restore the previous one."""
+        if len(self._mode_stack) <= 1:
+            return
+            # raise RuntimeError("Cannot pop the base mode")
+        self._mode_stack.pop()
+        new_mode = self.mode
+        self._set_mode_values(new_mode)
+
+    def toggle_math_mode(self, mode: ProcessingMode):
+        if self.is_math_mode:
+            self.pop_mode()
+        else:
+            self.push_mode(mode)
+
+    def _set_mode_values(self, mode: ProcessingMode):
+        if self.check_is_math_mode(mode):
+            self._set_math_catcode_values()
+        else:
+            self._unset_math_catcode_values()
 
     def _set_math_catcode_values(self):
         # Store original catcodes and set to ACTIVE
