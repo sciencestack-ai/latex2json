@@ -2,6 +2,7 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
+from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
     END_BRACE_TOKEN,
@@ -190,10 +191,20 @@ class ExpanderCore:
         self, tokens: List[Token], args: List[List[Token]]
     ) -> List[Token]:
         is_math = self.state.is_math_mode
+        tokens = [t.copy() for t in tokens]
         if is_math:
+            # wrap all args in braces e.g. {x}
             for i, arg in enumerate(args):
                 args[i] = wrap_tokens_in_braces(arg)
-        out = substitute_token_args([t.copy() for t in tokens], args)
+            # convert token definitions to mathmode catcodes
+            for i, token in enumerate(tokens):
+                if token.type == TokenType.CONTROL_SEQUENCE:
+                    continue
+                ord_char = ord(token.value)
+                if ord_char in MATHMODE_CATCODES:
+                    tokens[i].catcode = MATHMODE_CATCODES[ord_char]
+
+        out = substitute_token_args(tokens, args)
         if is_math and out:
             has_trailing_character = False
             if (

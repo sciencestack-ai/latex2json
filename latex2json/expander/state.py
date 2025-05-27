@@ -6,6 +6,7 @@ from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
 from latex2json.tokens import Catcode, get_default_catcodes, TokenType
+from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.registers.counters import CounterManager
 
@@ -122,13 +123,11 @@ class ExpanderState:
 
     def _set_math_catcode_values(self):
         # Store original catcodes and set to ACTIVE
-        for chars in ["_", "^", "&"]:
-            char_ord = ord(chars)
+        for char_ord, catcode in MATHMODE_CATCODES.items():
             old_catcode = self.get_catcode(char_ord)
-            # Only store and change if not already ACTIVE
-            if old_catcode != Catcode.ACTIVE:
+            if old_catcode != catcode:
                 self._catcode_text_mode_values.append((char_ord, old_catcode))
-                self.tokenizer.set_catcode(char_ord, Catcode.ACTIVE)
+                self.tokenizer.set_catcode(char_ord, catcode)
 
     def _unset_math_catcode_values(self):
         for ord_char, old_catcode in self._catcode_text_mode_values:

@@ -80,3 +80,10 @@ CATCODE_MEANINGS: Dict[Catcode, str] = {
     Catcode.COMMENT: "comment character",
     Catcode.INVALID: "invalid character",
 }
+
+
+MATHMODE_CATCODES = {
+    ord("_"): Catcode.ACTIVE,
+    ord("^"): Catcode.ACTIVE,
+    ord("&"): Catcode.ACTIVE,
+}
