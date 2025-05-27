@@ -354,11 +354,30 @@ if __name__ == "__main__":
 """.strip()
 
     text = r"""
-    \newcommand{\abs}[1]{\left\vert#1\right\vert}
-    \def\ab#1{\abs#1}
-    $\ab{xbc}$
+    \let\pminus\pm
+    \renewcommand{\pm}{\phi_{\le m}}
+    \let\postpm\pm
 
+    \newcommand{\abs}[1]{\left\vert#1\right\vert}
+    \newcommand{\ti}{\tilde}
+    \newcommand{\calR}{\mathcal R}
+    \newcommand{\gab}{g^{\alpha\beta}}
+    \newcommand{\paa}{\partial_\alpha}
+    \newcommand{\f}{\frac}
+    \newcommand{\la}{\left\vert}
+
+    $\abs{x}$ % \left\vert{x}\right\vert
+    $\ti{3}$ % $\tilde{3}$
+    $\frac\calR 2$ % $\frac{\mathcal R} 2$
+    $\paa\gab$ % \partial_\alpha{g^{\alpha\beta}}
+    $\Delta^\paa$ % \Delta^\partial_\alpha
+    $x^\f{1}{2}$ % x^\frac{1}{2}
+    $\la \nabla_{x,y}$ % \left\vert \nabla_{x,y}
+    $\chi(x-x_0) \la$ % \chi(x-x_0) \left\vert
+    $\pminus$ % \pm
+    $\postpm$ % \phi_{\le m}
     """
+
     parser.set_text(text)
     out = parser.parse()
     out = strip_whitespace_nodes(out)

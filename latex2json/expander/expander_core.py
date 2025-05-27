@@ -2,8 +2,16 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
-from latex2json.tokens.types import EnvironmentStartToken
-from latex2json.tokens.utils import is_mathshift_token, substitute_token_args
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
+    EnvironmentStartToken,
+)
+from latex2json.tokens.utils import (
+    is_mathshift_token,
+    substitute_token_args,
+    wrap_tokens_in_braces,
+)
 from latex2json.expander.macro_registry import (
     Handler,
     Macro,
@@ -181,9 +189,21 @@ class ExpanderCore:
     def substitute_token_args(
         self, tokens: List[Token], args: List[List[Token]]
     ) -> List[Token]:
-        return substitute_token_args(
-            [t.copy() for t in tokens], args, math_mode=self.state.is_math_mode
-        )
+        is_math = self.state.is_math_mode
+        if is_math:
+            for i, arg in enumerate(args):
+                args[i] = wrap_tokens_in_braces(arg)
+        out = substitute_token_args([t.copy() for t in tokens], args)
+        if is_math and out:
+            has_trailing_character = False
+            if (
+                out[0].type == TokenType.CHARACTER
+                or out[-1].type == TokenType.CHARACTER
+            ):
+                has_trailing_character = True
+            if has_trailing_character:
+                out = wrap_tokens_in_braces(out)
+        return out
 
     # REGISTERS
     @property

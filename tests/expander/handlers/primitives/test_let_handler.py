@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.expander.expander import Expander
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import (
     assert_token_sequence,
@@ -121,3 +122,25 @@ def test_futurelet():
     out = strip_whitespace_tokens(out)
     assert_tokens_startwith(out, expander.expand("COLON"))
     assert_tokens_endwith(out, expander.expand(" :"))
+
+
+def test_let_preserve_unknown_control_sequence():
+    expander = Expander()
+    text = r"""
+    \let\pminus\pm
+    \renewcommand{\pm}{\phi_{\le m}}
+    \let\postpm\pm
+    """.strip()
+    expander.expand(text)
+    # \pminus -> \pm is not found, so we preserve it as a control sequence
+    assert_token_sequence(
+        expander.expand(r"\pminus"),
+        [
+            Token(TokenType.CONTROL_SEQUENCE, "pm"),
+        ],
+    )
+    # \postpm -> \pm is defined, so we copy its definition
+    assert_token_sequence(
+        expander.expand(r"\postpm"),
+        expander.expand(r"\pm"),
+    )

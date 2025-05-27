@@ -27,12 +27,23 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         )
         return None
 
-    # copies the definition as is, without expanding it
-    final_definition = expander.convert_to_macro_definitions([definition])
+    if definition.type == TokenType.CONTROL_SEQUENCE and not expander.get_macro(
+        definition.value
+    ):
+        # if the definition is a control sequence that is not found, we preserve it
+        needs_expansion = False
+        final_definition = [definition]
+    else:
+        # copies the definition as is
+        needs_expansion = True
+        final_definition = expander.convert_to_macro_definitions([definition])
 
     def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        expander.push_tokens(final_definition)
-        return []
+        if needs_expansion:
+            expander.push_tokens(final_definition)
+            return []
+        else:
+            return [t.copy() for t in final_definition]
 
     macro = Macro(name, handler, final_definition, type=MacroType.CHAR)
     expander.register_macro(name, macro, is_global=False)

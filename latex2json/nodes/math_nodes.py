@@ -3,7 +3,11 @@ from latex2json.nodes.base import ASTNode, check_asts_equal
 
 from enum import Enum, auto
 
-from latex2json.nodes.syntactic_nodes import strip_whitespace_nodes
+from latex2json.nodes.syntactic_nodes import (
+    CommandNode,
+    TextNode,
+    strip_whitespace_nodes,
+)
 
 
 class EquationType(Enum):
@@ -35,8 +39,22 @@ class EquationNode(ASTNode):
             return False
         return check_asts_equal(self.math_nodes, other.math_nodes)
 
+    def equation_to_str(self):
+        eq_str = ""
+        N = len(self.math_nodes)
+
+        prev_node = None
+        # if we're converting to a string, we need to be careful about textnodes rightafter commands
+        for i, node in enumerate(self.math_nodes):
+            if isinstance(node, TextNode) and isinstance(prev_node, CommandNode):
+                if node.text and node.text[0].isalpha():
+                    eq_str += " "
+            eq_str += node.detokenize()
+            prev_node = node
+        return eq_str
+
     def detokenize(self):
-        math_str = "".join(node.detokenize() for node in self.math_nodes)
+        math_str = self.equation_to_str()
         if self.equation_type == EquationType.INLINE:
             return "$" + math_str + "$"
 
@@ -44,6 +62,8 @@ class EquationNode(ASTNode):
             return "$$" + math_str + "$$"
 
         env_name = "align" if self.equation_type == EquationType.ALIGN else "equation"
+        if not self.numbering:
+            env_name += "*"
         begin_str = f"\\begin{{{env_name}}}"
         end_str = f"\\end{{{env_name}}}"
         return begin_str + math_str + end_str

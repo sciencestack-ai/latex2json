@@ -1,6 +1,8 @@
 from typing import List
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
     WHITESPACE_TOKEN,
     Token,
     TokenType,
@@ -86,6 +88,14 @@ def strip_whitespace_tokens(tokens: List[Token]) -> List[Token]:
     return tokens
 
 
+def wrap_tokens_in_braces(tokens: List[Token]) -> List[Token]:
+    return [
+        BEGIN_BRACE_TOKEN.copy(),
+        *tokens,
+        END_BRACE_TOKEN.copy(),
+    ]
+
+
 def substitute_token_args(
     definition: List[Token],
     args: List[List[Token]],
@@ -99,15 +109,10 @@ def substitute_token_args(
             index = int(token.value) - 1
             if index < len(args):
                 if math_mode:
-                    math_out = [
-                        WHITESPACE_TOKEN.copy(),
-                        *args[index],
-                        WHITESPACE_TOKEN.copy(),
-                    ]
+                    math_out = wrap_tokens_in_braces(args[index])
                     out.extend(math_out)
                 else:
                     out.extend(args[index])
-
         else:
             out.append(token)
 
