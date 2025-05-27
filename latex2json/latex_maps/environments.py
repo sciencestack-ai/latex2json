@@ -205,4 +205,5 @@ for env in STAR_VARIANTS:
     env_star.name = env_star.name + "*"
     env_star.has_direct_command = False
     env_star.step_counter = False
+    env_star.assign_counter = False
     COMMON_ENVIRONMENTS[env_star.name] = env_star

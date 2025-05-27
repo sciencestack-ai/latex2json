@@ -10,7 +10,7 @@ def caption_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     """Handle caption tokens."""
     cur_env = expander.state.current_env
 
-    return make_section_handler(cur_env)(expander, token)
+    return make_section_handler("caption", counter_name=cur_env)(expander, token)
 
 
 def register_caption_handler(expander: ExpanderCore):

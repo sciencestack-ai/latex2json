@@ -90,6 +90,37 @@ class ExpanderCore:
     def _init_macros(self):
         self._init_state_macros()
         self._init_counter_macros()
+        self._init_math_macros()
+
+    def _init_math_macros(self):
+        def make_begin_end_math_handlers(mode: ProcessingMode):
+            out_token = Token(TokenType.MATH_SHIFT_INLINE, "$")
+            if mode == ProcessingMode.MATH_DISPLAY:
+                out_token = Token(TokenType.MATH_SHIFT_DISPLAY, "$$")
+
+            def begin_math_handler(expander: "ExpanderCore", token: Token):
+                expander.state.push_mode(mode)
+                return [out_token.copy()]
+
+            def end_math_handler(expander: "ExpanderCore", token: Token):
+                if expander.state.is_math_mode:
+                    expander.state.pop_mode()
+                return [out_token.copy()]
+
+            return begin_math_handler, end_math_handler
+
+        inline_begin, inline_end = make_begin_end_math_handlers(
+            ProcessingMode.MATH_INLINE
+        )
+        display_begin, display_end = make_begin_end_math_handlers(
+            ProcessingMode.MATH_DISPLAY
+        )
+
+        self.register_handler("\\(", inline_begin, is_global=True)
+        self.register_handler("\\)", inline_end, is_global=True)
+
+        self.register_handler("\\[", display_begin, is_global=True)
+        self.register_handler("\\]", display_end, is_global=True)
 
     def _init_state_macros(self):
         def global_handler(expander: "ExpanderCore", token: Token):
@@ -101,17 +132,20 @@ class ExpanderCore:
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
 
     def _init_counter_macros(self):
-        for counter_name in self.state.counter_manager.counters:
-
+        def make_the_counter_handler(counter_name: str):
             def the_counter_handler(expander: "ExpanderCore", token: Token):
-                counter_name = token.value.lstrip("the")
                 value = expander.state.get_counter_as_format(counter_name)
                 if value is None:
                     return None
                 return expander.convert_str_to_tokens(str(value))
 
+            return the_counter_handler
+
+        for counter_name in self.state.counter_manager.counters:
             self.register_handler(
-                f"\\the{counter_name}", the_counter_handler, is_global=True
+                f"\\the{counter_name}",
+                make_the_counter_handler(counter_name),
+                is_global=True,
             )
 
     # MACROS
@@ -753,4 +787,4 @@ if __name__ == "__main__":
     expander = ExpanderCore()
 
     # expander.set_text(r"$$")
-    expander.expand(r"$$")
+    out = expander.expand(r"\[1_1\$$$$$2^2\]_")

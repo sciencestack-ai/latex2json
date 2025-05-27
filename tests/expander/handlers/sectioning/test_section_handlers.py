@@ -7,6 +7,7 @@ from latex2json.tokens.types import (
     END_BRACE_TOKEN,
     BEGIN_BRACKET_TOKEN,
     END_BRACKET_TOKEN,
+    CommandWithArgsToken,
     Token,
     TokenType,
 )
@@ -19,30 +20,26 @@ def mock_section_token(
     opt_arg: Optional[str] = None,
     numbering: Optional[str] = None,
 ):
-    section_token = Token(TokenType.CONTROL_SEQUENCE, section_name)
-    if numbering:
-        section_token.numbering = numbering
 
-    out_tokens = [section_token]
-    if opt_arg:
-        out_tokens.extend(
-            [BEGIN_BRACKET_TOKEN]
-            + expander.convert_str_to_tokens(opt_arg)
-            + [END_BRACKET_TOKEN]
-        )
-    out_tokens.extend(
-        [BEGIN_BRACE_TOKEN]
-        + expander.convert_str_to_tokens(content)
-        + [END_BRACE_TOKEN]
+    content_tokens = expander.convert_str_to_tokens(content)
+    opt_arg_tokens = expander.convert_str_to_tokens(opt_arg) if opt_arg else []
+    section_token = CommandWithArgsToken(
+        name=section_name,
+        args=[content_tokens],
+        opt_args=[opt_arg_tokens],
+        numbering=numbering,
     )
-    return out_tokens
+
+    return [section_token]
 
 
 def test_section_handler():
     expander = Expander()
 
-    out = expander.expand(r"\section{Hello}")
-    expected = mock_section_token(expander, "section", "Hello", numbering="1")
+    expander.expand(r"\def\title{TITLE}")
+
+    out = expander.expand(r"\section{\title}")
+    expected = mock_section_token(expander, "section", "TITLE", numbering="1")
     assert expander.check_tokens_equal(out, expected)
 
     # test with *

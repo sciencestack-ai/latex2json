@@ -449,3 +449,52 @@ def test_math_shift_and_mode():
     assert expander.state.mode == base_mode
 
     check_text_catcodes()
+
+
+# \( \), \[ \]
+def test_math_macros():
+    expander = ExpanderCore()
+
+    out = expander.expand(r"\(1^1\)")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.MATH_SHIFT_INLINE, "$", 0),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_INLINE, "$"),
+        ],
+    )
+
+    out = expander.expand(r"\[1&1\]")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 0),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "&", catcode=Catcode.ACTIVE),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        ],
+    )
+
+    # test weird edge case but valid latex
+    out = expander.expand(r"\[1_1\$$$_$$2^2\]_^")
+    expected = [
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+        Token(TokenType.CHARACTER, "_", catcode=Catcode.ACTIVE),
+        Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+        Token(TokenType.CONTROL_SEQUENCE, "$"),
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        Token(TokenType.CHARACTER, "_", catcode=Catcode.SUBSCRIPT),
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+        Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE),
+        Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        Token(TokenType.CHARACTER, "_", catcode=Catcode.SUBSCRIPT),
+        Token(TokenType.CHARACTER, "^", catcode=Catcode.SUPERSCRIPT),
+    ]
+    assert_token_sequence(out, expected)

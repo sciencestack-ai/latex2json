@@ -1,6 +1,7 @@
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from latex2json.tokens.catcodes import Catcode
 
@@ -21,9 +22,9 @@ class TokenType(Enum):
     PARAMETER = 6  # Simulate Catcode.PARAMETER=6
     ENVIRONMENT_START = 7
     ENVIRONMENT_END = 8
+    COMMAND_WITH_ARGS = 9  # for \section, \caption, etc
 
-    # Add other potential types if needed, though character/control sequence are primary
-    # e.g., EndOfFile = 3, ParameterToken = 4 (for # in macro definitions)
+    # TODO?
     INVALID = 15  # For invalid tokens or errors
 
 
@@ -82,6 +83,48 @@ class Token:
             # and self.position == other.position
             and self.catcode == other.catcode
             and self.numbering == other.numbering
+        )
+
+
+class CommandWithArgsToken(Token):
+    args: List[List[Token]] = []
+    opt_args: List[List[Token]] = []
+
+    def __init__(
+        self,
+        name: str,
+        args: List[List[Token]] = [],
+        opt_args: List[List[Token]] = [],
+        numbering: Optional[str] = None,
+    ):
+        super().__init__(TokenType.COMMAND_WITH_ARGS, value=name, numbering=numbering)
+        self.name = name
+        self.args = args
+        self.opt_args = opt_args
+
+    @property
+    def num_req_args(self) -> int:
+        return len(self.args)
+
+    @property
+    def num_opt_args(self) -> int:
+        return len(self.opt_args)
+
+    def copy(self) -> "CommandWithArgsToken":
+        return CommandWithArgsToken(
+            name=self.name,
+            args=deepcopy(self.args),
+            opt_args=deepcopy(self.opt_args),
+            numbering=self.numbering,
+        )
+
+    def __eq__(self, other: Token) -> bool:
+        if not isinstance(other, CommandWithArgsToken):
+            return False
+        return (
+            super().__eq__(other)
+            and self.args == other.args
+            and self.opt_args == other.opt_args
         )
 
 
