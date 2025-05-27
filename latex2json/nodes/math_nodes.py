@@ -2,22 +2,6 @@ from typing import Optional
 from latex2json.nodes.base import ASTNode
 
 
-class MathShiftNode(ASTNode):
-    def __init__(self, text: str):
-        self.text = text
-
-    def __str__(self):
-        return f"MathShift({self.text})"
-
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, MathShiftNode):
-            return False
-        return self.text == other.text
-
-    def detokenize(self):
-        return self.text
-
-
 class InlineEquationNode(ASTNode):
     def __init__(self, text: str):
         self.text = text
