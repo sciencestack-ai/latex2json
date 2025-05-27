@@ -82,13 +82,6 @@ class CounterManager:
         self.new_counter("figure")
         self.new_counter("subfigure", parent="figure")
         self.new_counter("table")
-        # self.new_counter("table")
-
-        # Enumerate counters (nested lists)
-        self.new_counter("enumi")
-        self.new_counter("enumii", parent="enumi")
-        self.new_counter("enumiii", parent="enumii")
-        self.new_counter("enumiv", parent="enumiii")
 
     def _get_internal_name(self, counter_name: str) -> str:
         """Convert a user-facing counter name to internal register name"""

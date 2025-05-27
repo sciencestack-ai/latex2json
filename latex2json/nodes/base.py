@@ -4,6 +4,8 @@ from typing import List, Optional
 class ASTNode:
     children: List["ASTNode"] = []
     parent: Optional["ASTNode"] = None
+    labels: List[str] = []
+    styles: List[str] = []
 
     def __repr__(self):
         return self.__str__()

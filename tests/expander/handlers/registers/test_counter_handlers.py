@@ -57,6 +57,10 @@ def test_new_counter():
     expander.expand(r"\setcounter{mycounter}{10}")
     assert expander.state.get_counter_value("mycounter") == 10
 
+    # test \the<counter>
+    out = expander.expand(r"\themycounter")
+    assert expander.convert_tokens_to_str(out) == "10"
+
     # Stepping parent should reset child
     expander.expand(r"\stepcounter{section}")
     assert expander.state.get_counter_value("mycounter") == 0

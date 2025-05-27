@@ -1,6 +1,7 @@
 from typing import List
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
+    WHITESPACE_TOKEN,
     Token,
     TokenType,
 )
@@ -97,8 +98,24 @@ def substitute_token_args(
         if token.type == TokenType.PARAMETER:
             index = int(token.value) - 1
             if index < len(args):
-                out.extend(args[index])
+                if math_mode:
+                    math_out = [
+                        WHITESPACE_TOKEN.copy(),
+                        *args[index],
+                        WHITESPACE_TOKEN.copy(),
+                    ]
+                    out.extend(math_out)
+                else:
+                    out.extend(args[index])
+
         else:
             out.append(token)
+
+    # if math_mode:
+    #     out = [
+    #         WHITESPACE_TOKEN.copy(),
+    #         *out,
+    #         WHITESPACE_TOKEN.copy(),
+    #     ]
 
     return out

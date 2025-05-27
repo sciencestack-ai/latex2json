@@ -428,3 +428,20 @@ def test_more_defs():
     assert_token_sequence(
         expander.expand(r"\Xint{THREE}"), expander.expand("1) ONE 2) TWO 3) THREE 4)")
     )
+
+
+def test_def_nesting_doesnot_affect_control_sequence():
+    expander = ExpanderCore()
+    register_def(expander)
+
+    text = r"""
+    \def\abs#1{AB #1 S}
+    \def\ab#1{\abs#1} 
+    \ab{xbc} % -> \absxbc, where \abs is already a control sequence so it will be equivalent to \abs{x}bc
+    """
+
+    expander.expand(text)
+    assert expander.get_macro("abs")
+    assert expander.get_macro("ab")
+
+    assert_token_sequence(expander.expand(r"\ab{xbc}"), expander.expand("AB x Sbc"))

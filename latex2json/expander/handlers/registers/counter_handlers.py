@@ -100,14 +100,9 @@ def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         expander.logger.warning(r"\newcounter: Missing counter name argument")
         return None
 
-    def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        return get_counter_value_as_tokens(expander, counter_name)
-
-    expander.register_handler("the" + counter_name, the_handler, is_global=True)
-
     # check optional bracket [parent] arg
     parent_name = parse_counter_name(expander, brackets=True)
-    expander.state.new_counter(counter_name, parent_name)
+    expander.create_new_counter(counter_name, parent_name)
 
     return []
 

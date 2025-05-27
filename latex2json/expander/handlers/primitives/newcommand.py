@@ -106,15 +106,15 @@ def newcommand_handler(
     if name is None:
         return None
 
+    out = get_newcommand_args_and_definition(expander)
+    if out is None:
+        return None
+
     # Check if command already exists
     if not allow_redefine and expander.state.get_macro(name):
         expander.logger.warning(
             f"Warning: command {name} already exists. Use \\renewcommand to redefine"
         )
-        return None
-
-    out = get_newcommand_args_and_definition(expander)
-    if out is None:
         return None
 
     num_args, default_arg, definition = out

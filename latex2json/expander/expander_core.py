@@ -60,6 +60,16 @@ class RelaxMacro(Macro):
         )
 
 
+def make_the_counter_handler(counter_name: str):
+    def the_counter_handler(expander: "ExpanderCore", token: Token):
+        value = expander.state.get_counter_as_format(counter_name)
+        if value is None:
+            return None
+        return expander.convert_str_to_tokens(str(value))
+
+    return the_counter_handler
+
+
 class ExpanderCore:
     """
     The main engine for processing the document.
@@ -92,6 +102,11 @@ class ExpanderCore:
         self._init_state_macros()
         self._init_counter_macros()
         self._init_math_macros()
+
+        def newline_handler(expander: "ExpanderCore", token: Token):
+            return [Token(TokenType.END_OF_LINE, "\n\n")]
+
+        self.register_handler("\\newline", newline_handler, is_global=True)
 
     def _init_math_macros(self):
         def make_begin_end_math_handlers(mode: ProcessingMode):
@@ -133,21 +148,21 @@ class ExpanderCore:
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
 
     def _init_counter_macros(self):
-        def make_the_counter_handler(counter_name: str):
-            def the_counter_handler(expander: "ExpanderCore", token: Token):
-                value = expander.state.get_counter_as_format(counter_name)
-                if value is None:
-                    return None
-                return expander.convert_str_to_tokens(str(value))
-
-            return the_counter_handler
-
         for counter_name in self.state.counter_manager.counters:
             self.register_handler(
                 f"\\the{counter_name}",
                 make_the_counter_handler(counter_name),
                 is_global=True,
             )
+
+    # counters
+    def create_new_counter(self, counter_name: str, parent: Optional[str] = None):
+        self.state.new_counter(counter_name, parent)
+        self.register_handler(
+            f"\\the{counter_name}",
+            make_the_counter_handler(counter_name),
+            is_global=True,
+        )
 
     # MACROS
     def get_macro(self, name: str) -> Optional[Macro]:
@@ -166,7 +181,9 @@ class ExpanderCore:
     def substitute_token_args(
         self, tokens: List[Token], args: List[List[Token]]
     ) -> List[Token]:
-        return substitute_token_args(tokens, args, math_mode=self.state.is_math_mode)
+        return substitute_token_args(
+            [t.copy() for t in tokens], args, math_mode=self.state.is_math_mode
+        )
 
     # REGISTERS
     @property

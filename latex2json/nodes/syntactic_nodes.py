@@ -7,18 +7,19 @@ from latex2json.nodes.base import ASTNode, check_asts_equal
 
 def strip_whitespace_nodes(nodes: List[ASTNode]):
     if nodes:
-        if isinstance(nodes[0], TextNode):
+        while nodes and isinstance(nodes[0], TextNode):
             text = nodes[0].text.lstrip()
             if text:
                 nodes[0].text = text
-            else:
-                nodes.pop(0)
-        if isinstance(nodes[-1], TextNode):
+                break
+            nodes.pop(0)
+
+        while nodes and isinstance(nodes[-1], TextNode):
             text = nodes[-1].text.rstrip()
             if text:
                 nodes[-1].text = text
-            else:
-                nodes.pop(-1)
+                break
+            nodes.pop(-1)
     return nodes
 
 
