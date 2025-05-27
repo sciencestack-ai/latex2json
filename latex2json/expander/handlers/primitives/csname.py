@@ -33,10 +33,6 @@ def csname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
         expander.logger.warning("Warning: \\csname expects a block")
         return None
 
-    tok = expander.peek()
-    if tok and is_endcsname_command(tok):
-        expander.consume()
-
     str_name = expander.convert_tokens_to_str(block)
     control_sequence = Token(TokenType.CONTROL_SEQUENCE, str_name)
     expander.push_tokens([control_sequence])

@@ -2,7 +2,13 @@ from dataclasses import dataclass
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
+    EnvironmentStartToken,
+    Token,
+    TokenType,
+)
 
 
 def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -29,9 +35,15 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
             f"Warning: {prefix}{{{name}}} has no begin handler, returning default environment start token"
         )
 
-    begin_token = Token(TokenType.ENVIRONMENT_START, name)
-    if expander.state.has_counter(name):
-        begin_token.numbering = expander.state.get_counter_as_format(name)
+    counter_name = name
+    if env_def:
+        counter_name = env_def.counter_name
+
+    numbering = None
+    if counter_name and expander.state.has_counter(counter_name):
+        numbering = expander.state.get_counter_as_format(counter_name)
+    is_math = env_def.is_math if env_def else False
+    begin_token = EnvironmentStartToken(name, numbering=numbering, is_math_env=is_math)
 
     return [begin_token]
 

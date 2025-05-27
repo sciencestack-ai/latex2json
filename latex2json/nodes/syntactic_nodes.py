@@ -5,7 +5,7 @@ from latex2json.nodes.base import ASTNode, check_asts_equal
 # from latex2json.nodes.utils import check_children_equal
 
 
-def strip_whitespace(nodes: List[ASTNode]):
+def strip_whitespace_nodes(nodes: List[ASTNode]):
     if nodes:
         if isinstance(nodes[0], TextNode):
             text = nodes[0].text.lstrip()
@@ -100,7 +100,7 @@ class BraceNode(ASTNode):
         self.set_children(children)
 
     def strip_whitespace(self):
-        strip_whitespace(self.children)
+        strip_whitespace_nodes(self.children)
 
     def __str__(self):
         return f"Brace({', '.join(str(child) for child in self.children)})"
@@ -123,7 +123,7 @@ class BracketNode(ASTNode):
         self.set_children(children)
 
     def strip_whitespace(self):
-        strip_whitespace(self.children)
+        strip_whitespace_nodes(self.children)
 
     def __str__(self):
         return f"Bracket({', '.join(str(child) for child in self.children)})"
@@ -149,7 +149,7 @@ class CommandNode(ASTNode):
         self.set_children(self.opt_args + self.args)
 
     def __str__(self):
-        out_str = f"{self.name}"
+        out_str = f"\\{self.name}"
         if self.args or self.opt_args:
             out_str += f"([{self.opt_args}], {self.args})"
         return out_str
@@ -168,10 +168,12 @@ class CommandNode(ASTNode):
 
     def detokenize(self):
         out = self.name
+        if not out.startswith("\\"):
+            out = "\\" + out
         if self.opt_args:
-            out += "".join(child.detokenize() for child in self.opt_args)
+            out += "[" + "".join(child.detokenize() for child in self.opt_args) + "]"
         if self.args:
-            out += "".join(child.detokenize() for child in self.args)
+            out += "{" + "".join(child.detokenize() for child in self.args) + "}"
         return out
 
 

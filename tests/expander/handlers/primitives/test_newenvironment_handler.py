@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import EnvironmentStartToken, Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -9,7 +9,7 @@ from tests.test_utils import assert_token_sequence
 def get_environment_tokens(expander: Expander, env_name: str, text: str):
     out_text = expander.expand(text)
     return [
-        Token(TokenType.ENVIRONMENT_START, env_name),
+        EnvironmentStartToken(env_name),
         *out_text,
         Token(TokenType.ENVIRONMENT_END, env_name),
     ]
@@ -34,7 +34,7 @@ def test_basic_newenvironment():
     # test only partial
     out = expander.expand(r"\hello")
     assert_token_sequence(
-        out, [Token(TokenType.ENVIRONMENT_START, "hello")] + expander.expand("HELLO")
+        out, [EnvironmentStartToken("hello")] + expander.expand("HELLO")
     )
 
     out = expander.expand(r"\endhello")
@@ -90,9 +90,9 @@ def test_nested_environments():
     strip_whitespace_tokens(out)
 
     expected = [
-        Token(TokenType.ENVIRONMENT_START, "test"),
+        EnvironmentStartToken("test"),
         *expander.expand("START TEST"),
-        Token(TokenType.ENVIRONMENT_START, "innertest"),
+        EnvironmentStartToken("innertest"),
         *expander.expand("Begin 333 444"),
         *expander.expand("END 333"),
         Token(TokenType.ENVIRONMENT_END, "innertest"),
@@ -141,9 +141,9 @@ def test_newenvironment_with_counter():
     assert expander.state.get_counter_value("myenv") == 0
 
     out = expander.expand(r"\begin{myenv}Hello\end{myenv}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "myenv", numbering="1")
+    assert out[0] == EnvironmentStartToken("myenv")
     assert expander.state.get_counter_value("myenv") == 1
 
     out = expander.expand(r"\begin{myenv}Hello\end{myenv}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "myenv", numbering="2")
+    assert out[0] == EnvironmentStartToken("myenv")
     assert expander.state.get_counter_value("myenv") == 2

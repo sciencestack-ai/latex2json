@@ -40,19 +40,14 @@ class Token:
         value: str,  # Can be a string (command name) or a character
         position: int = -1,
         catcode: Optional[Catcode] = None,  # Use the Catcode enum for type hinting
-        numbering: Optional[str] = None,
     ):
         self.type = type
         self.value = value
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
 
-        self.numbering = numbering  # usually for controlsequence or environment types e.g. \section 1.2, \begin{equation*} -> 2.3
-
     def __str__(self) -> str:
         value = self.value
-        if self.numbering:
-            value += f" ({self.numbering})"
 
         if self.type == TokenType.CONTROL_SEQUENCE:
             return f"Pos {self.position:3}: {self.type.name:18} -> \\{value!r}"
@@ -69,20 +64,45 @@ class Token:
         return self.value
 
     def copy(self) -> "Token":
-        return Token(
-            self.type, self.value, self.position, self.catcode, numbering=self.numbering
-        )
+        return Token(self.type, self.value, self.position, self.catcode)
 
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __eq__(self, other: "Token") -> bool:
+    def __eq__(self, other: Any) -> bool:
+        if not isinstance(other, Token):
+            return False
+        if type(self) != type(other):
+            return False
         return (
             self.type == other.type
             and self.value == other.value
             # and self.position == other.position
             and self.catcode == other.catcode
+        )
+
+
+class EnvironmentStartToken(Token):
+    def __init__(
+        self, name: str, numbering: Optional[str] = None, is_math_env: bool = False
+    ):
+        super().__init__(TokenType.ENVIRONMENT_START, value=name)
+        self.numbering = numbering
+        self.name = name
+        self.is_math_env = is_math_env
+
+    def copy(self) -> "EnvironmentStartToken":
+        return EnvironmentStartToken(
+            name=self.name, numbering=self.numbering, is_math_env=self.is_math_env
+        )
+
+    def __eq__(self, other: Token) -> bool:
+        if not isinstance(other, EnvironmentStartToken):
+            return False
+        return (
+            super().__eq__(other)
             and self.numbering == other.numbering
+            and self.is_math_env == other.is_math_env
         )
 
 
@@ -97,7 +117,8 @@ class CommandWithArgsToken(Token):
         opt_args: List[List[Token]] = [],
         numbering: Optional[str] = None,
     ):
-        super().__init__(TokenType.COMMAND_WITH_ARGS, value=name, numbering=numbering)
+        super().__init__(TokenType.COMMAND_WITH_ARGS, value=name)
+        self.numbering = numbering
         self.name = name
         self.args = args
         self.opt_args = opt_args
@@ -125,6 +146,7 @@ class CommandWithArgsToken(Token):
             super().__eq__(other)
             and self.args == other.args
             and self.opt_args == other.opt_args
+            and self.numbering == other.numbering
         )
 
 

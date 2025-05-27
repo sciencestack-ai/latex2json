@@ -3,6 +3,7 @@ from latex2json.expander.expander import Expander
 from latex2json.expander.state import ProcessingMode
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
+    EnvironmentStartToken,
     Token,
     TokenType,
     BEGIN_BRACE_TOKEN,
@@ -21,6 +22,7 @@ def mock_env_token(
     opt_args: List[str] = [],
     req_args: List[str] = [],
     numbering: Optional[str] = None,
+    is_math_env: bool = False,
 ):
     """Create a mock environment token sequence with optional arguments and numbering.
 
@@ -32,11 +34,10 @@ def mock_env_token(
         req_arg: Required argument in curly braces
         numbering: Optional numbering for the environment
     """
-    begin_token = Token(TokenType.ENVIRONMENT_START, env_name)
+    begin_token = EnvironmentStartToken(
+        env_name, numbering=numbering, is_math_env=is_math_env
+    )
     end_token = Token(TokenType.ENVIRONMENT_END, env_name)
-
-    if numbering:
-        begin_token.numbering = numbering
 
     out_tokens = [begin_token]
 
@@ -64,25 +65,13 @@ def test_basic_environments():
 
     # Test basic document environment
     out = expander.expand(r"\begin{document}Hello\end{document}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "document")
+    assert out[0] == EnvironmentStartToken("document")
     assert out[-1] == Token(TokenType.ENVIRONMENT_END, "document")
 
     # Test center environment
     out = expander.expand(r"\begin{center}Centered text\end{center}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "center")
+    assert out[0] == EnvironmentStartToken("center")
     assert out[-1] == Token(TokenType.ENVIRONMENT_END, "center")
-
-
-def test_numbered_environments():
-    expander = Expander()
-
-    # Test equation environment (should be numbered)
-    out = expander.expand(r"\begin{equation}1+1\end{equation}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "equation", numbering="1")
-
-    # Test equation* environment (should not be numbered)
-    out = expander.expand(r"\begin{equation*}2+2\end{equation*}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "equation*")
 
 
 def test_environments_with_args():
@@ -90,11 +79,11 @@ def test_environments_with_args():
 
     # Test figure environment with optional placement argument
     out = expander.expand(r"\begin{figure}[htb]Content\end{figure}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "figure")
+    assert out[0] == EnvironmentStartToken("figure")
 
     # Test tabular environment with required argument
     out = expander.expand(r"\begin{tabular}{|c|c|}Content\end{tabular}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "tabular")
+    assert out[0] == EnvironmentStartToken("tabular")
 
 
 def test_nested_environments():
@@ -111,13 +100,13 @@ def test_nested_environments():
     out = expander.expand(text)
 
     # Check outer environment
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "figure")
+    assert out[0] == EnvironmentStartToken("figure")
 
     # Find center environment tokens
     center_start = None
     center_end = None
     for i, token in enumerate(out):
-        if token.type == TokenType.ENVIRONMENT_START and token.value == "center":
+        if token == EnvironmentStartToken("center"):
             center_start = i
         elif token.type == TokenType.ENVIRONMENT_END and token.value == "center":
             center_end = i
@@ -127,16 +116,27 @@ def test_nested_environments():
     assert center_start < center_end
 
 
-def test_math_environments():
+def test_math_environments_numbers():
     expander = Expander()
 
-    # Test align environment
+    # Test equation environment (should be numbered)
+    out = expander.expand(r"\begin{equation}1+1\end{equation}")
+    assert out[0] == EnvironmentStartToken("equation", numbering="1", is_math_env=True)
+
+    # Test equation* environment (should not be numbered)
+    out = expander.expand(r"\begin{equation*}2+2\end{equation*}")
+    assert out[0] == EnvironmentStartToken("equation*", is_math_env=True)
+
+    # Test align environment (notice the numbering is +1 since it shares same counter as equation)
     out = expander.expand(r"\begin{align}x &= y\end{align}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "align", numbering="1")
+    assert out[0] == EnvironmentStartToken("align", numbering="2", is_math_env=True)
 
     # Test align* environment
     out = expander.expand(r"\begin{align*}x &= y\end{align*}")
-    assert out[0] == Token(TokenType.ENVIRONMENT_START, "align*")
+    assert out[0] == EnvironmentStartToken("align*", is_math_env=True)
+
+    out = expander.expand(r"\begin{equation}x &= y\end{equation}")
+    assert out[0] == EnvironmentStartToken("equation", numbering="3", is_math_env=True)
 
 
 def test_mock_env_token():
@@ -159,7 +159,9 @@ def test_mock_env_token():
 
     # Test with numbering
     actual = expander.expand(r"\begin{equation}1+1\end{equation}")
-    expected = mock_env_token(expander, "equation", "1+1", numbering="1")
+    expected = mock_env_token(
+        expander, "equation", "1+1", numbering="1", is_math_env=True
+    )
     assert_token_sequence(actual, expected)
 
     # # Test with multiple optional args

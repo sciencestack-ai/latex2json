@@ -1,6 +1,12 @@
 import pytest
 from latex2json.expander.expander import Expander
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
+    EnvironmentStartToken,
+    Token,
+    TokenType,
+)
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -16,7 +22,7 @@ def test_basic_begin_end():
     assert_token_sequence(out, expander.expand(r"\test{ABC}CONTENT\endtest"))
 
     expected = [
-        Token(TokenType.ENVIRONMENT_START, "test"),
+        EnvironmentStartToken("test"),
         *expander.expand("BEGIN ABC 123CONTENTEND"),
         Token(TokenType.ENVIRONMENT_END, "test"),
     ]
@@ -31,9 +37,9 @@ def test_nested_environments():
 
     out = expander.expand(r"\begin{outer}A\begin{inner}B\end{inner}C\end{outer}")
     expected = [
-        Token(TokenType.ENVIRONMENT_START, "outer"),
+        EnvironmentStartToken("outer"),
         *expander.expand("<A"),
-        Token(TokenType.ENVIRONMENT_START, "inner"),
+        EnvironmentStartToken("inner"),
         *expander.expand("[B]"),
         Token(TokenType.ENVIRONMENT_END, "inner"),
         *expander.expand("C>"),
@@ -105,7 +111,7 @@ def test_begin_end_with_csname():
     )
 
     expected = [
-        Token(TokenType.ENVIRONMENT_START, "test"),
+        EnvironmentStartToken("test"),
         *expander.expand("START"),
         *expander.expand("CONTENT"),
         *expander.expand("END"),

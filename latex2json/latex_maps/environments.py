@@ -16,8 +16,7 @@ class EnvironmentDefinition:
         end_definition: List[Token] = [],
         num_args: int = 0,
         default_arg: Optional[List[Token]] = None,
-        step_counter: bool = False,  # whether to increment counter for the env in begin block each time
-        assign_counter: bool = True,  # whether to assign counter for the env in begin block. For table/figure, this should be False since captions are assigned counters
+        counter_name: Optional[str] = None,  # e.g. "equation"
         is_math: bool = False,  # e.g, align, equation, etc.
         has_direct_command: bool = True,  # e.g. \begin{document} -> \document + \enddocument
     ):
@@ -26,8 +25,7 @@ class EnvironmentDefinition:
         self.end_definition = end_definition
         self.num_args = num_args
         self.default_arg = default_arg
-        self.step_counter = step_counter
-        self.assign_counter = assign_counter
+        self.counter_name = counter_name
         self.is_math = is_math
         self.has_direct_command = has_direct_command
 
@@ -40,8 +38,7 @@ class EnvironmentDefinition:
             default_arg=(
                 self.default_arg.copy() if self.default_arg is not None else None
             ),
-            step_counter=self.step_counter,
-            assign_counter=self.assign_counter,
+            counter_name=self.counter_name,
             is_math=self.is_math,
             has_direct_command=self.has_direct_command,
         )
@@ -58,10 +55,8 @@ class EnvironmentDefinition:
             out += f", end_definition={self.end_definition}"
         if self.is_math:
             out += ", is_math=True"
-        if self.step_counter:
-            out += ", step_counter=True"
-        if self.assign_counter:
-            out += ", assign_counter=True"
+        if self.counter_name:
+            out += f", counter_name={self.counter_name}"
         if self.has_direct_command:
             out += ", has_direct_command=True"
         return out + ")"
@@ -95,23 +90,29 @@ LAYOUT_ENVIRONMENTS = {
 
 FIGURE_ENVIRONMENTS = {
     # figures
-    # assign_counter is False because captions are assigned counters
     "figure": EnvironmentDefinition(
-        "figure", num_args=1, default_arg=[], assign_counter=False
+        "figure",
+        num_args=1,
+        default_arg=[],
     ),
     "subfigure": EnvironmentDefinition(
-        "subfigure", num_args=2, default_arg=[], assign_counter=False
+        "subfigure",
+        num_args=2,
+        default_arg=[],
     ),
     "wrapfigure": EnvironmentDefinition(
-        "wrapfigure", num_args=3, default_arg=[], assign_counter=False
+        "wrapfigure",
+        num_args=3,
+        default_arg=[],
     ),
 }
 
 TABLE_ENVIRONMENTS = {
     # tables
-    # assign_counter is False because captions are assigned counters
     "table": EnvironmentDefinition(
-        "table", num_args=1, default_arg=[], assign_counter=False
+        "table",
+        num_args=1,
+        default_arg=[],
     ),
     "tabular": EnvironmentDefinition("tabular", num_args=1),
     "tabularx": EnvironmentDefinition("tabularx", num_args=2, has_direct_command=False),
@@ -124,35 +125,41 @@ TABLE_ENVIRONMENTS = {
 # List environments
 LIST_ENVIRONMENTS = {
     "itemize": EnvironmentDefinition("itemize"),
-    "enumerate": EnvironmentDefinition("enumerate", step_counter=True),
+    "enumerate": EnvironmentDefinition("enumerate"),
     "description": EnvironmentDefinition("description"),
     "list": EnvironmentDefinition("list", num_args=2),
 }
 
 # Mathematical environments
 MATH_ENVIRONMENTS = {
-    "equation": EnvironmentDefinition("equation", step_counter=True, is_math=True),
+    "equation": EnvironmentDefinition(
+        "equation", counter_name="equation", is_math=True
+    ),
     "align": EnvironmentDefinition(
-        "align", step_counter=True, is_math=True, has_direct_command=False
+        "align", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "aligned": EnvironmentDefinition("aligned", is_math=True, has_direct_command=False),
     "gather": EnvironmentDefinition(
-        "gather", step_counter=True, is_math=True, has_direct_command=False
+        "gather", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "multline": EnvironmentDefinition(
-        "multline", step_counter=True, is_math=True, has_direct_command=False
+        "multline", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "eqnarray": EnvironmentDefinition(
-        "eqnarray", step_counter=True, is_math=True, has_direct_command=False
+        "eqnarray", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "flalign": EnvironmentDefinition(
-        "flalign", step_counter=True, is_math=True, has_direct_command=False
+        "flalign", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "alignat": EnvironmentDefinition(
-        "alignat", num_args=1, step_counter=True, is_math=True, has_direct_command=False
+        "alignat",
+        num_args=1,
+        counter_name="equation",
+        is_math=True,
+        has_direct_command=False,
     ),
     "dmath": EnvironmentDefinition(
-        "dmath", step_counter=True, is_math=True, has_direct_command=False
+        "dmath", counter_name="equation", is_math=True, has_direct_command=False
     ),
     "split": EnvironmentDefinition("split", is_math=True, has_direct_command=False),
     "array": EnvironmentDefinition(
@@ -204,6 +211,5 @@ for env in STAR_VARIANTS:
     env_star = env_def.copy()
     env_star.name = env_star.name + "*"
     env_star.has_direct_command = False
-    env_star.step_counter = False
-    env_star.assign_counter = False
+    env_star.counter_name = None
     COMMON_ENVIRONMENTS[env_star.name] = env_star

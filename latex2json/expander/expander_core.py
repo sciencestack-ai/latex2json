@@ -2,6 +2,7 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
+from latex2json.tokens.types import EnvironmentStartToken
 from latex2json.tokens.utils import is_mathshift_token, substitute_token_args
 from latex2json.expander.macro_registry import (
     Handler,
@@ -222,12 +223,16 @@ class ExpanderCore:
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
         self.push_tokens(tokens + [STOP_TOKEN])
-        out = self.process(stop_token_logic=lambda tok: tok is STOP_TOKEN)
-        if self.peek() is STOP_TOKEN:
-            self.consume()  # consume the STOP_TOKEN
+        out = self.process(
+            stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
+        )
         return out
 
-    def process(self, stop_token_logic: Optional[TokenPredicate] = None) -> List[Token]:
+    def process(
+        self,
+        stop_token_logic: Optional[TokenPredicate] = None,
+        consume_stop_token: bool = True,
+    ) -> List[Token]:
         """
         Processes the entire token stream, performing expansions and executing side effects,
         until the stop token is encountered.
@@ -240,6 +245,8 @@ class ExpanderCore:
             if current_token is None:  # Should be caught by eof(), but defensive check
                 break
             if stop_token_logic and stop_token_logic(current_token):
+                if consume_stop_token:
+                    self.consume()
                 break
 
             processed = self.expand_next()
@@ -708,17 +715,16 @@ class ExpanderCore:
         self.state.set_environment_definition(env_name, env_def)
 
         is_math = env_def.is_math
-        force_stepcounter = env_def.step_counter
-        if force_stepcounter:
-            self.state.new_counter(env_name)
+        counter_name = env_def.counter_name
+        if counter_name:
+            self.state.new_counter(counter_name)
 
         def begin_handler(
             expander: "ExpanderCore", token: Token
         ) -> Optional[List[Token]]:
-            begin_token = Token(TokenType.ENVIRONMENT_START, env_name)
             state = expander.state
-            if force_stepcounter:
-                state.step_counter(env_name)
+            if counter_name:
+                state.step_counter(counter_name)
 
             state.push_env_stack(env_name)
 
@@ -736,8 +742,12 @@ class ExpanderCore:
 
             # evaluate the counter post begin definition expansion
             # e.g. some newenvironment definitions place \refstepcounter in the begin definition
-            if env_def.assign_counter and state.has_counter(env_name):
-                begin_token.numbering = state.get_counter_as_format(env_name)
+            numbering = None
+            if counter_name:
+                numbering = state.get_counter_as_format(counter_name)
+            begin_token = EnvironmentStartToken(
+                env_name, numbering=numbering, is_math_env=is_math
+            )
             return [begin_token] + subbed
 
         def end_handler(

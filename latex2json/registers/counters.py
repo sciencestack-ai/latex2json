@@ -284,30 +284,7 @@ class CounterManager:
 
 # Demo of the hierarchy in action
 if __name__ == "__main__":
-    pass
 
     register = TexRegisters()
     counter_manager = CounterManager(register)
     print(counter_manager.debug_hierarchy())
-    # system = LaTeXCounterSystem()
-
-    # # Simulate some LaTeX operations
-    # print("=== Initial State ===")
-    # print(system.counters.debug_hierarchy())
-
-    # print("\n=== After \\stepcounter{chapter} ===")
-    # system.counters.step_counter("chapter")
-    # print(system.counters.debug_hierarchy())
-
-    # print("\n=== After \\stepcounter{section} twice ===")
-    # system.counters.step_counter("section")
-    # system.counters.step_counter("section")
-    # print(system.counters.debug_hierarchy())
-
-    # print("\n=== After \\stepcounter{subsection} ===")
-    # system.counters.step_counter("subsection")
-    # print(system.counters.debug_hierarchy())
-
-    # print("\n=== After \\stepcounter{section} (resets subsection) ===")
-    # system.counters.step_counter("section")
-    # print(system.counters.debug_hierarchy())
