@@ -1,19 +1,20 @@
 from typing import List, Optional
-from latex2json.nodes.base import ASTNode, check_asts_equal
+from latex2json.nodes.base_nodes import (
+    ASTNode,
+    check_asts_equal,
+    CommandNode,
+    TextNode,
+)
 
 from enum import Enum, auto
 
-from latex2json.nodes.syntactic_nodes import (
-    CommandNode,
-    TextNode,
-    strip_whitespace_nodes,
-)
+from latex2json.nodes.utils import strip_whitespace_nodes
 
 
 class EquationType(Enum):
-    INLINE = auto()
-    DISPLAY = auto()
-    ALIGN = auto()
+    INLINE = 1
+    DISPLAY = 2
+    ALIGN = 3
 
 
 class EquationNode(ASTNode):
@@ -23,9 +24,19 @@ class EquationNode(ASTNode):
         equation_type: EquationType = EquationType.INLINE,
         numbering: Optional[str] = None,
     ):
-        self.math_nodes = strip_whitespace_nodes(math_nodes)
-        self.equation_type = equation_type
         self.numbering = numbering
+
+        self.equation_type = equation_type
+
+        self.set_body(math_nodes)
+
+    def set_body(self, body: List[ASTNode]):
+        self.body = strip_whitespace_nodes(body)
+        self.set_children(self.body)
+
+    @property
+    def math_nodes(self):
+        return self.body
 
     def __str__(self):
         return self.detokenize() + (f" ({self.numbering})" if self.numbering else "")

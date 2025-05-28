@@ -1,28 +1,6 @@
 from typing import List, Optional
-from latex2json.nodes.base import ASTNode, check_asts_equal
+from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
-
-
-SECTION_LEVELS = {
-    "part": 0,
-    "chapter": 1,
-    "section": 1,
-    "subsection": 2,
-    "subsubsection": 3,
-}
-
-PARAGRAPH_LEVELS = {
-    "paragraph": 1,
-    "subparagraph": 2,
-}
-
-
-def get_section_level(name: str) -> int:
-    return SECTION_LEVELS.get(name.lstrip("\\"), 0)
-
-
-def get_paragraph_level(name: str) -> int:
-    return PARAGRAPH_LEVELS.get(name.lstrip("\\"), 0)
 
 
 class SectionNode(EnvironmentNode):

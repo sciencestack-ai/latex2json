@@ -16,18 +16,33 @@ class Parser(ParserCore):
 
 
 if __name__ == "__main__":
-    from latex2json.nodes.syntactic_nodes import strip_whitespace_nodes
+    from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 
     text = r"""
     \textbf{ \textit {NODE} }
 
-    \section{Hello}
+    \textbf{ \section{Hello} }
     \label{hello}
+    { \bf 
+        BOLD
+        { \it
+            BOLD ITALIC
+        }
+    }
     """
+
+    text = r"""
+    \bf 
+    \begin{align}
+    1+1
+    \end{align}
+"""
 
     parser = Parser()
     parser.set_text(text)
     out = parser.parse()
     out = strip_whitespace_nodes(out)
-    print(out)
+    out = [node for node in out if not is_whitespace_node(node)]
+    for node in out:
+        print(node, "->", node.styles)
     # out = parser.expander.expand(text)

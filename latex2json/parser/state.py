@@ -1,40 +1,63 @@
 from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
+from enum import Enum, auto
 
 
 # --- Define some basic attribute types (you'll expand these) ---
 # Assuming these are enums or simple strings for now
+class FontStyleType(Enum):
+    SERIES = auto()
+    SHAPE = auto()
+    SIZE = auto()
+    FAMILY = auto()
+
+
+@dataclass
+class FontStyle:
+    type: FontStyleType
+    value: str
+
+
 class FontSeries:
-    NORMAL = "normal"
-    BOLD = "bold"
+    NORMAL = FontStyle(FontStyleType.SERIES, "normal")
+    BOLD = FontStyle(FontStyleType.SERIES, "bold")
 
 
 class FontShape:
-    UPRIGHT = "upright"
-    ITALIC = "italic"
+    UPRIGHT = FontStyle(FontStyleType.SHAPE, "upright")
+    ITALIC = FontStyle(FontStyleType.SHAPE, "italic")
 
 
 class FontSize:
-    NORMAL = "normal"
-    LARGE = "large"
+    NORMAL = FontStyle(FontStyleType.SIZE, "normal")
+    LARGE = FontStyle(FontStyleType.SIZE, "large")
     # ... etc.
 
 
 class FontFamily:
-    ROMAN = "roman"
-    SANS = "sans"
-    TYPEWRITER = "typewriter"
+    ROMAN = FontStyle(FontStyleType.FAMILY, "roman")
+    SANS = FontStyle(FontStyleType.FAMILY, "sans")
+    TYPEWRITER = FontStyle(FontStyleType.FAMILY, "typewriter")
 
 
 @dataclass
 class FontAttributes:
     """Represents the current font settings."""
 
-    series: FontSeries = FontSeries.NORMAL
-    shape: FontShape = FontShape.UPRIGHT
-    size: FontSize = FontSize.NORMAL
-    family: FontFamily = FontFamily.ROMAN
-    color: Optional[str] = None  # e.g., "#000000" for black
+    series: FontStyle = field(default_factory=lambda: FontSeries.NORMAL)
+    shape: FontStyle = field(default_factory=lambda: FontShape.UPRIGHT)
+    size: FontStyle = field(default_factory=lambda: FontSize.NORMAL)
+    family: FontStyle = field(default_factory=lambda: FontFamily.ROMAN)
+    color: Optional[str] = None  # This one is fine as it's immutable
+
+    def copy(self):
+        return FontAttributes(
+            series=self.series,
+            shape=self.shape,
+            size=self.size,
+            family=self.family,
+            color=self.color,
+        )
 
 
 @dataclass
@@ -60,7 +83,7 @@ class ParserStateLayer:
         self.parent = parent
 
         # --- Formatting Attributes (Inherited/Overridden) ---
-        self.font: FontAttributes = parent.font if parent else FontAttributes()
+        self.font: FontAttributes = parent.font.copy() if parent else FontAttributes()
         # You might have other formatting attributes like line spacing, indentation, etc.
 
         # --- List Attributes (Inherited/Overates) ---
@@ -81,24 +104,18 @@ class ParserStateLayer:
         """
         styles = []
         font = self.font
-
-        # Get parent font attributes or default if no parent
-        parent_font = self.parent.font if self.parent else DEFAULT_FONT
+        # parent_font = self.parent.font if self.parent else DEFAULT_FONT
 
         # Check each font attribute against parent (or default if no parent)
-        if font.series != parent_font.series:
-            styles.append(font.series)
-
-        if font.shape != parent_font.shape:
-            styles.append(font.shape)
-
-        if font.size != parent_font.size:
-            styles.append(font.size)
-
-        if font.family != parent_font.family:
-            styles.append(font.family)
-
-        if font.color != parent_font.color:
+        if font.series.value != DEFAULT_FONT.series.value:
+            styles.append(font.series.value)
+        if font.shape.value != DEFAULT_FONT.shape.value:
+            styles.append(font.shape.value)
+        if font.size.value != DEFAULT_FONT.size.value:
+            styles.append(font.size.value)
+        if font.family.value != DEFAULT_FONT.family.value:
+            styles.append(font.family.value)
+        if font.color != DEFAULT_FONT.color:
             styles.append(f"color={font.color}")
 
         return styles
@@ -106,7 +123,7 @@ class ParserStateLayer:
     def __repr__(self) -> str:
         parent_name = self.parent.__class__.__name__ if self.parent else "None"
         return (
-            f"ParserStateLayer(font={self.font.series}, "
+            f"ParserStateLayer(font={self.font.series.value}, "
             f"list_level={self.list_attributes.level}, "
             f"parent={parent_name})"
         )
@@ -124,11 +141,6 @@ class ParserState:
             ParserStateLayer()
         ]  # Start with a base layer
 
-        # # Global registry for labels (accessible from anywhere in the document)
-        # self.labels: Dict[str, LabelInfo] = {}
-
-        # You might add other global registries here, e.g., for bibliography entries
-
     @property
     def current(self) -> ParserStateLayer:
         """Get the currently active parser state layer (top of the stack)."""
@@ -137,14 +149,12 @@ class ParserState:
         return self._stack[-1]
 
     # --- Scope Management ---
-    def push_scope(self, new_node_context: Optional[Any] = None):
+    def push_scope(self):
         """
         Pushes a new parser state layer onto the stack, creating a new scope.
         Optionally sets the current AST node for this new scope.
         """
         new_layer = ParserStateLayer(parent=self.current)
-        if new_node_context:
-            new_layer.current_ast_node = new_node_context
         self._stack.append(new_layer)
 
     def pop_scope(self):
@@ -163,29 +173,20 @@ class ParserState:
     def list_attributes(self) -> ListAttributes:
         return self.current.list_attributes
 
-    @property
-    def current_ast_node(self) -> Optional[Any]:
-        """The AST node that current content should be added to."""
-        return self.current.current_ast_node
-
-    def set_current_ast_node(self, node: Any):
-        """Sets the current AST node for the active scope."""
-        self.current.current_ast_node = node
-
     # --- Methods to Modify State (Delegated to current layer) ---
-    def set_font_series(self, series: FontSeries):
+    def set_font_series(self, series: FontStyle):
         self.current.font.series = series
 
-    def set_font_shape(self, shape: FontShape):
+    def set_font_shape(self, shape: FontStyle):
         self.current.font.shape = shape
 
-    def set_font_size(self, size: FontSize):
+    def set_font_size(self, size: FontStyle):
         self.current.font.size = size
 
-    def set_font_family(self, family: FontFamily):
+    def set_font_family(self, family: FontStyle):
         self.current.font.family = family
 
-    def set_color(self, color_hex: str):
+    def set_font_color(self, color_hex: str):
         self.current.font.color = color_hex
 
     def get_styles_as_string(self) -> List[str]:
@@ -202,3 +203,14 @@ class ParserState:
 
     def __repr__(self) -> str:
         return f"ParserState(stack_depth={len(self._stack)})"
+
+    def set_font(self, style: FontStyle):
+        """Set font attribute based on FontStyle"""
+        if style.type == FontStyleType.SERIES:
+            self.set_font_series(style)
+        elif style.type == FontStyleType.SHAPE:
+            self.set_font_shape(style)
+        elif style.type == FontStyleType.SIZE:
+            self.set_font_size(style)
+        elif style.type == FontStyleType.FAMILY:
+            self.set_font_family(style)

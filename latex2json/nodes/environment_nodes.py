@@ -1,6 +1,6 @@
 from typing import List, Optional
-from latex2json.nodes.base import ASTNode, check_asts_equal
-from latex2json.nodes.syntactic_nodes import strip_whitespace_nodes
+from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
+from latex2json.nodes.utils import strip_whitespace_nodes
 
 
 class EnvironmentNode(ASTNode):
@@ -14,12 +14,9 @@ class EnvironmentNode(ASTNode):
         self.numbering = numbering
         self.set_body(body)
 
-        # strip_whitespace(self.body)
-
-        # self.set_children(self.body)
-
     def set_body(self, body: List[ASTNode]):
         self.body = strip_whitespace_nodes(body)
+        self.set_children(self.body)
 
     def __str__(self):
         out = f"Environment: {self.name}"

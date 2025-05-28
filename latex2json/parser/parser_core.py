@@ -2,11 +2,17 @@ import logging
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
 from latex2json.latex_maps.sections import SECTIONS
-from latex2json.nodes.environment_nodes import EnvironmentNode
-from latex2json.nodes.math_nodes import EquationNode, EquationType
-from latex2json.nodes.semantic_nodes import SectionNode
-from latex2json.nodes.syntactic_nodes import CommandNode, strip_whitespace_nodes
-from latex2json.parser.state import FontSeries, FontShape, ParserState
+from latex2json.nodes import (
+    ASTNode,
+    EnvironmentNode,
+    TextNode,
+    EquationNode,
+    EquationType,
+    SectionNode,
+    CommandNode,
+    strip_whitespace_nodes,
+)
+from latex2json.parser.state import ParserState
 from latex2json.tokens import Token
 from latex2json.tokens.types import (
     CommandWithArgsToken,
@@ -14,7 +20,6 @@ from latex2json.tokens.types import (
     TokenType,
 )
 
-from latex2json.nodes import ASTNode, TextNode
 from latex2json.nodes.utils import merge_text_nodes
 from latex2json.tokens.utils import (
     is_begin_bracket_token,
@@ -164,9 +169,9 @@ class ParserCore:
         nodes = self._handler(token)
         # assign font attributes to nodes
         styles = self.state.get_styles_as_string()
-        if styles:
+        if styles and nodes:
             for node in nodes:
-                node.add_styles(styles)
+                node.add_styles(styles, insert_at_front=True)
         return nodes
 
     def parse(self, text: Optional[str] = None) -> List[ASTNode]:
@@ -220,10 +225,25 @@ class ParserCore:
         """Pop a node from the environment stack."""
         return self._env_node_stack.pop() if self._env_node_stack else None
 
+    def _generate_env_node(
+        self, token: EnvironmentStartToken
+    ) -> EnvironmentNode | EquationNode:
+        env_name = token.name
+        if token.is_math_env:
+            eq_type = EquationType.DISPLAY
+            if "align" in env_name or "eqnarray" in env_name:
+                eq_type = EquationType.ALIGN
+            env_node = EquationNode(
+                math_nodes=[], numbering=token.numbering, equation_type=eq_type
+            )
+        else:
+            env_node = EnvironmentNode(env_name, numbering=token.numbering)
+        return env_node
+
     def _handle_environment(self, token: EnvironmentStartToken) -> List[ASTNode]:
         env_name = token.name
 
-        env_node = EnvironmentNode(env_name, numbering=token.numbering)
+        env_node = self._generate_env_node(token)
         self.push_env_stack(env_node)
 
         was_math_mode = self.is_math_mode
@@ -408,6 +428,10 @@ if __name__ == "__main__":
 
     text = r"""
     \textbf{ \textit {NODE} }
+    \bf 
+    \begin{align}
+    1+1
+    \end{align}
     """
 
     parser.set_text(text)
