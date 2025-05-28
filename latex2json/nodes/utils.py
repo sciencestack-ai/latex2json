@@ -5,6 +5,10 @@ from latex2json.nodes.base_nodes import (
 )
 
 
+def convert_nodes_to_str(nodes: List[ASTNode]) -> str:
+    return "".join(node.detokenize() for node in nodes)
+
+
 def merge_text_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
     """Merges consecutive TextNodes in a list."""
     merged = []

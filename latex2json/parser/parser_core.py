@@ -11,17 +11,19 @@ from latex2json.nodes import (
     SectionNode,
     CommandNode,
     strip_whitespace_nodes,
+    merge_text_nodes,
 )
+from latex2json.nodes.caption_node import CaptionNode
 from latex2json.parser.state import ParserState
-from latex2json.tokens import Token
-from latex2json.tokens.types import (
+from latex2json.tokens import (
+    Token,
     CommandWithArgsToken,
     EnvironmentStartToken,
     TokenType,
 )
 
-from latex2json.nodes.utils import merge_text_nodes
 from latex2json.tokens.utils import (
+    is_asterisk_token,
     is_begin_bracket_token,
     is_begin_group_token,
     is_end_bracket_token,
@@ -269,10 +271,6 @@ class ParserCore:
         self.is_math_mode = was_math_mode
         return [env_node]
 
-    @staticmethod
-    def convert_nodes_to_str(nodes: List[ASTNode]) -> str:
-        return "".join(node.detokenize() for node in nodes)
-
     def _handle_control_sequence(self, token: Token) -> List[ASTNode]:
         macro = self.get_macro(token.value)
         if macro:
@@ -288,16 +286,46 @@ class ParserCore:
             # remove cur env for this section
             self.pop_env_stack()
 
-            args_ast = self.process_tokens(args, scoped=True)
-            opt_args_ast = self.process_tokens(opt_args)
+            arg_nodes = self.process_tokens(args, scoped=True)
+            opt_arg_nodes = self.process_tokens(opt_args)
             section_node = SectionNode(
                 token.value,
-                body=args_ast,
-                opt_arg=opt_args_ast,
+                body=arg_nodes,
+                opt_arg=opt_arg_nodes,
                 numbering=token.numbering,
             )
             self.push_env_stack(section_node)
             return [section_node]
+        elif token.name == "caption":
+            args = token.args[0]
+            opt_args = token.opt_args[0] if token.opt_args else []
+
+            arg_nodes = self.process_tokens(args, scoped=True)
+            opt_arg_nodes = self.process_tokens(opt_args)
+            return [
+                CaptionNode(
+                    body=arg_nodes, opt_arg=opt_arg_nodes, numbering=token.numbering
+                )
+            ]
+        else:
+            arg_nodes: List[List[ASTNode]] = []
+            opt_arg_nodes: List[List[ASTNode]] = []
+            for arg in token.args:
+                proc_arg = self.process_tokens(arg, scoped=True)
+                if proc_arg:
+                    arg_nodes.append(proc_arg)
+            for opt_arg in token.opt_args:
+                proc_opt_arg = self.process_tokens(opt_arg)
+                if proc_opt_arg:
+                    opt_arg_nodes.append(proc_opt_arg)
+            return [
+                CommandNode(
+                    token.name,
+                    args=arg_nodes,
+                    opt_args=opt_arg_nodes,
+                    numbering=token.numbering,
+                )
+            ]
 
         return []
 
@@ -377,6 +405,13 @@ class ParserCore:
         if tokens:
             return self.process_tokens(tokens, scoped=scoped)
         return None
+
+    def parse_asterisk(self):
+        self.skip_whitespace()
+        if is_asterisk_token(self.peek()):
+            self.consume()
+            return True
+        return False
 
     def parse_brace_as_nodes(self, scoped=False) -> Optional[List[ASTNode]]:
         return self.parse_begin_end_as_nodes(

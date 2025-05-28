@@ -33,10 +33,17 @@ if __name__ == "__main__":
 
     text = r"""
     \bf 
-    \begin{align}
+    \begin{align} \label{eq:1}
     1+1
     \end{align}
-"""
+
+    \begin{table}
+    \caption{CAPTION}
+    \label{tab:1}
+    \end{table}
+
+    \label{WUT}
+    """
 
     parser = Parser()
     parser.set_text(text)
@@ -44,5 +51,8 @@ if __name__ == "__main__":
     out = strip_whitespace_nodes(out)
     out = [node for node in out if not is_whitespace_node(node)]
     for node in out:
-        print(node, "->", node.styles)
+        node_meta_str = f"STYLES: {node.styles}"
+        if node.labels:
+            node_meta_str += f", LABELS: {node.labels}"
+        print(node, f"-> {node_meta_str}")
     # out = parser.expander.expand(text)

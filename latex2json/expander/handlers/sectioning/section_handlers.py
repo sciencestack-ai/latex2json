@@ -2,7 +2,7 @@ from typing import List, Optional, Callable
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.sections import SECTIONS
-from latex2json.tokens.types import (
+from latex2json.tokens import (
     CommandWithArgsToken,
     Token,
 )
@@ -32,14 +32,16 @@ def make_section_handler(
         expanded_content = []
         if content:
             expanded_content = expander.expand_tokens(content)
-        expanded_opt_arg = []
+        expanded_opt_args = []
         if opt_arg:
-            expanded_opt_arg = expander.expand_tokens(opt_arg)
+            exp_opt_arg = expander.expand_tokens(opt_arg)
+            if exp_opt_arg:
+                expanded_opt_args = [exp_opt_arg]
 
         out_token = CommandWithArgsToken(
             name=cmd_name,
             args=[expanded_content],
-            opt_args=[expanded_opt_arg],
+            opt_args=expanded_opt_args,
             numbering=numbering,
         )
         return [out_token]

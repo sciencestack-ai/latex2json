@@ -10,6 +10,7 @@ class EnvironmentNode(ASTNode):
         body: List[ASTNode] = [],
         numbering: Optional[str] = None,
     ):
+        super().__init__()
         self.name = name
         self.numbering = numbering
         self.set_body(body)
@@ -19,16 +20,7 @@ class EnvironmentNode(ASTNode):
         self.set_children(self.body)
 
     def __str__(self):
-        out = f"Environment: {self.name}"
-        if self.numbering:
-            out += f" ({self.numbering})"
-        out += "\n"
-        out += "\n".join(str(child) for child in self.body)
-        out += f"\nEND Environment: {self.name}"
-        if self.numbering:
-            out += f" ({self.numbering})"
-        out += "\n"
-        return out
+        return self.detokenize()
 
     def __repr__(self):
         return self.__str__()
@@ -40,3 +32,23 @@ class EnvironmentNode(ASTNode):
         if not same:
             return False
         return check_asts_equal(self.body, other.body)
+
+    def detokenize(self) -> str:
+        """Convert the environment node back to LaTeX source code."""
+        # Start with \begin{name}
+        out = f"\\begin{{{self.name}}}"
+
+        # Add numbering if present
+        if self.numbering:
+            out += f"[{self.numbering}]"
+
+        # Add body content
+        if self.body:
+            out += "\n"
+            out += "\n".join(child.detokenize() for child in self.body)
+            out += "\n"
+
+        # End with \end{name}
+        out += f"\\end{{{self.name}}}"
+
+        return out

@@ -55,6 +55,14 @@ def is_whitespace_token(tok: Token) -> bool:
     return tok.type == TokenType.CHARACTER and tok.catcode == Catcode.SPACE
 
 
+def is_asterisk_token(tok: Token) -> bool:
+    return (
+        # tok.type == TokenType.CHARACTER and
+        tok.catcode == Catcode.OTHER
+        and tok.value == "*"
+    )
+
+
 def is_signed_integer_token(tok: Token) -> bool:
     return is_digit_token(tok) and tok.value != "."
 

@@ -24,8 +24,8 @@ class EquationNode(ASTNode):
         equation_type: EquationType = EquationType.INLINE,
         numbering: Optional[str] = None,
     ):
+        super().__init__()
         self.numbering = numbering
-
         self.equation_type = equation_type
 
         self.set_body(math_nodes)

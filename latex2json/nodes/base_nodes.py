@@ -2,10 +2,17 @@ from typing import List, Optional
 
 
 class ASTNode:
-    children: List["ASTNode"] = []
-    parent: Optional["ASTNode"] = None
-    labels: List[str] = []
-    _styles: List[str] = []
+    def __init__(
+        self,
+        children: List["ASTNode"] = None,
+        parent: Optional["ASTNode"] = None,
+        labels: List[str] = None,
+        styles: List[str] = None,
+    ):
+        self.children = children if children is not None else []
+        self.parent = parent
+        self.labels = labels if labels is not None else []
+        self._styles = styles if styles is not None else []
 
     def __repr__(self):
         return self.__str__()
@@ -62,6 +69,7 @@ def flatten(lst: List[List[ASTNode]]) -> List[ASTNode]:
 
 class TextNode(ASTNode):
     def __init__(self, text: str):
+        super().__init__()
         self.text = text
 
     def __str__(self):
@@ -91,10 +99,13 @@ class CommandNode(ASTNode):
         name: str,
         args: List[List[ASTNode]] = [],
         opt_args: List[List[ASTNode]] = [],
+        numbering: Optional[str] = None,
     ):
+        super().__init__()
         self.name = name
         self.args = args
         self.opt_args = opt_args
+        self.numbering = numbering
 
         self.set_children(flatten(self.opt_args + self.args))
 
@@ -107,10 +118,10 @@ class CommandNode(ASTNode):
         return len(self.args)
 
     def __str__(self):
-        out_str = f"\\{self.name}"
-        if self.args or self.opt_args:
-            out_str += f"([{self.opt_args}], {self.args})"
-        return out_str
+        out = self.detokenize()
+        if self.numbering:
+            out += f" ({self.numbering})"
+        return out
 
     def __repr__(self):
         return self.__str__()
@@ -120,16 +131,23 @@ class CommandNode(ASTNode):
             return False
         if self.name != other.name:
             return False
-        return check_asts_equal(self.args, other.args) and check_asts_equal(
-            self.opt_args, other.opt_args
-        )
+        if len(self.args) != len(other.args):
+            return False
+        for arg1, arg2 in zip(self.args, other.args):
+            if not check_asts_equal(arg1, arg2):
+                return False
+        if len(self.opt_args) != len(other.opt_args):
+            return False
+        if self.numbering != other.numbering:
+            return False
+        return True
 
     def detokenize(self):
         out = self.name
         if not out.startswith("\\"):
             out = "\\" + out
-        if self.opt_args:
-            out += "[" + "".join(child.detokenize() for child in self.opt_args) + "]"
-        if self.args:
-            out += "{" + "".join(child.detokenize() for child in self.args) + "}"
+        for opt_arg in self.opt_args:
+            out += "[" + "".join(child.detokenize() for child in opt_arg) + "]"
+        for arg in self.args:
+            out += "{" + "".join(child.detokenize() for child in arg) + "}"
         return out
