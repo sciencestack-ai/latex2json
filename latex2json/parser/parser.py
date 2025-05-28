@@ -42,7 +42,8 @@ if __name__ == "__main__":
     \label{tab:1}
     \end{table}
 
-    \label{WUT}
+    \bf
+    \hyperref[tab:1]{TABLE}
     """
 
     parser = Parser()

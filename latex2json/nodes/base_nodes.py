@@ -99,6 +99,7 @@ class CommandNode(ASTNode):
         name: str,
         args: List[List[ASTNode]] = [],
         opt_args: List[List[ASTNode]] = [],
+        has_star: bool = False,
         numbering: Optional[str] = None,
     ):
         super().__init__()
@@ -106,7 +107,7 @@ class CommandNode(ASTNode):
         self.args = args
         self.opt_args = opt_args
         self.numbering = numbering
-
+        self.has_star = has_star
         self.set_children(flatten(self.opt_args + self.args))
 
     @property

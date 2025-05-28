@@ -205,12 +205,24 @@ class ParserState:
         return f"ParserState(stack_depth={len(self._stack)})"
 
     def set_font(self, style: FontStyle):
-        """Set font attribute based on FontStyle"""
+        """Set font attribute based on FontStyle, toggling back to default if same style is set"""
         if style.type == FontStyleType.SERIES:
-            self.set_font_series(style)
+            if self.current.font.series.value == style.value:
+                self.set_font_series(DEFAULT_FONT.series)
+            else:
+                self.set_font_series(style)
         elif style.type == FontStyleType.SHAPE:
-            self.set_font_shape(style)
+            if self.current.font.shape.value == style.value:
+                self.set_font_shape(DEFAULT_FONT.shape)
+            else:
+                self.set_font_shape(style)
         elif style.type == FontStyleType.SIZE:
-            self.set_font_size(style)
+            if self.current.font.size.value == style.value:
+                self.set_font_size(DEFAULT_FONT.size)
+            else:
+                self.set_font_size(style)
         elif style.type == FontStyleType.FAMILY:
-            self.set_font_family(style)
+            if self.current.font.family.value == style.value:
+                self.set_font_family(DEFAULT_FONT.family)
+            else:
+                self.set_font_family(style)
