@@ -2,7 +2,7 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -11,14 +11,31 @@ def test_bgroup_egroup():
     expander = Expander()
 
     # scoped
-    expander.expand("\\bgroup")
+    out = expander.expand("\\bgroup")  # -> evals to {
+    assert_token_sequence(out, [BEGIN_BRACE_TOKEN])
 
     # test catcode change (local inside scope)
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
     expander.set_catcode(ord("@"), Catcode.LETTER)
     assert expander.get_catcode(ord("@")) == Catcode.LETTER
 
-    expander.expand("\\egroup")
+    out = expander.expand("\\egroup")  # -> evals to }
+    assert_token_sequence(out, [END_BRACE_TOKEN])
+
+    assert expander.get_catcode(ord("@")) == Catcode.OTHER
+
+    # begin/endgroup
+
+    out = expander.expand(r"\begingroup")  # -> pushes scope but not {
+    assert_token_sequence(out, [])
+
+    # test catcode change (local inside scope)
+    expander.set_catcode(ord("@"), Catcode.LETTER)
+    assert expander.get_catcode(ord("@")) == Catcode.LETTER
+
+    out = expander.expand(r"\endgroup")
+    assert_token_sequence(out, [])
+
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
 

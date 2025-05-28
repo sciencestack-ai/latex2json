@@ -27,7 +27,14 @@ def merge_text_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
     i = 0
     while i < len(nodes):
         node = nodes[i]
-        if isinstance(node, TextNode) and merged and isinstance(merged[-1], TextNode):
+        should_merge = (
+            isinstance(node, TextNode) and merged and isinstance(merged[-1], TextNode)
+        )
+        if should_merge:
+            # check if styles are the same. if so, merge
+            # check styles
+            pass
+        if should_merge:
             merged[-1].text += node.text
         else:
             merged.append(node)

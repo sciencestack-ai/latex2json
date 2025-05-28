@@ -15,6 +15,9 @@ class ASTNode:
         for child in self.children:
             child.parent = self
 
+    def add_styles(self, styles: List[str]):
+        self.styles.extend(styles)
+
     def __eq__(self, other: "ASTNode"):
         if not isinstance(other, self.__class__):
             return False
