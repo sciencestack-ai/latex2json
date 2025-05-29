@@ -1,0 +1,103 @@
+import pytest
+
+from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
+from latex2json.nodes.utils import strip_whitespace_nodes
+from latex2json.parser.parser import Parser
+
+
+def test_tabular_with_multirow_col():
+    parser = Parser()
+
+    text = r"""
+    \begin{tabular}{c|c|c}
+        \\ % first row is empty, stripped
+        1 & 2abc & & 3 \\ 
+        \multicolumn{3}{|c|{xxx}}{\multirow{2}{*}{4}} & 6
+        \\ % last row is empty, stripped
+    \end{tabular}
+""".strip()
+
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    assert len(tabular.row_nodes) == 2
+    assert len(tabular.row_nodes[0].cells) == 4
+    assert len(tabular.row_nodes[1].cells) == 2
+
+    row1 = tabular.row_nodes[0]
+    row2 = tabular.row_nodes[1]
+
+    assert row1.cells[0].body == [TextNode("1")]
+    assert row1.cells[1].body == [TextNode("2abc")]
+    assert row1.cells[2].body == []  # preserve empty cells!
+    assert row1.cells[3].body == [TextNode("3")]
+
+    assert row2.cells[0].body == [TextNode("4")]
+    assert row2.cells[0].rowspan == 2
+    assert row2.cells[0].colspan == 3
+    assert row2.cells[1].body == [TextNode("6")]
+
+
+def test_nested_tabular():
+    parser = Parser()
+
+    text = r"""
+    \def\postinner{POST INNER TABLE}
+    \begin{tabular}{c}
+        FIRST 
+        &
+        \begin{tabular}{c}
+            \begin{tabular}{c} 111 \end{tabular} & 22 \\ 
+            33 & 44
+        \end{tabular} \postinner
+        & 
+        \begin{tabular}{c} \multicolumn{2}{c|}{222} \end{tabular} 
+        & 
+        LAST
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    assert len(tabular.row_nodes) == 1
+
+    first_cell = tabular.row_nodes[0].cells[0]
+    assert len(first_cell.body) == 1
+    assert isinstance(first_cell.body[0], TextNode)
+    assert first_cell.body[0].text == "FIRST"
+
+    last_cell = tabular.row_nodes[0].cells[-1]
+    assert len(last_cell.body) == 1
+    assert isinstance(last_cell.body[0], TextNode)
+    assert last_cell.body[0].text == "LAST"
+
+    second_cell = tabular.row_nodes[0].cells[1]
+    assert len(second_cell.body) == 2
+    assert isinstance(second_cell.body[0], TabularNode)
+    assert isinstance(second_cell.body[1], TextNode)
+    assert second_cell.body[1].text == " POST INNER TABLE"
+    inner_tab1 = second_cell.body[0]
+    assert len(inner_tab1.row_nodes) == 2
+    inner_tab1_r1 = inner_tab1.row_nodes[0]
+    inner_tab1_r2 = inner_tab1.row_nodes[1]
+    assert len(inner_tab1_r1.cells) == 2
+    assert len(inner_tab1_r2.cells) == 2
+    # assert inner_tab1_r1.cells[0].body == [TextNode("111")]
+    assert inner_tab1_r1.cells[0].body == [
+        TabularNode([RowNode([CellNode(body=[TextNode("111")])])])
+    ]
+    assert inner_tab1_r1.cells[1].body == [TextNode("22")]
+    assert inner_tab1_r2.cells[0].body == [TextNode("33")]
+    assert inner_tab1_r2.cells[1].body == [TextNode("44")]
+
+    #
+    third_cell = tabular.row_nodes[0].cells[2]
+    assert third_cell.body == [
+        TabularNode([RowNode([CellNode(body=[TextNode("222")], colspan=2)])])
+    ]

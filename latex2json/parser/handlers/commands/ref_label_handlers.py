@@ -71,8 +71,8 @@ def register_ref_label_handlers(parser: ParserCore):
 
     # refs
     for command in REF_COMMANDS:
-        split_command = command.lower() == "cref"
-        parser.register_handler(command, make_ref_handler(split_command))
+        split_comma = command.lower() == "cref"
+        parser.register_handler(command, make_ref_handler(split_comma))
 
     # hyperref
     parser.register_handler("hyperref", hyperref_handler)

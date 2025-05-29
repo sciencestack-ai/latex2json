@@ -46,10 +46,15 @@ if __name__ == "__main__":
     \hyperref[tab:1]{TABLE}
     \\
 
-    \tabular{c|c|c}
+    \begin{longtable*}{c|c|c}
      1 & 2 & & 3 \\ 
-     \multicolumn{3}{|c|}{\multirow{2}{*}{4}} & 6 \\
-    \endtabular
+     \multicolumn{3}{|c|{xxx}}{\multirow{2}{*}{4}} STEP & 6 \\
+     abc \\ 
+     bbb
+    \end{longtable*}
+
+    \begin{generic}
+    \end{generic}
     """
 
     parser = Parser()

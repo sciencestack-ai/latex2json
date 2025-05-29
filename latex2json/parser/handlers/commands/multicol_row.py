@@ -36,7 +36,7 @@ def multirow_handler(parser: ParserCore, token: Token):
         return []
 
     nodes, num_rows = parsed
-    return [CellNode(body=nodes or [], rowspan=num_rows)]
+    return [CellNode(body=nodes, rowspan=num_rows)]
 
 
 def multicolumn_handler(parser: ParserCore, token: Token):
@@ -49,14 +49,17 @@ def multicolumn_handler(parser: ParserCore, token: Token):
     out_nodes: List[ASTNode] = []
 
     max_rows = 1
+    max_cols = num_cols
+    # check if nested cellnode from e.g. multirow
     for node in nodes:
         if isinstance(node, CellNode):
             out_nodes.extend(node.body)
             max_rows = max(max_rows, node.rowspan)
+            max_cols = max(max_cols, node.colspan)
         else:
             out_nodes.append(node)
 
-    return [CellNode(body=out_nodes, colspan=num_cols, rowspan=max_rows)]
+    return [CellNode(body=out_nodes, colspan=max_cols, rowspan=max_rows)]
 
 
 def register_multicol_row_handlers(parser: ParserCore):

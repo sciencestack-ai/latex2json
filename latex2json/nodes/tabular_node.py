@@ -1,7 +1,6 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode
 from latex2json.nodes.environment_nodes import EnvironmentNode
-from latex2json.nodes.utils import strip_whitespace_nodes
 
 
 class CellNode(ASTNode):
@@ -73,21 +72,21 @@ class RowNode(ASTNode):
         return self.detokenize()
 
 
-class TabularNode(EnvironmentNode):
+class TabularNode(ASTNode):
     def __init__(
         self,
-        rows: List[RowNode] = [],
+        row_nodes: List[RowNode] = [],
         # alignment: str = "",
     ):
-        super().__init__("tabular", [])
-        self.rows = rows
+        super().__init__()
+        self.row_nodes = row_nodes
         # self.alignment = alignment
-        self.set_children(rows)
+        self.set_children(row_nodes)
 
     def get_row_col(self):
         """Get dimensions of the table."""
-        rows = len(self.rows)
-        cols = max((row.get_total_cols() for row in self.rows), default=0)
+        rows = len(self.row_nodes)
+        cols = max((row.cols for row in self.row_nodes), default=0)
         return {"rows": rows, "cols": cols}
 
     def __eq__(self, other: ASTNode):
@@ -95,22 +94,25 @@ class TabularNode(EnvironmentNode):
             return False
         # if self.alignment != other.alignment:
         #     return False
-        return all(a == b for a, b in zip(self.rows, other.rows))
+        return all(a == b for a, b in zip(self.row_nodes, other.row_nodes))
 
     def detokenize(self) -> str:
         """Convert the tabular node back to LaTeX source code."""
         # Add required packages for multirow/multicolumn support
         out = "\\begin{tabular}"
 
-        if not self.rows:
+        if not self.row_nodes:
             return out + "\\end{tabular}"
 
         out += "\n"
 
-        for i, row in enumerate(self.rows):
+        for i, row in enumerate(self.row_nodes):
             out += row.detokenize()
-            if i < len(self.rows) - 1:
+            if i < len(self.row_nodes) - 1:
                 out += " \\\\\n"
 
         out += "\n\\end{tabular}"
         return out
+
+    def __str__(self):
+        return self.detokenize()

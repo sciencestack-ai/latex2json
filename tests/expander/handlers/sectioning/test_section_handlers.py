@@ -26,7 +26,7 @@ def mock_section_token(
     section_token = CommandWithArgsToken(
         name=section_name,
         args=[content_tokens],
-        opt_args=[opt_arg_tokens],
+        opt_args=[opt_arg_tokens] if opt_arg_tokens else [],
         numbering=numbering,
     )
 
