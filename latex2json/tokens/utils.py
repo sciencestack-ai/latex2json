@@ -1,4 +1,4 @@
-from typing import List
+from typing import Callable, List
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
@@ -140,3 +140,31 @@ def substitute_token_args(
     #     ]
 
     return out
+
+
+def split_tokens_by_predicate(
+    tokens: List[Token], is_separator: Callable[[Token], bool]
+) -> List[List[Token]]:
+    """Generic function to split tokens into groups based on a separator predicate.
+
+    Args:
+        tokens: List of tokens to split
+        is_separator: Function that returns True for tokens that mark group boundaries
+
+    Returns:
+        List of token groups
+    """
+    groups: List[List[Token]] = []
+    current_group: List[Token] = []
+
+    for tok in tokens:
+        if is_separator(tok):
+            groups.append(current_group)
+            current_group = []
+        else:
+            current_group.append(tok)
+
+    if current_group:
+        groups.append(current_group)
+
+    return groups

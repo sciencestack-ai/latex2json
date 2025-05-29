@@ -1,14 +1,14 @@
-from typing import Dict, List
+from typing import Dict, List, Callable
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
 from latex2json.nodes import ASTNode, EnvironmentNode
 
 from latex2json.parser.parser_core import EnvHandler, ParserCore, TokenPredicate
-from latex2json.tokens.utils import is_alignment_token, strip_whitespace_tokens
-
-
-def is_newcol_token(tok: Token) -> bool:
-    return is_alignment_token(tok)
+from latex2json.tokens.utils import (
+    is_alignment_token,
+    split_tokens_by_predicate,
+    strip_whitespace_tokens,
+)
 
 
 def is_newrow_token(tok: Token) -> bool:
@@ -16,37 +16,11 @@ def is_newrow_token(tok: Token) -> bool:
 
 
 def split_into_rows(tokens: List[Token]) -> List[List[Token]]:
-    rows: List[List[Token]] = []
-    current_row: List[Token] = []
-
-    for tok in tokens:
-        if is_newrow_token(tok):
-            if current_row:
-                rows.append(current_row)
-            current_row = []
-        else:
-            current_row.append(tok)
-
-    if current_row:
-        rows.append(current_row)
-
-    return rows
+    return split_tokens_by_predicate(tokens, is_newrow_token)
 
 
 def split_row_into_columns(row_tokens: List[Token]) -> List[List[Token]]:
-    columns: List[List[Token]] = []
-    current_col: List[Token] = []
-
-    for tok in row_tokens:
-        if is_newcol_token(tok):
-            columns.append(current_col)
-            current_col = []
-        else:
-            current_col.append(tok)
-
-    if current_col:
-        columns.append(current_col)
-
+    columns = split_tokens_by_predicate(row_tokens, is_alignment_token)
     return [strip_whitespace_tokens(col) for col in columns]
 
 
@@ -102,6 +76,8 @@ def process_inner_tabular_environments(
     parser: ParserCore, tokens: List[Token]
 ) -> tuple[List[Token], SubstituteMapType]:
     """Process inner tabular environments by replacing them with mock control sequence tokens.
+    We replace nested tabular environments with placeholder tokens to simplify
+    row/column splitting. The actual tabular nodes are stored in a map for later use.
 
     Args:
         parser: The parser instance
@@ -122,9 +98,7 @@ def process_inner_tabular_environments(
         final_tokens.extend(tokens[last_idx:start_idx])
         last_idx = end_idx + 1
 
-        tab_start_token = tokens[start_idx]
-        parser.push_tokens(tokens[start_idx + 1 : end_idx + 1])
-        out = tabular_handler(parser, tab_start_token)
+        out = parser.process_tokens(tokens[start_idx : end_idx + 1])
         if out:
             # Create a mock substitute token to replace the original tabular environment
             mock_name = f"<tabularsub>{len(substitute_map)}</tabularsub>"
@@ -141,6 +115,8 @@ def process_table_tokens_to_nodes(
     strip_null_rows: bool = True,
     substitute_map: SubstituteMapType = {},
 ) -> List[RowNode]:
+    """Process table tokens into nodes, replacing any substitute tokens with their
+    corresponding tabular nodes from the substitution map."""
     row_nodes: List[RowNode] = []
     for row_tokens in table_tokens:
         row_cells: List[CellNode] = []
@@ -190,7 +166,7 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     if not tokens:
         return [TabularNode()]
 
-    # Handle all inner tabular environments
+    # replace nested tabular environments with placeholder tokens to simplify row/column splitting
     final_tokens, substitute_map = process_inner_tabular_environments(parser, tokens)
 
     # Split into rows and columns

@@ -57,6 +57,16 @@ if __name__ == "__main__":
     \end{generic}
     """
 
+    text = r"""
+    \begin{tabular}{c|c|c}
+        \\ % first row is empty, stripped
+        1 & 2abc & & 3 \\ 
+        \\ % not stripped
+        \multicolumn{3}{|c|{xxx}}{\multirow{2}{*}{4}} & 6
+        \\ % last row is empty, stripped
+    \end{tabular}
+""".strip()
+
     parser = Parser()
     parser.set_text(text)
     out = parser.parse()

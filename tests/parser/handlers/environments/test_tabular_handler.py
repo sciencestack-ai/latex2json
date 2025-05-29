@@ -13,6 +13,7 @@ def test_tabular_with_multirow_col():
     \begin{tabular}{c|c|c}
         \\ % first row is empty, stripped
         1 & 2abc & & 3 \\ 
+        \\ % not stripped, should be a single cell containing space if space itself is not stripped
         \multicolumn{3}{|c|{xxx}}{\multirow{2}{*}{4}} & 6
         \\ % last row is empty, stripped
     \end{tabular}
@@ -22,12 +23,15 @@ def test_tabular_with_multirow_col():
     assert len(out) == 1 and isinstance(out[0], TabularNode)
     tabular = out[0]
 
-    assert len(tabular.row_nodes) == 2
+    assert len(tabular.row_nodes) == 3
     assert len(tabular.row_nodes[0].cells) == 4
-    assert len(tabular.row_nodes[1].cells) == 2
+    assert len(tabular.row_nodes[1].cells) == 1
+    assert len(tabular.row_nodes[2].cells) == 2
 
     row1 = tabular.row_nodes[0]
-    row2 = tabular.row_nodes[1]
+    row2 = tabular.row_nodes[2]
+
+    assert tabular.row_nodes[1] == RowNode([CellNode(body=[TextNode("")])])
 
     assert row1.cells[0].body == [TextNode("1")]
     assert row1.cells[1].body == [TextNode("2abc")]
@@ -49,7 +53,7 @@ def test_nested_tabular():
         FIRST 
         &
         \begin{tabular}{c}
-            \begin{tabular}{c} 111 \end{tabular} & 22 \\ 
+            \begin{tabular}{c} 111 \end{tabular} & 22\& \\ 
             33 & 44
         \end{tabular} \postinner
         & 
@@ -92,7 +96,7 @@ def test_nested_tabular():
     assert inner_tab1_r1.cells[0].body == [
         TabularNode([RowNode([CellNode(body=[TextNode("111")])])])
     ]
-    assert inner_tab1_r1.cells[1].body == [TextNode("22")]
+    assert inner_tab1_r1.cells[1].body == parser.parse(r"22\&")
     assert inner_tab1_r2.cells[0].body == [TextNode("33")]
     assert inner_tab1_r2.cells[1].body == [TextNode("44")]
 
