@@ -1,6 +1,8 @@
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.utils import convert_nodes_to_str
-from latex2json.parser.handlers.handler_utils import make_generic_command_handler
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    make_generic_command_handler,
+)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 
@@ -42,7 +44,7 @@ def hyperref_handler(parser: ParserCore, token: Token):
     if ref_nodes:
         ref_str = convert_nodes_to_str(ref_nodes)
         title_str = convert_nodes_to_str(title_nodes)
-        return [RefNode(ref_str, title=title_str)]
+        return [RefNode([ref_str], title=title_str)]
     return []
 
 
@@ -77,9 +79,17 @@ def register_ref_label_handlers(parser: ParserCore):
 
     # cite
     for command in CITE_COMMANDS:
-        handler = make_generic_command_handler(command, "[[{")
+        handler = make_generic_command_handler("cite", "[[{")
         parser.register_handler(command, handler)
 
     # # citealias
     # for command in ["citetalias", "citepalias"]:
     #     parser.register_handler(command, make_generic_command_handler(command, "{"))
+
+
+if __name__ == "__main__":
+    from latex2json.parser.parser import Parser
+
+    parser = Parser()
+    parser.set_text(r"\cites{sdsds}")
+    out = parser.parse()

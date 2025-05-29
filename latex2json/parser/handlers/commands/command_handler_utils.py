@@ -3,13 +3,6 @@ from latex2json.nodes.base_nodes import ASTNode, CommandNode
 from latex2json.parser.parser_core import ParserCore, Handler
 from latex2json.tokens.types import Token
 
-COMMAND_ARGS = {
-    "ref": "{",  # ref requires one mandatory argument
-    "label": "{",  # label requires one mandatory argument
-    "cite": "*[{",  # cite can have a star, optional arg, and required arg
-    "somearg": "*[{[",  # keeping this as an example
-}
-
 
 def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
     """

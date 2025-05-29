@@ -36,6 +36,7 @@ TokenPredicate = Callable[[Token], bool]
 
 
 Handler = Callable[["ParserCore", Token], Optional[List[ASTNode]]]
+EnvHandler = Callable[["ParserCore", EnvironmentStartToken], Optional[List[ASTNode]]]
 
 
 class Macro:
@@ -60,6 +61,7 @@ class ParserCore:
         self.state = ParserState()
 
         self.macros: Dict[str, Macro] = {}
+        self.env_handlers: Dict[str, EnvHandler] = {}
 
     @property
     def current_env(self) -> Optional[EnvironmentNode]:
@@ -90,6 +92,7 @@ class ParserCore:
             self.peek()
         return self.token_buffer.pop(0) if self.token_buffer else None
 
+    # MACROS (for control sequences/commands)
     def get_macro(self, name: str) -> Optional[Macro]:
         if not name.startswith("\\"):
             name = f"\\{name}"
@@ -106,6 +109,13 @@ class ParserCore:
     def register_handler(self, name: str, handler: Handler):
         macro = Macro(name, handler)
         self.register_macro(name, macro)
+
+    # ENVIRONMENTS
+    def register_env_handler(self, name: str, handler: EnvHandler):
+        self.env_handlers[name] = handler
+
+    def get_env_handler(self, name: str) -> Optional[EnvHandler]:
+        return self.env_handlers.get(name)
 
     def skip_whitespace(self):
         tok = self.peek()
@@ -169,11 +179,12 @@ class ParserCore:
             return []
 
         nodes = self._handler(token)
-        # assign font attributes to nodes
-        styles = self.state.get_styles_as_string()
-        if styles and nodes:
-            for node in nodes:
-                node.add_styles(styles, insert_at_front=True)
+        if nodes:
+            # assign font attributes to nodes
+            styles = self.state.get_styles_as_string()
+            if styles:
+                for node in nodes:
+                    node.add_styles(styles, insert_at_front=True)
         return nodes
 
     def parse(self, text: Optional[str] = None) -> List[ASTNode]:
@@ -187,6 +198,8 @@ class ParserCore:
             return self._handle_control_sequence(token)
         elif isinstance(token, CommandWithArgsToken):
             return self._handle_command_w_args(token)
+        elif isinstance(token, EnvironmentStartToken):
+            return self._handle_environment(token)
 
         if not self.is_math_mode:
             if is_begin_group_token(token):
@@ -204,8 +217,6 @@ class ParserCore:
             return self._handle_math_shift(token, is_inline=True)
         elif token.type == TokenType.MATH_SHIFT_DISPLAY:
             return self._handle_math_shift(token, is_inline=False)
-        elif isinstance(token, EnvironmentStartToken):
-            return self._handle_environment(token)
         elif token.type == TokenType.ENVIRONMENT_END:
             return []
         return [TextNode(token.value)]
@@ -243,6 +254,11 @@ class ParserCore:
         return env_node
 
     def _handle_environment(self, token: EnvironmentStartToken) -> List[ASTNode]:
+        handler = self.get_env_handler(token.name)
+        if handler:
+            nodes = handler(self, token)
+            return nodes if nodes else []
+
         env_name = token.name
 
         env_node = self._generate_env_node(token)
@@ -311,13 +327,9 @@ class ParserCore:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []
             for arg in token.args:
-                proc_arg = self.process_tokens(arg, scoped=True)
-                if proc_arg:
-                    arg_nodes.append(proc_arg)
+                arg_nodes.append(self.process_tokens(arg, scoped=True))
             for opt_arg in token.opt_args:
-                proc_opt_arg = self.process_tokens(opt_arg)
-                if proc_opt_arg:
-                    opt_arg_nodes.append(proc_opt_arg)
+                opt_arg_nodes.append(self.process_tokens(opt_arg))
             return [
                 CommandNode(
                     token.name,
@@ -329,12 +341,12 @@ class ParserCore:
 
         return []
 
-    def _parse_begin_end_as_tokens(
+    def parse_begin_end_as_tokens(
         self,
         begin_predicate: TokenPredicate,
         end_predicate: TokenPredicate,
         check_first_token: bool = True,
-        include_begin_end_tokens=True,
+        include_begin_end_tokens=False,
     ) -> Optional[List[Token]]:
         """
         Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
@@ -393,10 +405,10 @@ class ParserCore:
         begin_predicate: TokenPredicate,
         end_predicate: TokenPredicate,
         check_first_token: bool = True,
-        include_begin_end_tokens=True,
+        include_begin_end_tokens=False,
         scoped=False,
     ) -> Optional[List[ASTNode]]:
-        tokens = self._parse_begin_end_as_tokens(
+        tokens = self.parse_begin_end_as_tokens(
             begin_predicate,
             end_predicate,
             check_first_token=check_first_token,

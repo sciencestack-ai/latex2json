@@ -104,6 +104,14 @@ def wrap_tokens_in_braces(tokens: List[Token]) -> List[Token]:
     ]
 
 
+def is_alignment_token(tok: Token) -> bool:
+    return (
+        # tok.type == TokenType.CHARACTER and
+        tok.catcode
+        == Catcode.ALIGNMENT_TAB
+    )
+
+
 def substitute_token_args(
     definition: List[Token],
     args: List[List[Token]],

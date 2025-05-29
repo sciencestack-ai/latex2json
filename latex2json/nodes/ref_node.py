@@ -3,9 +3,11 @@ from typing import List
 
 
 class RefNode(ASTNode):
-    def __init__(self, references: List[str], title: str = None):
+    def __init__(self, references: str | List[str], title: str = None):
         super().__init__()
-        self.references = references
+        self.references: List[str] = (
+            references if isinstance(references, list) else [references]
+        )
         self.title = title
 
     def __str__(self):

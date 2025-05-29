@@ -44,6 +44,12 @@ if __name__ == "__main__":
 
     \bf
     \hyperref[tab:1]{TABLE}
+    \\
+
+    \tabular{c|c|c}
+     1 & 2 & & 3 \\ 
+     \multicolumn{3}{|c|}{\multirow{2}{*}{4}} & 6 \\
+    \endtabular
     """
 
     parser = Parser()

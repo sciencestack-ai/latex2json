@@ -1,8 +1,8 @@
-from latex2json.parser.handlers.ref_label_handlers import register_ref_label_handlers
-from latex2json.parser.handlers.text_handlers import register_text_handlers
 from latex2json.parser.parser_core import ParserCore
+from latex2json.parser.handlers.commands import register_command_handlers
+from latex2json.parser.handlers.environments import register_env_handlers
 
 
 def register_handlers(parser: ParserCore):
-    register_text_handlers(parser)
-    register_ref_label_handlers(parser)
+    register_command_handlers(parser)
+    register_env_handlers(parser)
