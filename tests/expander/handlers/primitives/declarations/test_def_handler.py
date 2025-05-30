@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
-from latex2json.expander.handlers.primitives.newdef import (
+from latex2json.expander.handlers.primitives.declarations.def_handler import (
     get_def_usage_pattern_and_definition,
     get_parsed_args_from_usage_pattern,
     register_def,

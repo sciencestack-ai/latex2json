@@ -1,6 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.primitives.newcommand import (
+from latex2json.expander.handlers.primitives.declarations.declaration_utils import (
     get_newcommand_args_and_definition,
 )
 from latex2json.expander.macro_registry import Macro

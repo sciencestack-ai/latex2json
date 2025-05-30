@@ -19,6 +19,10 @@ class CellNode(ASTNode):
         self.body = body
         self.set_children(self.body)
 
+    def is_null_cell(self) -> bool:
+        """Check if this is an empty cell."""
+        return len(self.body) == 0
+
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CellNode):
             return False
