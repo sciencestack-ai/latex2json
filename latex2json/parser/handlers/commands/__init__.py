@@ -1,3 +1,6 @@
+from latex2json.parser.handlers.commands.makecell_shortstack import (
+    register_makecell_shortstack_handlers,
+)
 from latex2json.parser.parser_core import ParserCore
 
 from latex2json.parser.handlers.commands.multicol_row import (
@@ -13,3 +16,4 @@ def register_command_handlers(parser: ParserCore):
     register_text_handlers(parser)
     register_ref_label_handlers(parser)
     register_multicol_row_handlers(parser)
+    register_makecell_shortstack_handlers(parser)

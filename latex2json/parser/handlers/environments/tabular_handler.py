@@ -1,31 +1,30 @@
 from typing import Dict, List, Callable
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
+from latex2json.nodes.utils import strip_whitespace_nodes, split_nodes_by_predicate
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
-from latex2json.nodes import ASTNode, EnvironmentNode
+from latex2json.nodes import ASTNode, EnvironmentNode, NewLineNode, AlignmentNode
 
-from latex2json.parser.parser_core import EnvHandler, ParserCore, TokenPredicate
-from latex2json.tokens.utils import (
-    is_alignment_token,
-    split_tokens_by_predicate,
-    strip_whitespace_tokens,
-)
+from latex2json.parser.parser_core import ParserCore
 
 
-def is_newrow_token(tok: Token) -> bool:
-    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "\\"
+def split_into_rows(nodes: List[ASTNode]) -> List[List[ASTNode]]:
+    """Split nodes into rows based on NewLineNode"""
+    return split_nodes_by_predicate(nodes, lambda n: isinstance(n, NewLineNode))
 
 
-def split_into_rows(tokens: List[Token]) -> List[List[Token]]:
-    return split_tokens_by_predicate(tokens, is_newrow_token)
+def split_nodes_into_columns(nodes: List[ASTNode]) -> List[CellNode]:
+    """Split nodes into columns based on AlignmentNode and convert to CellNodes"""
+    columns = split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
+    return [merge_nodes_into_cellnode(col) for col in columns]
 
 
-def split_row_into_columns(row_tokens: List[Token]) -> List[List[Token]]:
-    columns = split_tokens_by_predicate(row_tokens, is_alignment_token)
-    return [strip_whitespace_tokens(col) for col in columns]
-
-
-def merge_nodes_into_cellnode(nodes: List[ASTNode]) -> CellNode:
+def merge_nodes_into_cellnode(
+    nodes: List[ASTNode], strip_whitespace: bool = True
+) -> CellNode:
     all_nodes: List[ASTNode] = []
+
+    if strip_whitespace:
+        nodes = strip_whitespace_nodes(nodes)
 
     max_rowspan = 1
     max_colspan = 1
@@ -39,146 +38,25 @@ def merge_nodes_into_cellnode(nodes: List[ASTNode]) -> CellNode:
     return CellNode(all_nodes, rowspan=max_rowspan, colspan=max_colspan)
 
 
-def find_all_inner_tabular_tokens(tokens: List[Token]) -> List[tuple[int, int]]:
-    """Find all inner environment token ranges, accounting for nesting.
+def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
+    # parse as generic environment first
+    out = parser.parse_environment(token)
+    if not out:
+        return []
 
-    Args:
-        tokens: List of tokens to search through
-
-    Returns:
-        List of (start_index, end_index) tuples for all inner environment tokens,
-        in order of appearance.
-    """
-    stack = []
-    matches = []
-
-    for i, tok in enumerate(tokens):
-        if tok.type == TokenType.ENVIRONMENT_START and tok.value in TABULAR_ENV_NAMES:
-            stack.append((i, tok.value))
-        elif tok.type == TokenType.ENVIRONMENT_END and tok.value in TABULAR_ENV_NAMES:
-            if not stack:
-                continue
-
-            start_idx, env_name = stack[-1]
-            if tok.value == env_name:
-                stack.pop()
-                # If stack is empty, we found a complete environment
-                if not stack:
-                    matches.append((start_idx, i))
-
-    return matches
-
-
-SubstituteMapType = Dict[str, List[ASTNode]]
-
-
-def process_inner_tabular_environments(
-    parser: ParserCore, tokens: List[Token]
-) -> tuple[List[Token], SubstituteMapType]:
-    """Process inner tabular environments by replacing them with mock control sequence tokens.
-    We replace nested tabular environments with placeholder tokens to simplify
-    row/column splitting. The actual tabular nodes are stored in a map for later use.
-
-    Args:
-        parser: The parser instance
-        tokens: List of tokens to process
-
-    Returns:
-        Tuple of (processed tokens, mapping of mock names to tabular nodes)
-    """
-    substitute_map: SubstituteMapType = {}
-    inner_envs = find_all_inner_tabular_tokens(tokens)
-
-    if not inner_envs:
-        return tokens, substitute_map
-
-    final_tokens: List[Token] = []
-    last_idx = 0
-    for start_idx, end_idx in inner_envs:
-        final_tokens.extend(tokens[last_idx:start_idx])
-        last_idx = end_idx + 1
-
-        out = parser.process_tokens(tokens[start_idx : end_idx + 1])
-        if out:
-            # Create a mock substitute token to replace the original tabular environment
-            mock_name = f"<tabularsub>{len(substitute_map)}</tabularsub>"
-            substitute_map[mock_name] = out
-            final_tokens.append(Token(TokenType.CONTROL_SEQUENCE, mock_name))
-
-    final_tokens.extend(tokens[last_idx:])
-    return final_tokens, substitute_map
-
-
-def process_table_tokens_to_nodes(
-    parser: ParserCore,
-    table_tokens: List[List[List[Token]]],
-    strip_null_rows: bool = True,
-    substitute_map: SubstituteMapType = {},
-) -> List[RowNode]:
-    """Process table tokens into nodes, replacing any substitute tokens with their
-    corresponding tabular nodes from the substitution map."""
+    env_nodes: List[ASTNode] = out[0].body
     row_nodes: List[RowNode] = []
-    for row_tokens in table_tokens:
-        row_cells: List[CellNode] = []
-        for col_tokens in row_tokens:
-            col_nodes: List[ASTNode] = []
-            N = len(col_tokens)
-            last_idx = 0
-            if len(substitute_map) > 0:
-                for i, tok in enumerate(col_tokens):
-                    if (
-                        tok.type == TokenType.CONTROL_SEQUENCE
-                        and tok.value in substitute_map
-                    ):
-                        col_nodes.extend(parser.process_tokens(col_tokens[last_idx:i]))
-                        col_nodes.extend(substitute_map[tok.value])
-                        last_idx = i + 1
-            col_nodes.extend(parser.process_tokens(col_tokens[last_idx:N]))
-            row_cells.append(merge_nodes_into_cellnode(col_nodes))
-        row_nodes.append(RowNode(row_cells))
+    if env_nodes:
+        # Split into rows and columns using node-based splitting
+        rows = split_into_rows(env_nodes)
+        row_nodes = [RowNode(split_nodes_into_columns(row)) for row in rows]
 
-    if strip_null_rows:
+        # strip null rows
         while row_nodes and row_nodes[0].is_null_row():
             row_nodes.pop(0)
         while row_nodes and row_nodes[-1].is_null_row():
             row_nodes.pop()
 
-    return row_nodes
-
-
-def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
-    env_name = token.name
-
-    begin_predicate: TokenPredicate = (
-        lambda tok: tok.type == TokenType.ENVIRONMENT_START and tok.value == env_name
-    )
-    end_predicate: TokenPredicate = (
-        lambda tok: tok.type == TokenType.ENVIRONMENT_END and tok.value == env_name
-    )
-
-    tokens = parser.parse_begin_end_as_tokens(
-        begin_predicate,
-        end_predicate,
-        check_first_token=False,
-        include_begin_end_tokens=False,
-    )
-
-    if not tokens:
-        return [TabularNode()]
-
-    # replace nested tabular environments with placeholder tokens to simplify row/column splitting
-    final_tokens, substitute_map = process_inner_tabular_environments(parser, tokens)
-
-    # Split into rows and columns
-    rows = split_into_rows(final_tokens)
-    table_tokens = [split_row_into_columns(row) for row in rows]  # row -> column
-
-    row_nodes = process_table_tokens_to_nodes(
-        parser,
-        table_tokens,
-        substitute_map=substitute_map,
-        strip_null_rows=True,
-    )
     return [TabularNode(row_nodes)]
 
 

@@ -13,6 +13,7 @@ from latex2json.nodes import (
     strip_whitespace_nodes,
     merge_text_nodes,
 )
+from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode
 from latex2json.nodes.caption_node import CaptionNode
 from latex2json.parser.state import ParserState
 from latex2json.tokens import (
@@ -23,11 +24,13 @@ from latex2json.tokens import (
 )
 
 from latex2json.tokens.utils import (
+    is_alignment_token,
     is_asterisk_token,
     is_begin_bracket_token,
     is_begin_group_token,
     is_end_bracket_token,
     is_end_group_token,
+    is_newline_token,
     is_whitespace_token,
 )
 
@@ -195,11 +198,15 @@ class ParserCore:
 
     def _handler(self, token: Token) -> List[ASTNode]:
         if token.type == TokenType.CONTROL_SEQUENCE:
-            return self._handle_control_sequence(token)
+            return self.parse_control_sequence(token)
         elif isinstance(token, CommandWithArgsToken):
             return self._handle_command_w_args(token)
         elif isinstance(token, EnvironmentStartToken):
-            return self._handle_environment(token)
+            handler = self.get_env_handler(token.name)
+            if handler:
+                nodes = handler(self, token)
+                return nodes if nodes else []
+            return self.parse_environment(token)
 
         if not self.is_math_mode:
             if is_begin_group_token(token):
@@ -211,6 +218,8 @@ class ParserCore:
 
         if is_whitespace_token(token):
             return [TextNode(token.value)]
+        elif is_alignment_token(token):
+            return [AlignmentNode(token.value)]
         elif token.type == TokenType.CHARACTER:
             return [TextNode(token.value)]
         elif token.type == TokenType.MATH_SHIFT_INLINE:
@@ -253,12 +262,9 @@ class ParserCore:
             env_node = EnvironmentNode(env_name, numbering=token.numbering)
         return env_node
 
-    def _handle_environment(self, token: EnvironmentStartToken) -> List[ASTNode]:
-        handler = self.get_env_handler(token.name)
-        if handler:
-            nodes = handler(self, token)
-            return nodes if nodes else []
-
+    def parse_environment(
+        self, token: EnvironmentStartToken
+    ) -> List[EnvironmentNode | EquationNode]:
         env_name = token.name
 
         env_node = self._generate_env_node(token)
@@ -287,10 +293,13 @@ class ParserCore:
         self.is_math_mode = was_math_mode
         return [env_node]
 
-    def _handle_control_sequence(self, token: Token) -> List[ASTNode]:
+    def parse_control_sequence(self, token: Token) -> List[ASTNode]:
         macro = self.get_macro(token.value)
         if macro:
             return macro.handler(self, token)
+
+        if is_newline_token(token):
+            return [NewLineNode(token.value)]
 
         return [CommandNode(token.value)]
 

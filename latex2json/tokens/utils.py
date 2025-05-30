@@ -112,6 +112,11 @@ def is_alignment_token(tok: Token) -> bool:
     )
 
 
+def is_newline_token(tok: Token) -> bool:
+    # Not to be confused with \n
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "\\"
+
+
 def substitute_token_args(
     definition: List[Token],
     args: List[List[Token]],

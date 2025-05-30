@@ -93,6 +93,42 @@ class TextNode(ASTNode):
         return self.text
 
 
+class AlignmentNode(ASTNode):
+    def __init__(self, value: str):
+        super().__init__()
+        self.value = value  # Usually "&"
+
+    def __str__(self):
+        return f"AlignmentNode({self.value})"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, AlignmentNode):
+            return False
+        return self.value == other.value
+
+    def detokenize(self):
+        return self.value
+
+
+class NewLineNode(ASTNode):
+    """Represents a LaTeX line break (\\) - not to be confused with \n"""
+
+    def __init__(self, value: str):
+        super().__init__()
+        self.value = value  # Usually "\\"
+
+    def __str__(self):
+        return f"NewLineNode({self.value})"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, NewLineNode):
+            return False
+        return self.value == other.value
+
+    def detokenize(self):
+        return self.value
+
+
 class CommandNode(ASTNode):
     def __init__(
         self,
