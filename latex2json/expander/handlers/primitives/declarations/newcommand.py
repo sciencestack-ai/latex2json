@@ -102,6 +102,11 @@ def register_newcommand(expander: ExpanderCore):
         NewCommandMacro("\\renewcommand", allow_redefine=True),
         is_global=True,
     )
+    expander.register_macro(
+        "\\providecommand",
+        NewCommandMacro("\\providecommand", allow_redefine=False),
+        is_global=True,
+    )
 
 
 if __name__ == "__main__":

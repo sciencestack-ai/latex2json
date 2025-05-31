@@ -364,12 +364,15 @@ class ExpanderCore:
                 return param
         return self.consume()
 
-    def parse_tokens_until(self, predicate: TokenPredicate) -> Optional[List[Token]]:
+    def parse_tokens_until(
+        self, predicate: TokenPredicate, consume_predicate=False
+    ) -> List[Token]:
         out = []
         while not self.eof():
             tok = self.parse_token()
             if predicate(tok):
-                self.push_tokens([tok])
+                if not consume_predicate:  # if don't consume, push back
+                    self.push_tokens([tok])
                 break
             out.append(tok)
         return out
