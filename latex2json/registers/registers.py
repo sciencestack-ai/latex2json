@@ -1,5 +1,5 @@
 from typing import Any, Optional, Union
-from latex2json.registers.types import Box, Glue, RegisterType
+from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 
 
@@ -12,14 +12,14 @@ class TexRegisters:
         self._dimens_sp: list[int] = [
             0
         ] * 256  # Dimensions stored as scaled points (int)
-        self._skips: list[Glue] = [Glue(0, 0, 0)] * 256
+        self._skips: list[int] = [0] * 256
         self._toks: list[list[Token]] = [[] for _ in range(256)]
         self._boxes: list[Optional[Box]] = [None] * 256
 
         # For named registers (e.g., \newcount\mycounter)
         self._named_counts: dict[str, int] = {}
         self._named_dimens_sp: dict[str, int] = {}
-        self._named_skips: dict[str, Glue] = {}
+        self._named_skips: dict[str, int] = {}
         self._named_toks: dict[str, list[Token]] = {}
         self._named_boxes: dict[str, Optional[Box]] = {}
         self._named_bools: dict[str, bool] = {}
@@ -46,6 +46,13 @@ class TexRegisters:
 
     def set_register(self, reg_type: RegisterType, reg_id: Union[int, str], value: Any):
         self._set_generic_register(reg_type, reg_id, value)
+
+    def create_register(
+        self, reg_type: RegisterType, reg_id: str, default_value: Optional[Any] = None
+    ):
+        if default_value is None:
+            default_value = reg_type.get_default_value()
+        self._set_generic_register(reg_type, reg_id, default_value)
 
     def delete_register(self, reg_type: RegisterType, reg_id: str):
         if reg_id in self._named_register_pools.get(reg_type, {}):
@@ -104,16 +111,6 @@ class TexRegisters:
         if reg_type in (RegisterType.COUNT, RegisterType.DIMEN):
             # For numeric registers, perform simple addition
             new_value = current_value + increment
-        elif reg_type == RegisterType.SKIP:
-            # For glue registers, add each component separately
-            raise NotImplementedError(f"Incrementing {reg_type} is not implemented")
-            # if not isinstance(increment, Glue):
-            #     return None
-            # new_value = Glue(
-            #     width=current_value.width + increment.width,
-            #     stretch=current_value.stretch + increment.stretch,
-            #     shrink=current_value.shrink + increment.shrink,
-            # )
         else:
             raise NotImplementedError(f"Incrementing {reg_type} is not implemented")
             # Other register types don't support increment operations

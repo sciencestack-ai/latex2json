@@ -238,6 +238,13 @@ class ExpanderCore:
         value = self.get_register_value(register_type, reg_id, return_default)
         if value is None:
             return None
+        if isinstance(value, list):  # should be a list of tokens
+            if value and not isinstance(value[0], Token):
+                self.logger.warning(
+                    f"Register '{reg_id}' is not a list of Tokens, returning []"
+                )
+                return []
+            return value
         return self.convert_str_to_tokens(str(value))
 
     def set_register(
@@ -525,6 +532,14 @@ class ExpanderCore:
                     lambda tok: tok.catcode == Catcode.LETTER
                 )
         return dimension_to_scaled_points(digits, unit)
+
+    def parse_skip(self) -> Optional[int]:
+        tok = self.peek()
+        if tok is None:
+            return None
+        if tok.type == TokenType.CONTROL_SEQUENCE:
+            return None
+        return int(tok.value)
 
     def parse_equals(self) -> bool:
         if self.match(value="=", catcode=Catcode.OTHER):

@@ -218,6 +218,14 @@ class ExpanderState:
         self.registers.set_register(register_type, reg_id, value)
         self.pending_global = False
 
+    def create_register(
+        self,
+        register_type: RegisterType,
+        reg_id: Union[int, str],
+        default_value: Optional[Any] = None,
+    ):
+        self.registers.create_register(register_type, reg_id, default_value)
+
     def increment_register(
         self, register_type: RegisterType, reg_id: Union[int, str], increment: Any
     ):

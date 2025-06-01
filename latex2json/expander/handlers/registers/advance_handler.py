@@ -42,9 +42,9 @@ class AdvanceHandler:
             return None
 
         value = parse_registertype_value(expander, register_type)
-        if value is None:
+        if value is None or not isinstance(value, int):
             expander.logger.warning(
-                f"Warning: \\advance\\{register_name} [by] expects a value, but found {tok}"
+                f"Warning: \\advance\\{register_name} [by] expects an int, but found {value}"
             )
             return None
 

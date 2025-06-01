@@ -35,7 +35,7 @@ class RegisterType(Enum):
         elif self == RegisterType.DIMEN:
             return 0
         elif self == RegisterType.SKIP:
-            return Glue(0, 0, 0)
+            return 0
         elif self == RegisterType.TOKS:
             return []
         elif self == RegisterType.BOX:
@@ -81,15 +81,6 @@ class CounterFormat(Enum):
                 return int_to_alpha(value, lowercase=True)
             case CounterFormat.ALPHA_UPPER:
                 return int_to_alpha(value, lowercase=False)
-
-
-@dataclass
-class Glue:
-    """Represents TeX glue with natural width and stretch/shrink components"""
-
-    width: int  # Natural width in scaled points
-    stretch: int  # Stretch amount in scaled points
-    shrink: int  # Shrink amount in scaled points
 
 
 @dataclass

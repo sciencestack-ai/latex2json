@@ -1,6 +1,6 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
-from latex2json.registers import Glue, RegisterType
+from latex2json.registers import RegisterType
 from latex2json.tokens import Token
 from latex2json.tokens.types import TokenType
 
@@ -9,12 +9,16 @@ from latex2json.expander.expander_core import ExpanderCore
 
 def parse_registertype_value(
     expander: ExpanderCore, register_type: RegisterType
-) -> Optional[int]:
+) -> Optional[int | List[Token]]:
     value = None
     if register_type == RegisterType.COUNT:
         return expander.parse_integer()
     elif register_type == RegisterType.DIMEN:
         return expander.parse_dimensions()
+    elif register_type == RegisterType.TOKS:
+        return expander.parse_brace_as_tokens()
+    elif register_type == RegisterType.SKIP:
+        return expander.parse_skip()
     else:
         raise NotImplementedError(f"Setting {register_type} is not implemented")
 
@@ -126,9 +130,7 @@ def new_register_macro_handler(
     count_name = tok.value
     expander.consume()
 
-    default_value = register_type.get_default_value()
-
-    expander.set_register(register_type, count_name, default_value, is_global=True)
+    expander.state.create_register(register_type, count_name)
     # create a macro for the register
     expander.register_macro(
         count_name,
@@ -154,3 +156,20 @@ def register_base_register_macros(expander: ExpanderCore):
             NewRegisterMacro(register_type, new_register_name),
             is_global=True,
         )
+
+
+if __name__ == "__main__":
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    # test in scope
+    text = r"""
+        \newtoks\tokker
+        \tokker={123}
+        \the\tokker
+    """.strip()
+    expander.push_scope()
+    out = expander.expand(text)
+    expander.pop_scope()
+
+    expander.state.get_register(RegisterType.TOKS, "tokker")

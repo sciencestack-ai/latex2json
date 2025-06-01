@@ -1,7 +1,6 @@
 import pytest
 
 from latex2json.registers import (
-    Glue,
     RegisterType,
     TexRegisters,
     Box,
@@ -35,14 +34,10 @@ def test_dimen_register():
 def test_skip_register():
     registers = TexRegisters()
 
-    glue = Glue(width=65536, stretch=32768, shrink=16384)
-    registers.set_register(RegisterType.SKIP, "myskip", glue)
+    registers.set_register(RegisterType.SKIP, "myskip", 100)
 
     result = registers.get_register_value(RegisterType.SKIP, "myskip")
-    assert isinstance(result, Glue)
-    assert result.width == 65536
-    assert result.stretch == 32768
-    assert result.shrink == 16384
+    assert result == 100
 
 
 def test_delete_register():
