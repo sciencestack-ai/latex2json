@@ -7,10 +7,11 @@ from latex2json.tokens.types import TokenType
 from latex2json.expander.expander_core import ExpanderCore
 
 
-def parse_registertype_value(
+def parse_register_setter(
     expander: ExpanderCore, register_type: RegisterType
 ) -> Optional[int | List[Token]]:
     value = None
+    expander.skip_whitespace()
     if register_type == RegisterType.COUNT:
         return expander.parse_integer()
     elif register_type == RegisterType.DIMEN:
@@ -64,7 +65,7 @@ def set_register_value_handler(
 
     # if = is found, it's an assignment
     expander.skip_whitespace()
-    value = parse_registertype_value(expander, register_type)
+    value = parse_register_setter(expander, register_type)
 
     if value is None:
         expander.logger.warning(

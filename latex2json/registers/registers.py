@@ -12,7 +12,7 @@ class TexRegisters:
         self._dimens_sp: list[int] = [
             0
         ] * 256  # Dimensions stored as scaled points (int)
-        self._skips: list[int] = [0] * 256
+        self._skips: list[int] = [0] * 256  # Skip stored as scaled points (int)
         self._toks: list[list[Token]] = [[] for _ in range(256)]
         self._boxes: list[Optional[Box]] = [None] * 256
 

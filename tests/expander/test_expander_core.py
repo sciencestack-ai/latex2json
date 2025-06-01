@@ -215,6 +215,20 @@ def test_parse_bracket_as_tokens():
     )
 
 
+def test_parse_keyword():
+    expander = ExpanderCore()
+
+    expander.set_text("plus")
+    assert expander.parse_keyword("plus")
+    assert not expander.parse_keyword("plus")
+    assert expander.eof()
+
+    expander.set_text("minus")
+    assert not expander.parse_keyword("minux")
+    assert expander.parse_keyword("minus")
+    assert expander.eof()
+
+
 # test helper functions
 def test_parse_int_float_arguments():
     expander = ExpanderCore()
@@ -280,6 +294,7 @@ def test_parse_int_float_arguments():
 
 def test_parse_dimensions():
     expander = ExpanderCore()
+    register_base_register_macros(expander)
 
     expander.set_text("15pt")
     assert expander.parse_dimensions() == dimension_to_scaled_points(15, "pt")
@@ -299,6 +314,41 @@ def test_parse_dimensions():
 
     expander.set_text(r"1234 i\relax n")
     assert expander.parse_dimensions() == dimension_to_scaled_points(1234, "i")
+
+    # test parse dimensions with multiplier and register value
+    dimen_100_value = 10
+    expander.set_register(RegisterType.DIMEN, 100, dimen_100_value)
+    expander.set_text(r"2\dimen100")  # should be 2x dimen_100_value
+    assert expander.parse_dimensions() == 2 * dimen_100_value
+
+
+def test_parse_skip():
+    expander = ExpanderCore()
+
+    # base component only
+    expander.set_text("10pt")
+    out = expander.parse_skip()
+    assert out == dimension_to_scaled_points(10, "pt")
+    assert expander.eof()
+
+    expander.set_text("10pt plus 2pt minus  5pt")
+    out = expander.parse_skip()
+    assert out == dimension_to_scaled_points(10 + 2 - 5, "pt")
+    assert expander.eof()
+
+    # test with \relax
+    expander.set_text(r"10pt plus 2pt \relax minus 1pt")
+    out = expander.parse_skip()
+    assert out == dimension_to_scaled_points(10 + 2, "pt")
+    assert not expander.eof()
+
+    tok = expander.peek()
+    assert tok.value == "relax"
+    expander.consume()
+
+    # test with \empty
+    assert expander.parse_keyword(" minus 1pt")
+    assert expander.eof()
 
 
 def test_parse_register():

@@ -419,13 +419,16 @@ class ExpanderCore:
                     self.consume()  # consume \relax token itself
                     return out, True
 
-                if expand_registers:
-                    # parse register value literal i.e. without any expanding
-                    reg_out = self.parse_register_value(expand=False)
-                    if reg_out is not None:
-                        self.push_tokens(self.convert_str_to_tokens(str(reg_out)))
-                        tok = self.peek()
-                        continue
+                if self.is_next_token_register():
+                    if expand_registers:
+                        # parse register value literal i.e. without any expanding
+                        reg_out = self.parse_register_value(expand=False)
+                        if reg_out is not None:
+                            self.push_tokens(self.convert_str_to_tokens(str(reg_out)))
+                            tok = self.peek()
+                            continue
+                    else:
+                        break
 
                 # expand and continue loop
                 exp = self.expand_next()
@@ -456,15 +459,34 @@ class ExpanderCore:
         )
         if not sequence:
             return None
-        return int(parse_number_str_to_float(sequence))
+        parsed_float = parse_number_str_to_float(sequence)
+        if parsed_float is None:
+            return None
+        return int(parsed_float)
 
     def parse_float(self) -> Optional[float]:
+        parsed = self._parse_float()
+        if parsed is None:
+            return None
+        return parsed[0]
+
+    def _parse_float(self) -> Optional[Tuple[float, bool]]:
         sequence, relax = self._expand_and_combine_as_str(
             is_digit_token, expand_registers=True
         )
         if not sequence:
             return None
-        return parse_number_str_to_float(sequence)
+        return parse_number_str_to_float(sequence), relax
+
+    def is_next_token_register(self) -> bool:
+        tok = self.peek()
+        if tok is None:
+            return False
+
+        if tok.type == TokenType.CONTROL_SEQUENCE:
+            macro = self.get_macro(tok.value)
+            return macro and macro.type == MacroType.REGISTER
+        return False
 
     def parse_register(
         self, expand=True
@@ -507,39 +529,91 @@ class ExpanderCore:
         return self.get_register_value(out[0], out[1])
 
     def parse_dimensions(self) -> Optional[int]:
+        parsed = self._parse_dimensions()
+        if parsed is None:
+            return None
+        return parsed[0]
+
+    def _parse_dimensions(self) -> Optional[Tuple[int, bool]]:
         """
-        Parses a sequence of digits followed by an optional unit.
-        Returns a tuple (float, str) where the float is the number and the str is the unit.
-        e.g. 15 pt
+        Cases: [optional multiplier float] dimen_register OR  dimension_float [space] dimension_unit
+
+        Returns: (int, bool) where int is the parsed value and bool is whether relax
         """
         register_value = self.parse_register_value(expand=True)
         if register_value is not None:
-            return register_value
-
+            return register_value, False
         digits, relax = self._expand_and_combine_as_str(is_digit_token)
         if not digits:
             return None
         digits = float(digits)
 
         unit = None
-        if not relax:
+        if not relax and self.peek():
             self.skip_whitespace()
 
             if is_relax_token(self.peek()):
                 self.consume()
             else:
+                register_value = self.parse_register_value(expand=True)
+                if isinstance(register_value, float | int):
+                    return register_value * digits, False
                 unit, relax = self._expand_and_combine_as_str(
                     lambda tok: tok.catcode == Catcode.LETTER
                 )
-        return dimension_to_scaled_points(digits, unit)
+        return dimension_to_scaled_points(digits, unit), relax
 
     def parse_skip(self) -> Optional[int]:
-        tok = self.peek()
-        if tok is None:
+        """
+        must be in this order:
+        skip_value = base_component [plus_component] [minus_component]
+        where [...] is optional
+
+        base_component = dimension | skip_register | expression
+        plus_component = "plus" (dimension | skip_register | fill_spec)
+        minus_component = "minus" (dimension | skip_register)
+        """
+        # Parse base component (required)
+        base_result = self._parse_dimensions()
+        if base_result is None:
             return None
-        if tok.type == TokenType.CONTROL_SEQUENCE:
-            return None
-        return int(tok.value)
+
+        base_scaled_points, relax = base_result
+        if relax:
+            return base_scaled_points
+
+        # Parse optional plus component
+        self.skip_whitespace()
+        if self.parse_keyword("plus"):
+            self.skip_whitespace()
+            plus_result = self._parse_dimensions()
+            if plus_result:
+                plus_scaled_points, relax = plus_result
+                base_scaled_points += plus_scaled_points
+                if relax:
+                    return base_scaled_points
+
+        # Parse optional minus component
+        self.skip_whitespace()
+        if self.parse_keyword("minus"):
+            self.skip_whitespace()
+            minus_result = self._parse_dimensions()
+            if minus_result:
+                minus_scaled_points, relax = minus_result
+                base_scaled_points -= minus_scaled_points
+
+        return base_scaled_points  # Return just the base dimension
+
+    def parse_keyword(self, keyword: str) -> bool:
+        consumed_tokens: List[Token] = []
+        for c in keyword:
+            tok = self.consume()
+            consumed_tokens.append(tok)
+            if tok is None or tok.value != c or tok.type == TokenType.CONTROL_SEQUENCE:
+                # push back all consumed tokens
+                self.push_tokens(consumed_tokens)
+                return False
+        return True
 
     def parse_equals(self) -> bool:
         if self.match(value="=", catcode=Catcode.OTHER):
@@ -876,8 +950,14 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
+    from latex2json.expander.handlers.registers.base_register_handlers import (
+        register_base_register_macros,
+    )
 
     expander = ExpanderCore()
-
-    # expander.set_text(r"$$")
-    out = expander.expand(r"\[1_1\$$$$$2^2\]_")
+    register_base_register_macros(expander)
+    dimen_100_value = 10
+    expander.set_register(RegisterType.DIMEN, 100, dimen_100_value)
+    expander.set_text(r"2\dimen100")  # should be 2x dimen_100_value
+    print(expander.parse_dimensions())
+    # print(expander.parse_register())

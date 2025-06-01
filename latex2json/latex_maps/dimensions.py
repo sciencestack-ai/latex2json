@@ -48,7 +48,7 @@ def dimension_to_scaled_points(
     Raises:
         KeyError: If the unit is not a valid LaTeX dimension unit
     """
-    if unit is None:
+    if not unit or unit.isspace():
         return int(value)
     if not is_dimension_unit(unit):
         return None

@@ -2,6 +2,7 @@ from latex2json.expander.expander import Expander
 from latex2json.expander.handlers.registers.base_register_handlers import (
     register_base_register_macros,
 )
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
@@ -61,7 +62,7 @@ def test_new_register_macros():
     )
 
 
-def test_register_macro_setters():
+def test_toks():
     expander = Expander()
 
     expander.expand(r"\newtoks\mytoks")
@@ -90,3 +91,22 @@ def test_register_macro_setters():
     # after scope, register is back to default
     assert expander.state.get_register(RegisterType.TOKS, "tokker") == []
     assert expander.expand(r"\the\tokker") == []
+
+
+def test_skips():
+    expander = Expander()
+
+    expander.expand(r"\newskip\myskip")
+    expander.expand(r"\myskip=10pt plus 2pt minus 5pt")
+
+    expected_pt = dimension_to_scaled_points(10 + 2 - 5, "pt")
+
+    assert expander.get_register_value(RegisterType.SKIP, "myskip") == expected_pt
+
+    # test with dimensions too
+    expander.expand(r"\newdimen\mydimen \mydimen=10pt")
+    # expander.expand(r"\myskip=10pt plus 2pt")
+    # assert expander.get_register_value(RegisterType.SKIP, "myskip") == pt10 + pt2
+
+    # expander.expand(r"\myskip=10pt plus 2pt minus 5pt")
+    # assert expander.get_register_value(RegisterType.SKIP, "myskip") == pt10 + pt2 - pt5
