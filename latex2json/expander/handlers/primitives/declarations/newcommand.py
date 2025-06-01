@@ -5,8 +5,7 @@ from latex2json.expander.handlers.primitives.declarations.declaration_utils impo
     get_newcommand_args_and_definition,
 )
 from latex2json.expander.macro_registry import Macro
-from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import is_begin_bracket_token
+from latex2json.tokens.types import Token
 
 
 @dataclass
@@ -44,33 +43,15 @@ class NewCommandMacro(Macro):
         return []
 
 
-def get_newcommand_name(expander: ExpanderCore) -> Optional[str]:
-    expander.parse_asterisk()
-    expander.skip_whitespace()
-
-    # Parse command name
-    cmd = expander.parse_immediate_token()
-    if (
-        not cmd
-        or len(cmd) < 0
-        or len(cmd) > 1
-        or cmd[0].type != TokenType.CONTROL_SEQUENCE
-    ):
-        expander.logger.warning(
-            f"Warning: \\newcommand expects a command name, but found {cmd}"
-        )
-        return None
-
-    name = cmd[0].value
-
-    return name
-
-
 def newcommand_handler(
     expander: ExpanderCore, token: Token, allow_redefine: bool
 ) -> Optional[NewCommandResult]:
-    name = get_newcommand_name(expander)
+    expander.parse_asterisk()
+    name = expander.parse_command_name()
     if name is None:
+        expander.logger.warning(
+            f"Warning: \\newcommand expects a command name, but found {expander.peek()}"
+        )
         return None
 
     out = get_newcommand_args_and_definition(expander)

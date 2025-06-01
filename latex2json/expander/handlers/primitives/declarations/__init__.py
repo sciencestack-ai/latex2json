@@ -6,6 +6,9 @@ from latex2json.expander.handlers.primitives.declarations.declare_handler import
 from latex2json.expander.handlers.primitives.declarations.let_handler import (
     register_let,
 )
+from latex2json.expander.handlers.primitives.declarations.namedef_handler import (
+    register_namedef,
+)
 from latex2json.expander.handlers.primitives.declarations.newcommand import (
     register_newcommand,
 )
@@ -24,3 +27,4 @@ def register_declarations(expander: ExpanderCore):
     register_newcommand(expander)
     register_newenvironment(expander)
     register_declare_commands(expander)
+    register_namedef(expander)

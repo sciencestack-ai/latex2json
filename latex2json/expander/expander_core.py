@@ -686,6 +686,23 @@ class ExpanderCore:
             final_definition.append(tok)
         return final_definition
 
+    def parse_command_name(self) -> Optional[str]:
+        self.skip_whitespace()
+
+        # Parse command name
+        cmd = self.parse_immediate_token()
+        if (
+            not cmd
+            or len(cmd) < 0
+            or len(cmd) > 1
+            or cmd[0].type != TokenType.CONTROL_SEQUENCE
+        ):
+            return None
+
+        name = cmd[0].value
+
+        return name
+
     def parse_environment_name(self) -> Optional[str]:
         self.skip_whitespace()
 

@@ -1,7 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.primitives.declarations.newcommand import (
     NewCommandMacro,
-    get_newcommand_name,
 )
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
@@ -30,8 +29,11 @@ def declare_math_operator_handler(
     expander.skip_whitespace()
 
     # Parse the operator name
-    name = get_newcommand_name(expander)
+    name = expander.parse_command_name()
     if name is None:
+        expander.logger.warning(
+            f"Warning: \\DeclareMathOperator expects a command name, but found {expander.peek()}"
+        )
         return None
 
     # Parse the operator text
@@ -71,8 +73,11 @@ def declare_paired_delimiter_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[list[Token]]:
     r"""Handler for \DeclarePairedDelimiter"""
-    name = get_newcommand_name(expander)
+    name = expander.parse_command_name()
     if name is None:
+        expander.logger.warning(
+            f"Warning: \\DeclarePairedDelimiter expects a command name, but found {expander.peek()}"
+        )
         return None
 
     blocks = expander.parse_braced_blocks(2)
