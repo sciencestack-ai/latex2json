@@ -79,3 +79,31 @@ def test_advance_handler():
     """
     expander.expand(text)
     assert_token_sequence(expander.expand(r"\the\count2"), expander.expand("200"))
+
+
+def test_advance_handler_with_dimension_unit():
+    expander = Expander()
+    expander.expand(r"\newdimen\mydimen")
+    expander.expand(r"\advance \mydimen by 10pt")
+    pt_10 = dimension_to_scaled_points(10, "pt")
+    assert_token_sequence(
+        expander.expand(r"\the\mydimen"),
+        expander.expand(str(pt_10)),
+    )
+
+    # test with multiplier
+    expander.expand(r"\advance \mydimen by 0.5\mydimen")
+    assert_token_sequence(
+        expander.expand(r"\the\mydimen"),
+        expander.expand(str(int(pt_10 + 0.5 * pt_10))),
+    )
+
+    # test with \def
+    expander.expand(r"\def\tenpoints{10pt}")
+    # actually in latex, this won't even work. \tenpoints just becomes consumed and not assigned
+    out = expander.expand(r"\advance \mydimen by 0.5\tenpoints")
+    assert out == []
+    # assert_token_sequence(
+    #     expander.expand(r"\the\mydimen"),
+    #     expander.expand(str(int(pt_10 + pt_10))),
+    # )

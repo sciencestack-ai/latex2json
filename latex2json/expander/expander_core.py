@@ -557,7 +557,7 @@ class ExpanderCore:
             else:
                 register_value = self.parse_register_value(expand=True)
                 if isinstance(register_value, float | int):
-                    return register_value * digits, False
+                    return int(register_value * digits), False
                 unit, relax = self._expand_and_combine_as_str(
                     lambda tok: tok.catcode == Catcode.LETTER
                 )

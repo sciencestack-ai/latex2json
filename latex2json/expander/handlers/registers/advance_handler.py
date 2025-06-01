@@ -3,6 +3,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     parse_register_setter,
 )
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -40,9 +41,9 @@ def advance_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
         return None
 
     value = parse_register_setter(expander, register_type)
-    if value is None or not isinstance(value, int):
+    if value is None or not isinstance(value, int | float):
         expander.logger.warning(
-            f"Warning: \\advance [by] expects an int, but found {value}"
+            f"Warning: \\advance [by] expects a number, but found {value}"
         )
         return None
 
@@ -61,22 +62,11 @@ if __name__ == "__main__":
     expander = Expander()
     register_advance_handler(expander)
 
-    # expander.expand(r"\def\cnter{\count} \def\one{1}")
-    # expander.expand(r"\advance\count1 by 10")
-    # expander.expand(r"\advance\cnter\one by 20")
-    # print(expander.get_register_value(RegisterType.COUNT, 1))
+    expander.expand(r"\newdimen\mydimen")
+    pt_10 = dimension_to_scaled_points(10, "pt")
 
-    # test with args
-    text = r"""
-    \def\advanceby#1->#2{\advance #1 by #2}
-    \def\TEN{10}
-    """
-    expander.expand(text)
-
-    # slightly more complex nestings
-    text = r"""
-    \count2=100
-    \def\neg#1{-#1}
-    \advanceby\count2->-\neg{\count2} % → --200 = +200
-    """
-    expander.expand(text)
+    # test with multiplier
+    expander.expand(r"\def\tenpoints{10pt}")
+    expander.expand(r"\advance \mydimen by 0.5\tenpoints")
+    out = expander.expand(r"\the\mydimen")
+    print(out)
