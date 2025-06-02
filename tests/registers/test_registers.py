@@ -39,6 +39,11 @@ def test_skip_register():
     result = registers.get_register_value(RegisterType.SKIP, "myskip")
     assert result == 100
 
+    # muskip
+    registers.set_register(RegisterType.MUSKIP, "mymuskip", 100)
+    result = registers.get_register_value(RegisterType.MUSKIP, "mymuskip")
+    assert result == 100
+
 
 def test_delete_register():
     registers = TexRegisters()

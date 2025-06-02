@@ -10,6 +10,7 @@ class RegisterType(Enum):
     COUNT = "count"
     DIMEN = "dimen"
     SKIP = "skip"
+    MUSKIP = "muskip"
     TOKS = "toks"
     BOX = "box"
     BOOL = "bool"
@@ -30,11 +31,12 @@ class RegisterType(Enum):
 
     def get_default_value(self) -> Any:
         """Get the default value for this register type"""
-        if self == RegisterType.COUNT:
-            return 0
-        elif self == RegisterType.DIMEN:
-            return 0
-        elif self == RegisterType.SKIP:
+        if self in [
+            RegisterType.COUNT,
+            RegisterType.DIMEN,
+            RegisterType.SKIP,
+            RegisterType.MUSKIP,
+        ]:
             return 0
         elif self == RegisterType.TOKS:
             return []

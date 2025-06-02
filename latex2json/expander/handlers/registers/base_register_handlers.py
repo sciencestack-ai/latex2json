@@ -21,7 +21,7 @@ def parse_register_setter(
         return expander.parse_box()
     elif register_type == RegisterType.TOKS:
         return expander.parse_brace_as_tokens()
-    elif register_type == RegisterType.SKIP:
+    elif register_type in [RegisterType.SKIP, RegisterType.MUSKIP]:
         return expander.parse_skip()
     else:
         raise NotImplementedError(f"Setting {register_type} is not implemented")

@@ -28,20 +28,25 @@ ignored_skip_pattern_N_blocks = {
     "vfill": 0,
     "vfilneg": 0,  # Negative vfil
     "vss": 0,  # Vertical stretch/shrink
+    # MATH
+    # Fixed math spaces (no arguments)
+    "thinspace": 0,  # \, (3mu)
+    "medspace": 0,  # \: (4mu)
+    "thickspace": 0,  # \; (5mu)
+    "negthinspace": 0,  # \! (-3mu)
+    "negmedspace": 0,  # Negative medium space
+    "negthickspace": 0,  # Negative thick space
 }
 
 
 def register_skip_handlers(expander: ExpanderCore) -> None:
     """Register skip-related macros and handlers."""
     # Skip-related macros
-    expander.register_handler(
-        "hskip",
-        hvskip_handler,
-    )
-    expander.register_handler(
-        "vskip",
-        hvskip_handler,
-    )
+    for skips in ["hskip", "vskip", "mskip"]:
+        expander.register_handler(
+            skips,
+            hvskip_handler,
+        )
 
     register_ignore_handlers_util(expander, ignored_skip_pattern_N_blocks)
 

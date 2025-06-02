@@ -30,6 +30,8 @@ class TexRegisters:
             0
         ] * 256  # Dimensions stored as scaled points (int)
         self._skips: list[int] = [0] * 256  # Skip stored as scaled points (int)
+        self._muskips: list[int] = [0] * 256  # Math skip stored as scaled points (int)
+
         self._toks: list[list[Token]] = [[] for _ in range(256)]
         self._boxes: list[Optional[Box]] = [None] * 256
 
@@ -37,6 +39,7 @@ class TexRegisters:
         self._named_counts: dict[str, int] = {}
         self._named_dimens_sp: dict[str, int] = {}
         self._named_skips: dict[str, int] = {}
+        self._named_muskips: dict[str, int] = {}
         self._named_toks: dict[str, list[Token]] = {}
         self._named_boxes: dict[str, Optional[Box]] = {}
         self._named_bools: dict[str, bool] = {}
@@ -46,6 +49,7 @@ class TexRegisters:
             RegisterType.COUNT: self._counts,
             RegisterType.DIMEN: self._dimens_sp,
             RegisterType.SKIP: self._skips,
+            RegisterType.MUSKIP: self._muskips,
             RegisterType.TOKS: self._toks,
             RegisterType.BOX: self._boxes,
         }
@@ -53,6 +57,7 @@ class TexRegisters:
             RegisterType.COUNT: self._named_counts,
             RegisterType.DIMEN: self._named_dimens_sp,
             RegisterType.SKIP: self._named_skips,
+            RegisterType.MUSKIP: self._named_muskips,
             RegisterType.TOKS: self._named_toks,
             RegisterType.BOX: self._named_boxes,
             RegisterType.BOOL: self._named_bools,

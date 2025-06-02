@@ -64,6 +64,16 @@ def test_new_register_macros():
     expander.expand(r"\newskip\myskip")
     assert expander.get_register_value(RegisterType.SKIP, "myskip") == 0
 
+    expander.expand(r"\myskip=10pt")
+    assert expander.get_register_value(RegisterType.SKIP, "myskip") > 0
+
+    # muskip
+    expander.expand(r"\newmuskip\mymuskip")
+    assert expander.get_register_value(RegisterType.MUSKIP, "mymuskip") == 0
+
+    expander.expand(r"\mymuskip=10pt")
+    assert expander.get_register_value(RegisterType.MUSKIP, "mymuskip") > 0
+
     # toks
     expander.expand(r"\newtoks\mytoks")
     assert expander.get_register_value(RegisterType.TOKS, "mytoks") == []
