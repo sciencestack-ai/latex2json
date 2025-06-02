@@ -1,4 +1,5 @@
 from latex2json.expander.expander import Expander
+from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
 from latex2json.registers.types import Box
 
@@ -18,7 +19,7 @@ def test_setbox():
     expander = Expander()
 
     # Test setting box with numeric id
-    expander.expand(r"\setbox0=\vbox{123}")
+    expander.expand(r"\setbox0= \vbox{123}")
     box = expander.get_register_value(RegisterType.BOX, 0)
     assert isinstance(box, Box)
     assert box.type == "vbox"
@@ -31,6 +32,17 @@ def test_setbox():
     assert isinstance(box, Box)
     assert box.type == "hbox"
     assert expander.check_tokens_equal(box.content, expander.expand("abc"))
+
+    # test that setbox immediately expands the box content
+    text = r"""
+    \def\aaa{AAA}
+    \setbox\mybox=\vbox{\aaa} % immediately expands the box content to AAA
+    \def\aaa{BBB}
+""".strip()
+    expander.expand(text)
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert expander.check_tokens_equal(box.content, expander.expand("AAA"))
 
 
 def test_box_and_copy():
@@ -76,16 +88,19 @@ def test_wd_ht_dp():
     expander.expand(r"\setbox\mybox=\hbox to 10pt{abc}")
     box = expander.get_register_value(RegisterType.BOX, "mybox")
     assert isinstance(box, Box)
-    box.width = 10
-    box.height = 5
-    box.depth = 2
 
-    # Test dimension commands
-    wd = expander.expand(r"\wd\mybox")
-    assert expander.check_tokens_equal(wd, expander.expand("10"))
+    # test assignment
+    expander.expand(r"\wd \mybox=15pt")
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.width == dimension_to_scaled_points(15, "pt")
 
-    ht = expander.expand(r"\ht\mybox")
-    assert expander.check_tokens_equal(ht, expander.expand("5"))
+    expander.expand(r"\ht\mybox =10pt")
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.height == dimension_to_scaled_points(10, "pt")
 
-    dp = expander.expand(r"\dp\mybox")
-    assert expander.check_tokens_equal(dp, expander.expand("2"))
+    expander.expand(r"\dp\mybox = 12pt")
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.depth == dimension_to_scaled_points(12, "pt")

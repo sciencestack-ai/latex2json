@@ -29,36 +29,6 @@ def parse_register_setter(
     return value
 
 
-def get_register_handler(
-    expander: ExpanderCore, token: Token
-) -> Optional[Tuple[RegisterType, Union[int, str]]]:
-    macro = expander.get_macro(token.value)
-    if not macro:
-        return None
-    if isinstance(macro, RegisterMacro):
-        if expander.peek() == token:
-            expander.consume()
-        register_type = macro.register_type
-        reg_id = macro.name
-
-        if macro.is_id_integer:
-            if register_type == RegisterType.OTHER:
-                raise NotImplementedError(
-                    f"Getting register:{register_type} is not implemented"
-                )
-
-            # detect primitive register id e.g. \count100 -> 100
-            tok = expander.peek()
-            reg_id = expander.parse_integer()
-            if reg_id is None:
-                expander.logger.warning(
-                    f"Register:{register_type} invalid register id, tok: {tok}"
-                )
-                return None
-        return register_type, reg_id
-    return None
-
-
 def set_register_value_handler(
     expander: ExpanderCore,
     register_type: RegisterType,
@@ -81,45 +51,69 @@ def set_register_value_handler(
     return True
 
 
-def registertype_macro_handler(
-    expander: ExpanderCore,
-    token: Token,
-    is_primitive_register: bool = True,
-) -> Optional[List[Token]]:
-    parsed = get_register_handler(expander, token)
-    if not parsed:
+def make_primitive_register_handler(is_id_integer: bool = True) -> Handler:
+    def primitive_register_handler(
+        expander: ExpanderCore, token: Token
+    ) -> Optional[List[Token]]:
+        macro = expander.get_macro(token.value)
+        if not macro or not isinstance(macro, RegisterMacro):
+            return [token]
+
+        register_type, reg_id = macro.parse_register(expander, token)
+        if reg_id is None:
+            return [token]
+
+        if set_register_value_handler(expander, register_type, reg_id):
+            return []
+
+        if is_id_integer:
+            # e.g. \count20 -> [\count, 2, 0]
+            return [token] + expander.convert_str_to_tokens(str(reg_id))
         return [token]
-    register_type, reg_id = parsed
-    if set_register_value_handler(expander, register_type, reg_id):
-        return []
-    # don't expand by default # expander.get_register_value_as_tokens(register_type, reg_id)
-    # return the token itself instead since it is technically non-expandable
-    if is_primitive_register:
-        # e.g. \count20 -> [\count, 2, 0]
-        return [token] + expander.convert_str_to_tokens(str(reg_id))
-    return [token]
+
+    return primitive_register_handler
 
 
 class RegisterMacro(Macro):
     def __init__(
-        self, register_type: RegisterType, command_name: str, is_id_integer=True
+        self,
+        register_type: RegisterType,
+        command_name: str,
+        handler: Handler,
+        is_id_integer: bool = True,
     ):
-        handler: Handler = lambda expander, token: registertype_macro_handler(
-            expander, token, is_id_integer
-        )
         super().__init__(command_name, handler, [], type=MacroType.REGISTER)
+        self.command_name = command_name
         self.register_type = register_type
         self.is_id_integer = is_id_integer
+        self.parse_register = self._parse_register
+
+    def _parse_register(
+        self, expander: ExpanderCore, token: Token
+    ) -> Tuple[RegisterType, Optional[Union[int, str]]]:
+        if expander.peek() == token:
+            expander.consume()
+
+        reg_id: Optional[Union[int, str]] = None
+        if self.is_id_integer:
+            # detect primitive register id e.g. \count100 -> 100
+            reg_id = expander.parse_integer()
+            if reg_id is None:
+                expander.logger.warning(
+                    f"Register:{self.register_type} invalid register id, tok: {expander.peek()}"
+                )
+                return self.register_type, None
+        else:
+            reg_id = self.command_name
+
+        return self.register_type, reg_id
 
 
-class NewRegisterMacro(Macro):
-    def __init__(self, register_type: RegisterType, command_name: str):
-
-        handler: Handler = lambda expander, token: new_register_macro_handler(
-            expander, token, register_type
-        )
-        super().__init__(command_name, handler, [])
-        self.register_type = register_type
+def make_register_macro(
+    register_type: RegisterType, command_name: str, is_id_integer: bool = True
+) -> RegisterMacro:
+    handler = make_primitive_register_handler(is_id_integer)
+    return RegisterMacro(register_type, command_name, handler, is_id_integer)
 
 
 def new_register_macro_handler(
@@ -140,7 +134,7 @@ def new_register_macro_handler(
     # create a macro for the register
     expander.register_macro(
         count_name,
-        RegisterMacro(register_type, count_name, is_id_integer=False),
+        make_register_macro(register_type, count_name, is_id_integer=False),
         is_global=True,
     )
 
@@ -159,14 +153,18 @@ def register_base_register_macros(expander: ExpanderCore):
         new_register_name = f"new{cmd_name}"
         expander.register_macro(
             new_register_name,
-            NewRegisterMacro(register_type, new_register_name),
+            Macro(
+                new_register_name,
+                lambda e, t, rt=register_type: new_register_macro_handler(e, t, rt),
+                [],
+            ),
             is_global=True,
         )
 
         # SETTERS: count0/dimen0/skip0/toks0/bool0
         expander.register_macro(
             cmd_name,
-            RegisterMacro(register_type, cmd_name),
+            make_register_macro(register_type, cmd_name),
             is_global=True,
         )
 
@@ -174,7 +172,7 @@ def register_base_register_macros(expander: ExpanderCore):
     for builtin_dimen in BUILTIN_DIMENSIONS:
         expander.register_macro(
             builtin_dimen,
-            RegisterMacro(RegisterType.DIMEN, builtin_dimen, is_id_integer=False),
+            make_register_macro(RegisterType.DIMEN, builtin_dimen, is_id_integer=False),
             is_global=True,
         )
 

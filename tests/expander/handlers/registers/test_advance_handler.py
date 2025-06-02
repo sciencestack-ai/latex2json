@@ -130,3 +130,16 @@ def test_advance_handler_with_dimension_unit():
     #     expander.expand(r"\the\mydimen"),
     #     expander.expand(str(int(pt_10 + pt_10))),
     # )
+
+
+def test_advance_handler_with_box_dimension():
+    expander = Expander()
+    expander.expand(r"\newbox\mybox")
+    expander.expand(r"\setbox\mybox=\hbox{Hello}")
+    expander.expand(r"\advance \wd\mybox by -10pt")
+
+    pt_10 = dimension_to_scaled_points(10, "pt")
+    assert_token_sequence(
+        expander.expand(r"\the\wd\mybox"),
+        expander.expand(str(-pt_10)),
+    )

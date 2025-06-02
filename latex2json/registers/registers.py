@@ -65,10 +65,25 @@ class TexRegisters:
             self.set_register(RegisterType.DIMEN, dimen, 0)
 
     def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):
-        return self._get_generic_register_value(reg_type, reg_id)
+        out = self._get_generic_register_value(reg_type, reg_id)
+        if reg_type == RegisterType.BOX and isinstance(out, Box):
+            out.width = (
+                self._get_generic_register_value(RegisterType.DIMEN, f"wd{reg_id}") or 0
+            )
+            out.height = (
+                self._get_generic_register_value(RegisterType.DIMEN, f"ht{reg_id}") or 0
+            )
+            out.depth = (
+                self._get_generic_register_value(RegisterType.DIMEN, f"dp{reg_id}") or 0
+            )
+        return out
 
     def set_register(self, reg_type: RegisterType, reg_id: Union[int, str], value: Any):
         self._set_generic_register(reg_type, reg_id, value)
+        if reg_type == RegisterType.BOX and isinstance(value, Box):
+            self._set_generic_register(RegisterType.DIMEN, f"wd{reg_id}", value.width)
+            self._set_generic_register(RegisterType.DIMEN, f"ht{reg_id}", value.height)
+            self._set_generic_register(RegisterType.DIMEN, f"dp{reg_id}", value.depth)
 
     def create_register(
         self, reg_type: RegisterType, reg_id: str, default_value: Optional[Any] = None

@@ -497,7 +497,7 @@ class ExpanderCore:
 
         # Import here to avoid circular dependency with register handlers
         from latex2json.expander.handlers.registers.base_register_handlers import (
-            get_register_handler,
+            RegisterMacro,
         )
 
         tok = self.peek()
@@ -505,8 +505,8 @@ class ExpanderCore:
             return None
 
         macro = self.get_macro(tok.value)
-        if macro and macro.type == MacroType.REGISTER:
-            return get_register_handler(self, tok)
+        if macro and isinstance(macro, RegisterMacro):
+            return macro.parse_register(self, tok)
 
         if expand:
             # expand in case
@@ -516,7 +516,11 @@ class ExpanderCore:
             tok = self.peek()
             if tok is None:
                 return None
-            out = get_register_handler(self, tok)
+            out = None
+            macro = self.get_macro(tok.value)
+            if macro and isinstance(macro, RegisterMacro):
+                out = macro.parse_register(self, tok)
+
             if out is None:
                 self.stream.set_pos(*start_pos)
             return out
@@ -573,6 +577,9 @@ class ExpanderCore:
         if content is None:
             self.logger.warning(f"Could not find {...} after \\{box_type}")
             return None
+
+        # immediate expansion
+        content = self.expand_tokens(content)
 
         return Box(type=box_type, content=content)
 

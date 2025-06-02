@@ -1,8 +1,8 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.handlers.registers.base_register_handlers import (
-    NewRegisterMacro,
     RegisterMacro,
+    make_register_macro,
 )
 from latex2json.expander.macro_registry import Macro
 from latex2json.registers.types import RegisterType
@@ -80,7 +80,7 @@ def newlength_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     # create a macro for the register
     expander.register_macro(
         length_name,
-        RegisterMacro(REGISTER_TYPE, length_name, is_id_integer=False),
+        make_register_macro(REGISTER_TYPE, length_name, is_id_integer=False),
         is_global=True,
     )
 

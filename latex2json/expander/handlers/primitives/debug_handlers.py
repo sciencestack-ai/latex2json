@@ -28,6 +28,11 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         if parsed:
             return expander.get_register_value_as_tokens(parsed[0], parsed[1])
 
+        # just use the macro handler itself...?
+        macro = expander.get_macro(name)
+        if macro:
+            return macro.handler(expander, token)
+
     return []
 
 
