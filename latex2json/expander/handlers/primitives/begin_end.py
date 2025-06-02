@@ -15,7 +15,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     prefix = "\\begin"
     expander.push_scope()
 
-    name = expander.parse_environment_name()
+    name = expander.parse_brace_name()
     if name is None:
         expander.logger.warning(
             f"Warning: {prefix} expects an environment name, but found {expander.peek()}"
@@ -52,7 +52,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     prefix = "\\end"
     expander.pop_scope()
 
-    name = expander.parse_environment_name()
+    name = expander.parse_brace_name()
     if name is None:
         expander.logger.warning(
             f"Warning: {prefix} expects an environment name, but found {expander.peek()}"

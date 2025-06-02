@@ -848,11 +848,11 @@ class ExpanderCore:
 
         return name
 
-    def parse_environment_name(self) -> Optional[str]:
+    def parse_brace_name(self) -> Optional[str]:
         self.skip_whitespace()
 
         tok = self.peek()
-        if not tok or not is_begin_group_token(tok):
+        if not tok:
             return None
 
         name = self.parse_brace_as_tokens()

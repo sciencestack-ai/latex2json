@@ -143,7 +143,7 @@ def new_register_macro_handler(
 
 def register_base_register_macros(expander: ExpanderCore):
     for register_type in RegisterType:
-        if register_type == RegisterType.BOX:
+        if register_type == RegisterType.BOX or register_type == RegisterType.BOOL:
             # NOTE THAT \box is different since it requires \setbox. Handle it in box_handlers.py
             continue
 

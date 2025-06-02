@@ -16,7 +16,7 @@ class NewEnvironmentMacro(Macro):
 
     def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.parse_asterisk()
-        name = expander.parse_environment_name()
+        name = expander.parse_brace_name()
         if name is None:
             expander.logger.warning(
                 f"Warning: \\newenvironment expects an environment name, but found {token}"

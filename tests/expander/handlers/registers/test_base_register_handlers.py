@@ -15,7 +15,9 @@ def test_register_macros():
     expander = Expander()
 
     for register_type in RegisterType:
-        if register_type != RegisterType.BOX:  # handle box separately due to \setbox
+        if (
+            register_type != RegisterType.BOX and register_type != RegisterType.BOOL
+        ):  # handle box separately due to \setbox
             assert expander.get_macro(register_type.value)
 
     # test on dim direct expand
