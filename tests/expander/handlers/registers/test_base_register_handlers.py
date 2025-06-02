@@ -4,6 +4,8 @@ from latex2json.expander.handlers.registers.base_register_handlers import (
 )
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
+from latex2json.registers.registers import BUILTIN_DIMENSIONS
+from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
@@ -13,7 +15,8 @@ def test_register_macros():
     expander = Expander()
 
     for register_type in RegisterType:
-        assert expander.get_macro(register_type.value)
+        if register_type != RegisterType.BOX:  # handle box separately due to \setbox
+            assert expander.get_macro(register_type.value)
 
     # test on dim direct expand
     expander.expand(r"\dimen20=10pt")
@@ -29,6 +32,15 @@ def test_register_macros():
             Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER),
         ],
     )
+
+
+def test_builtin_dimens():
+    expander = Expander()
+
+    # e.g. \textwidth, \textheight, \parindent, etc
+    for builtin_dimen in BUILTIN_DIMENSIONS:
+        expander.expand(f"\\{builtin_dimen}=10pt")
+        assert expander.get_register_value(RegisterType.DIMEN, builtin_dimen) > 0
 
 
 def test_new_register_macros():
@@ -122,3 +134,21 @@ def test_skips():
         RegisterType.SKIP, "myskip"
     ) == dimension_to_scaled_points(10 + 3, "pt")
     assert strip_whitespace_tokens(out) == expander.expand(r"minus 5 pt")
+
+
+# def test_boxes():
+#     expander = Expander()
+
+#     # test base registers
+#     expander.expand(r"\setbox0=\vbox{123}")
+#     box: Box | None = expander.get_register_value(RegisterType.BOX, 0)
+#     assert box is not None
+#     assert box.type == "vbox"
+#     assert box.content == expander.expand("123")
+
+#     expander.expand(r"\newbox\mybox")
+#     expander.expand(r"\setbox\mybox=\hbox to 10pt{abc}")
+#     box: Box | None = expander.get_register_value(RegisterType.BOX, "mybox")
+#     assert box is not None
+#     assert box.type == "hbox"
+#     assert box.content == expander.expand("abc")

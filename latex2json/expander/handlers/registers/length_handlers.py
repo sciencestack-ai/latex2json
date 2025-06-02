@@ -129,3 +129,6 @@ if __name__ == "__main__":
     out = expander.expand(r"\addtolength{\textheight}{1em}")
     print(out)
     print(expander.get_register_value(REGISTER_TYPE, "textheight"))
+
+    expander.expand(r"\textwidth=10pt")
+    print(expander.get_register_value(REGISTER_TYPE, "textwidth"))

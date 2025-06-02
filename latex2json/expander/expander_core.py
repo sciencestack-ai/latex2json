@@ -493,6 +493,7 @@ class ExpanderCore:
     def parse_register(
         self, expand=True
     ) -> Optional[Tuple[RegisterType, Union[int, str]]]:
+        # won't work for boxes since they are different
 
         # Import here to avoid circular dependency with register handlers
         from latex2json.expander.handlers.registers.base_register_handlers import (

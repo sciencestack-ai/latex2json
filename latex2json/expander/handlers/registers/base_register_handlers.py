@@ -1,6 +1,7 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
 from latex2json.registers import RegisterType
+from latex2json.registers.registers import BUILTIN_DIMENSIONS
 from latex2json.tokens import Token
 from latex2json.tokens.types import TokenType
 
@@ -148,17 +149,32 @@ def new_register_macro_handler(
 
 def register_base_register_macros(expander: ExpanderCore):
     for register_type in RegisterType:
+        if register_type == RegisterType.BOX:
+            # NOTE THAT \box is different since it requires \setbox. Handle it in box_handlers.py
+            continue
+
         cmd_name = register_type.value
+
+        # newcount/newdimen/newskip/newtoks/newbool
+        new_register_name = f"new{cmd_name}"
+        expander.register_macro(
+            new_register_name,
+            NewRegisterMacro(register_type, new_register_name),
+            is_global=True,
+        )
+
+        # SETTERS: count0/dimen0/skip0/toks0/bool0
         expander.register_macro(
             cmd_name,
             RegisterMacro(register_type, cmd_name),
             is_global=True,
         )
 
-        new_register_name = f"new{cmd_name}"
+    # textwidth/textheight/parindent/parskip etc
+    for builtin_dimen in BUILTIN_DIMENSIONS:
         expander.register_macro(
-            new_register_name,
-            NewRegisterMacro(register_type, new_register_name),
+            builtin_dimen,
+            RegisterMacro(RegisterType.DIMEN, builtin_dimen, is_id_integer=False),
             is_global=True,
         )
 
