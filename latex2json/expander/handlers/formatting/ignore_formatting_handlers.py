@@ -1,6 +1,5 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import Token
-from typing import Optional
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 
 ignored_formatting_pattern_N_blocks = {
     # Float-related formatting
@@ -23,33 +22,20 @@ ignored_formatting_pattern_N_blocks = {
     # You might also add:
     "geometry": 1,  # \geometry{margin=1in}
     "setstretch": 1,  # \setstretch{1.5} - line spacing
-    "color": 1,  # \color{red}
+    # "color": 1,  # \color{red}
 }
-
-
-def make_formatting_ignore_handler(pattern: str, n_blocks: int):
-    def ignore_handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
-        blocks = expander.parse_braced_blocks(n_blocks)
-        return []
-
-    return ignore_handler
 
 
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
-    for command, n_blocks in ignored_formatting_pattern_N_blocks.items():
-        expander.register_handler(
-            command,
-            make_formatting_ignore_handler(command, n_blocks),
-            is_global=True,
-        )
+    register_ignore_handlers_util(expander, ignored_formatting_pattern_N_blocks)
 
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    register_ignore_format_handlers(expander)
+    register_ignore_handlers_util(expander)
 
     # Test some formatting commands
     out1 = expander.expand(r"\floatname{figure}{Fig.}")

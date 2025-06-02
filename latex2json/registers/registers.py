@@ -3,6 +3,23 @@ from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 
 
+BUILTIN_DIMENSIONS = [
+    # Page dimensions
+    "textwidth",  # Width of text area
+    "textheight",  # Height of text area
+    "paperwidth",  # Total page width
+    "paperheight",  # Total page height
+    # Paragraph formatting
+    "parindent",  # Paragraph indentation
+    "parskip",  # Space between paragraphs
+    "baselineskip",  # Space between lines
+    # List formatting
+    "leftmargin",  # Left margin in lists
+    "rightmargin",  # Right margin in lists
+    "itemsep",  # Space between list items
+]
+
+
 class TexRegisters:
     """Manages TeX registers including counts, dimensions, skips, tokens, and boxes"""
 
@@ -40,6 +57,12 @@ class TexRegisters:
             RegisterType.BOX: self._named_boxes,
             RegisterType.BOOL: self._named_bools,
         }
+
+        self._init_builtin_registers()
+
+    def _init_builtin_registers(self):
+        for dimen in BUILTIN_DIMENSIONS:
+            self.set_register(RegisterType.DIMEN, dimen, 0)
 
     def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):
         return self._get_generic_register_value(reg_type, reg_id)

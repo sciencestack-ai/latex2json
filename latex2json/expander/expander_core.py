@@ -2,6 +2,8 @@ from logging import Logger
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
+from latex2json.latex_maps.boxes import BOXES
+from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
@@ -112,10 +114,10 @@ class ExpanderCore:
         self._init_counter_macros()
         self._init_math_macros()
 
-        def newline_handler(expander: "ExpanderCore", token: Token):
-            return [Token(TokenType.END_OF_LINE, "\n\n")]
+        # def newline_handler(expander: "ExpanderCore", token: Token):
+        #     return [Token(TokenType.END_OF_LINE, "\n\n")]
 
-        self.register_handler("\\newline", newline_handler, is_global=True)
+        # self.register_handler("\\newline", newline_handler, is_global=True)
 
     def _init_math_macros(self):
         def make_begin_end_math_handlers(mode: ProcessingMode):
@@ -533,6 +535,45 @@ class ExpanderCore:
         if parsed is None:
             return None
         return parsed[0]
+
+    def parse_box(self) -> Optional[Box]:
+        r"""
+        \hbox{content}              % Just type + content
+        \vbox to 5cm{content}       % Type + "to" + dimension + content
+        \vtop spread 1cm{content}   % Type + "spread" + dimension + content
+        """
+
+        tok = self.peek()
+        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+            return None
+        box_type = tok.value
+        if box_type not in BOXES:
+            self.logger.warning(f"Unknown box command: \\{box_type}")
+            return None
+        self.consume()
+        self.skip_whitespace()
+
+        tok = self.peek()
+        if tok is None:
+            return None
+
+        operator = None
+        if self.parse_keyword("to "):
+            operator = "to"
+        elif self.parse_keyword("spread "):
+            operator = "spread"
+
+        if operator:
+            self.skip_whitespace()
+            dims = self.parse_dimensions()
+            self.skip_whitespace()
+
+        content = self.parse_brace_as_tokens()
+        if content is None:
+            self.logger.warning(f"Could not find {...} after \\{box_type}")
+            return None
+
+        return Box(type=box_type, content=content)
 
     def _parse_dimensions(self) -> Optional[Tuple[int, bool]]:
         """

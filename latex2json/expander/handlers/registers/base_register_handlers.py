@@ -16,6 +16,8 @@ def parse_register_setter(
         return expander.parse_integer()
     elif register_type == RegisterType.DIMEN:
         return expander.parse_dimensions()
+    elif register_type == RegisterType.BOX:
+        return expander.parse_box()
     elif register_type == RegisterType.TOKS:
         return expander.parse_brace_as_tokens()
     elif register_type == RegisterType.SKIP:
@@ -30,6 +32,8 @@ def get_register_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[Tuple[RegisterType, Union[int, str]]]:
     macro = expander.get_macro(token.value)
+    if not macro:
+        return None
     if isinstance(macro, RegisterMacro):
         if expander.peek() == token:
             expander.consume()

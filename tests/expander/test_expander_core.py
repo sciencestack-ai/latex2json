@@ -362,6 +362,31 @@ def test_parse_register():
     assert expander.parse_integer() == 123
 
 
+def test_parse_box():
+    expander = ExpanderCore()
+
+    expander.set_text(r"\hbox{Hello}")
+    box = expander.parse_box()
+    assert box is not None
+    assert box.type == "hbox"
+    assert box.content == expander.expand("Hello")
+    assert expander.eof()
+
+    expander.set_text(r"\vtop to 10pt{Hello2}")
+    box = expander.parse_box()
+    assert box is not None
+    assert box.type == "vtop"
+    assert box.content == expander.expand("Hello2")
+    assert expander.eof()
+
+    expander.set_text(r"\vbox  spread   10pt {Hello3}")
+    box = expander.parse_box()
+    assert box is not None
+    assert box.type == "vbox"
+    assert box.content == expander.expand("Hello3")
+    assert expander.eof()
+
+
 def test_equality_ops():
     expander = ExpanderCore()
 

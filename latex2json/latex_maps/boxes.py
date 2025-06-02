@@ -1,0 +1,5 @@
+BOXES = [
+    "hbox",
+    "vbox",
+    "vtop",
+]

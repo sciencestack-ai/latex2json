@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional, Union, List
 
@@ -39,7 +39,7 @@ class RegisterType(Enum):
         elif self == RegisterType.TOKS:
             return []
         elif self == RegisterType.BOX:
-            return None
+            return Box()
         elif self == RegisterType.BOOL:
             return False
         else:
@@ -87,7 +87,10 @@ class CounterFormat(Enum):
 class Box:
     """Represents a TeX box with content and dimensions"""
 
-    content: List[Token]  # Forward reference for Token type
-    width: int  # Width in scaled points
-    height: int  # Height in scaled points
-    depth: int  # Depth in scaled points
+    type: str = "hbox"
+    content: List[Token] = field(
+        default_factory=list
+    )  # Forward reference for Token type
+    width: int = 0  # Width in scaled points
+    height: int = 0  # Height in scaled points
+    depth: int = 0  # Depth in scaled points

@@ -12,6 +12,9 @@ from latex2json.expander.handlers.registers.counter_handlers import (
 from latex2json.expander.handlers.registers.counter_format_handlers import (
     register_counter_format_handlers,
 )
+from latex2json.expander.handlers.registers.length_handlers import (
+    register_length_handlers,
+)
 
 
 def register_register_handlers(expander: ExpanderCore):
@@ -19,3 +22,4 @@ def register_register_handlers(expander: ExpanderCore):
     register_base_register_macros(expander)
     register_counter_handlers(expander)
     register_counter_format_handlers(expander)
+    register_length_handlers(expander)
