@@ -25,6 +25,10 @@ LATEX_DIMENSION_UNITS = {
     "Q": 46617,  # Quarter millimeter (0.25 mm)
     "vw": 65536,  # Viewport width (treated as pt for conversion)
     "vh": 65536,  # Viewport height (treated as pt for conversion)
+    # Infinite glue units (fil units) - using large integers instead of infinity
+    "fil": 2**30,  # First order infinity
+    "fill": 2**31,  # Second order infinity (larger than fil)
+    "filll": 2**32,  # Third order infinity (larger than fill)
 }
 
 
