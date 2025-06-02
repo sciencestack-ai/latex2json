@@ -99,14 +99,26 @@ def test_skips():
     expander.expand(r"\newskip\myskip")
     expander.expand(r"\myskip=10pt plus 2pt minus 5pt")
 
-    expected_pt = dimension_to_scaled_points(10 + 2 - 5, "pt")
+    assert expander.get_register_value(
+        RegisterType.SKIP, "myskip"
+    ) == dimension_to_scaled_points(10 + 2 - 5, "pt")
 
-    assert expander.get_register_value(RegisterType.SKIP, "myskip") == expected_pt
-
-    # test with dimensions too
+    # test with dimensions as setters too
+    pt_10 = dimension_to_scaled_points(10, "pt")
     expander.expand(r"\newdimen\mydimen \mydimen=10pt")
-    # expander.expand(r"\myskip=10pt plus 2pt")
-    # assert expander.get_register_value(RegisterType.SKIP, "myskip") == pt10 + pt2
+    expander.expand(r"\myskip=10pt plus 2\mydimen")
+    assert expander.get_register_value(RegisterType.SKIP, "myskip") == pt_10 + 2 * pt_10
 
-    # expander.expand(r"\myskip=10pt plus 2pt minus 5pt")
-    # assert expander.get_register_value(RegisterType.SKIP, "myskip") == pt10 + pt2 - pt5
+    # test with \relax
+    expander.expand(r"\myskip=10pt plus 2 pt \relax minus 5 pt")
+    assert expander.get_register_value(
+        RegisterType.SKIP, "myskip"
+    ) == dimension_to_scaled_points(10 + 2, "pt")
+
+    # test with \def \relax
+    expander.expand(r"\def\ddd{10pt plus 3 pt \relax minus 5 pt}")
+    out = expander.expand(r"\myskip=\ddd")
+    assert expander.get_register_value(
+        RegisterType.SKIP, "myskip"
+    ) == dimension_to_scaled_points(10 + 3, "pt")
+    assert strip_whitespace_tokens(out) == expander.expand(r"minus 5 pt")

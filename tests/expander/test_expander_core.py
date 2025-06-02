@@ -342,11 +342,6 @@ def test_parse_skip():
     assert out == dimension_to_scaled_points(10 + 2, "pt")
     assert not expander.eof()
 
-    tok = expander.peek()
-    assert tok.value == "relax"
-    expander.consume()
-
-    # test with \empty
     assert expander.parse_keyword(" minus 1pt")
     assert expander.eof()
 

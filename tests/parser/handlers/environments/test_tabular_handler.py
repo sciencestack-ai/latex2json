@@ -105,3 +105,34 @@ def test_nested_tabular():
     assert third_cell.body == [
         TabularNode([RowNode([CellNode(body=[TextNode("222")], colspan=2)])])
     ]
+
+
+def test_with_makecell():
+    parser = Parser()
+
+    text = r"""
+    \begin{tabular}{c}
+        \makecell{111 \\ 222} & 333 \\
+        444 & \shortstack{555 \\ 666}
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+    assert len(tabular.row_nodes) == 2
+    assert len(tabular.row_nodes[0].cells) == 2
+    assert len(tabular.row_nodes[1].cells) == 2
+
+    row1 = tabular.row_nodes[0]
+    cell1 = row1.cells[0]
+    cell1_str = "".join(node.detokenize() for node in cell1.body)
+    assert cell1_str.strip() == "111\n222"
+
+    assert row1.cells[1].body == [TextNode("333")]
+
+    row2 = tabular.row_nodes[1]
+    assert row2.cells[0].body == [TextNode("444")]
+    last_cell = row2.cells[-1]
+    last_cell_str = "".join(node.detokenize() for node in last_cell.body)
+    assert last_cell_str.strip() == "555\n666"

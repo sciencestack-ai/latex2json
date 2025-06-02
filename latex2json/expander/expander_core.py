@@ -595,6 +595,13 @@ class ExpanderCore:
 
         # Parse optional minus component
         self.skip_whitespace()
+        tok = self.peek()
+        if not tok:
+            return base_scaled_points
+        if is_relax_token(tok):
+            self.consume()
+            return base_scaled_points
+
         if self.parse_keyword("minus"):
             self.skip_whitespace()
             minus_result = self._parse_dimensions()
