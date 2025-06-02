@@ -63,3 +63,56 @@ def test_bool_error_cases():
 
     # Test incomplete ifbool blocks
     expander.expand(r"\ifbool{testbool}{TRUE}")  # Should log warning
+
+
+def test_newboolean():
+    expander = Expander()
+
+    # Test creating a new boolean register with \newboolean
+    expander.expand(r"\newboolean{mybool}")
+    bool_value = expander.get_register_value(RegisterType.BOOL, "mybool")
+    assert bool_value is not None
+    assert bool_value is False
+
+    # Test that both \newbool and \newboolean work the same way
+    expander.expand(r"\newbool{otherbool}")
+    bool_value = expander.get_register_value(RegisterType.BOOL, "otherbool")
+    assert bool_value is not None
+    assert bool_value is False
+
+
+def test_setboolean():
+    expander = Expander()
+
+    # Setup test boolean
+    expander.expand(r"\newboolean{testbool}")
+
+    # Test setting to true
+    expander.expand(r"\setboolean{testbool}{true}")
+    assert expander.get_register_value(RegisterType.BOOL, "testbool") is True
+
+    # Test setting to false
+    expander.expand(r"\setboolean{testbool}{false}")
+    assert expander.get_register_value(RegisterType.BOOL, "testbool") is False
+
+    # Test with whitespace in value
+    expander.expand(r"\setboolean{testbool}{ true }")
+    assert expander.get_register_value(RegisterType.BOOL, "testbool") is True
+
+    # Test invalid value (should default to false)
+    expander.expand(r"\setboolean{testbool}{invalid}")
+    assert expander.get_register_value(RegisterType.BOOL, "testbool") is False
+
+
+def test_bool_compatibility():
+    expander = Expander()
+
+    # Test that bools created with \newboolean work with \booltrue/\boolfalse
+    expander.expand(r"\newboolean{testbool}")
+    expander.expand(r"\booltrue{testbool}")
+    assert expander.get_register_value(RegisterType.BOOL, "testbool") is True
+
+    # Test that bools created with \newbool work with \setboolean
+    expander.expand(r"\newbool{otherbool}")
+    expander.expand(r"\setboolean{otherbool}{true}")
+    assert expander.get_register_value(RegisterType.BOOL, "otherbool") is True

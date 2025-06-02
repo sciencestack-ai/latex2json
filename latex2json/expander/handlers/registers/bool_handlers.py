@@ -3,6 +3,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro
 from latex2json.registers.types import RegisterType
 from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 
 def newbool_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -54,10 +55,52 @@ def if_bool_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     return []
 
 
+def set_boolean_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    bool_name = expander.parse_brace_name()
+    if not bool_name:
+        expander.logger.warning(
+            f"Warning: \\setboolean expects a boolean name, but found {expander.peek()}"
+        )
+        return None
+
+    expander.skip_whitespace()
+    value = expander.parse_brace_name().strip()
+    if not value:
+        expander.logger.warning(
+            f"Warning: \\setboolean expects a boolean value, but found {expander.peek()}"
+        )
+        return None
+
+    flag = value.lower() == "true"
+
+    expander.state.set_register(RegisterType.BOOL, bool_name, flag)
+    return []
+
+
 def register_bool_handlers(expander: ExpanderCore):
+    r"""
+    \newboolean{myflag}           % Create boolean
+    \setboolean{myflag}{true}     % Set to true
+    \setboolean{myflag}{false}    % Set to false
+    % meant for \ifthenelse{\boolean{myflag}}{true code}{false code} but ifthenelse handled separately
+
+    \newbool{myflag}              % Create boolean
+    \booltrue{myflag}             % Set to true
+    \boolfalse{myflag}            % Set to false
+    \ifbool{myflag}{true code}{false code}
+    """
+
+    for newbool in ["newbool", "newboolean"]:
+        expander.register_handler(
+            newbool,
+            newbool_handler,
+            is_global=True,
+        )
+
     expander.register_handler(
-        "newbool",
-        newbool_handler,
+        "setboolean",
+        set_boolean_handler,
         is_global=True,
     )
 
