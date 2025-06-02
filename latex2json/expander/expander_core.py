@@ -546,7 +546,7 @@ class ExpanderCore:
         digits, relax = self._expand_and_combine_as_str(is_digit_token)
         if not digits:
             return None
-        digits = float(digits)
+        digits = parse_number_str_to_float(digits)
 
         unit = None
         if not relax and self.peek():

@@ -66,7 +66,8 @@ if __name__ == "__main__":
     pt_10 = dimension_to_scaled_points(10, "pt")
 
     # test with multiplier
-    expander.expand(r"\def\tenpoints{10pt}")
-    expander.expand(r"\advance \mydimen by 0.5\tenpoints")
+    expander.expand(r"\advance \mydimen by 10 pt")
+    expander.expand(r"\def\defmydimen{\mydimen}")
+    expander.expand(r"\advance \mydimen by 0.5\defmydimen")
     out = expander.expand(r"\the\mydimen")
     print(out)

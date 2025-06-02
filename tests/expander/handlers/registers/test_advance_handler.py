@@ -98,7 +98,30 @@ def test_advance_handler_with_dimension_unit():
         expander.expand(str(int(pt_10 + 0.5 * pt_10))),
     )
 
+    # set back to 0 via \advance ... by -\mydimen
+    expander.expand(r"\advance \mydimen by -\mydimen")
+    assert_token_sequence(
+        expander.expand(r"\the\mydimen"),
+        expander.expand("0"),
+    )
+
+    # set back to 10 pt
+    expander.expand(r"\advance \mydimen by 10 pt")
+    assert_token_sequence(
+        expander.expand(r"\the\mydimen"),
+        expander.expand(str(pt_10)),
+    )
+
     # test with \def
+    expander.expand(r"\def\defmydimen{\mydimen}")
+    # add by 0.5 of \defmydimen -> \mydimen = 0.5 * 10 pt = 5 pt
+    out = expander.expand(r"\advance \mydimen by 0.5\defmydimen")
+    assert out == []
+    assert_token_sequence(
+        expander.expand(r"\the\mydimen"),
+        expander.expand(str(int(pt_10 + 0.5 * pt_10))),
+    )
+
     expander.expand(r"\def\tenpoints{10pt}")
     # actually in latex, this won't even work. \tenpoints just becomes consumed and not assigned
     out = expander.expand(r"\advance \mydimen by 0.5\tenpoints")
