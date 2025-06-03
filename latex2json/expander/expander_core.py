@@ -1,4 +1,5 @@
 from logging import Logger
+import os
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
@@ -32,7 +33,7 @@ from latex2json.expander.state import ExpanderState, ProcessingMode
 from latex2json.expander.utils import parse_number_str_to_float
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
-from latex2json.tokens.token_stream2 import (
+from latex2json.tokens.token_stream import (
     TokenStream,
 )
 from latex2json.tokens.utils import (
@@ -320,6 +321,17 @@ class ExpanderCore:
 
     def push_tokens(self, tokens: List[Token]):
         self.stream.push_tokens([t for t in tokens if t is not None])
+
+    def push_text(self, text: str):
+        self.stream.push_text(text)
+
+    def push_file(self, file_path: str):
+        if not os.path.exists(file_path):
+            expander.logger.warning(f"Input file {file_path} does not exist")
+            return []
+
+        input_text = open(file_path).read()
+        self.push_text(input_text)
 
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)

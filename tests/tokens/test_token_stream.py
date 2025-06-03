@@ -3,14 +3,12 @@ from typing import List
 
 from latex2json.tokens import Tokenizer, TokenType, Catcode, Token
 from latex2json.tokens.token_stream import (
-    BaseTokenStream,
     TokenStream,
-    MultiTokenStream,
 )
 
 
 def assert_stream_sequence(
-    stream: BaseTokenStream, expected_tokens: List[Token], skip_whitespace: bool = True
+    stream: TokenStream, expected_tokens: List[Token], skip_whitespace: bool = True
 ):
     i = 0
     while not stream.eof():
@@ -23,6 +21,74 @@ def assert_stream_sequence(
     assert i == len(expected_tokens)
 
 
+def test_push_text():
+    stream = TokenStream()
+    stream.push_text("12345")
+
+    assert stream.consume() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
+
+    # now insert new text
+    stream.push_text("abc")
+    assert stream.consume() == Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER)
+
+    # now resume back to the original text
+    assert stream.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "5", catcode=Catcode.OTHER)
+
+    assert stream.eof()
+
+
+def test_push_tokens():
+    stream = TokenStream()
+    stream.push_tokens(
+        [
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "5", catcode=Catcode.OTHER),
+        ]
+    )
+    assert stream.consume() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
+
+    # now test with push_text
+    stream.push_text("abc")
+    assert stream.consume() == Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER)
+
+    # now test with push_tokens again
+    stream.push_tokens(
+        [
+            Token(TokenType.CHARACTER, "6", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER),
+        ]
+    )
+    assert stream.consume() == Token(TokenType.CHARACTER, "6", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER)
+
+    # now its back at abc -> c
+    assert stream.consume() == Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER)
+
+    # now its back at "12345" -> 345
+    assert stream.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER)
+
+    assert not stream.eof()
+
+    # check set_text resets all
+    stream.set_text("123")
+    assert stream.consume() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
+
+    assert stream.eof()
+
+
 def test_token_stream():
     text = r"""
     \Hello, % world!
@@ -31,7 +97,7 @@ def test_token_stream():
     """.strip()
 
     stream = TokenStream(Tokenizer())
-    stream.set_text(text)
+    stream.push_text(text)
 
     bro_start = text.find("BRO")
     expected_tokens = [
@@ -53,16 +119,9 @@ def test_token_stream():
     # stream.go_previous()
     # assert stream.consume() == expected_tokens[-1]
 
-    stream.reset()
-    assert stream.get_pos()[0] == 0 and not stream.eof()
-
-    assert stream.peek() == expected_tokens[0]
-    stream.consume()
-    assert stream.peek() == expected_tokens[1]
-
 
 def test_token_stream_match():
-    stream = BaseTokenStream()
+    stream = TokenStream()
     stream.push_tokens(
         [
             Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
@@ -87,7 +146,7 @@ def test_skip_ignored():
 
     text = r"~ Hi there ~ [}"
     stream = TokenStream(tokenizer=tokenizer)
-    stream.set_text(text)
+    stream.push_text(text)
 
     expected_tokens = [
         Token(TokenType.CHARACTER, " ", 1, Catcode.SPACE),
@@ -105,217 +164,3 @@ def test_skip_ignored():
         Token(TokenType.CHARACTER, "}", 14, Catcode.END_GROUP),
     ]
     assert_stream_sequence(stream, expected_tokens, skip_whitespace=False)
-
-    # reset and test peek
-    stream.reset()
-    assert stream.peek() == expected_tokens[0]
-    assert stream.peek(3) == expected_tokens[3]
-
-
-def test_token_stream_with_buffer():
-    tokenizer = Tokenizer()
-    stream = TokenStream(tokenizer=tokenizer)
-
-    text = r"123   456"
-    stream.set_text(text)
-    assert stream.peek() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
-    stream.consume()
-    assert stream.peek() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
-
-    # test push_tokens
-    stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "8", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "9", catcode=Catcode.OTHER),
-        ]
-    )
-    assert stream.peek() == Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER)
-    stream.consume()
-    # test pop_tokens
-    stream.pop_tokens()
-    assert stream.peek() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
-    stream.consume()
-    assert stream.peek() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
-    stream.consume()
-    cur_base_pos = stream.get_pos()
-
-    # check that skip_whitespace skips past the buffer too
-    stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-        ]
-    )
-    stream.get_pos() == (0, 1)
-    preskip_pos = stream.skip_whitespace()
-    # test that preskip_pos now uses base stream since skip_whitespace has gone past the buffer
-    assert preskip_pos == cur_base_pos
-
-    assert stream.peek() == Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER)
-    cur_pos = (text.find("4"), 0)
-    assert stream.get_pos() == cur_pos
-
-    # test that set_pos after buffer is gone does not work
-    stream.set_pos(1, 1)
-    assert stream.get_pos() == cur_pos
-
-    # test set_pos
-    stream.set_pos(text.find("6"), 0)
-    assert stream.peek() == Token(TokenType.CHARACTER, "6", catcode=Catcode.OTHER)
-
-    # test get_pos/set_pos with stacks
-    stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "8", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "9", catcode=Catcode.OTHER),
-        ]
-    )
-    assert stream.get_pos() == (0, 1)
-    assert stream.consume() == Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER)
-    assert stream.get_pos() == (1, 1)
-    stream.set_pos(0, 1)
-    assert stream.consume() == Token(TokenType.CHARACTER, "7", catcode=Catcode.OTHER)
-
-    stream.pop_tokens()
-
-    # back to base stream pos
-    assert stream.get_pos() == (text.find("6"), 0)
-
-    stream.clear()
-    assert stream.eof()
-
-
-def test_multi_tokenizer_stream():
-    tokenizer = Tokenizer()
-    stream = TokenStream(tokenizer=tokenizer)
-    stream.set_text(r"123")
-    multi_stream = MultiTokenStream([stream])
-    assert multi_stream.peek() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
-    multi_stream.consume()
-
-    # now add tokens
-    multi_stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, "H", catcode=Catcode.LETTER),
-            Token(TokenType.CHARACTER, "e", catcode=Catcode.LETTER),
-            Token(TokenType.CHARACTER, "l", catcode=Catcode.LETTER),
-            Token(TokenType.CHARACTER, "l", catcode=Catcode.LETTER),
-            Token(TokenType.CHARACTER, "o", catcode=Catcode.LETTER),
-        ]
-    )
-    assert multi_stream.peek() == Token(
-        TokenType.CHARACTER, "H", catcode=Catcode.LETTER
-    )
-    multi_stream.consume()
-    assert multi_stream.peek() == Token(
-        TokenType.CHARACTER, "e", catcode=Catcode.LETTER
-    )
-
-    # now pop it
-    multi_stream.pop_tokens()
-    # back to the original stream
-    assert multi_stream.peek() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
-    multi_stream.consume()
-    assert multi_stream.peek() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
-    multi_stream.consume()
-    assert multi_stream.eof()
-
-    # add back some tokens
-    multi_stream.push_tokens(
-        [
-            Token(TokenType.CONTROL_SEQUENCE, "foo"),
-        ]
-    )
-    # add 2nd layer of tokens
-    multi_stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
-            Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER),
-        ]
-    )
-    assert not multi_stream.eof()
-
-    # consume top layer
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "1", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "2", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "3", catcode=Catcode.OTHER
-    )
-    # consume next layer
-    assert multi_stream.consume() == Token(TokenType.CONTROL_SEQUENCE, "foo")
-    # finish
-    assert multi_stream.eof()
-
-
-def test_multi_tokenizer_stream():
-    stream = TokenStream(tokenizer=Tokenizer())
-    stream.set_text(r"123")
-    stream2 = TokenStream(tokenizer=Tokenizer())
-    stream2.set_text(r"456")
-    multi_stream = MultiTokenStream([stream, stream2])
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "4", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "5", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "6", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "1", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "2", catcode=Catcode.OTHER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "3", catcode=Catcode.OTHER
-    )
-    assert multi_stream.eof()
-
-
-def test_multi_stream_skip_whitespace():
-    tokenizer = Tokenizer()
-    stream = TokenStream(tokenizer=tokenizer)
-    stream.set_text(r"1  2  3")
-    multi_stream = MultiTokenStream([stream])
-
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "1", catcode=Catcode.OTHER
-    )
-
-    multi_stream.push_tokens(
-        [
-            Token(TokenType.CHARACTER, "H", catcode=Catcode.LETTER),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-            Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE),
-        ]
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "H", catcode=Catcode.LETTER
-    )
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, " ", catcode=Catcode.SPACE
-    )
-    # notice the whitespace skips past the stack to the next stack as well
-    multi_stream.skip_whitespace()
-    # already at base stack
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "2", catcode=Catcode.OTHER
-    )
-    multi_stream.skip_whitespace()
-    assert multi_stream.consume() == Token(
-        TokenType.CHARACTER, "3", catcode=Catcode.OTHER
-    )
-    assert multi_stream.eof()
