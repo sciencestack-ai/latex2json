@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import Token, TokenType
@@ -11,7 +12,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     \newtheorem{env_name}{display_name}[reset_counter]
     \newtheorem{env_name}[shared_counter]{display_name}
     """
-    expander.parse_asterisk()
+    has_asterisk = expander.parse_asterisk()
     env_name = expander.parse_brace_name()
     if env_name is None:
         expander.logger.warning(
@@ -43,7 +44,10 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
             return None
 
     # create new counter name
-    expander.state.new_counter(counter_name)
+    if has_asterisk:
+        counter_name = None
+    if counter_name:
+        expander.state.new_counter(counter_name)
 
     display_name = env_name
     if tok.value == "{":
@@ -57,7 +61,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
 
         if not has_shared_counter:
             reset_counter = expander.parse_brace_name(bracket=True)
-            if reset_counter:
+            if counter_name and reset_counter:
                 expander.state.counter_within(counter_name, reset_counter)
 
     env_def = EnvironmentDefinition(
@@ -98,6 +102,13 @@ def register_newtheorem(expander: ExpanderCore):
         newtheorem_handler,
         is_global=True,
     )
+
+    ignored_theorem_pattern_N_blocks = {
+        "theoremstyle": 1,
+        "newtheoremstyle": 9,
+    }
+
+    register_ignore_handlers_util(expander, ignored_theorem_pattern_N_blocks)
 
 
 if __name__ == "__main__":

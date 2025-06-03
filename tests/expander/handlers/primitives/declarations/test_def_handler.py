@@ -215,8 +215,31 @@ def test_def_handler():
         expected = expander.expand("BAR HI BAR")
         assert_token_sequence(out, expected)
 
+    def test3():
+        text = r"\def\shout!#1!{shout #1}"
+        expander.expand(text)
+        assert expander.get_macro("shout")
+
+        out = expander.expand(r"\shout!hello!")
+        expected = expander.expand("shout hello")
+        assert_token_sequence(out, expected)
+
+    def test4():
+        text = r"\def\swap#1#2{S#2#1S}"
+        expander.expand(text)
+        assert expander.get_macro("swap")
+
+        out = expander.expand(r"\swap{hello}{world}")
+        expected = expander.expand("SworldhelloS")
+        assert_token_sequence(out, expected)
+        out = expander.expand(r"\swap a b")
+        expected = expander.expand("SbaS")
+        assert_token_sequence(out, expected)
+
     test1()
     test2()
+    test3()
+    test4()
 
 
 def test_def_redefine():

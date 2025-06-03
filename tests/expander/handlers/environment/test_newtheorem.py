@@ -17,6 +17,15 @@ def test_newtheorem():
         display_name="Definition",
     )
 
+    # test unnumbered with asterisk
+    expander.expand(r"\newtheorem*{remark}{Remark}")
+    assert expander.expand(r"\begin{remark}REM\end{remark}") == mock_env_token(
+        expander,
+        "remark",
+        content="REM",
+        display_name="Remark",
+    )
+
     # test with shared and nested counters
     text = r"""
 \newtheorem{theorem}{Theorem}[section]
@@ -58,3 +67,24 @@ def test_newtheorem():
 
     for text, env_token in text_env_pairs:
         assert expander.expand(text) == env_token
+
+
+def test_ignore_theorem_formatting():
+    expander = Expander()
+
+    # parsed and ignored
+    text = r"""
+\newtheoremstyle{mystyle}
+  {}
+  {}
+  {\itshape}
+  {}
+  {\bfseries}
+  {.}
+  { }
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}} POST""".strip()
+
+    out = expander.expand(text)
+    assert out == expander.expand(" POST")
+
+    assert expander.expand(r"\theoremstyle{mystyle}") == []

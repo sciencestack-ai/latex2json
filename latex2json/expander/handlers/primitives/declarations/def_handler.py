@@ -28,6 +28,7 @@ def get_parsed_args_from_usage_pattern(
 
         if pat.type == TokenType.PARAMETER:
             # expects argument
+            expander.skip_whitespace()
             tokens = expander.parse_immediate_token()
             if tokens is None:
                 expander.logger.warning(

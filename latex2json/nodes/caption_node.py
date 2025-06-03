@@ -1,6 +1,5 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
-from latex2json.nodes.environment_nodes import EnvironmentNode
 
 
 class CaptionNode(ASTNode):

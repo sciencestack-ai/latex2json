@@ -259,7 +259,9 @@ class ParserCore:
                 math_nodes=[], numbering=token.numbering, equation_type=eq_type
             )
         else:
-            env_node = EnvironmentNode(env_name, numbering=token.numbering)
+            env_node = EnvironmentNode(
+                env_name, numbering=token.numbering, display_name=token.display_name
+            )
         return env_node
 
     def parse_environment(

@@ -1,6 +1,5 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode
-from latex2json.nodes.environment_nodes import EnvironmentNode
 
 
 class CellNode(ASTNode):

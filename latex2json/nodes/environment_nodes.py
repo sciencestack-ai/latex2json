@@ -9,11 +9,13 @@ class EnvironmentNode(ASTNode):
         name: str,
         body: List[ASTNode] = [],
         numbering: Optional[str] = None,
+        display_name: Optional[str] = None,
     ):
         super().__init__()
         self.name = name
         self.numbering = numbering
         self.set_body(body)
+        self.display_name = display_name or name
 
     def set_body(self, body: List[ASTNode]):
         self.body = strip_whitespace_nodes(body)
@@ -29,6 +31,9 @@ class EnvironmentNode(ASTNode):
         if not isinstance(other, EnvironmentNode):
             return False
         same = self.name == other.name
+        if not same:
+            return False
+        same = self.display_name == other.display_name
         if not same:
             return False
         return check_asts_equal(self.body, other.body)

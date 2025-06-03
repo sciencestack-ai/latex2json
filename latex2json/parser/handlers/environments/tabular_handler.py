@@ -2,7 +2,7 @@ from typing import Dict, List, Callable
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import strip_whitespace_nodes, split_nodes_by_predicate
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
-from latex2json.nodes import ASTNode, EnvironmentNode, NewLineNode, AlignmentNode
+from latex2json.nodes import ASTNode, NewLineNode, AlignmentNode
 
 from latex2json.parser.parser_core import ParserCore
 
