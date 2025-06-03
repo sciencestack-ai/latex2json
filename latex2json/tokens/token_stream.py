@@ -15,12 +15,6 @@ class BaseTokenStream:
     def __init__(self):
         self._buffer: TokensBuffer = []  # List of (tokens, position at tokens)
 
-    def has_buffer(self):
-        return len(self._buffer) > 0
-
-    def get_buffer_stacks(self):
-        return len(self._buffer)
-
     def get_pos(self) -> Tuple[int, int]:
         """Get current position as (position, stack_depth)."""
         if self._buffer:

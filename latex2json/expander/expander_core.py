@@ -32,7 +32,7 @@ from latex2json.expander.state import ExpanderState, ProcessingMode
 from latex2json.expander.utils import parse_number_str_to_float
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
-from latex2json.tokens.token_stream import (
+from latex2json.tokens.token_stream2 import (
     TokenStream,
 )
 from latex2json.tokens.utils import (
@@ -319,7 +319,7 @@ class ExpanderCore:
         self.state.pop_scope()
 
     def push_tokens(self, tokens: List[Token]):
-        self.stream.push_tokens(tokens)
+        self.stream.push_tokens([t for t in tokens if t is not None])
 
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)
@@ -328,7 +328,7 @@ class ExpanderCore:
         return self.stream.consume()
 
     def skip_whitespace(self):
-        return self.stream.skip_whitespace()
+        self.stream.skip_whitespace()
 
     # main parsing logic
     def expand_next(self) -> Optional[List[Token]]:
@@ -379,6 +379,8 @@ class ExpanderCore:
         out = []
         while not self.eof():
             tok = self.parse_token()
+            if tok is None:
+                break
             if predicate(tok):
                 if not consume_predicate:  # if don't consume, push back
                     self.push_tokens([tok])
@@ -512,7 +514,7 @@ class ExpanderCore:
             # expand in case
             exp = self.expand_next()
             self.push_tokens(exp)
-            start_pos = self.skip_whitespace()
+            self.skip_whitespace()
             tok = self.peek()
             if tok is None:
                 return None
@@ -521,8 +523,6 @@ class ExpanderCore:
             if macro and isinstance(macro, RegisterMacro):
                 out = macro.parse_register(self, tok)
 
-            if out is None:
-                self.stream.set_pos(*start_pos)
             return out
         return None
 
@@ -1019,14 +1019,10 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    from latex2json.expander.handlers.registers.base_register_handlers import (
-        register_base_register_macros,
-    )
-
     expander = ExpanderCore()
-    register_base_register_macros(expander)
-    dimen_100_value = 10
-    expander.set_register(RegisterType.DIMEN, 100, dimen_100_value)
-    expander.set_text(r"2\dimen100")  # should be 2x dimen_100_value
-    print(expander.parse_dimensions())
-    # print(expander.parse_register())
+
+    # base component only
+    expander.set_text(r"123\unknown4")
+    expander.parse_integer() == 123
+    expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "unknown")
+    print(expander.peek())
