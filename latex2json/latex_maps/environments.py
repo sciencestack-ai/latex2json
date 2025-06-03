@@ -8,10 +8,12 @@ class EnvironmentDefinition:
     name: str
     begin_handler: Optional[Callable] = None
     end_handler: Optional[Callable] = None
+    display_name: Optional[str] = None
 
     def __init__(
         self,
         name: str,
+        display_name: Optional[str] = None,
         begin_definition: List[Token] = [],
         end_definition: List[Token] = [],
         num_args: int = 0,
@@ -21,6 +23,9 @@ class EnvironmentDefinition:
         has_direct_command: bool = True,  # e.g. \begin{document} -> \document + \enddocument
     ):
         self.name = name
+        if not display_name:
+            display_name = name
+        self.display_name = display_name
         self.begin_definition = begin_definition
         self.end_definition = end_definition
         self.num_args = num_args

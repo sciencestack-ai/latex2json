@@ -23,6 +23,7 @@ def mock_env_token(
     req_args: List[str] = [],
     numbering: Optional[str] = None,
     is_math_env: bool = False,
+    display_name: Optional[str] = None,
 ):
     """Create a mock environment token sequence with optional arguments and numbering.
 
@@ -35,7 +36,10 @@ def mock_env_token(
         numbering: Optional numbering for the environment
     """
     begin_token = EnvironmentStartToken(
-        env_name, numbering=numbering, is_math_env=is_math_env
+        env_name,
+        numbering=numbering,
+        is_math_env=is_math_env,
+        display_name=display_name,
     )
     end_token = Token(TokenType.ENVIRONMENT_END, env_name)
 
@@ -193,3 +197,15 @@ def test_math_environments():
     expander.expand(r"\end{align}")
     assert expander.state.mode == base_mode
     assert not expander.state.is_math_mode
+
+
+def test_floatname():
+    expander = Expander()
+
+    # change env displayname
+    expander.expand(r"\floatname{figure}{Fig.}")
+
+    fig = expander.expand(r"\begin{figure}[h]\end{figure}")
+    assert fig == mock_env_token(
+        expander, "figure", content="", display_name="Fig.", is_math_env=False
+    )

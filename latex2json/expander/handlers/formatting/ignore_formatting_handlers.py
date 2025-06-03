@@ -3,7 +3,6 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 
 ignored_formatting_pattern_N_blocks = {
     # Float-related formatting
-    "floatname": 2,
     "floatstyle": 1,
     "restylefloat": 1,
     # Section-related formatting

@@ -3,12 +3,33 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.latex_maps.environments import (
     COMMON_ENVIRONMENTS,
 )
+from latex2json.tokens.types import Token
+
+
+def floatname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    env_name = expander.parse_brace_name()
+    if env_name is None:
+        expander.logger.warning(f"Warning: \\floatname: Missing environment name")
+        return None
+    display_name = expander.parse_brace_name()
+    if display_name is None:
+        expander.logger.warning(f"Warning: \\floatname: Missing display name")
+        return None
+
+    env_def = expander.get_environment_definition(env_name)
+    if env_def is None:
+        # expander.logger.warning(f"Warning: \\floatname: Unknown environment {env_name}")
+        return None
+    env_def.display_name = display_name
+    return []
 
 
 def register_base_environment_handlers(expander: ExpanderCore):
     """Register basic environments that just wrap their content."""
     for env_name, env_def in COMMON_ENVIRONMENTS.items():
         expander.register_environment(env_def.copy())
+
+    expander.register_handler("floatname", floatname_handler, is_global=True)
 
 
 if __name__ == "__main__":

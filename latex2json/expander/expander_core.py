@@ -848,17 +848,21 @@ class ExpanderCore:
 
         return name
 
-    def parse_brace_name(self) -> Optional[str]:
+    def parse_brace_name(self, bracket=False) -> Optional[str]:
         self.skip_whitespace()
 
         tok = self.peek()
         if not tok:
             return None
 
-        name = self.parse_brace_as_tokens()
-        expanded_name = self.expand_tokens(name)
+        tokens = (
+            self.parse_brace_as_tokens()
+            if not bracket
+            else self.parse_bracket_as_tokens()
+        )
+        expanded = self.expand_tokens(tokens)
         out_name = self.convert_tokens_to_str(
-            expanded_name
+            expanded
         )  # don't strip, env names are literal
 
         return out_name
@@ -918,6 +922,11 @@ class ExpanderCore:
 
         return args
 
+    def get_environment_definition(
+        self, env_name: str
+    ) -> Optional[EnvironmentDefinition]:
+        return self.state.get_environment_definition(env_name)
+
     def register_environment(
         self,
         env_def: EnvironmentDefinition,
@@ -958,8 +967,12 @@ class ExpanderCore:
             numbering = None
             if counter_name:
                 numbering = state.get_counter_as_format(counter_name)
+
             begin_token = EnvironmentStartToken(
-                env_name, numbering=numbering, is_math_env=is_math
+                env_name,
+                display_name=env_def.display_name,
+                numbering=numbering,
+                is_math_env=is_math,
             )
             return [begin_token] + subbed
 

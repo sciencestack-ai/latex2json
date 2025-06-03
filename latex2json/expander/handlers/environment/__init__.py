@@ -9,9 +9,15 @@ from latex2json.expander.handlers.environment.environment_handlers import (
 from latex2json.expander.handlers.environment.float_handler import (
     register_float_handler,
 )
+from latex2json.expander.handlers.environment.newenvironment import (
+    register_newenvironment,
+)
+from latex2json.expander.handlers.environment.newtheorem import register_newtheorem
 
 
 def register_environment_handlers(expander: ExpanderCore):
     register_base_environment_handlers(expander)
     register_caption_handler(expander)
     register_float_handler(expander)
+    register_newenvironment(expander)
+    register_newtheorem(expander)

@@ -84,17 +84,33 @@ class Token:
 
 class EnvironmentStartToken(Token):
     def __init__(
-        self, name: str, numbering: Optional[str] = None, is_math_env: bool = False
+        self,
+        name: str,
+        numbering: Optional[str] = None,
+        is_math_env: bool = False,
+        display_name: Optional[str] = None,
     ):
         super().__init__(TokenType.ENVIRONMENT_START, value=name)
-        self.numbering = numbering
         self.name = name
+        self.numbering = numbering
         self.is_math_env = is_math_env
+        self.display_name = display_name if display_name else name
 
     def copy(self) -> "EnvironmentStartToken":
         return EnvironmentStartToken(
-            name=self.name, numbering=self.numbering, is_math_env=self.is_math_env
+            name=self.name,
+            numbering=self.numbering,
+            is_math_env=self.is_math_env,
+            display_name=self.display_name,
         )
+
+    def __str__(self) -> str:
+        out = f"{self.type.name:18} -> {self.name} ({self.display_name})"
+        if self.numbering:
+            out += f" [Numbering: {self.numbering}]"
+        if self.is_math_env:
+            out += " [Math]"
+        return out
 
     def __eq__(self, other: Token) -> bool:
         if not isinstance(other, EnvironmentStartToken):
@@ -103,6 +119,7 @@ class EnvironmentStartToken(Token):
             super().__eq__(other)
             and self.numbering == other.numbering
             and self.is_math_env == other.is_math_env
+            and self.display_name == other.display_name
         )
 
 
