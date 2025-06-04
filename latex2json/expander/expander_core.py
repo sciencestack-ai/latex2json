@@ -585,13 +585,10 @@ class ExpanderCore:
             dims = self.parse_dimensions()
             self.skip_whitespace()
 
-        content = self.parse_brace_as_tokens()
+        content = self.parse_brace_as_tokens(expand=True)
         if content is None:
             self.logger.warning(f"Could not find {...} after \\{box_type}")
             return None
-
-        # immediate expansion
-        content = self.expand_tokens(content)
 
         return Box(type=box_type, content=content)
 
@@ -808,13 +805,21 @@ class ExpanderCore:
 
         return out_tokens
 
-    def parse_brace_as_tokens(self) -> Optional[List[Token]]:
-        return self.parse_begin_end_as_tokens(is_begin_group_token, is_end_group_token)
+    def parse_brace_as_tokens(self, expand=False) -> Optional[List[Token]]:
+        tokens = self.parse_begin_end_as_tokens(
+            is_begin_group_token, is_end_group_token
+        )
+        if expand and tokens:
+            tokens = self.expand_tokens(tokens)
+        return tokens
 
-    def parse_bracket_as_tokens(self) -> Optional[List[Token]]:
-        return self.parse_begin_end_as_tokens(
+    def parse_bracket_as_tokens(self, expand=False) -> Optional[List[Token]]:
+        tokens = self.parse_begin_end_as_tokens(
             is_begin_bracket_token, is_end_bracket_token
         )
+        if expand and tokens:
+            tokens = self.expand_tokens(tokens)
+        return tokens
 
     def set_catcode(self, char_ord: int, catcode: Catcode):
         self.state.set_catcode(char_ord, catcode)
@@ -868,14 +873,12 @@ class ExpanderCore:
             return None
 
         tokens = (
-            self.parse_brace_as_tokens()
+            self.parse_brace_as_tokens(expand=True)
             if not bracket
-            else self.parse_bracket_as_tokens()
+            else self.parse_bracket_as_tokens(expand=True)
         )
-        expanded = self.expand_tokens(tokens)
-        out_name = self.convert_tokens_to_str(
-            expanded
-        )  # don't strip, env names are literal
+        # don't strip, env names are literal
+        out_name = self.convert_tokens_to_str(tokens)
 
         return out_name
 
@@ -1018,11 +1021,11 @@ class ExpanderCore:
                 is_global=is_global,
             )
 
-    def parse_braced_blocks(self, N_blocks: int = 2) -> List[List[Token]]:
+    def parse_braced_blocks(self, N_blocks: int = 2, expand=False) -> List[List[Token]]:
         blocks = []
         for _ in range(N_blocks):
             self.skip_whitespace()
-            block = self.parse_brace_as_tokens()
+            block = self.parse_brace_as_tokens(expand=expand)
             if block is None:
                 break
             blocks.append(block)

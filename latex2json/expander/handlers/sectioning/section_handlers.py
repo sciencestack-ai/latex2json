@@ -18,7 +18,7 @@ def make_section_handler(
         opt_arg = expander.parse_bracket_as_tokens()
 
         expander.skip_whitespace()
-        content = expander.parse_brace_as_tokens()
+        content = expander.parse_brace_as_tokens(expand=True) or []
 
         numbering = None
         if (
@@ -29,9 +29,6 @@ def make_section_handler(
             expander.state.step_counter(counter_name)  # e.g. section/subsection.. +1
             numbering = expander.state.get_counter_as_format(counter_name)
 
-        expanded_content = []
-        if content:
-            expanded_content = expander.expand_tokens(content)
         expanded_opt_args = []
         if opt_arg:
             exp_opt_arg = expander.expand_tokens(opt_arg)
@@ -40,7 +37,7 @@ def make_section_handler(
 
         out_token = CommandWithArgsToken(
             name=cmd_name,
-            args=[expanded_content],
+            args=[content],
             opt_args=expanded_opt_args,
             numbering=numbering,
         )
