@@ -49,9 +49,8 @@ class ParserStateLayer:
         """
         styles = []
         font = self.font
-        # parent_font = self.parent.font if self.parent else DEFAULT_FONT
 
-        # Check each font attribute against parent (or default if no parent)
+        # Check each font attribute against default
         if font.series.value != DEFAULT_FONT.series.value:
             styles.append(font.series.value)
         if font.shape.value != DEFAULT_FONT.shape.value:
@@ -60,6 +59,12 @@ class ParserStateLayer:
             styles.append(font.size.value)
         if font.family.value != DEFAULT_FONT.family.value:
             styles.append(font.family.value)
+        if font.decoration.value != DEFAULT_FONT.decoration.value:
+            styles.append(font.decoration.value)
+        if font.transform.value != DEFAULT_FONT.transform.value:
+            styles.append(font.transform.value)
+        if font.position.value != DEFAULT_FONT.position.value:
+            styles.append(font.position.value)
         if font.color != DEFAULT_FONT.color:
             styles.append(f"color={font.color}")
 
@@ -118,22 +123,6 @@ class ParserState:
     def list_attributes(self) -> ListAttributes:
         return self.current.list_attributes
 
-    # --- Methods to Modify State (Delegated to current layer) ---
-    def set_font_series(self, series: FontStyle):
-        self.current.font.series = series
-
-    def set_font_shape(self, shape: FontStyle):
-        self.current.font.shape = shape
-
-    def set_font_size(self, size: FontStyle):
-        self.current.font.size = size
-
-    def set_font_family(self, family: FontStyle):
-        self.current.font.family = family
-
-    def set_font_color(self, color_hex: str):
-        self.current.font.color = color_hex
-
     def get_styles_as_string(self) -> List[str]:
         return self.current.get_styles_as_string()
 
@@ -151,23 +140,46 @@ class ParserState:
 
     def set_font(self, style: FontStyle):
         """Set font attribute based on FontStyle, toggling back to default if same style is set"""
+        font = self.current.font
+
         if style.type == FontStyleType.SERIES:
-            if self.current.font.series.value == style.value:
-                self.set_font_series(DEFAULT_FONT.series)
+            if font.series.value == style.value:
+                font.series = DEFAULT_FONT.series
             else:
-                self.set_font_series(style)
+                font.series = style
         elif style.type == FontStyleType.SHAPE:
-            if self.current.font.shape.value == style.value:
-                self.set_font_shape(DEFAULT_FONT.shape)
+            if font.shape.value == style.value:
+                font.shape = DEFAULT_FONT.shape
             else:
-                self.set_font_shape(style)
+                font.shape = style
         elif style.type == FontStyleType.SIZE:
-            if self.current.font.size.value == style.value:
-                self.set_font_size(DEFAULT_FONT.size)
+            if font.size.value == style.value:
+                font.size = DEFAULT_FONT.size
             else:
-                self.set_font_size(style)
+                font.size = style
         elif style.type == FontStyleType.FAMILY:
-            if self.current.font.family.value == style.value:
-                self.set_font_family(DEFAULT_FONT.family)
+            if font.family.value == style.value:
+                font.family = DEFAULT_FONT.family
             else:
-                self.set_font_family(style)
+                font.family = style
+        elif style.type == FontStyleType.DECORATION:
+            if font.decoration.value == style.value:
+                font.decoration = DEFAULT_FONT.decoration
+            else:
+                font.decoration = style
+        elif style.type == FontStyleType.TRANSFORM:
+            if font.transform.value == style.value:
+                font.transform = DEFAULT_FONT.transform
+            else:
+                font.transform = style
+        elif style.type == FontStyleType.POSITION:
+            if font.position.value == style.value:
+                font.position = DEFAULT_FONT.position
+            else:
+                font.position = style
+        elif style.type == FontStyleType.COLOR:
+            # Color is handled differently as it's a string, not a FontStyle
+            if font.color == style.value:
+                font.color = DEFAULT_FONT.color
+            else:
+                font.color = style.value

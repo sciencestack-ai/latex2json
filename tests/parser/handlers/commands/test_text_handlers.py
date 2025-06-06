@@ -98,6 +98,7 @@ def test_nested_text_styles():
     # notice \bf + shape(\it vs \sc) switches on/off
     text = r"""
     {\bf BOLD \it BOLD-ITALIC \sc BOLD-SC \it BOLD-ITALIC \it BOLD \bf NORMAL}
+    {\color{blue} BLUE \color{blue} NONBLUE}
 """.strip()
     out = parser.parse(text)
 
@@ -108,6 +109,8 @@ def test_nested_text_styles():
         ("BOLD-ITALIC", ["bold", "italic"]),
         ("BOLD", ["bold"]),
         ("NORMAL", []),
+        ("BLUE", ["color=blue"]),
+        ("NONBLUE", []),
     ]
 
     assert_output_matches_expected(out, expected_text_style_pairs)

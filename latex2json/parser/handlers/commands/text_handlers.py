@@ -7,6 +7,7 @@ from latex2json.latex_maps.fonts import (
     FontStyle,
     LEGACY_TO_FONT_STYLE,
     LATEX_TO_FONT_STYLE,
+    FontStyleType,
 )
 from latex2json.tokens.types import Token
 
@@ -48,6 +49,20 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     return nodes
 
 
+def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    parser.skip_whitespace()
+    color_name_nodes = parser.parse_brace_as_nodes()
+    if not color_name_nodes:
+        parser.logger.warning("Warning: \\color expects a color name")
+        return []
+
+    color_name = "".join(
+        [node.text for node in color_name_nodes if isinstance(node, TextNode)]
+    )
+    parser.set_font(FontStyle(FontStyleType.COLOR, color_name))
+    return []
+
+
 def register_text_handlers(parser: ParserCore):
     # Register legacy handlers
     for cmd, style_obj in LEGACY_TO_FONT_STYLE.items():
@@ -57,8 +72,9 @@ def register_text_handlers(parser: ParserCore):
     for cmd, style_obj in LATEX_TO_FONT_STYLE.items():
         parser.register_handler(cmd, make_text_handler(style_obj))
 
-    # Special handlers
+    # Color handlers
     parser.register_handler("textcolor", textcolor_handler)
+    parser.register_handler("color", legacy_color_handler)
 
 
 if __name__ == "__main__":

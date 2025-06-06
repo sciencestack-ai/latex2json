@@ -13,6 +13,7 @@ class FontStyleType(Enum):
     DECORATION = auto()
     TRANSFORM = auto()
     POSITION = auto()
+    COLOR = auto()
 
 
 @dataclass
