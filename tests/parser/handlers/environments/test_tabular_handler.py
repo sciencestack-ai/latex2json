@@ -50,9 +50,11 @@ def test_nested_tabular():
     text = r"""
     \def\postinner{POST INNER TABLE}
     \begin{tabular}{c}
+        \label{outer:tab1}
         FIRST 
         &
         \begin{tabular}{c}
+            \label{inner:tab1}
             \begin{tabular}{c} 111 \end{tabular} & 22\& \\ 
             33 & 44
         \end{tabular} \postinner
@@ -68,6 +70,8 @@ def test_nested_tabular():
 
     assert len(out) == 1 and isinstance(out[0], TabularNode)
     tabular = out[0]
+
+    assert tabular.labels == ["outer:tab1"]
 
     assert len(tabular.row_nodes) == 1
 
@@ -87,6 +91,7 @@ def test_nested_tabular():
     assert isinstance(second_cell.body[1], TextNode)
     assert second_cell.body[1].text == " POST INNER TABLE"
     inner_tab1 = second_cell.body[0]
+    assert inner_tab1.labels == ["inner:tab1"]
     assert len(inner_tab1.row_nodes) == 2
     inner_tab1_r1 = inner_tab1.row_nodes[0]
     inner_tab1_r2 = inner_tab1.row_nodes[1]

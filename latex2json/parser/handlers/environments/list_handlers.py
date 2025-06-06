@@ -47,7 +47,11 @@ def list_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNo
     env_nodes: List[ASTNode] = out.body
     items = split_into_items(env_nodes)
 
-    return [ListNode(items, list_type=list_type, is_inline=is_inline)]
+    list_node = ListNode(items, list_type=list_type, is_inline=is_inline)
+    # re-assign labels from environment node
+    list_node.labels = out.labels
+
+    return [list_node]
 
 
 LIST_ENV_NAMES = ["itemize", "enumerate", "description"]
@@ -66,6 +70,7 @@ if __name__ == "__main__":
 
     text = r"""
     \begin{itemize}
+    \label{list:item1}
     \item Item 1 \begin{itemize}
                 \item[3] Item 1.1
                 \item Item 1.2

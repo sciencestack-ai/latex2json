@@ -40,11 +40,11 @@ def merge_nodes_into_cellnode(
 
 def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
     # parse as generic environment first
-    out = parser.parse_environment(token)
-    if not out:
+    env_node = parser.parse_environment(token)
+    if not env_node:
         return []
 
-    env_nodes: List[ASTNode] = out.body
+    env_nodes: List[ASTNode] = env_node.body
     row_nodes: List[RowNode] = []
     if env_nodes:
         # Split into rows and columns using node-based splitting
@@ -57,7 +57,11 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
         while row_nodes and row_nodes[-1].is_null_row():
             row_nodes.pop()
 
-    return [TabularNode(row_nodes)]
+    tabular_node = TabularNode(row_nodes)
+    # re-assign labels from environment node
+    tabular_node.labels = env_node.labels
+
+    return [tabular_node]
 
 
 TABULAR_ENV_NAMES = ["tabular", "longtable", "tabularx", "tabulary"]
