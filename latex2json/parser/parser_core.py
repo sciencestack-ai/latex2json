@@ -460,6 +460,15 @@ class ParserCore:
             scoped=scoped,
         )
 
+    def parse_braced_blocks(self, n_blocks: int) -> Optional[List[ASTNode]]:
+        blocks: List[List[ASTNode]] = []
+        for _ in range(n_blocks):
+            block = self.parse_brace_as_nodes()
+            if block is None:
+                break
+            blocks.append(block)
+        return blocks
+
     def parse_bracket_as_nodes(self, scoped=False) -> Optional[List[ASTNode]]:
         return self.parse_begin_end_as_nodes(
             is_begin_bracket_token,

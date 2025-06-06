@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, CommandNode
 from latex2json.parser.parser_core import ParserCore, Handler
 from latex2json.tokens.types import Token
@@ -46,3 +46,36 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
         ]
 
     return generic_command_handler
+
+
+def make_N_blocks_ignore_handler(command: str, n_blocks: int) -> Handler:
+    def ignore_handler(parser: ParserCore, token: Token) -> Optional[list[Token]]:
+        blocks = parser.parse_braced_blocks(n_blocks, expand=True)
+        return []
+
+    return ignore_handler
+
+
+def make_argspec_ignore_handler(command: str, argspec: str) -> Handler:
+    handler = make_generic_command_handler(command, argspec)
+
+    def ignore_handler(parser: ParserCore, token: Token) -> Optional[list[Token]]:
+        tokens = handler(parser, token)
+        return []
+
+    return ignore_handler
+
+
+def register_ignore_handlers_util(
+    parser: ParserCore, ignore_patterns: dict[str, int | str]
+):
+    """Register all formatting-related command handlers"""
+    for command, spec in ignore_patterns.items():
+        if isinstance(spec, str):
+            handler = make_argspec_ignore_handler(command, spec)
+        else:
+            handler = make_N_blocks_ignore_handler(command, spec)
+        parser.register_handler(
+            command,
+            handler,
+        )

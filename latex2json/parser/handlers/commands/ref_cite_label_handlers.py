@@ -1,9 +1,6 @@
 from latex2json.nodes import CommandNode, RefNode
-from latex2json.nodes.ref_cite_nodes import CiteNode
+from latex2json.nodes.ref_cite_nodes import CiteNode, URLNode
 from latex2json.nodes.utils import convert_nodes_to_str
-from latex2json.parser.handlers.commands.command_handler_utils import (
-    make_generic_command_handler,
-)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 
@@ -116,6 +113,28 @@ def citealias_handler(parser: ParserCore, token: Token):
     return [CiteNode([cite_key_str], title=alias_str)]
 
 
+def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
+    def url_handler(parser: ParserCore, token: Token):
+        parser.skip_whitespace()
+        url_nodes = parser.parse_brace_as_nodes()
+        if not url_nodes:
+            parser.logger.warning("Warning: \\url expects a URL")
+            return None
+        url_str = convert_nodes_to_str(url_nodes)
+        title = None
+
+        if parse_title:
+            parser.skip_whitespace()
+            title_nodes = parser.parse_brace_as_nodes()
+            if title_nodes:
+                title_str = convert_nodes_to_str(title_nodes)
+                title = title_str
+
+        return [URLNode(path_prefix + url_str, title=title)]
+
+    return url_handler
+
+
 def register_ref_label_handlers(parser: ParserCore):
     # labels
     parser.register_handler("label", label_handler)
@@ -138,6 +157,14 @@ def register_ref_label_handlers(parser: ParserCore):
     # citealias
     for command in ["citetalias", "citepalias"]:
         parser.register_handler(command, citealias_handler)
+
+    # urls
+    for url_command in ["url", "path"]:
+        parser.register_handler(url_command, make_url_handler(parse_title=False))
+    parser.register_handler("href", make_url_handler(parse_title=True))
+    parser.register_handler(
+        "doi", make_url_handler(parse_title=False, path_prefix="https://doi.org/")
+    )
 
 
 if __name__ == "__main__":

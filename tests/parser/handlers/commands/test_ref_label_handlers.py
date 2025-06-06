@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.nodes.base_nodes import CommandNode, TextNode
-from latex2json.nodes.ref_cite_nodes import CiteNode, RefNode
+from latex2json.nodes.ref_cite_nodes import CiteNode, RefNode, URLNode
 from latex2json.nodes.tabular_node import TabularNode
 from latex2json.parser.parser import Parser
 
@@ -146,4 +146,39 @@ def test_citealias():
     assert len(out) == 1
     assert isinstance(out[0], CiteNode)
     assert out[0].references == ["bbb"]
+    assert out[0].title is None
+
+
+def test_urls():
+    parser = Parser()
+
+    text = r"\url{https://www.google.com}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], URLNode)
+    assert out[0].url == "https://www.google.com"
+
+    text = r"\href {https://www.google.com} {Google}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], URLNode)
+    assert out[0].url == "https://www.google.com"
+    assert out[0].title == "Google"
+
+    text = r"\doi {10.1000/182}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], URLNode)
+    assert out[0].url == "https://doi.org/10.1000/182"
+    assert out[0].title is None
+
+    text = r"\path{https://www.google.com}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], URLNode)
+    assert out[0].url == "https://www.google.com"
     assert out[0].title is None
