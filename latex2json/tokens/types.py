@@ -166,6 +166,16 @@ class CommandWithArgsToken(Token):
             and self.numbering == other.numbering
         )
 
+    def __str__(self) -> str:
+        out = f"{self.type.name:18} -> {self.name}"
+        if self.opt_args:
+            out += (
+                "[" + "".join([arg.value for arg in self.opt_args for arg in arg]) + "]"
+            )
+        if self.args:
+            out += "{" + "".join([arg.value for arg in self.args for arg in arg]) + "}"
+        return out
+
 
 WHITESPACE_TOKEN = Token(TokenType.CHARACTER, " ", catcode=Catcode.SPACE)
 

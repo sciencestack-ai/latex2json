@@ -16,7 +16,7 @@ def is_end_float_token(token: Token) -> bool:
 def float_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle float tokens."""
     expander.skip_whitespace()
-    env_name_tokens = expander.parse_brace_as_tokens()
+    env_name_tokens = expander.parse_brace_as_tokens(expand=True)
     if not env_name_tokens:
         expander.logger.warning("\\@float: Missing environment name")
         return None

@@ -38,6 +38,7 @@ def case_transform_handler(
             expander.push_tokens(exp)
         expander.skip_whitespace()
 
+    # dont expand tokens, \uppercase\lowercase only transforms nonexpanded tokens i.e. letters
     tokens = expander.parse_brace_as_tokens()
     if tokens is None:
         expander.logger.warning(

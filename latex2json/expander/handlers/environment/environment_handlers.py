@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.latex_maps.environments import (
     COMMON_ENVIRONMENTS,
 )
@@ -31,6 +32,16 @@ def register_base_environment_handlers(expander: ExpanderCore):
 
     expander.register_handler("floatname", floatname_handler, is_global=True)
 
+    # table stuff to ignore?
+    ignored_env_pattern_N_blocks = {
+        "newcolumntype": "{[{",
+        "columncolor": 1,  # Column colors
+        "rowcolor": 1,  # Row colors
+        "arrayrulewidth": 1,  # Table rule width
+    }
+
+    register_ignore_handlers_util(expander, ignored_env_pattern_N_blocks)
+
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
@@ -51,7 +62,7 @@ if __name__ == "__main__":
     #     \end{equation*}
     # """
     text = r"""
-    \begin{figure}[htb]Content\end{figure}
+    \newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
     """.strip()
     out = expander.expand(text)
     # print(expander.state.get_counter_as_format("equation", hierarchy=True))

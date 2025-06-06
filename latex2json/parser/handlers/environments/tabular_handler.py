@@ -44,7 +44,7 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     if not out:
         return []
 
-    env_nodes: List[ASTNode] = out[0].body
+    env_nodes: List[ASTNode] = out.body
     row_nodes: List[RowNode] = []
     if env_nodes:
         # Split into rows and columns using node-based splitting

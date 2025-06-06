@@ -1,4 +1,5 @@
 from logging import Logger
+import os
 from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
 
 
@@ -319,7 +320,18 @@ class ExpanderCore:
         self.state.pop_scope()
 
     def push_tokens(self, tokens: List[Token]):
-        self.stream.push_tokens(tokens)
+        self.stream.push_tokens([t for t in tokens if t is not None])
+
+    def push_text(self, text: str):
+        self.stream.push_text(text)
+
+    def push_file(self, file_path: str):
+        if not os.path.exists(file_path):
+            expander.logger.warning(f"Input file {file_path} does not exist")
+            return []
+
+        input_text = open(file_path).read()
+        self.push_text(input_text)
 
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)
@@ -328,7 +340,7 @@ class ExpanderCore:
         return self.stream.consume()
 
     def skip_whitespace(self):
-        return self.stream.skip_whitespace()
+        self.stream.skip_whitespace()
 
     # main parsing logic
     def expand_next(self) -> Optional[List[Token]]:
@@ -379,6 +391,8 @@ class ExpanderCore:
         out = []
         while not self.eof():
             tok = self.parse_token()
+            if tok is None:
+                break
             if predicate(tok):
                 if not consume_predicate:  # if don't consume, push back
                     self.push_tokens([tok])
@@ -512,7 +526,7 @@ class ExpanderCore:
             # expand in case
             exp = self.expand_next()
             self.push_tokens(exp)
-            start_pos = self.skip_whitespace()
+            self.skip_whitespace()
             tok = self.peek()
             if tok is None:
                 return None
@@ -521,8 +535,6 @@ class ExpanderCore:
             if macro and isinstance(macro, RegisterMacro):
                 out = macro.parse_register(self, tok)
 
-            if out is None:
-                self.stream.set_pos(*start_pos)
             return out
         return None
 
@@ -573,13 +585,10 @@ class ExpanderCore:
             dims = self.parse_dimensions()
             self.skip_whitespace()
 
-        content = self.parse_brace_as_tokens()
+        content = self.parse_brace_as_tokens(expand=True)
         if content is None:
             self.logger.warning(f"Could not find {...} after \\{box_type}")
             return None
-
-        # immediate expansion
-        content = self.expand_tokens(content)
 
         return Box(type=box_type, content=content)
 
@@ -796,13 +805,21 @@ class ExpanderCore:
 
         return out_tokens
 
-    def parse_brace_as_tokens(self) -> Optional[List[Token]]:
-        return self.parse_begin_end_as_tokens(is_begin_group_token, is_end_group_token)
+    def parse_brace_as_tokens(self, expand=False) -> Optional[List[Token]]:
+        tokens = self.parse_begin_end_as_tokens(
+            is_begin_group_token, is_end_group_token
+        )
+        if expand and tokens:
+            tokens = self.expand_tokens(tokens)
+        return tokens
 
-    def parse_bracket_as_tokens(self) -> Optional[List[Token]]:
-        return self.parse_begin_end_as_tokens(
+    def parse_bracket_as_tokens(self, expand=False) -> Optional[List[Token]]:
+        tokens = self.parse_begin_end_as_tokens(
             is_begin_bracket_token, is_end_bracket_token
         )
+        if expand and tokens:
+            tokens = self.expand_tokens(tokens)
+        return tokens
 
     def set_catcode(self, char_ord: int, catcode: Catcode):
         self.state.set_catcode(char_ord, catcode)
@@ -856,14 +873,12 @@ class ExpanderCore:
             return None
 
         tokens = (
-            self.parse_brace_as_tokens()
+            self.parse_brace_as_tokens(expand=True)
             if not bracket
-            else self.parse_bracket_as_tokens()
+            else self.parse_bracket_as_tokens(expand=True)
         )
-        expanded = self.expand_tokens(tokens)
-        out_name = self.convert_tokens_to_str(
-            expanded
-        )  # don't strip, env names are literal
+        # don't strip, env names are literal
+        out_name = self.convert_tokens_to_str(tokens)
 
         return out_name
 
@@ -1006,11 +1021,11 @@ class ExpanderCore:
                 is_global=is_global,
             )
 
-    def parse_braced_blocks(self, N_blocks: int = 2) -> List[List[Token]]:
+    def parse_braced_blocks(self, N_blocks: int = 2, expand=False) -> List[List[Token]]:
         blocks = []
         for _ in range(N_blocks):
             self.skip_whitespace()
-            block = self.parse_brace_as_tokens()
+            block = self.parse_brace_as_tokens(expand=expand)
             if block is None:
                 break
             blocks.append(block)
@@ -1019,14 +1034,10 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    from latex2json.expander.handlers.registers.base_register_handlers import (
-        register_base_register_macros,
-    )
-
     expander = ExpanderCore()
-    register_base_register_macros(expander)
-    dimen_100_value = 10
-    expander.set_register(RegisterType.DIMEN, 100, dimen_100_value)
-    expander.set_text(r"2\dimen100")  # should be 2x dimen_100_value
-    print(expander.parse_dimensions())
-    # print(expander.parse_register())
+
+    # base component only
+    expander.set_text(r"123\unknown4")
+    expander.parse_integer() == 123
+    expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "unknown")
+    print(expander.peek())

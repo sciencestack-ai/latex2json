@@ -10,9 +10,9 @@ def parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
     expander.skip_whitespace()
     counter_name = None
     if brackets:
-        counter_name = expander.parse_bracket_as_tokens()
+        counter_name = expander.parse_bracket_as_tokens(expand=True)
     else:
-        counter_name = expander.parse_brace_as_tokens()
+        counter_name = expander.parse_brace_as_tokens(expand=True)
     if counter_name is None:
         return None
 
@@ -32,7 +32,7 @@ def parse_counter_args(
 
     # Get the value argument
     expander.skip_whitespace()
-    value = expander.parse_brace_as_tokens()
+    value = expander.parse_brace_as_tokens(expand=True)
     if value is None:
         expander.logger.warning(rf"\{command_name}: Missing or invalid value argument")
         return None
