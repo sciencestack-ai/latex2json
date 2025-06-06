@@ -142,6 +142,9 @@ def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
 
 
 def register_def(expander: ExpanderCore):
+    # skip \long
+    expander.register_handler("\\long", lambda expander, token: [], is_global=True)
+
     expander.register_macro(
         "\\def", DefMacro("\\def", is_lazy=True, is_global=False), is_global=True
     )

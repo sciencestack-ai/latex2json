@@ -13,14 +13,14 @@ class Expander(ExpanderCore):
     ):
         super().__init__(tokenizer, logger)
 
-        self._init_primitives()
+        self._register_handlers_and_packages()
 
-    def _init_primitives(self):
-        # Define core TeX/LaTeX primitives in the base registry.
-        # Primitives are defined using define_primitive which uses set(is_global=True)
+    def _register_handlers_and_packages(self):
         from latex2json.expander.handlers import register_handlers
+        from latex2json.expander.packages import register_packages
 
         register_handlers(self)
+        register_packages(self)
 
 
 if __name__ == "__main__":

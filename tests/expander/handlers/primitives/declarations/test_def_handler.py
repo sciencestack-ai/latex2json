@@ -190,7 +190,7 @@ def test_def_handler():
 
     def test1():
         assert not expander.get_macro("test")
-        expander.expand(r"\def \test[#1:#2]{TEST #1:#2 ENDTEST}")
+        expander.expand(r"\long\def \test[#1:#2]{TEST #1:#2 ENDTEST}")
         assert expander.get_macro("test")
 
         out = expander.expand(r"\test[HELLO:world]")
@@ -248,7 +248,7 @@ def test_def_redefine():
 
     text = r"""
     \def\foo{FOO}
-    \def\bar{\foo}
+    \long\def\bar{\foo}
     \def\foo{BAR}
     """.strip()
 
@@ -383,7 +383,7 @@ def test_xdef():
     {
         \def\foo{FOO}
         \xdef\bar#1{\foo #1} % global
-        \def\foo{BAR}
+        \long\def\foo{BAR}
     }
     \bar{3} % FOO 3 due to immediate expansion
     """.strip()
