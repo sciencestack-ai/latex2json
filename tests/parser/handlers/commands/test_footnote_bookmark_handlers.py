@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.nodes.base_nodes import CommandNode, TextNode
-from latex2json.nodes.ref_cite_nodes import FootnoteNode
+from latex2json.nodes.ref_cite_url_nodes import FootnoteNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 

@@ -1,5 +1,5 @@
 from latex2json.nodes import CommandNode, RefNode
-from latex2json.nodes.ref_cite_nodes import CiteNode, URLNode
+from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
 from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token

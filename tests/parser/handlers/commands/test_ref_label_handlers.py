@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.nodes.base_nodes import CommandNode, TextNode
-from latex2json.nodes.ref_cite_nodes import CiteNode, RefNode, URLNode
+from latex2json.nodes.ref_cite_url_nodes import CiteNode, RefNode, URLNode
 from latex2json.nodes.tabular_node import TabularNode
 from latex2json.parser.parser import Parser
 

@@ -1,6 +1,9 @@
 from latex2json.parser.handlers.commands.footnote_bookmark_handlers import (
     register_footnote_bookmark_handlers,
 )
+from latex2json.parser.handlers.commands.includegraphics_pdf_handlers import (
+    register_includegraphics_pdf_handlers,
+)
 from latex2json.parser.handlers.commands.makecell_shortstack import (
     register_makecell_shortstack_handlers,
 )
@@ -21,3 +24,4 @@ def register_command_handlers(parser: ParserCore):
     register_multicol_row_handlers(parser)
     register_makecell_shortstack_handlers(parser)
     register_footnote_bookmark_handlers(parser)
+    register_includegraphics_pdf_handlers(parser)
