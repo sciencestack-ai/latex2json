@@ -1,7 +1,7 @@
 import pytest
 
 from latex2json.nodes.base_nodes import CommandNode, TextNode
-from latex2json.nodes.ref_node import RefNode
+from latex2json.nodes.ref_cite_nodes import CiteNode, RefNode
 from latex2json.nodes.tabular_node import TabularNode
 from latex2json.parser.parser import Parser
 
@@ -91,3 +91,59 @@ def test_empty_ref():
     out = parser.parse(text)
 
     assert len(out) == 0  # Empty ref should return empty list
+
+
+def test_cite():
+    parser = Parser()
+
+    text = r"\cite{sdsds,   ss}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CiteNode)
+    assert out[0].references == ["sdsds", "ss"]
+
+    # test with pre/postnote
+    text = r"\cites[see][Chapter 4]{sdsds, ss}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CiteNode)
+    assert out[0].references == ["sdsds", "ss"]
+    assert out[0].title == "see, Chapter 4"
+
+    # test prenote only
+    text = r"\citep [Ch 5] {sdsds}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CiteNode)
+    assert out[0].references == ["sdsds"]
+    assert out[0].title == "Ch 5"
+
+
+def test_citealias():
+    parser = Parser()
+
+    text = r"\defcitealias{sdsds}{Ch 5}"
+    out = parser.parse(text)
+
+    assert len(out) == 0
+    assert parser.cite_aliases == {"sdsds": "Ch 5"}
+
+    text = r"\citetalias{sdsds}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CiteNode)
+    assert out[0].references == ["sdsds"]
+    assert out[0].title == "Ch 5"
+
+    # undefined citealias
+    text = r"\citetalias{bbb}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], CiteNode)
+    assert out[0].references == ["bbb"]
+    assert out[0].title is None

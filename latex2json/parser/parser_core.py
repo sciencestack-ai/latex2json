@@ -65,6 +65,7 @@ class ParserCore:
 
         self.macros: Dict[str, Macro] = {}
         self.env_handlers: Dict[str, EnvHandler] = {}
+        self.cite_aliases: Dict[str, str] = {}
 
     @property
     def current_env(self) -> Optional[EnvironmentNode]:

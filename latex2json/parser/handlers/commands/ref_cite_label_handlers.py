@@ -1,4 +1,5 @@
 from latex2json.nodes import CommandNode, RefNode
+from latex2json.nodes.ref_cite_nodes import CiteNode
 from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.handlers.commands.command_handler_utils import (
     make_generic_command_handler,
@@ -48,6 +49,29 @@ def hyperref_handler(parser: ParserCore, token: Token):
     return []
 
 
+def cite_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    prenote = parser.parse_bracket_as_nodes()
+    postnote = []
+    if prenote:
+        parser.skip_whitespace()
+        postnote = parser.parse_bracket_as_nodes()
+        parser.skip_whitespace()
+    citation_nodes = parser.parse_brace_as_nodes()
+    if citation_nodes is None:
+        parser.logger.warning("Warning: \\cite expects a citation")
+        return None
+
+    note_str = None
+    if prenote:
+        note_str = convert_nodes_to_str(prenote)
+        if postnote:
+            note_str += ", " + convert_nodes_to_str(postnote)
+    cite_str = convert_nodes_to_str(citation_nodes).split(",")
+    cite_str = [s.strip() for s in cite_str]
+    return [CiteNode(cite_str, title=note_str)]
+
+
 REF_COMMANDS = ["ref", "autoref", "eqref", "pageref", "cref", "Cref"]
 
 CITE_COMMANDS = [
@@ -65,6 +89,33 @@ CITE_COMMANDS = [
 ]
 
 
+def defcitealias_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    cite_key = parser.parse_brace_as_nodes()
+    if not cite_key:
+        parser.logger.warning("Warning: \\defcitealias expects a citation key")
+        return None
+    alias_nodes = parser.parse_brace_as_nodes()
+    if not alias_nodes:
+        parser.logger.warning("Warning: \\defcitealias expects an alias")
+        return None
+    cite_key_str = convert_nodes_to_str(cite_key)
+    alias_str = convert_nodes_to_str(alias_nodes)
+    parser.cite_aliases[cite_key_str] = alias_str
+    return []
+
+
+def citealias_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    cite_key = parser.parse_brace_as_nodes()
+    if not cite_key:
+        parser.logger.warning("Warning: \\cite[tp]alias expects a citation key")
+        return None
+    cite_key_str = convert_nodes_to_str(cite_key)
+    alias_str = parser.cite_aliases.get(cite_key_str, None)
+    return [CiteNode([cite_key_str], title=alias_str)]
+
+
 def register_ref_label_handlers(parser: ParserCore):
     # labels
     parser.register_handler("label", label_handler)
@@ -79,17 +130,19 @@ def register_ref_label_handlers(parser: ParserCore):
 
     # cite
     for command in CITE_COMMANDS:
-        handler = make_generic_command_handler("cite", "[[{")
-        parser.register_handler(command, handler)
+        parser.register_handler(command, cite_handler)
 
-    # # citealias
-    # for command in ["citetalias", "citepalias"]:
-    #     parser.register_handler(command, make_generic_command_handler(command, "{"))
+    # defcitealias
+    parser.register_handler("defcitealias", defcitealias_handler)
+
+    # citealias
+    for command in ["citetalias", "citepalias"]:
+        parser.register_handler(command, citealias_handler)
 
 
 if __name__ == "__main__":
     from latex2json.parser.parser import Parser
 
     parser = Parser()
-    parser.set_text(r"\cites{sdsds}")
+    parser.set_text(r"\cites[see][Chapter 4]{sdsds,   ss}")
     out = parser.parse()

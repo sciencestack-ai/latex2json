@@ -6,7 +6,7 @@ from latex2json.parser.parser_core import ParserCore
 from latex2json.parser.handlers.commands.multicol_row import (
     register_multicol_row_handlers,
 )
-from latex2json.parser.handlers.commands.ref_label_handlers import (
+from latex2json.parser.handlers.commands.ref_cite_label_handlers import (
     register_ref_label_handlers,
 )
 from latex2json.parser.handlers.commands.text_handlers import register_text_handlers
