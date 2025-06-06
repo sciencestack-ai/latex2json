@@ -80,6 +80,19 @@ class MacroRegistry:
             # This definition shadows any definitions in parent layers.
             self._definitions[name] = definition
 
+    def delete(self, name: str, is_global: bool = False):
+        """
+        Deletes a definition from this registry layer.
+        """
+        if not name.startswith("\\"):
+            name = f"\\{name}"
+
+        if is_global and self._parent:
+            self._parent.delete(name, is_global=True)
+        else:
+            if name in self._definitions:
+                del self._definitions[name]
+
     def get(self, name: str) -> Optional[Macro]:
         """
         Retrieves the definition for the given name, checking this layer

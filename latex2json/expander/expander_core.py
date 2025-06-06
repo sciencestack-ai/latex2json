@@ -176,6 +176,16 @@ class ExpanderCore:
             is_global=True,
         )
 
+    # fonts
+    def create_new_font(self, font_name: str, font_definition: List[Token]):
+        self.state.font_registry[font_name] = font_definition
+        # register and simply return the token as \fontname.. (for later use)
+        self.register_handler(
+            font_name,
+            lambda expander, token: [Token(TokenType.CONTROL_SEQUENCE, font_name)],
+            is_global=True,
+        )
+
     # MACROS
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.state.get_macro(name)

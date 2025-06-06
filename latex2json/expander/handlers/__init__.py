@@ -9,14 +9,14 @@ from latex2json.expander.handlers.inputs import register_input_handlers
 from latex2json.expander.handlers.primitives import register_primitives
 from latex2json.expander.handlers.registers import register_register_handlers
 from latex2json.expander.handlers.sectioning import register_sectioning_handlers
-from latex2json.expander.handlers.text_transforms import register_text_transforms
+from latex2json.expander.handlers.text_and_fonts import register_text_and_font_handlers
 
 
 def register_handlers(expander: ExpanderCore):
     register_primitives(expander)
     register_if_else(expander)
     register_register_handlers(expander)
-    register_text_transforms(expander)
+    register_text_and_font_handlers(expander)
     register_sectioning_handlers(expander)
     register_environment_handlers(expander)
     register_input_handlers(expander)

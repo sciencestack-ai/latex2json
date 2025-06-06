@@ -5,10 +5,10 @@ from latex2json.expander.macro_registry import Macro, MacroRegistry
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
-from latex2json.tokens import Catcode, get_default_catcodes, TokenType
-from latex2json.tokens.catcodes import MATHMODE_CATCODES
+from latex2json.tokens.catcodes import Catcode, MATHMODE_CATCODES
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.registers.counters import CounterManager
+from latex2json.tokens.types import Token
 
 
 class ProcessingMode(enum.Enum):
@@ -48,6 +48,9 @@ class StateLayer:
     def set_macro(self, name: str, definition: Macro, is_global: bool = False):
         self.macro_registry.set(name, definition, is_global)
 
+    def delete_macro(self, name: str, is_global: bool = True):
+        self.macro_registry.delete(name, is_global)
+
     def apply_old_values_to_state(self, state: "ExpanderState"):
         # Restore old catcode values
         for char_ord, old_value in reversed(self.catcode_old_values):
@@ -76,6 +79,9 @@ class ExpanderState:
         self.counter_manager = CounterManager(self.registers)
 
         self.environment_registry: Dict[str, EnvironmentDefinition] = {}
+
+        self.font_registry: Dict[str, List[Token]] = {}
+        self.color_registry: Dict[str, str] = {}  # e.g. "red" -> "rgb(1,0,0)"
 
         self._env_stack: List[str] = []
 
