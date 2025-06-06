@@ -206,7 +206,8 @@ class ParserCore:
             if handler:
                 nodes = handler(self, token)
                 return nodes if nodes else []
-            return self.parse_environment(token)
+            env_node = self.parse_environment(token)
+            return [env_node]
 
         if not self.is_math_mode:
             if is_begin_group_token(token):
@@ -266,7 +267,7 @@ class ParserCore:
 
     def parse_environment(
         self, token: EnvironmentStartToken
-    ) -> List[EnvironmentNode | EquationNode]:
+    ) -> EnvironmentNode | EquationNode:
         env_name = token.name
 
         env_node = self._generate_env_node(token)
@@ -293,7 +294,7 @@ class ParserCore:
 
         self.pop_env_stack()
         self.is_math_mode = was_math_mode
-        return [env_node]
+        return env_node
 
     def parse_control_sequence(self, token: Token) -> List[ASTNode]:
         macro = self.get_macro(token.value)

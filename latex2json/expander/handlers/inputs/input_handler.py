@@ -13,11 +13,12 @@ def input_handler(expander: ExpanderCore, token: Token):
 
 
 def register_file_input_handlers(expander: ExpanderCore):
-    expander.register_handler(
-        "input",
-        input_handler,
-        is_global=True,
-    )
+    for command in ["input", "include"]:
+        expander.register_handler(
+            command,
+            input_handler,
+            is_global=True,
+        )
 
 
 if __name__ == "__main__":
