@@ -327,7 +327,7 @@ class ExpanderCore:
 
     def push_file(self, file_path: str):
         if not os.path.exists(file_path):
-            expander.logger.warning(f"Input file {file_path} does not exist")
+            self.logger.warning(f"Input file {file_path} does not exist")
             return []
 
         input_text = open(file_path).read()

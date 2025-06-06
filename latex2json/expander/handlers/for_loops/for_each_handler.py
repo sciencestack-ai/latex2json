@@ -2,7 +2,7 @@ from typing import List
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import split_tokens_by_predicate
+from latex2json.tokens.utils import split_tokens_by_predicate, strip_whitespace_tokens
 
 
 def is_comma_token(tok: Token) -> bool:
@@ -69,15 +69,17 @@ def for_each_handler(expander: ExpanderCore, token: Token):
 
     expander.skip_whitespace()
     list_tokens = expander.parse_brace_as_tokens()
-    if not list_tokens:
+    if list_tokens is None:
         expander.logger.warning(r"\foreach expected list after 'in'")
         return None
 
     expander.skip_whitespace()
     body_tokens = expander.parse_brace_as_tokens()
-    if not body_tokens:
+    if body_tokens is None:
         expander.logger.warning(r"\foreach expected body after list")
         return None
+    elif len(body_tokens) == 0:
+        return []
 
     # split list tokens into groups by ','
     list_items = split_tokens_by_predicate(list_tokens, is_comma_token)
@@ -93,7 +95,12 @@ def for_each_handler(expander: ExpanderCore, token: Token):
             else [item]
         )
 
-        out_tokens = replace_for_each_item_body(body_tokens, variables, split)
+        # in latex, we lstrip whitespace after the comma
+        split_args = [
+            strip_whitespace_tokens(arg, lstrip=True, rstrip=False) for arg in split
+        ]
+
+        out_tokens = replace_for_each_item_body(body_tokens, variables, split_args)
         result_tokens.extend(out_tokens)
 
     expander.push_tokens(result_tokens)
@@ -107,13 +114,7 @@ def register_for_each_handlers(expander: ExpanderCore):
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
-    text = r"""
-    \begin{itemize}
-    \foreach \fruit in {apple, banana, orange} {
-        \item I like \fruit
-    }
-    \end{itemize}
-""".strip()
+    text = r"\foreach \fruit in {apple, banana, orange} {I like \fruit. }"
 
     expander = Expander()
     register_for_each_handlers(expander)
