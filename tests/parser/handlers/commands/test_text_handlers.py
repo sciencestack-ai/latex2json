@@ -114,3 +114,19 @@ def test_nested_text_styles():
     ]
 
     assert_output_matches_expected(out, expected_text_style_pairs)
+
+    text = r"""
+    {
+        \bf {\it {\color{green} BOLD-ITALIC-GREEN} BOLD-ITALIC } 
+        BOLD
+    }
+    POST
+"""
+    out = parser.parse(text)
+    expected_text_style_pairs = [
+        ("BOLD-ITALIC-GREEN", ["bold", "italic", "color=green"]),
+        ("BOLD-ITALIC", ["bold", "italic"]),
+        ("BOLD", ["bold"]),
+        ("POST", []),
+    ]
+    assert_output_matches_expected(out, expected_text_style_pairs)
