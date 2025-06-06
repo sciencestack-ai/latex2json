@@ -15,7 +15,7 @@ from latex2json.nodes import (
 )
 from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode
 from latex2json.nodes.caption_node import CaptionNode
-from latex2json.parser.state import ParserState
+from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
     Token,
     CommandWithArgsToken,
@@ -176,6 +176,14 @@ class ParserCore:
 
         return merge_text_nodes(nodes)
 
+    def _handle_font_command(self, cmd_name: str) -> List[ASTNode]:
+        if self.expander.state.font_registry.get(cmd_name):
+            return []
+        return [CommandNode(cmd_name)]
+
+    def set_font(self, style: FontStyle):
+        self.state.set_font(style)
+
     def parse_node(self) -> List[ASTNode]:
         token = self.consume()
         if not token:
@@ -297,14 +305,20 @@ class ParserCore:
         return env_node
 
     def parse_control_sequence(self, token: Token) -> List[ASTNode]:
-        macro = self.get_macro(token.value)
+        cmd_name = token.value
+        macro = self.get_macro(cmd_name)
         if macro:
             return macro.handler(self, token)
 
         if is_newline_token(token):
-            return [NewLineNode(token.value)]
+            return [NewLineNode(cmd_name)]
+        else:
+            if self.expander.state.font_registry.get(cmd_name):
+                # ignore defined font commands for now
+                # self.set_font(cmd_name)
+                return []
 
-        return [CommandNode(token.value)]
+        return [CommandNode(cmd_name)]
 
     def _handle_command_w_args(self, token: CommandWithArgsToken) -> List[ASTNode]:
         if token.name in SECTIONS:

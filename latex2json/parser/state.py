@@ -2,62 +2,7 @@ from typing import Optional, List, Dict, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-
-# --- Define some basic attribute types (you'll expand these) ---
-# Assuming these are enums or simple strings for now
-class FontStyleType(Enum):
-    SERIES = auto()
-    SHAPE = auto()
-    SIZE = auto()
-    FAMILY = auto()
-
-
-@dataclass
-class FontStyle:
-    type: FontStyleType
-    value: str
-
-
-class FontSeries:
-    NORMAL = FontStyle(FontStyleType.SERIES, "normal")
-    BOLD = FontStyle(FontStyleType.SERIES, "bold")
-
-
-class FontShape:
-    UPRIGHT = FontStyle(FontStyleType.SHAPE, "upright")
-    ITALIC = FontStyle(FontStyleType.SHAPE, "italic")
-
-
-class FontSize:
-    NORMAL = FontStyle(FontStyleType.SIZE, "normal")
-    LARGE = FontStyle(FontStyleType.SIZE, "large")
-    # ... etc.
-
-
-class FontFamily:
-    ROMAN = FontStyle(FontStyleType.FAMILY, "roman")
-    SANS = FontStyle(FontStyleType.FAMILY, "sans")
-    TYPEWRITER = FontStyle(FontStyleType.FAMILY, "typewriter")
-
-
-@dataclass
-class FontAttributes:
-    """Represents the current font settings."""
-
-    series: FontStyle = field(default_factory=lambda: FontSeries.NORMAL)
-    shape: FontStyle = field(default_factory=lambda: FontShape.UPRIGHT)
-    size: FontStyle = field(default_factory=lambda: FontSize.NORMAL)
-    family: FontStyle = field(default_factory=lambda: FontFamily.ROMAN)
-    color: Optional[str] = None  # This one is fine as it's immutable
-
-    def copy(self):
-        return FontAttributes(
-            series=self.series,
-            shape=self.shape,
-            size=self.size,
-            family=self.family,
-            color=self.color,
-        )
+from latex2json.latex_maps.fonts import FontAttributes, FontStyle, FontStyleType
 
 
 @dataclass
