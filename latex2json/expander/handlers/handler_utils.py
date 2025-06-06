@@ -1,13 +1,13 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Handler
-from latex2json.tokens.types import CommandWithArgsToken, Token
+from latex2json.tokens.types import CommandWithArgsToken, Token, TokenType
 
 
 def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
     """
     Generic handler for LaTeX commands based on their argument specification.
-    Spec string can contain: * (star), [ (optional arg), { (required arg)
+    Spec string can contain: * (star), [ (optional arg), { (required arg), = (required =), \\ (required \)
     Returns empty list if required arguments are not found.
     """
 
@@ -28,6 +28,21 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
             expander.skip_whitespace()
             if char == "*":
                 expander.parse_asterisk()
+            elif char == "=":
+                eq = expander.parse_equals()
+                if not eq:
+                    expander.logger.warning(
+                        f"Required = not found for command {command_name}"
+                    )
+                    break
+            elif char == "\\":
+                tok = expander.peek()
+                if not tok or tok.type != TokenType.CONTROL_SEQUENCE:
+                    expander.logger.warning(
+                        f"Required \\ not found for command {command_name}"
+                    )
+                    break
+                expander.consume()
             elif char == "[":
                 opt_arg = expander.parse_bracket_as_tokens(expand=True)
                 if opt_arg:
@@ -38,7 +53,7 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
                     expander.logger.warning(
                         f"Required argument not found for command {command_name}"
                     )
-                    return []
+                    break
                 args.append(req_arg)
 
         return [CommandWithArgsToken(name=command_name, args=args, opt_args=opt_args)]
