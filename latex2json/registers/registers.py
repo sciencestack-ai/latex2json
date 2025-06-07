@@ -1,23 +1,7 @@
 from typing import Any, Optional, Union
+from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
-
-
-BUILTIN_DIMENSIONS = [
-    # Page dimensions
-    "textwidth",  # Width of text area
-    "textheight",  # Height of text area
-    "paperwidth",  # Total page width
-    "paperheight",  # Total page height
-    # Paragraph formatting
-    "parindent",  # Paragraph indentation
-    "parskip",  # Space between paragraphs
-    "baselineskip",  # Space between lines
-    # List formatting
-    "leftmargin",  # Left margin in lists
-    "rightmargin",  # Right margin in lists
-    "itemsep",  # Space between list items
-]
 
 
 class TexRegisters:

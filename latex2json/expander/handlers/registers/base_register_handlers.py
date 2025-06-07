@@ -1,7 +1,7 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
 from latex2json.registers import RegisterType
-from latex2json.registers.registers import BUILTIN_DIMENSIONS
+from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
 from latex2json.tokens import Token
 from latex2json.tokens.types import TokenType
 

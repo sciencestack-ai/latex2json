@@ -3,6 +3,89 @@
 # Other conversions are calculated relative to points
 from typing import Optional
 
+BUILTIN_DIMENSIONS = [
+    # Page layout dimensions
+    "textwidth",  # Width of text area
+    "textheight",  # Height of text area
+    "paperwidth",  # Total page width
+    "paperheight",  # Total page height
+    "columnwidth",  # Width of column (in multicolumn)
+    "columnsep",  # Space between columns
+    "columnseprule",  # Width of rule between columns
+    "marginparwidth",  # Width of margin notes
+    "marginparsep",  # Space between text and margin notes
+    "oddsidemargin",  # Left margin on odd pages
+    "evensidemargin",  # Left margin on even pages
+    "topmargin",  # Top margin
+    "headheight",  # Height of page headers
+    "headsep",  # Space between header and text
+    "footskip",  # Distance from baseline to footer
+    "hoffset",  # Horizontal page offset
+    "voffset",  # Vertical page offset
+    "unitlength",  # Unit length for picture environment
+    # Paragraph formatting
+    "parindent",  # Paragraph indentation
+    "parskip",  # Space between paragraphs
+    "baselineskip",  # Space between lines
+    "lineskip",  # Minimum space between lines
+    "normalbaselineskip",  # Normal baseline skip
+    "lineskiplimit",  # Threshold for using lineskip
+    # List formatting
+    "leftmargin",  # Left margin in lists
+    "rightmargin",  # Right margin in lists
+    "itemsep",  # Space between list items
+    "parsep",  # Space between paragraphs in items
+    "topsep",  # Space before/after list
+    "partopsep",  # Extra space if list starts paragraph
+    "listparindent",  # Paragraph indent within list items
+    "itemindent",  # Additional indent for item bodies
+    "labelsep",  # Space between label and item text
+    "labelwidth",  # Width allocated for item labels
+    # Table formatting
+    "arrayrulewidth",  # Thickness of table rules
+    "arraycolsep",  # Column separation in array environment
+    "tabcolsep",  # Column separation in tabular environment
+    "doublerulesep",  # Space between double rules
+    "extrarowheight",  # Extra height added to table rows
+    # Math formatting
+    "jot",  # Extra space in eqnarray
+    "mathsurround",  # Space around inline math
+    "abovedisplayskip",  # Space above display math
+    "belowdisplayskip",  # Space below display math
+    "abovedisplayshortskip",  # Space above short display math
+    "belowdisplayshortskip",  # Space below short display math
+    "medmuskip",  # Medium math space (around binary operators)
+    "thickmuskip",  # Thick math space (around relations)
+    "thinmuskip",  # Thin math space (around punctuation)
+    # Float formatting
+    "floatsep",  # Space between floats
+    "textfloatsep",  # Space between floats and text
+    "intextsep",  # Space around here floats
+    "dblfloatsep",  # Space between double-column floats
+    "dbltextfloatsep",  # Space between double floats and text
+    # Footnote formatting
+    "footnotesep",  # Space between footnote rule and text
+    # Box dimensions (for measuring)
+    "fboxrule",  # Thickness of frame box rules
+    "fboxsep",  # Space between frame and contents
+    # Sectioning
+    "bibindent",  # Indentation in bibliography
+    # Page breaking
+    "topskip",  # Space at top of page
+    "splittopskip",  # Space at top of split page
+    "maxdepth",  # Maximum depth of page
+    # Emergency stretching
+    "emergencystretch",  # Extra stretch in emergency
+    # Hyphenation
+    "hfuzz",  # Tolerance for overfull hboxes
+    "vfuzz",  # Tolerance for overfull vboxes
+    "overfullrule",  # Width of overfull rule marker
+    # Penalties and spacing
+    "smallskipamount",  # Amount of \smallskip
+    "medskipamount",  # Amount of \medskip
+    "bigskipamount",  # Amount of \bigskip
+]
+
 
 LATEX_DIMENSION_UNITS = {
     "pt": 65536,  # Point (1 pt = 65536 sp)

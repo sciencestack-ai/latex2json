@@ -37,7 +37,6 @@ def register_base_environment_handlers(expander: ExpanderCore):
         "newcolumntype": "{[{",
         "columncolor": 1,  # Column colors
         "rowcolor": 1,  # Row colors
-        "arrayrulewidth": 1,  # Table rule width
     }
 
     register_ignore_handlers_util(expander, ignored_env_pattern_N_blocks)
