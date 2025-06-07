@@ -79,6 +79,41 @@ def test_box_and_copy():
     assert isinstance(mybox, Box)
     assert mybox.content == []
 
+    # test \unvbox \unhbox
+    expander.expand(r"\setbox10=\vbox{BOX 10} \setbox11=\hbox{BOX 11}")
+    out = expander.expand(r"\unvbox10\unvbox10")  # 2nd one becomes empty
+    assert expander.check_tokens_equal(out, expander.expand("BOX 10"))
+
+    out = expander.expand(r"\unhbox11\unhbox11")  # 2nd one becomes empty
+    assert expander.check_tokens_equal(out, expander.expand("BOX 11"))
+
+
+def test_direct_hvbox_usage():
+    expander = Expander()
+
+    out = expander.expand(r"\hbox to 10pt{abc}")
+    assert expander.check_tokens_equal(out, expander.expand("abc"))
+
+    out = expander.expand(r"\vtop{abc}")
+    assert expander.check_tokens_equal(out, expander.expand("abc"))
+
+
+def test_box_manipulation():
+    expander = Expander()
+
+    expander.expand(r"\setbox10=\vbox{BOX 10}")
+    out = expander.expand(r"\moveleft 10pt \copy10")
+    assert expander.check_tokens_equal(out, expander.expand("BOX 10"))
+
+    out = expander.expand(r"\moveright 10pt \copy10")
+    assert expander.check_tokens_equal(out, expander.expand("BOX 10"))
+
+    out = expander.expand(r"\raise 10pt \copy10")
+    assert expander.check_tokens_equal(out, expander.expand("BOX 10"))
+
+    out = expander.expand(r"\lower 10pt \copy10")
+    assert expander.check_tokens_equal(out, expander.expand("BOX 10"))
+
 
 def test_wd_ht_dp():
     expander = Expander()

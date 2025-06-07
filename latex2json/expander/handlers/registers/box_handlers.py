@@ -1,4 +1,5 @@
 from typing import List, Optional, Tuple, Union
+from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
@@ -81,7 +82,7 @@ class BoxDimRegisterMacro(RegisterMacro):
         return []
 
 
-def make_box_handler(copy=False):
+def box_n_copy_handler(copy=False):
     r"""Handle \box and \copy commands"""
     prefix = "\\copy" if copy else "\\box"
 
@@ -146,12 +147,43 @@ def newbox_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def direct_box_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    # push the current box token to the stack so that we can parse_box
+    expander.push_tokens([token])
+    box = expander.parse_box()
+    if box is None:
+        return None
+
+    return box.content
+
+
+def box_manipulation_handler(expander: ExpanderCore, token: Token):
+    """parse dimensions and ignored"""
+    expander.skip_whitespace()
+    dims = expander.parse_dimensions()
+    expander.skip_whitespace()
+
+    return []
+
+
 def register_box_handlers(expander: ExpanderCore):
     """Register all box-related handlers"""
     expander.register_handler("newbox", newbox_handler, is_global=True)
     expander.register_handler("setbox", setbox_handler, is_global=True)
-    expander.register_handler("box", make_box_handler(False), is_global=True)
-    expander.register_handler("copy", make_box_handler(True), is_global=True)
+
+    for cmd in BOXES:
+        expander.register_handler(cmd, direct_box_handler, is_global=True)
+
+    # treat them the same semantically
+    for cmd in ["box", "unvbox", "unhbox", "copy"]:
+        expander.register_handler(
+            cmd, box_n_copy_handler(cmd.endswith("copy")), is_global=True
+        )
+
+    # box manipulation handlers (parse dimensions and ignored)
+    for cmd in ["moveleft", "moveright", "raise", "lower"]:
+        expander.register_handler(cmd, box_manipulation_handler, is_global=True)
 
     # Register box dimension handlers (\wd, \ht, \dp)
     for dim in BOX_DIMENSIONS:
