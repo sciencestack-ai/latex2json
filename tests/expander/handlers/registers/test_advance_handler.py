@@ -143,3 +143,16 @@ def test_advance_handler_with_box_dimension():
         expander.expand(r"\the\wd\mybox"),
         expander.expand(str(-pt_10)),
     )
+
+
+def test_multiply_divide_handler():
+    expander = Expander()
+    expander.expand(r"\newcount\mycount")
+    expander.expand(r"\advance \mycount by 10")
+    assert_token_sequence(expander.expand(r"\the\mycount"), expander.expand("10"))
+
+    expander.expand(r"\divide \mycount by 2")
+    assert_token_sequence(expander.expand(r"\the\mycount"), expander.expand("5"))
+
+    expander.expand(r"\multiply \mycount by 2")
+    assert_token_sequence(expander.expand(r"\the\mycount"), expander.expand("10"))

@@ -7,7 +7,8 @@ from latex2json.tokens.types import Token
 def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
     """
     Generic handler for LaTeX commands based on their argument specification.
-    Spec string can contain: * (star), [ (optional arg), { (required arg)
+    Spec string can contain: * (star), [ (optional arg), ( (optional arg), { (required arg)
+    e.g. *[({
     Returns empty list if required arguments are not found.
     """
 
@@ -28,6 +29,10 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
             parser.skip_whitespace()
             if char == "*":
                 parser.parse_asterisk()
+            elif char == "(":
+                opt_arg = parser.parse_parenthesis_as_nodes()
+                if opt_arg:
+                    opt_args.append(opt_arg)
             elif char == "[":
                 opt_arg = parser.parse_bracket_as_nodes()
                 if opt_arg:
@@ -50,7 +55,7 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
 
 def make_N_blocks_ignore_handler(command: str, n_blocks: int) -> Handler:
     def ignore_handler(parser: ParserCore, token: Token) -> Optional[list[Token]]:
-        blocks = parser.parse_braced_blocks(n_blocks, expand=True)
+        blocks = parser.parse_braced_blocks(n_blocks)
         return []
 
     return ignore_handler

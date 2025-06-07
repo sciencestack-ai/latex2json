@@ -28,8 +28,10 @@ from latex2json.tokens.utils import (
     is_asterisk_token,
     is_begin_bracket_token,
     is_begin_group_token,
+    is_begin_parenthesis_token,
     is_end_bracket_token,
     is_end_group_token,
+    is_end_parenthesis_token,
     is_newline_token,
     is_whitespace_token,
 )
@@ -487,6 +489,14 @@ class ParserCore:
             is_end_bracket_token,
             include_begin_end_tokens=False,
             scoped=scoped,
+        )
+
+    def parse_parenthesis_as_nodes(self) -> Optional[List[ASTNode]]:
+        return self.parse_begin_end_as_nodes(
+            is_begin_parenthesis_token,
+            is_end_parenthesis_token,
+            include_begin_end_tokens=False,
+            scoped=False,
         )
 
 

@@ -83,7 +83,7 @@ TEXT_ENVIRONMENTS = {
 }
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
-    "center": EnvironmentDefinition("center"),
+    "center": EnvironmentDefinition("center", has_direct_command=False),
     "spacing": EnvironmentDefinition("spacing", num_args=1),
     "minipage": EnvironmentDefinition("minipage", num_args=1),
     "multicols": EnvironmentDefinition("multicols", num_args=1),
