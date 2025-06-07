@@ -124,9 +124,6 @@ class EnvironmentStartToken(Token):
 
 
 class CommandWithArgsToken(Token):
-    args: List[List[Token]] = []
-    opt_args: List[List[Token]] = []
-
     def __init__(
         self,
         name: str,

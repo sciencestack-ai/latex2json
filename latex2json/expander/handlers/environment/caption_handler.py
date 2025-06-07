@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.handlers.sectioning.section_handlers import (
     make_section_handler,
 )
@@ -13,9 +14,35 @@ def caption_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     return make_section_handler("caption", counter_name=cur_env)(expander, token)
 
 
+def captionof_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    """Handle captionof tokens."""
+    env_name = expander.parse_brace_name()
+    if not env_name:
+        expander.logger.warning("captionof: missing environment name")
+        return None
+
+    out = make_section_handler("caption", counter_name=env_name)(expander, token)
+    if not out:
+        return None
+    caption_token = out[0]
+    # make opt arg the env name + numbering i.e. equivalent to \caption[Figure 1]{CAPTION}
+    caption_token.opt_args = [
+        expander.convert_str_to_tokens(
+            env_name.capitalize() + " " + (caption_token.numbering or "")
+        )
+    ]
+    return out
+
+
 def register_caption_handler(expander: ExpanderCore):
     """Register caption handlers."""
     expander.register_handler("caption", caption_handler, is_global=True)
+    expander.register_handler("captionof", captionof_handler, is_global=True)
+
+    ignore_patterns = {
+        "captionsetup": "[{",
+    }
+    register_ignore_handlers_util(expander, ignore_patterns)
 
 
 if __name__ == "__main__":

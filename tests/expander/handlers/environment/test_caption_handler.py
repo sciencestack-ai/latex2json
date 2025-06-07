@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from latex2json.expander.expander import Expander
 from latex2json.expander.handlers.environment.caption_handler import (
     register_caption_handler,
@@ -31,6 +31,29 @@ class DummyCaption:
         self.cur_env = cur_env
         self.opt_arg = opt_arg
         self.numbering = numbering
+
+
+def assert_caption_instances(expander: Expander, expected_captions: List[DummyCaption]):
+    caption_index = 0
+    while not expander.eof():
+        tokens = expander.next_non_expandable_tokens()
+        out = strip_whitespace_tokens(tokens)
+        if out and out[0].value == "caption":
+            if caption_index >= len(expected_captions):
+                break
+
+            exp = expected_captions[caption_index]
+            assert expander.state.current_env == exp.cur_env
+            mock_caption = mock_caption_token(
+                expander,
+                exp.caption_text,
+                opt_arg=exp.opt_arg,
+                numbering=exp.numbering,
+            )
+            assert expander.check_tokens_equal(out, mock_caption)
+            caption_index += 1
+
+    assert caption_index == len(expected_captions)
 
 
 def test_caption_handler():
@@ -84,23 +107,35 @@ def test_caption_handler():
         DummyCaption(cur_env="figure", caption_text="FIGURE 4", numbering="2.2"),
     ]
 
+    assert_caption_instances(expander, expected_captions)
+
+
+def test_captionof_handler():
+    expander = Expander()
+    register_caption_handler(expander)
+
+    text = r"""
+    \begin{minipage}{0.5\textwidth}
+    \captionof{figure}{CAPTION}
+    \end{minipage}
+    """.strip()
+
+    expander.set_text(text)
+
     caption_index = 0
     while not expander.eof():
         tokens = expander.next_non_expandable_tokens()
         out = strip_whitespace_tokens(tokens)
         if out and out[0].value == "caption":
-            if caption_index >= len(expected_captions):
-                break
-
-            exp = expected_captions[caption_index]
-            assert expander.state.current_env == exp.cur_env
-            mock_caption = mock_caption_token(
+            assert out == mock_caption_token(
                 expander,
-                exp.caption_text,
-                opt_arg=exp.opt_arg,
-                numbering=exp.numbering,
+                "CAPTION",
+                opt_arg="Figure 1",
+                numbering="1",
             )
-            assert expander.check_tokens_equal(out, mock_caption)
             caption_index += 1
+            break
 
-    assert caption_index == len(expected_captions)
+    assert caption_index == 1
+
+    assert expander.state.get_counter_value("figure") == 1

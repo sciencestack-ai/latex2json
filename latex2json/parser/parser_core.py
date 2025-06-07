@@ -60,7 +60,7 @@ class ParserCore:
         self.token_buffer: List[Token] = []
 
         self.is_math_mode = False
-        self._env_node_stack: List[EnvironmentNode] = []
+        self._env_node_stack: List[ASTNode] = []
         self.state = ParserState()
 
         self.macros: Dict[str, Macro] = {}
@@ -68,7 +68,7 @@ class ParserCore:
         self.cite_aliases: Dict[str, str] = {}
 
     @property
-    def current_env(self) -> Optional[EnvironmentNode]:
+    def current_env(self) -> Optional[ASTNode]:
         return self._env_node_stack[-1] if self._env_node_stack else None
 
     def set_text(self, text: str):
@@ -249,13 +249,24 @@ class ParserCore:
         self.is_math_mode = False
         return [EquationNode(math_nodes, eq_type)]
 
-    def push_env_stack(self, node: EnvironmentNode):
+    def push_env_stack(self, node: ASTNode):
         """Push a node onto the environment stack."""
         self._env_node_stack.append(node)
 
-    def pop_env_stack(self) -> Optional[EnvironmentNode]:
+    def pop_env_stack(
+        self, env_node_onwards: Optional[ASTNode] = None
+    ) -> Optional[ASTNode]:
         """Pop a node from the environment stack."""
-        return self._env_node_stack.pop() if self._env_node_stack else None
+        if not self._env_node_stack:
+            return None
+        if env_node_onwards:
+            # Find target node index and truncate stack if found
+            if env_node_onwards in self._env_node_stack:
+                idx = self._env_node_stack.index(env_node_onwards)
+                self._env_node_stack = self._env_node_stack[:idx]
+
+                return env_node_onwards
+        return self._env_node_stack.pop()
 
     def _generate_env_node(
         self, token: EnvironmentStartToken
@@ -301,7 +312,7 @@ class ParserCore:
         else:
             self.logger.warning(f"Unmatched environment: {env_name}")
 
-        self.pop_env_stack()
+        self.pop_env_stack(env_node)
         self.is_math_mode = was_math_mode
         return env_node
 
@@ -345,11 +356,11 @@ class ParserCore:
 
             arg_nodes = self.process_tokens(args, scoped=True)
             opt_arg_nodes = self.process_tokens(opt_args)
-            return [
-                CaptionNode(
-                    body=arg_nodes, opt_arg=opt_arg_nodes, numbering=token.numbering
-                )
-            ]
+            caption_node = CaptionNode(
+                body=arg_nodes, opt_arg=opt_arg_nodes, numbering=token.numbering
+            )
+            self.push_env_stack(caption_node)
+            return [caption_node]
         else:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []
@@ -463,6 +474,7 @@ class ParserCore:
     def parse_braced_blocks(self, n_blocks: int) -> Optional[List[ASTNode]]:
         blocks: List[List[ASTNode]] = []
         for _ in range(n_blocks):
+            self.skip_whitespace()
             block = self.parse_brace_as_nodes()
             if block is None:
                 break

@@ -11,7 +11,7 @@ from latex2json.tokens import (
 def make_section_handler(
     cmd_name: str,
     counter_name: Optional[str] = None,
-) -> Callable[[ExpanderCore, Token], Optional[List[Token]]]:
+) -> Callable[[ExpanderCore, Token], Optional[List[CommandWithArgsToken]]]:
     def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         has_asterisk = expander.parse_asterisk()
         expander.skip_whitespace()
