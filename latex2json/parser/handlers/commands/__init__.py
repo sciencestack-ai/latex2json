@@ -1,3 +1,6 @@
+from latex2json.parser.handlers.commands.doc_content_handler import (
+    register_doc_content_handlers,
+)
 from latex2json.parser.handlers.commands.footnote_bookmark_handlers import (
     register_footnote_bookmark_handlers,
 )
@@ -29,3 +32,4 @@ def register_command_handlers(parser: ParserCore):
     register_footnote_bookmark_handlers(parser)
     register_includegraphics_pdf_handlers(parser)
     register_ignore_format_handlers(parser)
+    register_doc_content_handlers(parser)

@@ -116,12 +116,22 @@ def string_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
     return [tok]
 
 
+def escapechar_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    # ignore it..
+    expander.skip_whitespace()
+    if expander.parse_equals():
+        expander.skip_whitespace()
+        expander.parse_float()
+    return []
+
+
 def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\the", the_handler, is_global=True)
     expander.register_handler("\\show", show_handler, is_global=True)
     expander.register_handler("\\typeout", typeout_handler, is_global=True)
     expander.register_handler("\\meaning", meaning_handler, is_global=True)
     expander.register_handler("\\string", string_handler, is_global=True)
+    expander.register_handler("\\escapechar", escapechar_handler, is_global=True)
 
 
 if __name__ == "__main__":

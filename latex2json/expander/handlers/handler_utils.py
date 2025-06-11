@@ -5,13 +5,19 @@ from latex2json.tokens.types import CommandWithArgsToken, Token, TokenType
 
 
 def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
-    """
-    Generic handler for LaTeX commands based on their argument specification.
-    Spec string can contain: * (star), [ (optional arg), { (required arg), = (required =), \\ (required \)
-    Returns empty list if required arguments are not found.
-    """
-
     def generic_command_handler(expander: ExpanderCore, token: Token) -> list:
+        r"""
+        Generic handler for LaTeX commands based on their argument specification.
+        Spec can contain:
+        - * : star (asterisk)
+        - [ : optional bracket argument
+        - { : required brace argument
+        - = : required equals sign
+        - \ : required backslash
+        - f : parse float
+        - d : parse dimension
+        - i : parse integer
+        """
         spec = arg_spec
         if len(spec) == 0:
             return []
@@ -28,6 +34,12 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
             expander.skip_whitespace()
             if char == "*":
                 expander.parse_asterisk()
+            elif char == "f":
+                expander.parse_float()
+            elif char == "d":
+                expander.parse_dimensions()
+            elif char == "i":
+                expander.parse_integer()
             elif char == "=":
                 eq = expander.parse_equals()
                 if not eq:

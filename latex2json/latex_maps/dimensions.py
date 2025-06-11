@@ -43,6 +43,7 @@ BUILTIN_DIMENSIONS = [
     "labelwidth",  # Width allocated for item labels
     # Table formatting
     "arrayrulewidth",  # Thickness of table rules
+    "heavyrulewidth",
     "arraycolsep",  # Column separation in array environment
     "tabcolsep",  # Column separation in tabular environment
     "doublerulesep",  # Space between double rules
@@ -63,6 +64,9 @@ BUILTIN_DIMENSIONS = [
     "intextsep",  # Space around here floats
     "dblfloatsep",  # Space between double-column floats
     "dbltextfloatsep",  # Space between double floats and text
+    # Caption formatting
+    "abovecaptionskip",  # Space above captions
+    "belowcaptionskip",  # Space below captions
     # Footnote formatting
     "footnotesep",  # Space between footnote rule and text
     # Box dimensions (for measuring)

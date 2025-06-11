@@ -20,7 +20,7 @@ class EnvironmentDefinition:
         default_arg: Optional[List[Token]] = None,
         counter_name: Optional[str] = None,  # e.g. "equation"
         is_math: bool = False,  # e.g, align, equation, etc.
-        has_direct_command: bool = True,  # e.g. \begin{document} -> \document + \enddocument
+        has_direct_command: bool = False,  # e.g. \begin{document} -> \document + \enddocument
     ):
         self.name = name
         if not display_name:
@@ -72,20 +72,22 @@ class EnvironmentDefinition:
 
 # Document structure environments
 DOCUMENT_ENVIRONMENTS = {
-    "document": EnvironmentDefinition("document"),
-    "abstract": EnvironmentDefinition("abstract"),
-    "thebibliography": EnvironmentDefinition("thebibliography", num_args=1),
+    "document": EnvironmentDefinition("document", has_direct_command=True),
+    "abstract": EnvironmentDefinition("abstract", has_direct_command=True),
+    "thebibliography": EnvironmentDefinition(
+        "thebibliography", num_args=1, has_direct_command=True
+    ),
 }
 
 TEXT_ENVIRONMENTS = {
-    "quote": EnvironmentDefinition("quote"),
-    "verbatim": EnvironmentDefinition("verbatim"),
+    "quote": EnvironmentDefinition("quote", has_direct_command=True),
+    "verbatim": EnvironmentDefinition("verbatim", has_direct_command=True),
 }
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
-    "center": EnvironmentDefinition("center", has_direct_command=False),
+    "center": EnvironmentDefinition("center"),
     "spacing": EnvironmentDefinition("spacing", num_args=1),
-    "minipage": EnvironmentDefinition("minipage", num_args=1),
+    "minipage": EnvironmentDefinition("minipage", num_args=1, has_direct_command=True),
     "multicols": EnvironmentDefinition("multicols", num_args=1),
     "adjustbox": EnvironmentDefinition("adjustbox", num_args=1),
     "adjustwidth": EnvironmentDefinition("adjustwidth", num_args=2),
@@ -96,9 +98,7 @@ LAYOUT_ENVIRONMENTS = {
 FIGURE_ENVIRONMENTS = {
     # figures
     "figure": EnvironmentDefinition(
-        "figure",
-        num_args=1,
-        default_arg=[],
+        "figure", num_args=1, default_arg=[], has_direct_command=True
     ),
     "subfigure": EnvironmentDefinition(
         "subfigure",
@@ -115,61 +115,47 @@ FIGURE_ENVIRONMENTS = {
 TABLE_ENVIRONMENTS = {
     # tables
     "table": EnvironmentDefinition(
-        "table",
-        num_args=1,
-        default_arg=[],
+        "table", num_args=1, default_arg=[], has_direct_command=True
     ),
-    "tabular": EnvironmentDefinition("tabular", num_args=1),
-    "tabularx": EnvironmentDefinition("tabularx", num_args=2, has_direct_command=False),
-    "tabulary": EnvironmentDefinition("tabulary", num_args=1, has_direct_command=False),
-    "longtable": EnvironmentDefinition(
-        "longtable", num_args=1, has_direct_command=False
-    ),
+    "subtable": EnvironmentDefinition("subtable", num_args=2, default_arg=[]),
+    "tabular": EnvironmentDefinition("tabular", num_args=1, has_direct_command=True),
+    "tabularx": EnvironmentDefinition("tabularx", num_args=2),
+    "tabulary": EnvironmentDefinition("tabulary", num_args=1),
+    "longtable": EnvironmentDefinition("longtable", num_args=1),
 }
 
 # List environments
 LIST_ENVIRONMENTS = {
-    "itemize": EnvironmentDefinition("itemize"),
-    "enumerate": EnvironmentDefinition("enumerate"),
-    "description": EnvironmentDefinition("description"),
-    "list": EnvironmentDefinition("list", num_args=2),
+    "itemize": EnvironmentDefinition("itemize", has_direct_command=True),
+    "enumerate": EnvironmentDefinition("enumerate", has_direct_command=True),
+    "description": EnvironmentDefinition("description", has_direct_command=True),
+    "list": EnvironmentDefinition("list", num_args=2, has_direct_command=True),
 }
 
 # Mathematical environments
 MATH_ENVIRONMENTS = {
     "equation": EnvironmentDefinition(
-        "equation", counter_name="equation", is_math=True
+        "equation", counter_name="equation", is_math=True, has_direct_command=True
     ),
-    "align": EnvironmentDefinition(
-        "align", counter_name="equation", is_math=True, has_direct_command=False
-    ),
-    "aligned": EnvironmentDefinition("aligned", is_math=True, has_direct_command=False),
-    "gather": EnvironmentDefinition(
-        "gather", counter_name="equation", is_math=True, has_direct_command=False
-    ),
+    "align": EnvironmentDefinition("align", counter_name="equation", is_math=True),
+    "aligned": EnvironmentDefinition("aligned", is_math=True),
+    "gather": EnvironmentDefinition("gather", counter_name="equation", is_math=True),
     "multline": EnvironmentDefinition(
-        "multline", counter_name="equation", is_math=True, has_direct_command=False
+        "multline", counter_name="equation", is_math=True
     ),
     "eqnarray": EnvironmentDefinition(
-        "eqnarray", counter_name="equation", is_math=True, has_direct_command=False
+        "eqnarray", counter_name="equation", is_math=True
     ),
-    "flalign": EnvironmentDefinition(
-        "flalign", counter_name="equation", is_math=True, has_direct_command=False
-    ),
+    "flalign": EnvironmentDefinition("flalign", counter_name="equation", is_math=True),
     "alignat": EnvironmentDefinition(
         "alignat",
         num_args=1,
         counter_name="equation",
         is_math=True,
-        has_direct_command=False,
     ),
-    "dmath": EnvironmentDefinition(
-        "dmath", counter_name="equation", is_math=True, has_direct_command=False
-    ),
-    "split": EnvironmentDefinition("split", is_math=True, has_direct_command=False),
-    "array": EnvironmentDefinition(
-        "array", num_args=1, is_math=True, has_direct_command=False
-    ),
+    "dmath": EnvironmentDefinition("dmath", counter_name="equation", is_math=True),
+    "split": EnvironmentDefinition("split", is_math=True),
+    "array": EnvironmentDefinition("array", num_args=1, is_math=True),
 }
 
 # # Theorem-like environments

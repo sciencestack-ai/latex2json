@@ -96,3 +96,12 @@ def test_string():
 
     out = expander.expand(r"\string\foo")
     assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
+
+
+def test_escapechar():
+    expander = Expander()
+    out = expander.expand(r"\escapechar=123")
+    assert out == []
+
+    out = expander.expand(r"\escapechar")
+    assert out == []

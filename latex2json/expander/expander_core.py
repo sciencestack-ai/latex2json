@@ -72,12 +72,16 @@ class RelaxMacro(Macro):
         )
 
 
-def make_the_counter_handler(counter_name: str):
+def make_the_counter_handler(counter_name: str, formatted=True):
     def the_counter_handler(expander: "ExpanderCore", token: Token):
-        value = expander.state.get_counter_as_format(counter_name)
+        value = (
+            expander.state.get_counter_as_format(counter_name)
+            if formatted
+            else expander.state.get_counter_value(counter_name)
+        )
         if value is None:
             return None
-        return expander.convert_str_to_tokens(str(value))
+        return expander.convert_str_to_tokens(f"{value}")
 
     return the_counter_handler
 
@@ -157,13 +161,20 @@ class ExpanderCore:
 
         self.register_handler("\\global", global_handler, is_global=True)
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
+        self.register_macro("\\@empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
+        self.register_handler("\\protect", lambda expander, token: [], is_global=True)
 
     def _init_counter_macros(self):
         for counter_name in self.state.counter_manager.counters:
             self.register_handler(
                 f"\\the{counter_name}",
-                make_the_counter_handler(counter_name),
+                make_the_counter_handler(counter_name, formatted=True),
+                is_global=True,
+            )
+            self.register_handler(
+                f"\\c@{counter_name}",
+                make_the_counter_handler(counter_name, formatted=False),
                 is_global=True,
             )
 

@@ -4,6 +4,7 @@ from latex2json.expander.handlers.environment import (
     register_environment_handlers,
 )
 from latex2json.expander.handlers.for_loops import register_for_loop_handlers
+from latex2json.expander.handlers.formatting import register_formatting_handlers
 from latex2json.expander.handlers.if_else import register_if_else
 from latex2json.expander.handlers.inputs import register_input_handlers
 from latex2json.expander.handlers.primitives import register_primitives
@@ -13,6 +14,9 @@ from latex2json.expander.handlers.text_and_fonts import register_text_and_font_h
 
 
 def register_handlers(expander: ExpanderCore):
+    register_formatting_handlers(
+        expander
+    )  # put formatting ignore first so that the others can override any aggressive ignore formatting
     register_primitives(expander)
     register_if_else(expander)
     register_register_handlers(expander)

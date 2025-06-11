@@ -133,50 +133,21 @@ def counterwithout_handler(
 
 
 def register_counter_handlers(expander: ExpanderCore):
-    expander.register_macro(
-        "setcounter",
-        Macro("setcounter", setcounter_handler, []),
-        is_global=True,
-    )
-    expander.register_macro(
-        "addtocounter",
-        Macro("addtocounter", addtocounter_handler, []),
-        is_global=True,
-    )
-    expander.register_macro(
-        "stepcounter",
-        Macro("stepcounter", stepcounter_handler, []),
-        is_global=True,
-    )
-    expander.register_macro(
-        "refstepcounter",
-        # make it the same as step counter, we handle labels/refs separately
-        Macro("refstepcounter", stepcounter_handler, []),
-        is_global=True,
-    )
-    expander.register_macro(
-        "value",
-        Macro("value", value_handler, []),
-        is_global=True,
-    )
+    expander.register_handler("setcounter", setcounter_handler, is_global=True)
+    expander.register_handler("addtocounter", addtocounter_handler, is_global=True)
+    expander.register_handler("stepcounter", stepcounter_handler, is_global=True)
+    expander.register_handler(
+        "refstepcounter", stepcounter_handler, is_global=True
+    )  # same as stepcounter
+    expander.register_handler("value", value_handler, is_global=True)
+    expander.register_handler("newcounter", newcounter_handler, is_global=True)
 
-    # new counter
-    expander.register_macro(
-        "newcounter",
-        Macro("newcounter", newcounter_handler, []),
-        is_global=True,
-    )
-
-    expander.register_macro(
-        "counterwithin",
-        Macro("counterwithin", counterwithin_handler, []),
-        is_global=True,
-    )
-    expander.register_macro(
-        "counterwithout",
-        Macro("counterwithout", counterwithout_handler, []),
-        is_global=True,
-    )
+    # counter without/within
+    expander.register_handler("counterwithout", counterwithout_handler, is_global=True)
+    expander.register_handler("counterwithin", counterwithin_handler, is_global=True)
+    # functionally same as counterwithin
+    expander.register_handler("@addtoreset", counterwithin_handler, is_global=True)
+    expander.register_handler("numberwithin", counterwithin_handler, is_global=True)
 
 
 if __name__ == "__main__":

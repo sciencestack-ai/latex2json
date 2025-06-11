@@ -568,3 +568,10 @@ def test_math_macros():
         Token(TokenType.CHARACTER, "^", catcode=Catcode.SUPERSCRIPT),
     ]
     assert_token_sequence(out, expected)
+
+
+def test_counter_macros():
+    expander = ExpanderCore()
+    assert expander.expand(r"\thesection") == expander.expand("0")
+    expander.set_catcode(ord("@"), Catcode.LETTER)
+    assert expander.expand(r"\c@section") == expander.expand("0")

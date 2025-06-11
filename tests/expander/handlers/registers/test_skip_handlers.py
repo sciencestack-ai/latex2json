@@ -1,4 +1,5 @@
 from latex2json.expander.expander import Expander
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 
 def test_hvskip_handlers():
@@ -6,17 +7,17 @@ def test_hvskip_handlers():
 
     # Test horizontal skip commands
     out = expander.expand(r"\hskip 10pt")
-    assert out == []
+    assert strip_whitespace_tokens(out) == []
 
     out = expander.expand(r"\hskip 2em plus 1fil")
-    assert out == []
+    assert strip_whitespace_tokens(out) == []
 
     # Test vertical skip commands
     out = expander.expand(r"\vskip 20pt")
-    assert out == []
+    assert strip_whitespace_tokens(out) == []
 
     out = expander.expand(r"\vskip 1in plus 2pt minus 3pt")
-    assert out == []
+    assert strip_whitespace_tokens(out) == []
 
 
 def test_ignored_skip_commands():

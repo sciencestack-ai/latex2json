@@ -3,14 +3,23 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.tokens.types import WHITESPACE_TOKEN, TokenType
 
 
-def hvskip_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+def hskip_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     """Handle and ignore skip commands."""
     expander.skip_whitespace()
     expander.parse_skip()
 
-    return []
+    return [WHITESPACE_TOKEN.copy()]
+
+
+def vskip_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"add \n just for this"
+    expander.skip_whitespace()
+    expander.parse_skip()
+
+    return [Token(TokenType.END_OF_LINE, "\n")]
 
 
 ignored_skip_pattern_N_blocks = {
@@ -42,11 +51,15 @@ ignored_skip_pattern_N_blocks = {
 def register_skip_handlers(expander: ExpanderCore) -> None:
     """Register skip-related macros and handlers."""
     # Skip-related macros
-    for skips in ["hskip", "vskip", "mskip"]:
+    for skips in ["hskip", "mskip"]:
         expander.register_handler(
             skips,
-            hvskip_handler,
+            hskip_handler,
         )
+    expander.register_handler(
+        "vskip",
+        vskip_handler,
+    )
 
     register_ignore_handlers_util(expander, ignored_skip_pattern_N_blocks)
 
