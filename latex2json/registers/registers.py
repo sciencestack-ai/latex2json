@@ -51,7 +51,15 @@ class TexRegisters:
 
     def _init_builtin_registers(self):
         for dimen in BUILTIN_DIMENSIONS:
-            self.set_register(RegisterType.DIMEN, dimen, 0)
+            self.create_register(RegisterType.DIMEN, dimen, 0)
+
+        self.create_register(RegisterType.DIMEN, "@tempdima")
+        self.create_register(RegisterType.DIMEN, "@tempdimb")
+        self.create_register(RegisterType.DIMEN, "@tempdimc")
+        self.create_register(RegisterType.BOX, "@tempboxa")
+        self.create_register(RegisterType.SKIP, "@tempskipa")
+        self.create_register(RegisterType.SKIP, "@tempskipb")
+        self.create_register(RegisterType.TOKS, "@temptokena")
 
     def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):
         out = self._get_generic_register_value(reg_type, reg_id)
@@ -68,6 +76,8 @@ class TexRegisters:
         return out
 
     def set_register(self, reg_type: RegisterType, reg_id: Union[int, str], value: Any):
+        if value is None:
+            value = reg_type.get_default_value()
         self._set_generic_register(reg_type, reg_id, value)
         if reg_type == RegisterType.BOX and isinstance(value, Box):
             self._set_generic_register(RegisterType.DIMEN, f"wd{reg_id}", value.width)

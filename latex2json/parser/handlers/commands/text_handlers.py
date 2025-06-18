@@ -76,6 +76,11 @@ def register_text_handlers(parser: ParserCore):
     parser.register_handler("textcolor", textcolor_handler)
     parser.register_handler("color", legacy_color_handler)
 
+    for backslash in ["backslash", "textbackslash", "arraybackslash"]:
+        parser.register_handler(backslash, lambda parser, token: [TextNode(r"\\")])
+
+    parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
+
 
 if __name__ == "__main__":
     from latex2json.parser.parser import Parser

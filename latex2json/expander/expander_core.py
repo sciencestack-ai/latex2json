@@ -163,6 +163,7 @@ class ExpanderCore:
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
         self.register_macro("\\@empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
+        self.register_handler("\\null", lambda expander, token: [], is_global=True)
         self.register_handler("\\protect", lambda expander, token: [], is_global=True)
 
     def _init_counter_macros(self):
@@ -899,9 +900,10 @@ class ExpanderCore:
             else self.parse_bracket_as_tokens(expand=True)
         )
         # don't strip, env names are literal
-        out_name = self.convert_tokens_to_str(tokens)
+        if tokens:
+            return self.convert_tokens_to_str(tokens)
 
-        return out_name
+        return None
 
     def convert_str_to_tokens(self, text: str) -> List[Token]:
         out = []

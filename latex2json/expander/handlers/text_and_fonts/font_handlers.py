@@ -1,5 +1,6 @@
 from typing import List
 from latex2json.expander.expander_core import ExpanderCore, is_relax_token
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -47,6 +48,15 @@ def font_handler(expander: ExpanderCore, token: Token):
 
 def register_font_handlers(expander: ExpanderCore):
     expander.register_handler(r"\font", font_handler, is_global=True)
+
+    ignore_patterns = {
+        "newfam": "\\",  # e.g. \newfam\fontfam
+        "textfont": "\\=\\",  # e.g. \textfont\fontfam=\xxxx
+        "scriptfont": "\\=\\",
+        "scriptscriptfont": "\\=\\",
+        "setmathfont": "[{",
+    }
+    register_ignore_handlers_util(expander, ignore_patterns)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,12 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 
 formatting_patterns = {
+    "NeedsTeXFormat": 1,
+    "ProvidesClass": "{[",
+    "ProvidesPackage": "{[",
+    # tcb
+    "tcbset": "{",
+    "tcbuselibrary": "{",
     # Float-related formatting
     "floatstyle": 1,
     "restylefloat": 1,
@@ -18,6 +24,9 @@ formatting_patterns = {
     "setstretch": 1,  # \setstretch{1.5} - line spacing
     # Package processing
     "ProcessOptions": 0,  # Actually takes no arguments
+    "PassOptionsToClass": 2,
+    "PassOptionsToPackage": 2,
+    "ExecuteBibliographyOptions": 1,
     # pdf options
     "pdfinfo": "{",
     "pdfoutput": "=i",
@@ -57,7 +66,7 @@ formatting_patterns = {
     "bibliographystyle": 1,
     "documentstyle": 1,
     "setcitestyle": 1,
-    # setters
+    # lists and items
     "lstset": "{",
     "setlist": "[{",
     # Width-related commands
@@ -74,9 +83,6 @@ formatting_patterns = {
     "clubpenalty": "=f",
     "widowpenalty": "=f",
     "discretionarypenalty": "=f",
-    # paper width/height
-    "paperwidth": "=d",
-    "paperheight": "=d",
     # \kern, which is technically spacing but more like a length between characters. so ignore
     "kern": "d",
     # setup
@@ -88,6 +94,16 @@ formatting_patterns = {
     "setdefaultlanguage": 1,
     # class
     "subjclass": "[{",
+    # mathstack
+    "stackMath": 0,
+    # physics
+    "pacs": 1,
+    # other
+    "pz@": 0,
+    "phantomsection": 0,
+    "FloatBarrier": 0,
+    "footins": 0,
+    "/": 0,  # \/ (in latex, this is like an empty space)
 }
 
 content_formatting_patterns = {
@@ -103,6 +119,9 @@ content_formatting_patterns = {
     "contentspage": 0,
     "startcontents": 0,
     "printcontents": "{",
+    "hyphenation": 1,
+    # page numbers
+    "pagenumbering": 1,
     # line numbers
     "linenumbers": 0,
     "linesnumbered": 0,
@@ -127,7 +146,7 @@ if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    register_ignore_handlers_util(expander)
+    register_ignore_format_handlers(expander)
 
     # Test some formatting commands
     out1 = expander.expand(r"\floatname{figure}{Fig.}")

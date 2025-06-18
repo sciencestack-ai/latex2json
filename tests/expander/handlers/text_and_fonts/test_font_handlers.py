@@ -21,3 +21,18 @@ def test_font_handler():
     assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "bigfont")])
 
     assert expander.state.font_registry["bigfont"]
+
+
+def test_ignored_font_handlers():
+    expander = Expander()
+
+    text = r"""
+\newfam\fontfam
+\textfont\fontfam=\xxxx
+\scriptfont\fontfam=\sss
+\scriptscriptfont\fontfam=\yyy
+\setmathfont[range=\setminus, Scale=MatchUppercase]{Asana-Math.otf}
+"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out == []

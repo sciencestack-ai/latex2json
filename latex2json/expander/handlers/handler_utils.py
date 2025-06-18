@@ -42,11 +42,11 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
                 expander.parse_integer()
             elif char == "=":
                 eq = expander.parse_equals()
-                if not eq:
-                    expander.logger.warning(
-                        f"Required = not found for command {command_name}"
-                    )
-                    break
+                # if not eq:
+                #     expander.logger.warning(
+                #         f"Required = not found for command {command_name}"
+                #     )
+                #     break
             elif char == "\\":
                 tok = expander.peek()
                 if not tok or tok.type != TokenType.CONTROL_SEQUENCE:

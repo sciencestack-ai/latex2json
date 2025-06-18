@@ -1,4 +1,5 @@
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.handlers.primitives.declarations.newcommand import (
     NewCommandMacro,
 )
@@ -6,18 +7,20 @@ from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
 from typing import Optional
 
-ignored_declare_pattern_N_blocks = {
+ignored_declare_patterns = {
     # Font declarations
     "DeclareFontFamily": 3,
     "DeclareFontShape": 6,
     "DeclareMathAlphabet": 5,
     "SetMathAlphabet": 6,
+    "DeclareSymbolFont": 5,
     "DeclareSymbolFontAlphabet": 2,
     "DeclareMathVersion": 1,
     "DeclareMathSymbol": 4,
     # Package/class options
-    "DeclareOption": 2,
-    "DeclareOptionX": 2,
+    "DeclareOption": "*{{",
+    "DeclareOptionX": "*{{",
+    "DeclareGraphicsExtensions": 1,
 }
 
 
@@ -107,14 +110,6 @@ def declare_paired_delimiter_handler(
     return []
 
 
-def make_declare_ignore_handler(pattern: str, n_blocks: int):
-    def ignore_handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
-        blocks = expander.parse_braced_blocks(n_blocks)
-        return []
-
-    return ignore_handler
-
-
 def register_declare_commands(expander: ExpanderCore):
     expander.register_macro(
         "\\DeclareRobustCommand",
@@ -133,12 +128,7 @@ def register_declare_commands(expander: ExpanderCore):
         is_global=True,
     )
 
-    for command, n_blocks in ignored_declare_pattern_N_blocks.items():
-        expander.register_handler(
-            command,
-            make_declare_ignore_handler(command, n_blocks),
-            is_global=True,
-        )
+    register_ignore_handlers_util(expander, ignored_declare_patterns)
 
 
 if __name__ == "__main__":

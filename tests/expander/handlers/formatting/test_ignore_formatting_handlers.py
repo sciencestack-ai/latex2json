@@ -1,18 +1,19 @@
-import pytest
 from latex2json.expander.expander import Expander
 from latex2json.tokens.utils import strip_whitespace_tokens
-from tests.test_utils import assert_token_sequence
 
 
-def test_fam_handlers():
+def test_ignore_formatting_handlers():
     expander = Expander()
-
     text = r"""
-\newfam\fontfam
-\textfont\fontfam=\xxxx
-\scriptfont\fontfam=\sss
-\scriptscriptfont\fontfam=\yyy
-"""
+    \/
+    \subjclass[xx]{Secondary 01A80}
+    \FloatBarrier
+    \stackMath
+    \penalty1000
+    \clubpenalty=0 
+    \widowpenalty=0
+    \kern.4ex
+    """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert out == []
