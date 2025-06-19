@@ -9,9 +9,13 @@ from latex2json.expander.handlers.formatting.number_format_handler import (
 from latex2json.expander.handlers.formatting.spacing_handlers import (
     register_spacing_handlers,
 )
+from latex2json.expander.handlers.formatting.layout_content_handlers import (
+    register_layout_content_handlers,
+)
 
 
 def register_formatting_handlers(expander: ExpanderCore):
     register_ignore_format_handlers(expander)
     register_number_format_handlers(expander)
     register_spacing_handlers(expander)
+    register_layout_content_handlers(expander)

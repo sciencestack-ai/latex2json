@@ -199,4 +199,4 @@ One line ajajaja
 
     for command, expected_text in test_cases:
         out = expander.expand(command)
-        assert expander.check_tokens_equal(out, expander.expand(expected_text))
+        assert out == expander.convert_str_to_tokens(expected_text)

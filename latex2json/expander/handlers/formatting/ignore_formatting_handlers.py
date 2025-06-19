@@ -152,32 +152,10 @@ content_formatting_patterns = {
 }
 
 
-def two_column_handler(expander: ExpanderCore, token: Token):
-    expander.skip_whitespace()
-    out_tokens = expander.parse_bracket_as_tokens(expand=True)
-    return out_tokens
-
-
-def texorpdfstring_handler(expander: ExpanderCore, token: Token):
-    expander.skip_whitespace()
-    blocks = expander.parse_braced_blocks(2, expand=True)
-    if len(blocks) != 2:
-        expander.logger.warning("Expected 2 blocks for \\texorpdfstring")
-        return []
-    # choose the second block
-    return blocks[1]
-
-
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns)
     register_ignore_handlers_util(expander, content_formatting_patterns)
-
-    # columns
-    register_ignore_handlers_util(expander, {"onecolumn": 0})
-    expander.register_handler("twocolumn", two_column_handler)
-    # texorpdfstring
-    expander.register_handler("texorpdfstring", texorpdfstring_handler)
 
 
 if __name__ == "__main__":
