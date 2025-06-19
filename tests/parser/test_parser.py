@@ -1,4 +1,4 @@
-from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.base_nodes import DisplayType, TextNode, VerbatimNode
 from latex2json.nodes.include_graphics_pdf_nodes import IncludeGraphicsNode
 from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 from latex2json.parser.parser import Parser
@@ -66,3 +66,27 @@ def test_labels_n_captions_n_figures():
     assert minipage_node.labels == []
 
     assert parser.current_env is None
+
+
+def test_verbatim_handler():
+    parser = Parser()
+
+    # verb
+    text = r"""
+    \verb+Hello+
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], VerbatimNode)
+    assert out[0] == VerbatimNode("Hello", display=DisplayType.INLINE)
+
+    # lstinline
+    text = r"""
+    \lstinline[language=Python]|Hello|
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], VerbatimNode)
+    assert out[0] == VerbatimNode(
+        "Hello", display=DisplayType.INLINE, title="language=Python"
+    )

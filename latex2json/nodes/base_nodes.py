@@ -155,21 +155,35 @@ class GroupNode(ASTNode):
 
 
 class VerbatimNode(ASTNode):
-    def __init__(self, text: str, display: Optional[DisplayType] = None):
+    def __init__(
+        self,
+        text: str,
+        title: Optional[str] = None,
+        display: Optional[DisplayType] = None,
+    ):
         super().__init__()
         self.text = text
+        self.title = title
         self.display = display
 
     def __str__(self):
-        return f"VerbatimNode({self.text})"
+        out = "VerbatimNode("
+        if self.title:
+            out += f"title={self.title}, "
+        out += f"text={self.text})"
+        return out
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, VerbatimNode):
             return False
-        return self.text == other.text and self.display == other.display
+        return (
+            self.text == other.text
+            and self.display == other.display
+            and self.title == other.title
+        )
 
     def detokenize(self):
-        return self.text
+        return self.text  # not exactly accurate, but good enough for now
 
 
 class CommandNode(ASTNode):

@@ -15,6 +15,7 @@ from latex2json.nodes import (
 )
 from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode, VerbatimNode
 from latex2json.nodes.caption_node import CaptionNode
+from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
     Token,
@@ -367,6 +368,14 @@ class ParserCore:
             verb_tokens = token.args[0]
             verb_text = self.convert_tokens_to_str(verb_tokens)
             return [VerbatimNode(verb_text, display=DisplayType.INLINE)]
+        elif token.name == "lstinline":
+            verb_tokens = token.args[0]
+            verb_text = self.convert_tokens_to_str(verb_tokens)
+            title_tokens = token.opt_args[0] if token.opt_args else []
+            title_text = self.convert_tokens_to_str(title_tokens)
+            return [
+                VerbatimNode(verb_text, title=title_text, display=DisplayType.INLINE)
+            ]
         else:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []
@@ -388,6 +397,23 @@ class ParserCore:
     @staticmethod
     def convert_tokens_to_str(tokens: List[Token]) -> str:
         return Expander.convert_tokens_to_str(tokens)
+
+    @staticmethod
+    def convert_nodes_to_str(nodes: List[ASTNode]) -> str:
+        return convert_nodes_to_str(nodes)
+
+    def parse_tokens_until(
+        self, predicate: TokenPredicate, consume_predicate=False
+    ) -> List[Token]:
+        tokens = []
+        while not self.eof():
+            tok = self.peek()
+            if predicate(tok):
+                if consume_predicate:
+                    self.consume()
+                return tokens
+            tokens.append(self.consume())
+        return tokens
 
     def parse_begin_end_as_tokens(
         self,
