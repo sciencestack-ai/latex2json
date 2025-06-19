@@ -1,4 +1,5 @@
 from latex2json.expander.expander import Expander
+from latex2json.registers.utils import int_to_roman
 
 
 def test_num_handler():
@@ -15,3 +16,22 @@ def test_num_handler():
     text = r"\num[round-precision=2]{1.23456789}999"
     out = expander.expand(text)
     assert expander.check_tokens_equal(out, expander.expand("1.23999"))
+
+
+def test_romannumeral_handler():
+    expander = Expander()
+
+    # works with braces
+    text = r"\romannumeral{123}"
+    out = expander.expand(text)
+    assert expander.check_tokens_equal(out, expander.expand(int_to_roman(123)))
+
+    # works without braces (does not work with .)
+    text = r"\romannumeral 1000.3"
+    out = expander.expand(text)
+    assert expander.check_tokens_equal(out, expander.expand(int_to_roman(1000) + ".3"))
+
+    # works with negative numbers
+    text = r"\romannumeral{-123}"
+    out = expander.expand(text)
+    assert expander.check_tokens_equal(out, expander.expand(int_to_roman(-123)))

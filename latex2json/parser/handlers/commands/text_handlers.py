@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from latex2json.nodes import ASTNode
 from latex2json.nodes.base_nodes import TextNode
@@ -63,6 +63,22 @@ def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     return []
 
 
+def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    if parser.is_math_mode:
+        return [token]  # if math mode, just return the token as is
+
+    blocks = parser.parse_braced_blocks(2)
+    if len(blocks) != 2:
+        parser.logger.warning("Warning: \\frac expects 2 arguments")
+        return []
+    return TextNode("(") + blocks[0] + TextNode(") / (") + blocks[1] + TextNode(")")
+
+
+def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
+    parser.skip_whitespace()
+    return parser.parse_brace_as_nodes()
+
+
 def register_text_handlers(parser: ParserCore):
     # Register legacy handlers
     for cmd, style_obj in LEGACY_TO_FONT_STYLE.items():
@@ -76,10 +92,17 @@ def register_text_handlers(parser: ParserCore):
     parser.register_handler("textcolor", textcolor_handler)
     parser.register_handler("color", legacy_color_handler)
 
+    # citetext
+    parser.register_handler("citetext", citetext_handler)
+
+    # other
     for backslash in ["backslash", "textbackslash", "arraybackslash"]:
         parser.register_handler(backslash, lambda parser, token: [TextNode(r"\\")])
 
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
+
+    for frac in ["frac", "nicefrac", "textfrac"]:
+        parser.register_handler(frac, frac_handler)
 
 
 if __name__ == "__main__":

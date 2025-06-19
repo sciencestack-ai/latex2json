@@ -130,3 +130,21 @@ def test_nested_text_styles():
         ("POST", []),
     ]
     assert_output_matches_expected(out, expected_text_style_pairs)
+
+
+def test_citetext():
+    text = r"""
+    \citetext{My Text}
+    """.strip()
+    parser = Parser()
+    out = parser.parse(text)
+    assert out == [TextNode("My Text")]
+
+
+def test_backslash_indent():
+    text = r"""
+    \backslash
+    """.strip()
+    parser = Parser()
+    out = parser.parse(text)
+    assert out == [TextNode(r"\\")]

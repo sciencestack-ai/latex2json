@@ -2,7 +2,9 @@ import decimal
 import re
 from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN
 
 
 def num_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -38,8 +40,29 @@ def num_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     return expander.convert_str_to_tokens(str(number))
 
 
+def romannumeral_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    tok = expander.peek()
+    if tok is None:
+        return None
+
+    if tok == BEGIN_BRACE_TOKEN:
+        try:
+            number = int(expander.parse_brace_name())
+        except ValueError:
+            expander.logger.warning("romannumeral: Invalid number argument")
+            return None
+    else:
+        number = expander.parse_integer()
+    if number is None:
+        expander.logger.warning("romannumeral: Missing number argument")
+        return None
+    return expander.convert_str_to_tokens(int_to_roman(number))
+
+
 def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("num", num_handler, is_global=True)
+    expander.register_handler("romannumeral", romannumeral_handler, is_global=True)
 
 
 if __name__ == "__main__":

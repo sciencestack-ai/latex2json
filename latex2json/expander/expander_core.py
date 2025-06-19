@@ -114,6 +114,10 @@ class ExpanderCore:
     def macros(self) -> MacroRegistry:
         return self.state.current.macro_registry
 
+    @property
+    def is_math_mode(self) -> bool:
+        return self.state.is_math_mode
+
     def _init_macros(self):
         self._init_state_macros()
         self._init_counter_macros()
@@ -135,7 +139,7 @@ class ExpanderCore:
                 return [out_token.copy()]
 
             def end_math_handler(expander: "ExpanderCore", token: Token):
-                if expander.state.is_math_mode:
+                if expander.is_math_mode:
                     expander.state.pop_mode()
                 return [out_token.copy()]
 
@@ -215,7 +219,7 @@ class ExpanderCore:
     def substitute_token_args(
         self, tokens: List[Token], args: List[List[Token]]
     ) -> List[Token]:
-        is_math = self.state.is_math_mode
+        is_math = self.is_math_mode
         tokens = [t.copy() for t in tokens]
         if is_math:
             # wrap all args in braces e.g. {x}

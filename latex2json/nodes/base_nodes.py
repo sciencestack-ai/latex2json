@@ -129,6 +129,24 @@ class NewLineNode(ASTNode):
         return self.value
 
 
+class GroupNode(ASTNode):
+    def __init__(self, body: List[ASTNode]):
+        super().__init__()
+        self.body = body
+        self.set_children(body)
+
+    def __str__(self):
+        return f"GroupNode({self.body})"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, GroupNode):
+            return False
+        return check_asts_equal(self.body, other.body)
+
+    def detokenize(self):
+        return "{\n" + "".join(child.detokenize() for child in self.body) + "\n}"
+
+
 class CommandNode(ASTNode):
     def __init__(
         self,
