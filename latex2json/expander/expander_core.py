@@ -374,6 +374,9 @@ class ExpanderCore:
         if tok is None:
             return None
 
+        # if self.state.is_verbatim_mode:
+        #     return [tok]
+
         if tok.type == TokenType.CONTROL_SEQUENCE:
             macro = self.state.get_macro(tok.value)
             if macro and macro.handler:
@@ -401,7 +404,10 @@ class ExpanderCore:
                 return out
         return None
 
-    def parse_token(self) -> Optional[Token]:
+    def parse_token(self, verbatim=False) -> Optional[Token]:
+        if verbatim:
+            return self.consume()
+
         tok = self.peek()
         if tok is None:
             return None
@@ -412,11 +418,11 @@ class ExpanderCore:
         return self.consume()
 
     def parse_tokens_until(
-        self, predicate: TokenPredicate, consume_predicate=False
+        self, predicate: TokenPredicate, consume_predicate=False, verbatim=False
     ) -> List[Token]:
         out = []
         while not self.eof():
-            tok = self.parse_token()
+            tok = self.parse_token(verbatim=verbatim)
             if tok is None:
                 break
             if predicate(tok):
@@ -979,13 +985,13 @@ class ExpanderCore:
         self.state.set_environment_definition(env_name, env_def)
 
         is_math = env_def.is_math
+        is_verbatim = env_def.is_verbatim
+
         counter_name = env_def.counter_name
         if counter_name:
             self.state.new_counter(counter_name)
 
-        def begin_handler(
-            expander: "ExpanderCore", token: Token
-        ) -> Optional[List[Token]]:
+        def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
             state = expander.state
             if counter_name:
                 state.step_counter(counter_name)
@@ -1016,17 +1022,49 @@ class ExpanderCore:
                 numbering=numbering,
                 is_math_env=is_math,
             )
-            return [begin_token] + subbed
 
-        def end_handler(
-            expander: "ExpanderCore", token: Token
-        ) -> Optional[List[Token]]:
+            out_tokens = [begin_token] + subbed
+            if is_verbatim:
+                # if verbatim, we parse until we find the matching end environment token
+                def is_end_env_token(token: Token) -> bool:
+                    is_end_env_ctrl = (
+                        token.type == TokenType.CONTROL_SEQUENCE
+                        and token.value == "end"
+                    )
+                    if is_end_env_ctrl:
+                        tokens_to_return = expander.parse_tokens_until(
+                            is_begin_group_token, verbatim=True
+                        )
+                        # check next tok is the env name
+                        parsed_env_name = expander.parse_brace_name() or ""
+                        if parsed_env_name == env_name:
+                            return True
+                        else:
+                            expander.push_tokens(
+                                tokens_to_return
+                                + [BEGIN_BRACE_TOKEN.copy()]
+                                + expander.convert_str_to_tokens(parsed_env_name)
+                                + [END_BRACE_TOKEN.copy()]
+                            )
+                            return False
+                    return False
+
+                body_block = expander.parse_tokens_until(
+                    is_end_env_token, verbatim=True
+                )
+                out_tokens.extend(body_block)
+                out_tokens.extend(end_handler(expander, None))
+
+            return out_tokens
+
+        def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+            state = expander.state
             end_token = Token(TokenType.ENVIRONMENT_END, env_name)
 
-            expander.state.pop_env_stack()
+            state.pop_env_stack()
 
             if is_math:
-                expander.state.pop_mode()
+                state.pop_mode()
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             subbed = expander.expand_tokens(subbed)

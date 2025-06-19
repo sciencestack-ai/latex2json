@@ -72,22 +72,26 @@ class ExpanderState:
         # Initialize with the base global state layer
         self._stack: List[StateLayer] = [StateLayer()]
         self.tokenizer = tokenizer
-        self.pending_global = False
 
+        # registers and counters
         self.registers = TexRegisters()
-        # Add CounterManager instance
         self.counter_manager = CounterManager(self.registers)
 
+        # registries
         self.environment_registry: Dict[str, EnvironmentDefinition] = {}
-
         self.font_registry: Dict[str, List[Token]] = {}
         self.color_registry: Dict[str, str] = {}  # e.g. "red" -> "rgb(1,0,0)"
-
         self._env_stack: List[str] = []
 
+        # storage
         self._catcode_text_mode_values: List[Tuple[int, Catcode]] = []
 
+        # mode
         self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
+
+        # variable states
+        self.pending_global = False
+        # self.is_verbatim_mode = False
 
     @property
     def mode(self) -> ProcessingMode:

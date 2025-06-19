@@ -63,6 +63,11 @@ def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     return []
 
 
+def reset_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    parser.state.reset_font_color()
+    return []
+
+
 def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     if parser.is_math_mode:
         return [token]  # if math mode, just return the token as is
@@ -91,6 +96,7 @@ def register_text_handlers(parser: ParserCore):
     # Color handlers
     parser.register_handler("textcolor", textcolor_handler)
     parser.register_handler("color", legacy_color_handler)
+    parser.register_handler("normalcolor", reset_color_handler)
 
     # citetext
     parser.register_handler("citetext", citetext_handler)

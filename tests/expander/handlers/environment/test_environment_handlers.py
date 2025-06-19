@@ -209,3 +209,20 @@ def test_floatname():
     assert fig == mock_env_token(
         expander, "figure", content="", display_name="Fig.", is_math_env=False
     )
+
+
+def test_verbatim_environments():
+    expander = Expander()
+
+    verbatim_env_tokens = expander.expand(
+        r"\begin{verbatim}\newcommand{test}{123}\end {fake}##1\end{verbatim}"
+    )
+    assert verbatim_env_tokens[0] == EnvironmentStartToken("verbatim")
+    # check that newcommand remains there unexpanded since this is a verbatim environment
+    assert verbatim_env_tokens[1] == Token(TokenType.CONTROL_SEQUENCE, "newcommand")
+
+    # check that parameter token is not collapsed to #1
+    assert expander.check_tokens_equal(
+        verbatim_env_tokens[-4:-1], expander.convert_str_to_tokens("##1")
+    )
+    assert verbatim_env_tokens[-1] == Token(TokenType.ENVIRONMENT_END, "verbatim")

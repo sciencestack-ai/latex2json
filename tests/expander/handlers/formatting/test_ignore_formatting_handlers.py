@@ -31,6 +31,13 @@ def test_ignore_formatting_handlers():
     {\bfseries\titlerule*[0.5pc]{$\cdot$}\contentspage}
     [0.2em]
 
+    \titlelabel{(\thesubsection)}
+    \titleformat{\section}[hang]
+{\normalfont\Large\bfseries}{\thesection}{1em}{}
+
+    \titlespacing*{\paragraph}
+    {0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
     \printcontents{}{1}{\setcounter{tocdepth}{2}}
 
     \setmathfont[range=\setminus, Scale=MatchUppercase]{Asana-Math.otf}

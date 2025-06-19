@@ -50,6 +50,13 @@ def test_ifbool():
     )
     assert out == expander.expand("BOTH")
 
+    # test notbool
+    out = expander.expand(r"\notbool{testbool}{TRUE}{FALSE}")
+    assert out == expander.expand("FALSE")
+
+    out = expander.expand(r"\boolfalse{testbool}\notbool{testbool}{TRUE}{FALSE}")
+    assert out == expander.expand("TRUE")
+
 
 def test_bool_error_cases():
     expander = Expander()

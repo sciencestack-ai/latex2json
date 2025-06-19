@@ -140,6 +140,19 @@ LEGACY_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "unboldmath": FontSeries.NORMAL,
     "boldmath": FontSeries.BOLD,
     "bm": FontSeries.BOLD,
+    # Size mappings
+    "tiny": FontSize.TINY,
+    "scriptsize": FontSize.SCRIPTSIZE,
+    "footnotesize": FontSize.FOOTNOTESIZE,
+    "small": FontSize.SMALL,
+    "normalsize": FontSize.NORMALSIZE,
+    "large": FontSize.LARGE,
+    "Large": FontSize.LARGE,
+    "LARGE": FontSize.LARGE,
+    "huge": FontSize.HUGE,
+    "Huge": FontSize.HUGE,
+    "smaller": FontSize.SMALL,
+    "larger": FontSize.LARGE,
 }
 
 

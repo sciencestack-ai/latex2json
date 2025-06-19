@@ -36,23 +36,26 @@ def make_setbool_handler(flag: bool):
     return setbool_handler
 
 
-def if_bool_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    blocks = expander.parse_braced_blocks(3)
+def make_if_bool_handler(flag: bool = True):
+    def if_bool_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        blocks = expander.parse_braced_blocks(3)
 
-    if len(blocks) != 3:
-        expander.logger.warning("Warning: \\ifbool expects 3 blocks")
-        return None
+        if len(blocks) != 3:
+            expander.logger.warning("Warning: \\ifbool expects 3 blocks")
+            return None
 
-    eval_block = blocks[0]
-    bool_name = expander.convert_tokens_to_str(eval_block)
-    bool_value = expander.state.get_register(RegisterType.BOOL, bool_name)
-    # if not bool_value:
-    #     expander.logger.warning(f"Warning: \\ifbool expects a boolean name")
-    #     return None
+        eval_block = blocks[0]
+        bool_name = expander.convert_tokens_to_str(eval_block)
+        bool_value = expander.state.get_register(RegisterType.BOOL, bool_name)
+        # if not bool_value:
+        #     expander.logger.warning(f"Warning: \\ifbool expects a boolean name")
+        #     return None
 
-    block = blocks[1] if bool_value else blocks[2]
-    expander.push_tokens(block)
-    return []
+        block = blocks[1] if bool_value == flag else blocks[2]
+        expander.push_tokens(block)
+        return []
+
+    return if_bool_handler
 
 
 def set_boolean_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -91,18 +94,15 @@ def register_bool_handlers(expander: ExpanderCore):
     \ifbool{myflag}{true code}{false code}
     """
 
-    for newbool in ["newbool", "newboolean"]:
+    for newbool in ["newbool", "providebool", "newboolean"]:
         expander.register_handler(
             newbool,
             newbool_handler,
             is_global=True,
         )
 
-    expander.register_handler(
-        "setboolean",
-        set_boolean_handler,
-        is_global=True,
-    )
+    for setbool in ["setboolean", "setbool"]:
+        expander.register_handler(setbool, set_boolean_handler, is_global=True)
 
     expander.register_handler(
         "booltrue",
@@ -117,7 +117,8 @@ def register_bool_handlers(expander: ExpanderCore):
     )
 
     # ifbool
-    expander.register_handler("ifbool", if_bool_handler, is_global=True)
+    expander.register_handler("ifbool", make_if_bool_handler(True), is_global=True)
+    expander.register_handler("notbool", make_if_bool_handler(False), is_global=True)
 
 
 if __name__ == "__main__":

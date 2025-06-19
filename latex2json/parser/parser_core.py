@@ -7,13 +7,13 @@ from latex2json.nodes import (
     EnvironmentNode,
     TextNode,
     EquationNode,
-    EquationType,
+    DisplayType,
     SectionNode,
     CommandNode,
     strip_whitespace_nodes,
     merge_text_nodes,
 )
-from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode
+from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode, VerbatimNode
 from latex2json.nodes.caption_node import CaptionNode
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
@@ -247,7 +247,7 @@ class ParserCore:
     ) -> List[EquationNode]:
         self.is_math_mode = True
         math_nodes = self.process(lambda tok: tok == token)
-        eq_type = EquationType.INLINE if is_inline else EquationType.DISPLAY
+        eq_type = DisplayType.INLINE if is_inline else DisplayType.DISPLAY
         self.is_math_mode = False
         return [EquationNode(math_nodes, eq_type)]
 
@@ -275,9 +275,9 @@ class ParserCore:
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
         if token.is_math_env:
-            eq_type = EquationType.DISPLAY
+            eq_type = DisplayType.DISPLAY
             if "align" in env_name or "eqnarray" in env_name:
-                eq_type = EquationType.ALIGN
+                eq_type = DisplayType.ALIGN
             env_node = EquationNode(
                 math_nodes=[], numbering=token.numbering, equation_type=eq_type
             )
@@ -363,6 +363,10 @@ class ParserCore:
             )
             self.push_env_stack(caption_node)
             return [caption_node]
+        elif token.name == "verb":
+            verb_tokens = token.args[0]
+            verb_text = self.convert_tokens_to_str(verb_tokens)
+            return [VerbatimNode(verb_text, display=DisplayType.INLINE)]
         else:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []
@@ -380,6 +384,10 @@ class ParserCore:
             ]
 
         return []
+
+    @staticmethod
+    def convert_tokens_to_str(tokens: List[Token]) -> str:
+        return Expander.convert_tokens_to_str(tokens)
 
     def parse_begin_end_as_tokens(
         self,

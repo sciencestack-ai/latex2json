@@ -27,11 +27,11 @@ def test_romannumeral_handler():
     assert expander.check_tokens_equal(out, expander.expand(int_to_roman(123)))
 
     # works without braces (does not work with .)
-    text = r"\romannumeral 1000.3"
+    text = r"\romannumeral1000.3"
     out = expander.expand(text)
     assert expander.check_tokens_equal(out, expander.expand(int_to_roman(1000) + ".3"))
 
-    # works with negative numbers
-    text = r"\romannumeral{-123}"
+    # works with negative numbers (but consumes them, does not show in latex)
+    text = r"\romannumeral-123"
     out = expander.expand(text)
-    assert expander.check_tokens_equal(out, expander.expand(int_to_roman(-123)))
+    assert out == []

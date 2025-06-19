@@ -13,8 +13,12 @@ formatting_patterns = {
     "floatstyle": 1,
     "restylefloat": 1,
     # Section-related formatting
-    "titleformat": 4,
-    "titlespacing": 4,
+    "titleformat": "{[" + "{" * 4,
+    "titlespacing": "*" + "{" * 4,
+    "titlelabel": "{",
+    "titleclass": "{{[",
+    "titlecontents": "{[" + "{" * 4,
+    "titleline": "{",
     "sectionformat": 1,
     # Font-related formatting
     "setmathfont": "[{",
@@ -37,10 +41,16 @@ formatting_patterns = {
     "pdfoutput": "=i",
     "pdfsuppresswarningpagegroup": "=i",
     # Page-related formatting
+    # Style commands
     "pagestyle": 1,
     "newpagestyle": 2,
     "renewpagestyle": 2,
     "thispagestyle": 1,
+    "urlstyle": 1,
+    "theoremstyle": 1,
+    "bibliographystyle": 1,
+    "documentstyle": 1,
+    "setcitestyle": 1,
     "enlargethispage": 1,
     "pagecolor": "*{",
     "centering": 0,
@@ -65,12 +75,6 @@ formatting_patterns = {
     "flushleft": 0,
     "flushright": 0,
     "flushtop": 0,
-    # Style commands
-    "urlstyle": 1,
-    "theoremstyle": 1,
-    "bibliographystyle": 1,
-    "documentstyle": 1,
-    "setcitestyle": 1,
     # lists and items
     "lstset": "{",
     "setlist": "[{",
@@ -133,6 +137,10 @@ content_formatting_patterns = {
     # line numbers
     "linenumbers": 0,
     "linesnumbered": 0,
+    "linenomath": 0,
+    "endlinenomath": 0,
+    "modulolinenumbers": "[",
+    "resetlinenumber": 0,
     # bib
     "printbibliography": 0,
     "renewbibmacro": "{{",

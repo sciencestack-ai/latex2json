@@ -1,4 +1,11 @@
+from enum import Enum
 from typing import List, Optional
+
+
+class DisplayType(Enum):
+    INLINE = 1
+    DISPLAY = 2
+    ALIGN = 3
 
 
 class ASTNode:
@@ -145,6 +152,24 @@ class GroupNode(ASTNode):
 
     def detokenize(self):
         return "{\n" + "".join(child.detokenize() for child in self.body) + "\n}"
+
+
+class VerbatimNode(ASTNode):
+    def __init__(self, text: str, display: Optional[DisplayType] = None):
+        super().__init__()
+        self.text = text
+        self.display = display
+
+    def __str__(self):
+        return f"VerbatimNode({self.text})"
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, VerbatimNode):
+            return False
+        return self.text == other.text and self.display == other.display
+
+    def detokenize(self):
+        return self.text
 
 
 class CommandNode(ASTNode):

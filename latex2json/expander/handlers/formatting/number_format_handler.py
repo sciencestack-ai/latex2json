@@ -57,6 +57,9 @@ def romannumeral_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     if number is None:
         expander.logger.warning("romannumeral: Missing number argument")
         return None
+    if number < 0:
+        # \romannumeral does not show negative numbers in latex
+        return []
     return expander.convert_str_to_tokens(int_to_roman(number))
 
 

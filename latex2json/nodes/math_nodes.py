@@ -1,27 +1,20 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import (
     ASTNode,
+    DisplayType,
     check_asts_equal,
     CommandNode,
     TextNode,
 )
 
-from enum import Enum, auto
-
 from latex2json.nodes.utils import strip_whitespace_nodes
-
-
-class EquationType(Enum):
-    INLINE = 1
-    DISPLAY = 2
-    ALIGN = 3
 
 
 class EquationNode(ASTNode):
     def __init__(
         self,
         math_nodes: List[ASTNode],
-        equation_type: EquationType = EquationType.INLINE,
+        equation_type: DisplayType = DisplayType.INLINE,
         numbering: Optional[str] = None,
     ):
         super().__init__()
@@ -66,13 +59,13 @@ class EquationNode(ASTNode):
 
     def detokenize(self):
         math_str = self.equation_to_str()
-        if self.equation_type == EquationType.INLINE:
+        if self.equation_type == DisplayType.INLINE:
             return "$" + math_str + "$"
 
-        if self.equation_type == EquationType.DISPLAY and not self.numbering:
+        if self.equation_type == DisplayType.DISPLAY and not self.numbering:
             return "$$" + math_str + "$$"
 
-        env_name = "align" if self.equation_type == EquationType.ALIGN else "equation"
+        env_name = "align" if self.equation_type == DisplayType.ALIGN else "equation"
         if not self.numbering:
             env_name += "*"
         begin_str = f"\\begin{{{env_name}}}"

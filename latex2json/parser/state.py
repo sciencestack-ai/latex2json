@@ -183,3 +183,6 @@ class ParserState:
                 font.color = DEFAULT_FONT.color
             else:
                 font.color = style.value
+
+    def reset_font_color(self):
+        self.current.font.color = DEFAULT_FONT.color

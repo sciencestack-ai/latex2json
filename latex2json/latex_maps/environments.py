@@ -20,6 +20,7 @@ class EnvironmentDefinition:
         default_arg: Optional[List[Token]] = None,
         counter_name: Optional[str] = None,  # e.g. "equation"
         is_math: bool = False,  # e.g, align, equation, etc.
+        is_verbatim: bool = False,
         has_direct_command: bool = False,  # e.g. \begin{document} -> \document + \enddocument
     ):
         self.name = name
@@ -32,6 +33,7 @@ class EnvironmentDefinition:
         self.default_arg = default_arg
         self.counter_name = counter_name
         self.is_math = is_math
+        self.is_verbatim = is_verbatim
         self.has_direct_command = has_direct_command
 
     def copy(self) -> "EnvironmentDefinition":
@@ -45,6 +47,7 @@ class EnvironmentDefinition:
             ),
             counter_name=self.counter_name,
             is_math=self.is_math,
+            is_verbatim=self.is_verbatim,
             has_direct_command=self.has_direct_command,
         )
 
@@ -60,6 +63,8 @@ class EnvironmentDefinition:
             out += f", end_definition={self.end_definition}"
         if self.is_math:
             out += ", is_math=True"
+        if self.is_verbatim:
+            out += ", is_verbatim=True"
         if self.counter_name:
             out += f", counter_name={self.counter_name}"
         if self.has_direct_command:
@@ -79,9 +84,12 @@ DOCUMENT_ENVIRONMENTS = {
     ),
 }
 
-TEXT_ENVIRONMENTS = {
-    "quote": EnvironmentDefinition("quote", has_direct_command=True),
-    "verbatim": EnvironmentDefinition("verbatim", has_direct_command=True),
+VERBATIM_ENVIRONMENTS = {
+    "quote": EnvironmentDefinition("quote", has_direct_command=True, is_verbatim=True),
+    "verbatim": EnvironmentDefinition(
+        "verbatim", has_direct_command=True, is_verbatim=True
+    ),
+    "lstlisting": EnvironmentDefinition("lstlisting", is_verbatim=True),
 }
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
@@ -167,7 +175,7 @@ MATH_ENVIRONMENTS = {
 # Combine all environment dictionaries
 COMMON_ENVIRONMENTS = {
     **DOCUMENT_ENVIRONMENTS,
-    **TEXT_ENVIRONMENTS,
+    **VERBATIM_ENVIRONMENTS,
     **LAYOUT_ENVIRONMENTS,
     **FIGURE_ENVIRONMENTS,
     **TABLE_ENVIRONMENTS,
