@@ -1,10 +1,13 @@
 from typing import List, Optional, Tuple, Union
+from latex2json.expander.handlers.handler_utils import make_generic_command_handler
+from latex2json.expander.macro_registry import Handler
 from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
-from latex2json.tokens.types import TokenType
+from latex2json.tokens.types import CommandWithArgsToken, TokenType
 from latex2json.expander.handlers.registers.base_register_handlers import RegisterMacro
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 REGISTER_TYPE = RegisterType.BOX
 BOX_DIMENSIONS = ["wd", "ht", "dp"]
@@ -99,7 +102,7 @@ def box_n_copy_handler(copy=False):
             expander.logger.warning(f"Warning: {prefix} expects a box, but found {box}")
             return None
 
-        out_tokens = box.content
+        out_tokens = box.content.copy()
         if not copy:
             # \box0 flushes the box
             box.content = []
@@ -135,6 +138,69 @@ def setbox_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def make_savebox_handler(extended=False):
+    r"""
+    % Simple storage
+    \sbox{\mybox}{Hello World}
+
+    % Extended storage with width specification
+    \savebox{\mybox}[3cm][c]{Centered text in 3cm width}
+    """
+
+    def savebox_handler(expander: ExpanderCore, token: Token):
+        box_name = expander.parse_command_name()
+        if box_name is None:
+            expander.logger.warning(
+                f"Warning: \\sbox|savebox expects a name, but found {expander.peek()}"
+            )
+            return None
+
+        if extended:
+            # ignore blocks..
+            blocks = expander.parse_braced_blocks(
+                N_blocks=2,
+                brackets=True,
+            )
+
+        expander.skip_whitespace()
+        box_content = expander.parse_brace_as_tokens(expand=True)
+        if box_content is None:
+            expander.logger.warning(
+                f"Warning: \\sbox|savebox expects box content, but found {expander.peek()}"
+            )
+            return None
+
+        existing_box: Optional[Box] = expander.get_register_value(
+            REGISTER_TYPE, box_name
+        )
+        if existing_box is None:
+            box = Box(content=box_content)
+        else:
+            box = existing_box
+            box.content = box_content
+
+        expander.set_register(REGISTER_TYPE, box_name, box)
+
+        return []
+
+    return savebox_handler
+
+
+def usebox_handler(expander: ExpanderCore, token: Token):
+    box_name = expander.parse_command_name()
+    if box_name is None:
+        expander.logger.warning(
+            f"Warning: \\usebox expects a name, but found {expander.peek()}"
+        )
+        return None
+
+    box = expander.get_register_value(REGISTER_TYPE, box_name)
+    if isinstance(box, Box):
+        return box.content.copy()
+
+    return []
+
+
 def newbox_handler(expander: ExpanderCore, token: Token):
     tok = expander.peek()
     if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
@@ -142,6 +208,18 @@ def newbox_handler(expander: ExpanderCore, token: Token):
         return None
     box_name = tok.value
     expander.consume()
+
+    expander.state.create_register(REGISTER_TYPE, box_name)
+    return []
+
+
+def newsavebox_handler(expander: ExpanderCore, token: Token):
+    box_name = expander.parse_command_name()
+    if box_name is None:
+        expander.logger.warning(
+            f"Warning: \\newsavebox expects a name, but found {expander.peek()}"
+        )
+        return None
 
     expander.state.create_register(REGISTER_TYPE, box_name)
     return []
@@ -167,19 +245,76 @@ def box_manipulation_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+CONTENT_BOX_SPECS = {
+    "fbox": "{",  # \fbox{text}
+    "parbox": "[[[{{",  # \parbox[pos][height][inner-pos]{width}{text}
+    "makebox": "[[{",  # \makebox[width]{text}
+    "framebox": "[[{",  # \framebox[width][pos]{text}
+    "raisebox": "{[[{",  # \raisebox{distance}[extend-above][extend-below]{text}
+    "colorbox": "{{",  # \colorbox{color}{text}
+    "fcolorbox": "{{{",  # \fcolorbox{border}{bg}{text}
+    "scalebox": "{{",  # \scalebox{scale}{text}
+    "mbox": "{",  # \mbox{text}, strip out all EOL
+    "pbox": "{{",  # \pbox{x}{text}
+    "resizebox": "{{{",  # \resizebox{width}{height}{text}
+    "rotatebox": "{{",  # \rotatebox{angle}{text}
+    "adjustbox": "{{",  # \adjustbox{max width=\textwidth}{text}
+}
+
+
+def make_content_box_handler(command: str, argspec: str) -> Handler:
+    handler = make_generic_command_handler(command, argspec)
+
+    def content_box_handler(
+        expander: ExpanderCore, token: Token
+    ) -> Optional[list[Token]]:
+        tokens = handler(expander, token)
+        if tokens and isinstance(tokens[0], CommandWithArgsToken):
+            # the last arg is the text content itself
+            last_arg = tokens[0].args[-1]
+            if isinstance(last_arg, list):
+                out_tokens = strip_whitespace_tokens(last_arg)
+                if command == "mbox":
+                    return [t for t in out_tokens if t.type != TokenType.END_OF_LINE]
+                return out_tokens
+        return []
+
+    return content_box_handler
+
+
 def register_box_handlers(expander: ExpanderCore):
     """Register all box-related handlers"""
+
+    # newbox, newsavebox
     expander.register_handler("newbox", newbox_handler, is_global=True)
+    expander.register_handler("newsavebox", newsavebox_handler, is_global=True)
+
+    # setbox/savebox
     expander.register_handler("setbox", setbox_handler, is_global=True)
+    expander.register_handler(
+        "sbox", make_savebox_handler(extended=False), is_global=True
+    )
+    expander.register_handler(
+        "savebox", make_savebox_handler(extended=True), is_global=True
+    )
 
-    for cmd in BOXES:
-        expander.register_handler(cmd, direct_box_handler, is_global=True)
-
+    # box usage: usebox
+    expander.register_handler("usebox", usebox_handler, is_global=True)
     # treat them the same semantically
     for cmd in ["box", "unvbox", "unhbox", "copy"]:
         expander.register_handler(
             cmd, box_n_copy_handler(cmd.endswith("copy")), is_global=True
         )
+
+    # box content
+    for cmd, spec in CONTENT_BOX_SPECS.items():
+        expander.register_handler(
+            cmd, make_content_box_handler(cmd, spec), is_global=True
+        )
+
+    # hbox, vbox, vtop
+    for cmd in BOXES:
+        expander.register_handler(cmd, direct_box_handler, is_global=True)
 
     # box manipulation handlers (parse dimensions and ignored)
     for cmd in ["moveleft", "moveright", "raise", "lower"]:

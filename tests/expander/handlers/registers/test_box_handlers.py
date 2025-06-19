@@ -139,3 +139,64 @@ def test_wd_ht_dp():
     box = expander.get_register_value(RegisterType.BOX, "mybox")
     assert isinstance(box, Box)
     assert box.depth == dimension_to_scaled_points(12, "pt")
+
+
+def test_savebox():
+    expander = Expander()
+
+    expander.expand(r"\newsavebox\mybox")
+    expander.expand(r"\savebox\mybox[10pt][c]{Hello World}")
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.content == expander.expand("Hello World")
+
+    out = expander.expand(r"\usebox\mybox")
+    assert expander.check_tokens_equal(out, expander.expand("Hello World"))
+
+    # check that the box is not emptied (unlike \box)
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.content == expander.expand("Hello World")
+
+    # \sbox{\mybox}{}  % Explicitly empty it
+    expander.expand(r"\sbox{\mybox}{}")
+    box = expander.get_register_value(RegisterType.BOX, "mybox")
+    assert isinstance(box, Box)
+    assert box.content == []
+
+
+def test_box_commands():
+    expander = Expander()
+
+    # Test that box commands only return their text content
+    test_cases = [
+        (r"\makebox{Simple text}", "Simple text"),
+        (r"\framebox{Simple text}", "Simple text"),
+        (r"\raisebox{2pt}{Raised text}", "Raised text"),
+        (r"\raisebox{2pt}[1pt][2pt]{Raised text}", "Raised text"),
+        (r"\makebox[3cm]{Fixed width}", "Fixed width"),
+        (r"\framebox[3cm][l]{Left in frame}", "Left in frame"),
+        (r"\parbox{5cm}{Simple parbox text}", "Simple parbox text"),
+        (r"\parbox[t][3cm][s]{5cm}{Stretched vertically}", "Stretched vertically"),
+        (r"\fbox{Framed text}", "Framed text"),
+        (r"\colorbox{yellow}{Colored box}", "Colored box"),
+        (
+            r"\parbox[c][3cm]{5cm}{Center aligned with fixed height}",
+            "Center aligned with fixed height",
+        ),
+        (
+            r"""\mbox{
+All 
+One line ajajaja
+            }""",
+            "All One line ajajaja",
+        ),
+        (r"\hbox to 3in{Some text}", "Some text"),
+        (r"\pbox{3cm}{Some text}", "Some text"),
+        (r"\adjustbox{max width=\textwidth}{Some text}", "Some text"),
+        (r"\rotatebox{90}{Some text}", "Some text"),
+    ]
+
+    for command, expected_text in test_cases:
+        out = expander.expand(command)
+        assert expander.check_tokens_equal(out, expander.expand(expected_text))

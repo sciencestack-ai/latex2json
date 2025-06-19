@@ -1086,11 +1086,17 @@ class ExpanderCore:
                 is_global=is_global,
             )
 
-    def parse_braced_blocks(self, N_blocks: int = 2, expand=False) -> List[List[Token]]:
+    def parse_braced_blocks(
+        self, N_blocks: int = 2, expand=False, brackets=False
+    ) -> List[List[Token]]:
         blocks = []
         for _ in range(N_blocks):
             self.skip_whitespace()
-            block = self.parse_brace_as_tokens(expand=expand)
+            block = (
+                self.parse_brace_as_tokens(expand=expand)
+                if not brackets
+                else self.parse_bracket_as_tokens(expand=expand)
+            )
             if block is None:
                 break
             blocks.append(block)

@@ -58,7 +58,7 @@ if __name__ == "__main__":
     """
 
     text = r"""
-    & \\
+    $\frac{1}{2}$
 """.strip()
 
     parser = Parser()

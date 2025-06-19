@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from latex2json.nodes import ASTNode
-from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.base_nodes import CommandNode, TextNode
 from latex2json.parser.parser_core import Handler, ParserCore
 from latex2json.latex_maps.fonts import (
     FontStyle,
@@ -70,7 +70,9 @@ def reset_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
 
 def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     if parser.is_math_mode:
-        return [token]  # if math mode, just return the token as is
+        return [
+            CommandNode(token.value)
+        ]  # if math mode, just return the token as a standard CommandNode
 
     blocks = parser.parse_braced_blocks(2)
     if len(blocks) != 2:
