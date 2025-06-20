@@ -29,11 +29,12 @@ def head_handler(expander: ExpanderCore, token: Token):
 
 def register_layout_content_handlers(expander: ExpanderCore):
     # columns
-    register_ignore_handlers_util(expander, {"onecolumn": 0})
+    expander.register_handler("onecolumn", lambda expander, token: [], is_global=True)
     expander.register_handler("twocolumn", two_column_handler, is_global=True)
     # texorpdfstring
     expander.register_handler("texorpdfstring", texorpdfstring_handler, is_global=True)
 
+    # fancyhead/headers
     for head in ["fancyhead", "fancyheadoffset", "rhead", "chead", "lhead"]:
         expander.register_handler(head, head_handler, is_global=True)
 

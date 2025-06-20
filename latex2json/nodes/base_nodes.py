@@ -83,7 +83,7 @@ class TextNode(ASTNode):
         return f"'{self.text}'"
 
     def is_whitespace(self):
-        return self.text.isspace()
+        return self.text == "" or self.text.isspace()
 
     def split(self, delimiter: str) -> List["TextNode"]:
         return [TextNode(t) for t in self.text.split(delimiter)]

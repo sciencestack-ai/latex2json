@@ -22,6 +22,9 @@ from latex2json.parser.handlers.commands.ref_cite_label_handlers import (
     register_ref_label_handlers,
 )
 from latex2json.parser.handlers.commands.text_handlers import register_text_handlers
+from latex2json.parser.handlers.commands.spacing_handlers import (
+    register_spacing_handlers,
+)
 
 
 def register_command_handlers(parser: ParserCore):
@@ -33,3 +36,4 @@ def register_command_handlers(parser: ParserCore):
     register_includegraphics_pdf_handlers(parser)
     register_ignore_format_handlers(parser)
     register_doc_content_handlers(parser)
+    register_spacing_handlers(parser)

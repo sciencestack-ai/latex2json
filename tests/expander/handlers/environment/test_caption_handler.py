@@ -86,7 +86,7 @@ def test_caption_handler():
     \end{figure}
 
     \begin{figure}
-        \caption {FIGURE 4}
+        \subcaption {FIGURE 4}
     \end{figure}
     """
     expander.set_text(text)

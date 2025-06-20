@@ -36,7 +36,9 @@ def captionof_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
 def register_caption_handler(expander: ExpanderCore):
     """Register caption handlers."""
-    expander.register_handler("caption", caption_handler, is_global=True)
+    for caption in ["caption", "subcaption"]:
+        expander.register_handler(caption, caption_handler, is_global=True)
+
     expander.register_handler("captionof", captionof_handler, is_global=True)
 
     ignore_patterns = {

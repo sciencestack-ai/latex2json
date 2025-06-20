@@ -180,11 +180,6 @@ class ParserCore:
 
         return merge_text_nodes(nodes)
 
-    def _handle_font_command(self, cmd_name: str) -> List[ASTNode]:
-        if self.expander.state.font_registry.get(cmd_name):
-            return []
-        return [CommandNode(cmd_name)]
-
     def set_font(self, style: FontStyle):
         self.state.set_font(style)
 
