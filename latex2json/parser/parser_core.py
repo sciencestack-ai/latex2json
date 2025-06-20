@@ -437,8 +437,8 @@ class ParserCore:
                 elif (
                     len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
                 ):
-                    # e.g. \& -> &, \# -> #
-                    replacement_node = TextNode(name)
+                    # e.g. \& -> &, \# -> #, \@ -> ""
+                    replacement_node = TextNode(name if name != "@" else "")
             elif isinstance(node, NewLineNode):
                 replacement_node = TextNode("\n")
 

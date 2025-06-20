@@ -32,10 +32,8 @@ def test_list_with_custom_labels():
     assert list_node.list_items[1].label == "1."
     assert list_node.list_items[1].body == [TextNode("Custom number")]
 
-    # # Third item with LaTeX symbol
-    # assert len(list_node.list_items[2].label) == 1
-    # assert isinstance(list_node.list_items[2].label[0], CommandNode)
-    # assert list_node.list_items[2].label[0].name == "star"
+    # Third item with LaTeX symbol
+    assert list_node.list_items[2].label == "⋆"
     assert list_node.list_items[2].body == [TextNode("Custom symbol")]
 
     # Fourth item without custom label

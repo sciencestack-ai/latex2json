@@ -25,9 +25,18 @@ from latex2json.parser.handlers.commands.text_handlers import register_text_hand
 from latex2json.parser.handlers.commands.spacing_handlers import (
     register_spacing_handlers,
 )
+from latex2json.parser.handlers.commands.latex2unicode_handler import (
+    register_latex2unicode_handler,
+)
+from latex2json.parser.handlers.commands.diacritics_handler import (
+    register_diacritics_handler,
+)
 
 
 def register_command_handlers(parser: ParserCore):
+    # register generic latex2unicode first so that others below can override
+    register_latex2unicode_handler(parser)
+    register_diacritics_handler(parser)
     register_text_handlers(parser)
     register_ref_label_handlers(parser)
     register_multicol_row_handlers(parser)

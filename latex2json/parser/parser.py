@@ -57,19 +57,19 @@ if __name__ == "__main__":
     \end{generic}
     """
 
-    text = r"""
-    Hi there~~     \\bro \& \#
-    sdsds\newline haha\space ss $3\space3$ \bf\newline aa
-"""
+    #     text = r"""
+    #     Hi there~~     \\bro \& \#
+    #     sdsds\newline haha\space ss $3\space3$ \bf\newline aa
+    # """
 
     text = r"""
-    \begin{itemize}
-        \item[•] Custom bullet
-        \item[1.] Custom number
-        \item[\star] Custom symbol
-        \item Regular item
-    \end{itemize}
-"""
+        \begin{itemize}
+            \item[•] Hi there~~     \\bro \& \#
+            \item[1.] Custom number
+            \item[\star] Custom symbol
+            \item Regular item
+        \end{itemize}
+    """
 
     parser = Parser()
     parser.set_text(text)
