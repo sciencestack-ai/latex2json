@@ -4,20 +4,19 @@ from latex2json.nodes.include_graphics_pdf_nodes import (
 )
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
-from latex2json.nodes.utils import convert_nodes_to_str
 import re
 
 
 def includegraphics_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     page_nodes = parser.parse_bracket_as_nodes()
-    page_str = convert_nodes_to_str(page_nodes) if page_nodes else None
+    page_str = parser.convert_nodes_to_str(page_nodes) if page_nodes else None
     parser.skip_whitespace()
     path = parser.parse_brace_as_nodes()
     if path is None:
         parser.logger.warning(f"Warning: \\includegraphics: Missing path")
         return None
-    path_str = convert_nodes_to_str(path)
+    path_str = parser.convert_nodes_to_str(path)
 
     page = None
     if page_str:
@@ -29,13 +28,13 @@ def includegraphics_handler(parser: ParserCore, token: Token):
 def includepdf_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     pages_nodes = parser.parse_bracket_as_nodes()
-    pages_str = convert_nodes_to_str(pages_nodes) if pages_nodes else None
+    pages_str = parser.convert_nodes_to_str(pages_nodes) if pages_nodes else None
     parser.skip_whitespace()
     path = parser.parse_brace_as_nodes()
     if path is None:
         parser.logger.warning(f"Warning: \\includepdf: Missing path")
         return None
-    path_str = convert_nodes_to_str(path)
+    path_str = parser.convert_nodes_to_str(path)
 
     pages = None
     if pages_str:

@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.nodes.base_nodes import ASTNode
+from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 
 
 class CellNode(ASTNode):
@@ -12,15 +12,15 @@ class CellNode(ASTNode):
         super().__init__()
         self.rowspan = rowspan
         self.colspan = colspan
-        self.set_body(body)
+        self.set_children(body)
 
-    def set_body(self, body: List[ASTNode]):
-        self.body = body
-        self.set_children(self.body)
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
 
     def is_null_cell(self) -> bool:
         """Check if this is an empty cell."""
-        return len(self.body) == 0
+        return len(self.children) == 0
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CellNode):
@@ -28,12 +28,12 @@ class CellNode(ASTNode):
         return (
             self.rowspan == other.rowspan
             and self.colspan == other.colspan
-            and all(a == b for a, b in zip(self.body, other.body))
+            and check_asts_equal(self.children, other.children)
         )
 
     def detokenize(self) -> str:
         """Convert the cell node back to LaTeX source code."""
-        content = "".join(child.detokenize() for child in self.body)
+        content = "".join(child.detokenize() for child in self.children)
 
         # Apply multirow/multicolumn wrappers if needed
         if self.rowspan > 1:
@@ -60,7 +60,7 @@ class RowNode(ASTNode):
 
     def is_null_row(self) -> bool:
         """Check if this is an empty row."""
-        return all(len(cell.body) == 0 for cell in self.cells)
+        return all(len(cell.children) == 0 for cell in self.cells)
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, RowNode):
@@ -82,9 +82,12 @@ class TabularNode(ASTNode):
         # alignment: str = "",
     ):
         super().__init__()
-        self.row_nodes = row_nodes
         # self.alignment = alignment
         self.set_children(row_nodes)
+
+    @property
+    def row_nodes(self) -> List[RowNode]:
+        return self.children
 
     def get_row_col(self):
         """Get dimensions of the table."""
@@ -97,7 +100,7 @@ class TabularNode(ASTNode):
             return False
         # if self.alignment != other.alignment:
         #     return False
-        return all(a == b for a, b in zip(self.row_nodes, other.row_nodes))
+        return all(a == b for a, b in zip(self.children, other.children))
 
     def detokenize(self) -> str:
         """Convert the tabular node back to LaTeX source code."""

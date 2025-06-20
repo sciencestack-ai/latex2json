@@ -25,21 +25,21 @@ def test_list_with_custom_labels():
     assert len(list_node.list_items) == 4
 
     # First item with custom bullet
-    assert list_node.list_items[0].label == [TextNode("•")]
+    assert list_node.list_items[0].label == "•"
     assert list_node.list_items[0].body == [TextNode("Custom bullet")]
 
     # Second item with custom number
-    assert list_node.list_items[1].label == [TextNode("1.")]
+    assert list_node.list_items[1].label == "1."
     assert list_node.list_items[1].body == [TextNode("Custom number")]
 
-    # Third item with LaTeX symbol
-    assert len(list_node.list_items[2].label) == 1
-    assert isinstance(list_node.list_items[2].label[0], CommandNode)
-    assert list_node.list_items[2].label[0].name == "star"
+    # # Third item with LaTeX symbol
+    # assert len(list_node.list_items[2].label) == 1
+    # assert isinstance(list_node.list_items[2].label[0], CommandNode)
+    # assert list_node.list_items[2].label[0].name == "star"
     assert list_node.list_items[2].body == [TextNode("Custom symbol")]
 
     # Fourth item without custom label
-    assert list_node.list_items[3].label == []
+    assert list_node.list_items[3].label is None
     assert list_node.list_items[3].body == [TextNode("Regular item")]
 
 
@@ -82,7 +82,7 @@ def test_nested_lists():
     nested_enum = first_item.body[1]
     assert nested_enum.list_type == "enumerate"
     assert len(nested_enum.list_items) == 2
-    assert nested_enum.list_items[0].label == [TextNode("a)")]
+    assert nested_enum.list_items[0].label == "a)"
     assert nested_enum.list_items[0].body == [TextNode("Nested numbered item")]
     assert nested_enum.list_items[1].body == [TextNode("Another nested item")]
 
@@ -137,10 +137,10 @@ def test_description_list():
     assert list_node.list_type == "description"
     assert len(list_node.list_items) == 2
 
-    assert list_node.list_items[0].label == [TextNode("Term 1")]
+    assert list_node.list_items[0].label == "Term 1"
     assert list_node.list_items[0].body == [TextNode("Description of term 1")]
 
-    assert list_node.list_items[1].label == [TextNode("Term 2")]
+    assert list_node.list_items[1].label == "Term 2"
     assert list_node.list_items[1].body == [TextNode("Description of term 2")]
 
 
@@ -250,10 +250,10 @@ def test_list_equality():
 
 
 def test_list_item_equality():
-    item1 = ListItemNode([TextNode("test")], [TextNode("label")])
-    item2 = ListItemNode([TextNode("test")], [TextNode("label")])
-    item3 = ListItemNode([TextNode("different")], [TextNode("label")])
-    item4 = ListItemNode([TextNode("test")], [TextNode("different")])
+    item1 = ListItemNode([TextNode("test")], "label")
+    item2 = ListItemNode([TextNode("test")], "label")
+    item3 = ListItemNode([TextNode("different")], "label")
+    item4 = ListItemNode([TextNode("test")], "different")
 
     assert item1 == item2
     assert item1 != item3

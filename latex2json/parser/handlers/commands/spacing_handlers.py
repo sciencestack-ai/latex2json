@@ -16,9 +16,13 @@ def linebreak_handler(parser: ParserCore, token: Token):
     return [CommandNode("newline")]
 
 
-def spacecommand_handler(parser: ParserCore, token: Token):
-    """Return as a command node for parser postprocessing later"""
-    return [CommandNode("space")]
+def make_space_command(command: str):
+    def spacecommand_handler(parser: ParserCore, token: Token):
+        if parser.is_math_mode:
+            return [CommandNode(command)]
+        return [CommandNode("space")]
+
+    return spacecommand_handler
 
 
 def newline_handler(parser: ParserCore, token: Token):
@@ -70,16 +74,10 @@ def register_spacing_handlers(parser: ParserCore):
             newline_handler,
         )
 
-    for space in [
-        "quad",
-        "qquad",
-        "xspace",
-        "space",
-        "thinspace",
-    ]:  # , ",", ";", ":", "!"]:
+    for space in ["quad", "qquad", "xspace", "space", "thinspace", ",", ";", ":", "!"]:
         parser.register_handler(
             space,
-            spacecommand_handler,
+            make_space_command(space),
         )
 
     for hspace in ["hphantom", "phantom", "hspace", "linespread"]:

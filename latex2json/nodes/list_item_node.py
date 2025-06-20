@@ -1,16 +1,19 @@
-from typing import List
+from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode
 
 
 class ListItemNode(ASTNode):
-    def __init__(self, body: List[ASTNode] = [], label: List[ASTNode] = []):
+    def __init__(self, body: List[ASTNode] = [], label: Optional[str] = None):
         super().__init__()
         self.label = label
-        self.set_body(body)
+        self.set_children(body)
+
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
 
     def set_body(self, body: List[ASTNode]):
-        self.body = body
-        self.set_children(self.body)
+        self.set_children(body)
 
     def is_empty(self) -> bool:
         """Check if this is an empty list item."""
@@ -28,8 +31,7 @@ class ListItemNode(ASTNode):
         content = "".join(child.detokenize() for child in self.body)
         out_str = f"\\item"
         if self.label:
-            label = "".join(child.detokenize() for child in self.label)
-            out_str += f"[{label}]"
+            out_str += f"[{self.label}]"
         if content:
             out_str += f" {content}"
         return out_str

@@ -197,11 +197,29 @@ class CommandNode(ASTNode):
     ):
         super().__init__()
         self.name = name
-        self.args = args
-        self.opt_args = opt_args
         self.numbering = numbering
         self.has_star = has_star
-        self.set_children(flatten(self.opt_args + self.args))
+        # Store structure metadata
+
+        all_args: List[ASTNode] = []
+        self._arg_boundaries = [0, 0]
+        for arg in opt_args:
+            all_args.extend(arg)
+            self._arg_boundaries[0] += len(arg)
+        for arg in args:
+            all_args.extend(arg)
+            self._arg_boundaries[1] += len(arg)
+        self.set_children(all_args)
+
+    @property
+    def opt_args(self) -> List[ASTNode]:
+        return self.children[: self._arg_boundaries[0]]
+
+    @property
+    def args(self) -> List[ASTNode]:
+        start = self._arg_boundaries[0]
+        end = start + self._arg_boundaries[1]
+        return self.children[start:end]
 
     @property
     def num_opt_args(self):
@@ -225,12 +243,7 @@ class CommandNode(ASTNode):
             return False
         if self.name != other.name:
             return False
-        if len(self.args) != len(other.args):
-            return False
-        for arg1, arg2 in zip(self.args, other.args):
-            if not check_asts_equal(arg1, arg2):
-                return False
-        if len(self.opt_args) != len(other.opt_args):
+        if not check_asts_equal(self.children, other.children):
             return False
         if self.numbering != other.numbering:
             return False

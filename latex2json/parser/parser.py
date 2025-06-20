@@ -1,29 +1,6 @@
 import logging
 from typing import List, Optional
-import re
-from latex2json.nodes.base_nodes import ASTNode, CommandNode, NewLineNode, TextNode
-from latex2json.nodes.utils import merge_text_nodes
 from latex2json.parser.parser_core import ParserCore
-from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
-
-
-def normalize_whitespace_and_lines(text: str) -> str:
-    # Step 1: Replace two or more newlines (with optional surrounding spaces) with a unique marker.
-    # This marker should be something unlikely to appear in your text.
-    marker = "<PARA_BREAK>"
-    text = re.sub(r"(?:[ \t]*\n[ \t]*){2,}", marker, text)
-
-    # Step 2: Replace any remaining single newline (with optional surrounding spaces) with a single space.
-    text = re.sub(r"[ \t]*\n[ \t]*", " ", text)
-
-    # Step 3: Collapse multiple spaces into a single space.
-    text = re.sub(r"[ \t]+", " ", text)
-
-    # Step 4: Replace the marker with an actual newline (or any delimiter you prefer).
-    text = text.replace(marker, "\n")
-
-    # Optionally, trim leading and trailing whitespace.
-    return text  # .strip()
 
 
 class Parser(ParserCore):
@@ -36,52 +13,6 @@ class Parser(ParserCore):
         from latex2json.parser.handlers import register_handlers
 
         register_handlers(self)
-
-    # override
-    def parse(self, text: Optional[str] = None) -> List[ASTNode]:
-        nodes = super().parse(text)
-        return nodes  # self.postprocess_nodes(nodes)
-
-    def postprocess_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
-        r"""
-        post process nodes by
-        1. merging spacing, newlines
-        2. handling special characters e.g. ~, \& to text
-        """
-        final_nodes: List[ASTNode] = []
-        for node in nodes:
-            replacement_node: Optional[ASTNode] = None
-            if isinstance(node, CommandNode):
-                name = node.name
-                if name == "space":
-                    replacement_node = TextNode(" ")
-                elif name == "newline":
-                    replacement_node = TextNode("\n")
-                elif (
-                    len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
-                ):
-                    # e.g. \& -> &, \# -> #
-                    replacement_node = TextNode(name)
-            elif isinstance(node, NewLineNode):
-                replacement_node = TextNode("\n")
-
-            if replacement_node:
-                replacement_node.add_styles(node.styles)
-                final_nodes.append(replacement_node)
-                continue
-
-            if isinstance(node, TextNode):
-                text = node.text
-                # collapse multiple spaces into single space (latex)
-                text = normalize_whitespace_and_lines(text)
-                node.text = text.replace("~", " ")
-            elif node.children:
-                node.set_children(self.postprocess_nodes(node.children))
-
-            final_nodes.append(node)
-
-        # then do a final merge of text nodes
-        return merge_text_nodes(final_nodes)
 
 
 if __name__ == "__main__":
@@ -127,8 +58,18 @@ if __name__ == "__main__":
     """
 
     text = r"""
-    Hi there~~     bro \& \#
-""".strip()
+    Hi there~~     \\bro \& \#
+    sdsds\newline haha\space ss $3\space3$ \bf\newline aa
+"""
+
+    text = r"""
+    \begin{itemize}
+        \item[•] Custom bullet
+        \item[1.] Custom number
+        \item[\star] Custom symbol
+        \item Regular item
+    \end{itemize}
+"""
 
     parser = Parser()
     parser.set_text(text)

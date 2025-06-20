@@ -24,12 +24,8 @@ class EquationNode(ASTNode):
         self.set_body(math_nodes)
 
     def set_body(self, body: List[ASTNode]):
-        self.body = strip_whitespace_nodes(body)
-        self.set_children(self.body)
-
-    @property
-    def math_nodes(self):
-        return self.body
+        body = strip_whitespace_nodes(body)
+        self.set_children(body)
 
     def __str__(self):
         return self.detokenize() + (f" ({self.numbering})" if self.numbering else "")
@@ -41,15 +37,15 @@ class EquationNode(ASTNode):
             return False
         if self.numbering != other.numbering:
             return False
-        return check_asts_equal(self.math_nodes, other.math_nodes)
+        return check_asts_equal(self.children, other.children)
 
     def equation_to_str(self):
         eq_str = ""
-        N = len(self.math_nodes)
+        N = len(self.children)
 
         prev_node = None
         # if we're converting to a string, we need to be careful about textnodes rightafter commands
-        for i, node in enumerate(self.math_nodes):
+        for i, node in enumerate(self.children):
             if isinstance(node, TextNode) and isinstance(prev_node, CommandNode):
                 if node.text and node.text[0].isalpha():
                     eq_str += " "

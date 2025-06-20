@@ -8,18 +8,18 @@ class SectionNode(EnvironmentNode):
         self,
         name: str,
         body: List[ASTNode],
-        opt_arg: List[ASTNode] = [],
+        label: Optional[str] = None,
         numbering: Optional[str] = None,
     ):
         super().__init__(name, body, numbering)
-        self.opt_arg = opt_arg
+        self.label = label
 
     def __str__(self):
         out = self.name
         if self.numbering:
             out += f"({self.numbering})"
-        if self.opt_arg:
-            out += f"[{self.opt_arg}]"
+        if self.label:
+            out += f"[{self.label}]"
         if self.body:
             out += f"{{{self.body}}}"
         return out
@@ -27,9 +27,11 @@ class SectionNode(EnvironmentNode):
     def __eq__(self, other: ASTNode):
         if not isinstance(other, SectionNode):
             return False
-        same = self.name == other.name and self.numbering == other.numbering
+        same = (
+            self.name == other.name
+            and self.numbering == other.numbering
+            and self.label == other.label
+        )
         if not same:
             return False
-        return check_asts_equal(self.body, other.body) and check_asts_equal(
-            self.opt_arg, other.opt_arg
-        )
+        return check_asts_equal(self.body, other.body)

@@ -1,6 +1,5 @@
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
-from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 
@@ -10,7 +9,7 @@ def label_handler(parser: ParserCore, token: Token):
     label_nodes = parser.parse_brace_as_nodes()
     env_node = parser.current_env
     if env_node:
-        label_str = convert_nodes_to_str(label_nodes)
+        label_str = parser.convert_nodes_to_str(label_nodes)
         env_node.labels.append(label_str)
         return []
 
@@ -24,7 +23,7 @@ def make_ref_handler(split_comma: bool = False):
         parser.skip_whitespace()
         ref_nodes = parser.parse_brace_as_nodes()
         if ref_nodes:
-            ref_str = convert_nodes_to_str(ref_nodes)
+            ref_str = parser.convert_nodes_to_str(ref_nodes, postprocess=False)
             references = [ref_str]
             if split_comma:
                 references = ref_str.split(",")
@@ -40,8 +39,8 @@ def hyperref_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     title_nodes = parser.parse_brace_as_nodes()
     if ref_nodes:
-        ref_str = convert_nodes_to_str(ref_nodes)
-        title_str = convert_nodes_to_str(title_nodes)
+        ref_str = parser.convert_nodes_to_str(ref_nodes, postprocess=False)
+        title_str = parser.convert_nodes_to_str(title_nodes)
         return [RefNode([ref_str], title=title_str)]
     return []
 
@@ -61,10 +60,10 @@ def cite_handler(parser: ParserCore, token: Token):
 
     note_str = None
     if prenote:
-        note_str = convert_nodes_to_str(prenote)
+        note_str = parser.convert_nodes_to_str(prenote)
         if postnote:
-            note_str += ", " + convert_nodes_to_str(postnote)
-    cite_str = convert_nodes_to_str(citation_nodes).split(",")
+            note_str += ", " + parser.convert_nodes_to_str(postnote)
+    cite_str = parser.convert_nodes_to_str(citation_nodes).split(",")
     cite_str = [s.strip() for s in cite_str]
     return [CiteNode(cite_str, title=note_str)]
 
@@ -96,8 +95,8 @@ def defcitealias_handler(parser: ParserCore, token: Token):
     if not alias_nodes:
         parser.logger.warning("Warning: \\defcitealias expects an alias")
         return None
-    cite_key_str = convert_nodes_to_str(cite_key)
-    alias_str = convert_nodes_to_str(alias_nodes)
+    cite_key_str = parser.convert_nodes_to_str(cite_key)
+    alias_str = parser.convert_nodes_to_str(alias_nodes)
     parser.cite_aliases[cite_key_str] = alias_str
     return []
 
@@ -108,7 +107,7 @@ def citealias_handler(parser: ParserCore, token: Token):
     if not cite_key:
         parser.logger.warning("Warning: \\cite[tp]alias expects a citation key")
         return None
-    cite_key_str = convert_nodes_to_str(cite_key)
+    cite_key_str = parser.convert_nodes_to_str(cite_key)
     alias_str = parser.cite_aliases.get(cite_key_str, None)
     return [CiteNode([cite_key_str], title=alias_str)]
 
@@ -120,14 +119,14 @@ def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
         if not url_nodes:
             parser.logger.warning("Warning: \\url expects a URL")
             return None
-        url_str = convert_nodes_to_str(url_nodes)
+        url_str = parser.convert_nodes_to_str(url_nodes)
         title = None
 
         if parse_title:
             parser.skip_whitespace()
             title_nodes = parser.parse_brace_as_nodes()
             if title_nodes:
-                title_str = convert_nodes_to_str(title_nodes)
+                title_str = parser.convert_nodes_to_str(title_nodes)
                 title = title_str
 
         return [URLNode(path_prefix + url_str, title=title)]

@@ -30,7 +30,7 @@ def merge_nodes_into_cellnode(
     max_colspan = 1
     for node in nodes:
         if isinstance(node, CellNode):
-            all_nodes.extend(node.body)
+            all_nodes.extend(node.children)
             max_rowspan = max(max_rowspan, node.rowspan)
             max_colspan = max(max_colspan, node.colspan)
         else:

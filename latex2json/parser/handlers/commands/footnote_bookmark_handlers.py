@@ -1,5 +1,4 @@
 from latex2json.nodes import FootnoteNode
-from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 from latex2json.parser.handlers.commands.command_handler_utils import (
@@ -10,20 +9,20 @@ from latex2json.parser.handlers.commands.command_handler_utils import (
 def footnote_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     title_nodes = parser.parse_bracket_as_nodes()
-    title = convert_nodes_to_str(title_nodes) if title_nodes else None
+    title = parser.convert_nodes_to_str(title_nodes) if title_nodes else None
     parser.skip_whitespace()
     content = parser.parse_brace_as_nodes()
     if content is None:
         parser.logger.warning(f"Warning: \\footnote: Missing content")
         return None
-    footnote_text = convert_nodes_to_str(content)
+    footnote_text = parser.convert_nodes_to_str(content)
     return [FootnoteNode(footnote_text, title)]
 
 
 def footnotemark_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     nodes = parser.parse_bracket_as_nodes()
-    footnote_text = convert_nodes_to_str(nodes) if nodes else "*"
+    footnote_text = parser.convert_nodes_to_str(nodes) if nodes else "*"
     return [FootnoteNode(footnote_text)]
 
 

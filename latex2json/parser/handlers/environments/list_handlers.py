@@ -8,9 +8,10 @@ from latex2json.tokens.types import EnvironmentStartToken, Token
 
 def list_item_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     parser.skip_whitespace()
-    label = parser.parse_bracket_as_nodes() or []
+    label = parser.parse_bracket_as_nodes()
+    label_str = parser.convert_nodes_to_str(label) if label else None
     # return as empty list item node for now. Append body buffer in split_into_items.
-    return [ListItemNode([], label=label)]
+    return [ListItemNode([], label=label_str)]
 
 
 def split_into_items(nodes: List[ASTNode]) -> List[ListItemNode]:

@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
 from latex2json.latex_maps.sections import SECTIONS
@@ -15,7 +16,6 @@ from latex2json.nodes import (
 )
 from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode, VerbatimNode
 from latex2json.nodes.caption_node import CaptionNode
-from latex2json.nodes.utils import convert_nodes_to_str
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
     Token,
@@ -24,6 +24,7 @@ from latex2json.tokens import (
     TokenType,
 )
 
+from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.utils import (
     is_alignment_token,
     is_asterisk_token,
@@ -53,6 +54,25 @@ class Macro:
     ):
         self.name = name  # usually the command name e.g. \foo
         self.handler = handler
+
+
+def normalize_whitespace_and_lines(text: str) -> str:
+    # Step 1: Replace two or more newlines (with optional surrounding spaces) with a unique marker.
+    # This marker should be something unlikely to appear in your text.
+    marker = "<PARA_BREAK>"
+    text = re.sub(r"(?:[ \t]*\n[ \t]*){2,}", marker, text)
+
+    # Step 2: Replace any remaining single newline (with optional surrounding spaces) with a single space.
+    text = re.sub(r"[ \t]*\n[ \t]*", " ", text)
+
+    # Step 3: Collapse multiple spaces into a single space.
+    text = re.sub(r"[ \t]+", " ", text)
+
+    # Step 4: Replace the marker with an actual newline (or any delimiter you prefer).
+    text = text.replace(marker, "\n")
+
+    # Optionally, trim leading and trailing whitespace.
+    return text  # .strip()
 
 
 class ParserCore:
@@ -340,10 +360,11 @@ class ParserCore:
 
             arg_nodes = self.process_tokens(args, scoped=True)
             opt_arg_nodes = self.process_tokens(opt_args)
+            label_str = self.convert_nodes_to_str(opt_arg_nodes)
             section_node = SectionNode(
                 token.value,
                 body=arg_nodes,
-                opt_arg=opt_arg_nodes,
+                label=label_str,
                 numbering=token.numbering,
             )
             self.push_env_stack(section_node)
@@ -393,9 +414,57 @@ class ParserCore:
     def convert_tokens_to_str(tokens: List[Token]) -> str:
         return Expander.convert_tokens_to_str(tokens)
 
-    @staticmethod
-    def convert_nodes_to_str(nodes: List[ASTNode]) -> str:
-        return convert_nodes_to_str(nodes)
+    def convert_nodes_to_str(self, nodes: List[ASTNode], postprocess=True) -> str:
+        if postprocess:
+            nodes = self.postprocess_nodes(nodes)
+        return "".join(node.detokenize() for node in nodes)
+
+    def postprocess_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
+        r"""
+        post process nodes by
+        1. merging spacing, newlines
+        2. handling special characters e.g. ~, \& to text
+        """
+        final_nodes: List[ASTNode] = []
+        for node in nodes:
+            replacement_node: Optional[ASTNode] = None
+            if isinstance(node, CommandNode):
+                name = node.name
+                if name == "space":
+                    replacement_node = TextNode(" ")
+                elif name == "newline":
+                    replacement_node = TextNode("\n")
+                elif (
+                    len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
+                ):
+                    # e.g. \& -> &, \# -> #
+                    replacement_node = TextNode(name)
+            elif isinstance(node, NewLineNode):
+                replacement_node = TextNode("\n")
+
+            if replacement_node:
+                replacement_node.add_styles(node.styles)
+                final_nodes.append(replacement_node)
+                continue
+
+            if isinstance(node, TextNode):
+                text = node.text
+                # collapse multiple spaces into single space (latex)
+                text = normalize_whitespace_and_lines(text)
+                node.text = text.replace("~", " ")
+            elif node.children and not isinstance(node, EquationNode):
+                # don't process equation nodes
+                node.set_children(self.postprocess_nodes(node.children))
+
+            final_nodes.append(node)
+
+        # then do a final merge of text nodes
+        merged_nodes = merge_text_nodes(final_nodes)
+        for node in merged_nodes:
+            # latex newlines seem to strip trailing whitespace, so we strip
+            if isinstance(node, TextNode):
+                node.text = "\n".join(line.strip() for line in node.text.split("\n"))
+        return merged_nodes
 
     def parse_tokens_until(
         self, predicate: TokenPredicate, consume_predicate=False
