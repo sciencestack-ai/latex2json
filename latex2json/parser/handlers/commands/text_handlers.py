@@ -69,11 +69,6 @@ def reset_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
 
 
 def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
-    if parser.is_math_mode:
-        return [
-            CommandNode(token.value)
-        ]  # if math mode, just return the token as a standard CommandNode
-
     blocks = parser.parse_braced_blocks(2)
     if len(blocks) != 2:
         parser.logger.warning("Warning: \\frac expects 2 arguments")
@@ -110,7 +105,7 @@ def register_text_handlers(parser: ParserCore):
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
 
     for frac in ["frac", "nicefrac", "textfrac"]:
-        parser.register_handler(frac, frac_handler)
+        parser.register_handler(frac, frac_handler, text_mode_only=True)
 
 
 if __name__ == "__main__":

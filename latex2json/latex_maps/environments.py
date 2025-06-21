@@ -121,11 +121,13 @@ FIGURE_ENVIRONMENTS = {
 }
 
 TABLE_ENVIRONMENTS = {
-    # tables
     "table": EnvironmentDefinition(
         "table", num_args=1, default_arg=[], has_direct_command=True
     ),
     "subtable": EnvironmentDefinition("subtable", num_args=2, default_arg=[]),
+}
+
+TABULAR_ENVIRONMENTS = {
     "tabular": EnvironmentDefinition("tabular", num_args=1, has_direct_command=True),
     "tabularx": EnvironmentDefinition("tabularx", num_args=2),
     "tabulary": EnvironmentDefinition("tabulary", num_args=1),
@@ -179,6 +181,7 @@ COMMON_ENVIRONMENTS = {
     **LAYOUT_ENVIRONMENTS,
     **FIGURE_ENVIRONMENTS,
     **TABLE_ENVIRONMENTS,
+    **TABULAR_ENVIRONMENTS,
     **LIST_ENVIRONMENTS,
     **MATH_ENVIRONMENTS,
     # **THEOREM_ENVIRONMENTS,

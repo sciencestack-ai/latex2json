@@ -68,8 +68,6 @@ def apply_accent(base_char: str, accent: str) -> str:
 
 def make_diacritics_handler(accent: str) -> Handler:
     def handler(parser: ParserCore, token: Token):
-        if parser.is_math_mode:
-            return [CommandNode(token.value)]
         char = ""
         parser.skip_whitespace()
         tok = parser.peek()
@@ -95,7 +93,9 @@ def make_diacritics_handler(accent: str) -> Handler:
 
 def register_diacritics_handler(parser: ParserCore):
     for accent in ACCENT_MAP:
-        parser.register_handler(accent, make_diacritics_handler(accent))
+        parser.register_handler(
+            accent, make_diacritics_handler(accent), text_mode_only=True
+        )
 
 
 if __name__ == "__main__":

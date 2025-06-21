@@ -51,9 +51,13 @@ class Macro:
         self,
         name: str,
         handler: Handler,
+        text_mode_only: bool = False,
+        math_mode_only: bool = False,
     ):
         self.name = name  # usually the command name e.g. \foo
         self.handler = handler
+        self.text_mode_only = text_mode_only
+        self.math_mode_only = math_mode_only
 
 
 def normalize_whitespace_and_lines(text: str) -> str:
@@ -133,8 +137,14 @@ class ParserCore:
             name = f"\\{name}"
         self.macros[name] = macro
 
-    def register_handler(self, name: str, handler: Handler):
-        macro = Macro(name, handler)
+    def register_handler(
+        self,
+        name: str,
+        handler: Handler,
+        text_mode_only: bool = False,
+        math_mode_only: bool = False,
+    ):
+        macro = Macro(name, handler, text_mode_only, math_mode_only)
         self.register_macro(name, macro)
 
     # ENVIRONMENTS
@@ -338,7 +348,13 @@ class ParserCore:
         cmd_name = token.value
         macro = self.get_macro(cmd_name)
         if macro:
-            return macro.handler(self, token)
+            valid = True
+            if macro.text_mode_only and self.is_math_mode:
+                valid = False
+            elif macro.math_mode_only and not self.is_math_mode:
+                valid = False
+            if valid:
+                return macro.handler(self, token)
 
         if is_newline_token(token):
             return [NewLineNode(cmd_name)]

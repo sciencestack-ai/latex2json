@@ -10,9 +10,6 @@ def make_latex2unicode_handler(unicode_value: str | int) -> Handler:
     char = chr(unicode_value) if isinstance(unicode_value, int) else unicode_value
 
     def handler(parser: ParserCore, token: Token):
-        if parser.is_math_mode:
-            # if math mode, just return as raw command node
-            return [CommandNode(token.value)]
         return [TextNode(char)]
 
     return handler
@@ -46,7 +43,11 @@ def unicode_handler(parser: ParserCore, token: Token):
 
 def register_latex2unicode_handler(parser: ParserCore):
     for command, unicode_value in latex2unicode.items():
-        parser.register_handler(command, make_latex2unicode_handler(unicode_value))
+        parser.register_handler(
+            command,
+            make_latex2unicode_handler(unicode_value),
+            text_mode_only=True,
+        )
 
     # NOTE: LaTeX's \u is purely an accent command, not a Unicode escape mechanism. So we disable it
     # parser.register_handler("\\u", unicode_handler)

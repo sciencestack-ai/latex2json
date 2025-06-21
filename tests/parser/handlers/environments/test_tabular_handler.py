@@ -53,13 +53,13 @@ def test_nested_tabular():
         \label{outer:tab1}
         FIRST 
         &
-        \begin{tabular}{c}
+        \begin{tabulary}{c}
             \label{inner:tab1}
             \begin{tabular}{c} 111 \end{tabular} & 22\& \\ 
             33 & 44
-        \end{tabular} \postinner
+        \end{tabulary} \postinner
         & 
-        \begin{tabular}{c} \multicolumn{2}{c|}{222} \end{tabular} 
+        \begin{tabular*}{c} \multicolumn{2}{c|}{222} \end{tabular*} 
         & 
         LAST
     \end{tabular}

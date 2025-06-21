@@ -18,8 +18,6 @@ def linebreak_handler(parser: ParserCore, token: Token):
 
 def make_space_command(command: str):
     def spacecommand_handler(parser: ParserCore, token: Token):
-        if parser.is_math_mode:
-            return [CommandNode(command)]
         return [CommandNode("space")]
 
     return spacecommand_handler
@@ -78,6 +76,7 @@ def register_spacing_handlers(parser: ParserCore):
         parser.register_handler(
             space,
             make_space_command(space),
+            text_mode_only=True,
         )
 
     for hspace in ["hphantom", "phantom", "hspace", "linespread"]:

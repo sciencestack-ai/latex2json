@@ -1,4 +1,5 @@
 from typing import Dict, List, Callable
+from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import strip_whitespace_nodes, split_nodes_by_predicate
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
@@ -64,13 +65,10 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     return [tabular_node]
 
 
-TABULAR_ENV_NAMES = ["tabular", "longtable", "tabularx", "tabulary"]
-TABULAR_ENV_NAMES.extend(name + "*" for name in TABULAR_ENV_NAMES[:])
-
-
 def register_tabular_handlers(parser: ParserCore):
-    for env_name in TABULAR_ENV_NAMES:
+    for env_name in TABULAR_ENVIRONMENTS:
         parser.register_env_handler(env_name, tabular_handler)
+        parser.register_env_handler(env_name + "*", tabular_handler)
 
 
 if __name__ == "__main__":
