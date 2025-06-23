@@ -36,3 +36,13 @@ def test_ignore_separator_patterns():
     out = parser.parse(text)
     out = strip_whitespace_nodes(out)
     assert out == []
+
+
+def test_ignore_name_patterns():
+    parser = Parser()
+    # make @ letter
+    parser.parse(r"\makeatletter")
+
+    text = r"""\Hy@org{https://example.com}"""
+    out = parser.parse(text)
+    assert out == []

@@ -60,6 +60,20 @@ class Macro:
         self.math_mode_only = math_mode_only
 
 
+class MacroPattern:
+    def __init__(
+        self,
+        name_predicate: Callable[[str], bool],
+        handler: Handler,
+        text_mode_only: bool = False,
+        math_mode_only: bool = False,
+    ):
+        self.name_predicate = name_predicate
+        self.handler = handler
+        self.text_mode_only = text_mode_only
+        self.math_mode_only = math_mode_only
+
+
 def normalize_whitespace_and_lines(text: str) -> str:
     # Step 1: Replace two or more newlines (with optional surrounding spaces) with a unique marker.
     # This marker should be something unlikely to appear in your text.
@@ -91,6 +105,7 @@ class ParserCore:
         self.state = ParserState()
 
         self.macros: Dict[str, Macro] = {}
+        self.macro_patterns: List[MacroPattern] = []
         self.env_handlers: Dict[str, EnvHandler] = {}
         self.cite_aliases: Dict[str, str] = {}
 
@@ -146,6 +161,25 @@ class ParserCore:
     ):
         macro = Macro(name, handler, text_mode_only, math_mode_only)
         self.register_macro(name, macro)
+
+    def register_macro_pattern(self, macro_pattern: MacroPattern):
+        if macro_pattern not in self.macro_patterns:
+            self.macro_patterns.append(macro_pattern)
+
+    def register_pattern_handler(
+        self,
+        name_predicate: Callable[[str], bool],
+        handler: Handler,
+        text_mode_only: bool = False,
+        math_mode_only: bool = False,
+    ):
+        macro_pattern = MacroPattern(
+            name_predicate, handler, text_mode_only, math_mode_only
+        )
+        self.macro_patterns.append(macro_pattern)
+
+    def check_macro_is_user_defined(self, name: str) -> bool:
+        return self.expander.check_macro_is_user_defined(name)
 
     # ENVIRONMENTS
     def register_env_handler(self, name: str, handler: EnvHandler):
@@ -227,11 +261,14 @@ class ParserCore:
                     node.add_styles(styles, insert_at_front=True)
         return nodes
 
-    def parse(self, text: Optional[str] = None) -> List[ASTNode]:
+    def parse(self, text: Optional[str] = None, postprocess=False) -> List[ASTNode]:
         if text:
             self.set_text(text)
 
-        return self.process()
+        out = self.process()
+        if postprocess:
+            out = self.postprocess_nodes(out)
+        return out
 
     def _handler(self, token: Token) -> List[ASTNode]:
         if token.type == TokenType.CONTROL_SEQUENCE:
@@ -344,17 +381,26 @@ class ParserCore:
         self.is_math_mode = was_math_mode
         return env_node
 
+    def _check_macro_valid(self, macro: Macro | MacroPattern) -> bool:
+        valid = True
+        if macro.text_mode_only and self.is_math_mode:
+            valid = False
+        elif macro.math_mode_only and not self.is_math_mode:
+            valid = False
+        return valid
+
     def parse_control_sequence(self, token: Token) -> List[ASTNode]:
         cmd_name = token.value
         macro = self.get_macro(cmd_name)
-        if macro:
-            valid = True
-            if macro.text_mode_only and self.is_math_mode:
-                valid = False
-            elif macro.math_mode_only and not self.is_math_mode:
-                valid = False
-            if valid:
-                return macro.handler(self, token)
+        if macro and self._check_macro_valid(macro):
+            return macro.handler(self, token)
+
+        # check patterns
+        for macro_pattern in self.macro_patterns:
+            if macro_pattern.name_predicate(cmd_name) and self._check_macro_valid(
+                macro_pattern
+            ):
+                return macro_pattern.handler(self, token)
 
         if is_newline_token(token):
             return [NewLineNode(cmd_name)]

@@ -12,6 +12,9 @@ def test_declare_robust_command():
     expander.expand(r"\DeclareRobustCommand*{\paramcmd}[2]{#1-#2}")
     assert expander.expand(r"\paramcmd{a}{b}") == expander.expand("a-b")
 
+    assert expander.check_macro_is_user_defined("testcmd")
+    assert expander.check_macro_is_user_defined("paramcmd")
+
 
 def test_declare_math_operator():
     expander = Expander()
@@ -29,6 +32,9 @@ def test_declare_math_operator():
     tokens_str = expander.convert_tokens_to_str(tokens)
     assert tokens_str.endswith("limits")
 
+    assert expander.check_macro_is_user_defined("testop")
+    assert expander.check_macro_is_user_defined("testopstar")
+
 
 def test_declare_paired_delimiter():
     expander = Expander()
@@ -36,6 +42,8 @@ def test_declare_paired_delimiter():
     expander.expand(r"\DeclarePairedDelimiter\testbr{(}{)}")
     tokens = expander.expand(r"\testbr{content}")
     assert tokens == expander.expand("(content)")
+
+    assert expander.check_macro_is_user_defined("testbr")
 
 
 def test_declare_ignored_commands():

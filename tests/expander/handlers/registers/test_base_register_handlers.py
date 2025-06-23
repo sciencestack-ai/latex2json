@@ -48,6 +48,7 @@ def test_new_register_macros():
     # count
     expander.expand(r"\newcount\mycount")
     assert expander.get_register_value(RegisterType.COUNT, "mycount") == 0
+    assert expander.check_macro_is_user_defined("mycount")
 
     expander.expand(r"\mycount=10")
     assert expander.get_register_value(RegisterType.COUNT, "mycount") == 10

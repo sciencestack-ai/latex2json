@@ -46,7 +46,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             return [t.copy() for t in final_definition]
 
     macro = Macro(name, handler, final_definition, type=MacroType.CHAR)
-    expander.register_macro(name, macro, is_global=False)
+    expander.register_macro(name, macro, is_global=False, is_user_defined=True)
 
     return []
 
@@ -94,6 +94,7 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
         temp_name,
         Macro(temp_name, temp_macro_handler, [next_token], type=MacroType.CHAR),
         is_global=False,
+        is_user_defined=True,
     )
 
     # Push the handler macro back into the input stream to be expanded now

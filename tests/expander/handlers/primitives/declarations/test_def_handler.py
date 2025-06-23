@@ -197,6 +197,8 @@ def test_def_handler():
         expected = expander.expand("TEST HELLO:world ENDTEST")
         assert_token_sequence(out, expected)
 
+        assert expander.check_macro_is_user_defined("test")
+
     def test2():
         text = r"\def\foo(e#1{BAR #1 BAR} \def\hi{HI}"
         expander.expand(text)

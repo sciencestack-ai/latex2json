@@ -49,6 +49,8 @@ def test_newif_basic():
         out2 = strip_whitespace_tokens(expander.expand(expected))
         assert Expander.check_tokens_equal(out1, out2)
 
+    assert expander.check_macro_is_user_defined("iftest")
+
 
 def test_newif_nested():
     expander = Expander()

@@ -184,12 +184,15 @@ class ExpanderCore:
             )
 
     # counters
-    def create_new_counter(self, counter_name: str, parent: Optional[str] = None):
+    def create_new_counter(
+        self, counter_name: str, parent: Optional[str] = None, is_user_defined=True
+    ):
         self.state.new_counter(counter_name, parent)
         self.register_handler(
             f"\\the{counter_name}",
             make_the_counter_handler(counter_name),
             is_global=True,
+            is_user_defined=is_user_defined,
         )
 
     # fonts
@@ -209,12 +212,31 @@ class ExpanderCore:
     def get_all_macros(self) -> Dict[str, Macro]:
         return self.state.get_all_macros()
 
-    def register_macro(self, name: str, macro: Macro, is_global: bool = False):
+    def register_macro(
+        self,
+        name: str,
+        macro: Macro,
+        is_global: bool = False,
+        is_user_defined: bool = False,
+    ):
+        macro.is_user_defined = is_user_defined
         self.state.set_macro(name, macro, is_global=is_global)
 
-    def register_handler(self, name: str, handler: Handler, is_global: bool = False):
-        macro = Macro(name, handler)
+    def register_handler(
+        self,
+        name: str,
+        handler: Handler,
+        is_global: bool = False,
+        is_user_defined: bool = False,
+    ):
+        macro = Macro(name, handler, is_user_defined=is_user_defined)
         self.state.set_macro(name, macro, is_global=is_global)
+
+    def check_macro_is_user_defined(self, name: str) -> bool:
+        macro = self.get_macro(name)
+        if macro is None:
+            return False
+        return macro.is_user_defined
 
     def substitute_token_args(
         self, tokens: List[Token], args: List[List[Token]]
@@ -585,6 +607,35 @@ class ExpanderCore:
             return None
         return parsed[0]
 
+    def _parse_dimensions(self) -> Optional[Tuple[int, bool]]:
+        """
+        Cases: [optional multiplier float] dimen_register OR  dimension_float [space] dimension_unit
+
+        Returns: (int, bool) where int is the parsed value and bool is whether relax
+        """
+        register_value = self.parse_register_value(expand=True)
+        if register_value is not None:
+            return register_value, False
+        digits, relax = self._expand_and_combine_as_str(is_digit_token)
+        if not digits:
+            return None
+        digits = parse_number_str_to_float(digits)
+
+        unit = None
+        if not relax and self.peek():
+            self.skip_whitespace()
+
+            if is_relax_token(self.peek()):
+                self.consume()
+            else:
+                register_value = self.parse_register_value(expand=True)
+                if isinstance(register_value, float | int):
+                    return int(register_value * digits), False
+                unit, relax = self._expand_and_combine_as_str(
+                    lambda tok: tok.catcode == Catcode.LETTER
+                )
+        return dimension_to_scaled_points(digits, unit), relax
+
     def parse_box(self) -> Optional[Box]:
         r"""
         \hbox{content}              % Just type + content
@@ -623,35 +674,6 @@ class ExpanderCore:
             return None
 
         return Box(type=box_type, content=content)
-
-    def _parse_dimensions(self) -> Optional[Tuple[int, bool]]:
-        """
-        Cases: [optional multiplier float] dimen_register OR  dimension_float [space] dimension_unit
-
-        Returns: (int, bool) where int is the parsed value and bool is whether relax
-        """
-        register_value = self.parse_register_value(expand=True)
-        if register_value is not None:
-            return register_value, False
-        digits, relax = self._expand_and_combine_as_str(is_digit_token)
-        if not digits:
-            return None
-        digits = parse_number_str_to_float(digits)
-
-        unit = None
-        if not relax and self.peek():
-            self.skip_whitespace()
-
-            if is_relax_token(self.peek()):
-                self.consume()
-            else:
-                register_value = self.parse_register_value(expand=True)
-                if isinstance(register_value, float | int):
-                    return int(register_value * digits), False
-                unit, relax = self._expand_and_combine_as_str(
-                    lambda tok: tok.catcode == Catcode.LETTER
-                )
-        return dimension_to_scaled_points(digits, unit), relax
 
     def parse_skip(self) -> Optional[int]:
         """

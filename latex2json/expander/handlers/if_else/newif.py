@@ -56,7 +56,7 @@ def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
 
     # Create the condition macro
     condition = IfMacro(ifname, evaluate_newif_condition)
-    expander.register_macro(ifname, condition, is_global=True)
+    expander.register_macro(ifname, condition, is_global=True, is_user_defined=True)
 
     # Create the true/false setters
     def create_bool_setter(value: bool):

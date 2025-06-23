@@ -92,7 +92,9 @@ class DefMacro(Macro):
             return []
 
         macro = Macro(out.name, handler, out.definition)
-        expander.register_macro(out.name, macro, is_global=self.is_global)
+        expander.register_macro(
+            out.name, macro, is_global=self.is_global, is_user_defined=True
+        )
 
         return []
 

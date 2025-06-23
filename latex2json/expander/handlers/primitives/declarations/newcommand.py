@@ -38,7 +38,7 @@ class NewCommandMacro(Macro):
             return []
 
         macro = Macro(out.name, handler, out.definition)
-        expander.register_macro(out.name, macro, is_global=True)
+        expander.register_macro(out.name, macro, is_global=True, is_user_defined=True)
 
         return []
 

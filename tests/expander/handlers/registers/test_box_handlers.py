@@ -14,6 +14,13 @@ def test_newbox():
     assert isinstance(box, Box)
     assert box.content == []
 
+    assert expander.check_macro_is_user_defined("mybox")
+
+    # ensure it overrides previous \def\mybox etc
+    expander.expand(r"\def\myboxer{BOXER}\newbox\myboxer")
+    assert expander.check_macro_is_user_defined("myboxer")
+    assert expander.expand(r"\myboxer") != expander.expand("BOXER")
+
 
 def test_setbox():
     expander = Expander()
@@ -145,6 +152,8 @@ def test_savebox():
     expander = Expander()
 
     expander.expand(r"\newsavebox\mybox")
+    assert expander.check_macro_is_user_defined("mybox")
+
     expander.expand(r"\savebox\mybox[10pt][c]{Hello World}")
     box = expander.get_register_value(RegisterType.BOX, "mybox")
     assert isinstance(box, Box)

@@ -1,12 +1,15 @@
 from typing import List, Optional, Tuple, Union
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
-from latex2json.expander.macro_registry import Handler
+from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.tokens.types import CommandWithArgsToken, TokenType
-from latex2json.expander.handlers.registers.base_register_handlers import RegisterMacro
+from latex2json.expander.handlers.registers.base_register_handlers import (
+    RegisterMacro,
+    make_register_macro,
+)
 from latex2json.tokens.utils import strip_whitespace_tokens
 
 REGISTER_TYPE = RegisterType.BOX
@@ -201,6 +204,22 @@ def usebox_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def _create_box_register(expander: ExpanderCore, box_name: str):
+    expander.state.create_register(REGISTER_TYPE, box_name)
+    # create a macro for the register
+    # return the token itself as is, since we need it for setbox/copy/usebox etc
+    macro = Macro(
+        box_name,
+        lambda expander, token: [token],
+    )
+    expander.register_macro(
+        box_name,
+        macro,
+        is_global=True,
+        is_user_defined=True,
+    )
+
+
 def newbox_handler(expander: ExpanderCore, token: Token):
     tok = expander.peek()
     if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
@@ -209,7 +228,7 @@ def newbox_handler(expander: ExpanderCore, token: Token):
     box_name = tok.value
     expander.consume()
 
-    expander.state.create_register(REGISTER_TYPE, box_name)
+    _create_box_register(expander, box_name)
     return []
 
 
@@ -221,7 +240,7 @@ def newsavebox_handler(expander: ExpanderCore, token: Token):
         )
         return None
 
-    expander.state.create_register(REGISTER_TYPE, box_name)
+    _create_box_register(expander, box_name)
     return []
 
 

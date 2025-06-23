@@ -82,6 +82,7 @@ def newlength_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
         length_name,
         make_register_macro(REGISTER_TYPE, length_name, is_id_integer=False),
         is_global=True,
+        is_user_defined=True,
     )
 
 

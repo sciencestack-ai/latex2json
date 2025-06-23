@@ -136,6 +136,7 @@ def new_register_macro_handler(
         count_name,
         make_register_macro(register_type, count_name, is_id_integer=False),
         is_global=True,
+        is_user_defined=True,
     )
 
     return []

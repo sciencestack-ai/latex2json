@@ -14,6 +14,7 @@ def test_newlength():
     # Test that the length can be referenced
     expander.expand(r"\mylength=10pt")
     assert expander.get_register_value(RegisterType.DIMEN, "mylength") > 0
+    assert expander.check_macro_is_user_defined("mylength")
 
 
 def test_setlength():

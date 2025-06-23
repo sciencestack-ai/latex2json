@@ -31,6 +31,9 @@ def test_basic_newcommand():
         expander.expand(r"\greet12333"), expander.expand("Hello 2 and 1!333")
     )
 
+    assert expander.check_macro_is_user_defined("greet")
+    assert expander.check_macro_is_user_defined("\\hello")
+
 
 def test_newcommand_with_default():
     expander = Expander()

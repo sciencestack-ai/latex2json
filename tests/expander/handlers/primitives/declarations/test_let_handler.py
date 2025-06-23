@@ -45,6 +45,8 @@ def test_let():
         expander.expand(r"\greet"), expander.expand("Hello Universe!")
     )
 
+    assert expander.check_macro_is_user_defined("greet")
+
 
 def test_let_single_token():
     expander = Expander()
@@ -122,6 +124,9 @@ def test_futurelet():
     out = strip_whitespace_tokens(out)
     assert_tokens_startwith(out, expander.expand("COLON"))
     assert_tokens_endwith(out, expander.expand(" :"))
+
+    assert expander.check_macro_is_user_defined("lookahead")
+    assert expander.check_macro_is_user_defined("checkcolon")
 
 
 def test_let_preserve_unknown_control_sequence():

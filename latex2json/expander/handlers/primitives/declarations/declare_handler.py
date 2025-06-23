@@ -68,6 +68,7 @@ def declare_math_operator_handler(
         name,
         Macro(name, operator_handler, definition=wrapped_definition),
         is_global=True,
+        is_user_defined=True,
     )
     return []
 
@@ -105,6 +106,7 @@ def declare_paired_delimiter_handler(
         name,
         Macro(name, paired_delim_handler),
         is_global=True,
+        is_user_defined=True,
     )
 
     return []

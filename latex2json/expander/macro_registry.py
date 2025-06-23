@@ -33,6 +33,7 @@ class Macro:
         handler: Optional[Handler] = None,
         definition: List[Token] = [],
         type: MacroType = MacroType.MACRO,  # "macro" or "char" (e.g. \let \bgroup etc are single character tokens and treated differently for \ifx etc)
+        is_user_defined: bool = False,
     ):
         self.name = name  # usually the command name e.g. \foo
 
@@ -47,6 +48,7 @@ class Macro:
         # Useful for inspecting macro definitions ie debugging or copying macro definitions directly without expanding the stream
         self.definition = definition
         self.type = type
+        self.is_user_defined = is_user_defined
 
 
 class MacroRegistry:

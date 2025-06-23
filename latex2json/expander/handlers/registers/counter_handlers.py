@@ -102,7 +102,7 @@ def newcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
 
     # check optional bracket [parent] arg
     parent_name = parse_counter_name(expander, brackets=True)
-    expander.create_new_counter(counter_name, parent_name)
+    expander.create_new_counter(counter_name, parent_name, is_user_defined=True)
 
     return []
 
