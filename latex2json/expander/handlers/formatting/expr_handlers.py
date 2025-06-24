@@ -105,7 +105,11 @@ if __name__ == "__main__":
     register_expr_handlers(expander)
 
     text = r"""
-    \the\dimexpr 1pt * 10\relax
+    \setbox0=\hbox{1pt}
+    \setbox1=\hbox{1pt}
+    \wd0=15pt
+    \wd1=10pt
+    \the\dimexpr \wd0 + \wd1 \relax
     """.strip()
     out = expander.expand(text)
     print(out)

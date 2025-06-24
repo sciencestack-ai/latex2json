@@ -42,6 +42,16 @@ def test_numexpr_handler():
     # thus, '\numexpr (\xx' becomes 5
     assert out == expander.expand("5*3+(1+3)) * 3")
 
+    # test with counters/registers e.g. \value
+    text = r"""
+\setcounter{section}{3}
+\def\xx{\the\numexpr \value{section} + \value{section} * \value{section}}
+\xx
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out == expander.expand("%d" % (3 + 3 * 3))
+
 
 def test_dimexpr_handler():
     expander = Expander()
@@ -51,6 +61,19 @@ def test_dimexpr_handler():
     """.strip()
     out = expander.expand(text)
     dim_points = dimension_to_scaled_points(1, "pt") * 10
+    assert out == expander.expand(str(dim_points))
+
+    # test can be used with registers
+    text = r"""
+    \setbox0=\hbox{1pt}
+    \setbox1=\hbox{1pt}
+    \wd0=15pt
+    \wd1=10pt
+    \the\dimexpr \wd0 + \wd1 \relax
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    dim_points = dimension_to_scaled_points(25, "pt")
     assert out == expander.expand(str(dim_points))
 
 
