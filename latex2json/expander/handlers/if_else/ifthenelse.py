@@ -1,4 +1,5 @@
 from typing import List, Optional
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token
 from latex2json.expander.expander_core import ExpanderCore
 
@@ -23,7 +24,8 @@ def if_then_else_handler(expander: ExpanderCore, token: Token) -> Optional[List[
 
 def register_ifthenelse(expander: ExpanderCore):
     r"""Registers the \ifthenelse macro with the expander."""
-    expander.register_handler("\\ifthenelse", if_then_else_handler, is_global=True)
+    if_then_macro = Macro("ifthenelse", handler=if_then_else_handler, type=MacroType.IF)
+    expander.register_macro("\\ifthenelse", if_then_macro, is_global=True)
 
 
 if __name__ == "__main__":

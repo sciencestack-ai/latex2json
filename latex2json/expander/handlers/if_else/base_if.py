@@ -128,6 +128,23 @@ def evaluate_eof(
     return expander.eof(), None
 
 
+def make_if_defined_eval(check_undefined=False) -> Macro:
+    def evaluate_if_defined(
+        expander: ExpanderCore, token: Token
+    ) -> tuple[bool | None, str | None]:
+        expander.skip_whitespace()
+        tok = expander.consume()
+        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+            return None, "\\ifdefined expects a token"
+
+        is_defined = expander.get_macro(tok.value) is not None
+        if check_undefined:
+            return not is_defined, None
+        return is_defined, None
+
+    return evaluate_if_defined
+
+
 def register_base_ifs(expander: ExpanderCore):
     expander.register_macro("\\if", IfMacro("if", evaluate_base_if), is_global=True)
     expander.register_macro(
@@ -140,6 +157,20 @@ def register_base_ifs(expander: ExpanderCore):
         IfMacro("iffalse", lambda expander, token: (False, None)),
         is_global=True,
     )
+
+    # ifdefined
+    expander.register_macro(
+        "\\ifdefined",
+        IfMacro("ifdefined", make_if_defined_eval(check_undefined=False)),
+        is_global=True,
+    )
+    expander.register_macro(
+        "\\ifundefined",
+        IfMacro("ifundefined", make_if_defined_eval(check_undefined=True)),
+        is_global=True,
+    )
+
+    # eof
     expander.register_macro("\\ifeof", IfMacro("ifeof", evaluate_eof), is_global=True)
 
 

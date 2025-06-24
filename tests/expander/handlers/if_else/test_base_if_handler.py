@@ -140,3 +140,29 @@ def test_nopremature_expansion_inside_blocks():
     assert expander.check_tokens_equal(
         expander.expand(r"\the\count0"), expander.expand("10")
     )
+
+
+def test_ifdefined_handler():
+    expander = Expander()
+    text = r"""
+    \def\a{aaa}
+    \ifdefined\a
+        TRUE
+    \else
+        FALSE
+    \fi
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert Expander.check_tokens_equal(out, expander.expand("TRUE"))
+
+    text = r"""
+    \ifundefined\a
+        TRUE
+    \else
+        FALSE
+    \fi
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert Expander.check_tokens_equal(out, expander.expand("FALSE"))
