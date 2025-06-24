@@ -4,7 +4,7 @@ from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
-from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import CommandWithArgsToken, TokenType
 from latex2json.expander.handlers.registers.base_register_handlers import (
     RegisterMacro,
@@ -67,6 +67,7 @@ class BoxDimRegisterMacro(RegisterMacro):
         self, expander: ExpanderCore, token: Token
     ) -> Optional[List[Token]]:
         r"""Handle box dimension commands like \wd0=5pt"""
+        expander.skip_whitespace()
         register_type, reg_id = self._parse_register(expander, token)
         if reg_id is None:
             return None
@@ -367,3 +368,5 @@ if __name__ == "__main__":
     boxcopymybox = expander.expand(r"\copy\mybox")
     # print(boxcopy0)
     # print(boxcopymybox)
+
+    out = expander.expand(r"\wd \mybox=15pt")

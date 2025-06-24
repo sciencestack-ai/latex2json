@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.expander.expander_core import ExpanderCore, is_relax_token
+from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.types import Token, TokenType
 
@@ -27,7 +27,7 @@ def font_handler(expander: ExpanderCore, token: Token):
 
         break_out = False
         for i, tok in enumerate(tokens):
-            if is_relax_token(tok):
+            if expander.is_relax_token(tok):
                 expander.push_tokens(tokens[i + 1 :])
                 break_out = True
                 break

@@ -147,6 +147,13 @@ def test_wd_ht_dp():
     assert isinstance(box, Box)
     assert box.depth == dimension_to_scaled_points(12, "pt")
 
+    # test on box int id
+    expander.expand(r"\setbox0=\hbox{123}")
+    assert expander.expand(r"\wd0=3pt") == []
+    assert expander.get_register_value(
+        RegisterType.BOX, 0
+    ).width == dimension_to_scaled_points(3, "pt")
+
 
 def test_savebox():
     expander = Expander()

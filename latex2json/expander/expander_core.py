@@ -48,14 +48,9 @@ from latex2json.tokens.utils import (
     is_whitespace_token,
 )
 
-# arbitrary character that is not a valid token
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 
 TokenPredicate = Callable[[Token], bool]
-
-
-def is_relax_token(token: Token) -> bool:
-    return token.type == TokenType.CONTROL_SEQUENCE and token.value == "relax"
 
 
 class EmptyMacro(Macro):
@@ -84,6 +79,15 @@ def make_the_counter_handler(counter_name: str, formatted=True):
         return expander.convert_str_to_tokens(f"{value}")
 
     return the_counter_handler
+
+
+def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
+    if tok.value.isdigit():
+        return True
+    has_digit = any(c.isdigit() for c in cur_str)
+    if not has_digit and tok.value in ["+", "-", " "]:
+        return True
+    return False
 
 
 class ExpanderCore:
@@ -463,33 +467,31 @@ class ExpanderCore:
     ) -> bool:
         return self.stream.match(token_type, value, catcode)
 
+    def is_relax_token(self, token: Token) -> bool:
+        if token.type == TokenType.CONTROL_SEQUENCE and token.value == "relax":
+            if isinstance(self.get_macro(token.value), RelaxMacro):
+                return True
+        return False
+
     def _expand_and_combine_as_str(
         self,
-        predicate: Callable[[Token], bool],
+        tok_cur_str_predicate: Callable[[Token, str], bool],
         expand_registers=False,
-        skip_whitespace=True,
     ) -> Tuple[str, bool]:
         tok = self.peek()
         out = ""
 
         while tok:
-            if predicate(tok):
+            if tok_cur_str_predicate(tok, out):
                 self.consume()
                 out += tok.value
-            elif skip_whitespace and is_whitespace_token(tok) and len(out) == 0:
-                # if whitespace and no output yet, consume and continue
-                self.consume()
-                tok = self.peek()
-                continue
             elif tok.type == TokenType.CONTROL_SEQUENCE:
                 # check \relax token and that it is RelaxMacro i.e. has not been redefined
-                if is_relax_token(tok) and isinstance(
-                    self.get_macro(tok.value), RelaxMacro
-                ):
+                if self.is_relax_token(tok):
                     self.consume()  # consume \relax token itself
                     return out, True
 
-                if self.is_next_token_register():
+                if self._is_next_token_register():
                     if expand_registers:
                         # parse register value literal i.e. without any expanding
                         reg_out = self.parse_register_value(expand=False)
@@ -523,32 +525,42 @@ class ExpanderCore:
             return self.parse_brace_as_tokens()
         return [self.consume()]
 
-    def parse_integer(self) -> Optional[int]:
+    def parse_integer(self, expand_registers=True) -> Optional[int]:
         sequence, relax = self._expand_and_combine_as_str(
-            is_signed_integer_token, expand_registers=True
+            integer_tok_cur_str_predicate, expand_registers=expand_registers
         )
         if not sequence:
             return None
-        parsed_float = parse_number_str_to_float(sequence)
+
+        parsed_float = parse_number_str_to_float(sequence.strip())
         if parsed_float is None:
             return None
         return int(parsed_float)
 
-    def parse_float(self) -> Optional[float]:
-        parsed = self._parse_float()
+    def parse_float(self, expand_registers=True) -> Optional[float]:
+        parsed = self._parse_float(expand_registers=expand_registers)
         if parsed is None:
             return None
         return parsed[0]
 
-    def _parse_float(self) -> Optional[Tuple[float, bool]]:
+    def _parse_float(self, expand_registers=True) -> Optional[Tuple[float, bool]]:
+        def float_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
+            is_valid = integer_tok_cur_str_predicate(tok, cur_str)
+            if is_valid:
+                return True
+            # float can only have one decimal point
+            if tok.value == "." and "." not in cur_str:
+                return True
+            return False
+
         sequence, relax = self._expand_and_combine_as_str(
-            is_digit_token, expand_registers=True
+            float_tok_cur_str_predicate, expand_registers=expand_registers
         )
         if not sequence:
             return None
-        return parse_number_str_to_float(sequence), relax
+        return parse_number_str_to_float(sequence.strip()), relax
 
-    def is_next_token_register(self) -> bool:
+    def _is_next_token_register(self) -> bool:
         tok = self.peek()
         if tok is None:
             return False
@@ -616,23 +628,25 @@ class ExpanderCore:
         register_value = self.parse_register_value(expand=True)
         if register_value is not None:
             return register_value, False
-        digits, relax = self._expand_and_combine_as_str(is_digit_token)
-        if not digits:
+        parsed_float = self._parse_float(expand_registers=False)
+        if not parsed_float:
             return None
-        digits = parse_number_str_to_float(digits)
+        digits, relax = parsed_float
 
         unit = None
         if not relax and self.peek():
             self.skip_whitespace()
 
-            if is_relax_token(self.peek()):
+            if self.is_relax_token(self.peek()):
                 self.consume()
+                relax = True
             else:
                 register_value = self.parse_register_value(expand=True)
                 if isinstance(register_value, float | int):
                     return int(register_value * digits), False
                 unit, relax = self._expand_and_combine_as_str(
-                    lambda tok: tok.catcode == Catcode.LETTER
+                    lambda tok, cur_str: tok.catcode == Catcode.LETTER
+                    or (tok.value == " " and cur_str.strip() == "")
                 )
         return dimension_to_scaled_points(digits, unit), relax
 
@@ -710,7 +724,7 @@ class ExpanderCore:
         tok = self.peek()
         if not tok:
             return base_scaled_points
-        if is_relax_token(tok):
+        if self.is_relax_token(tok):
             self.consume()
             return base_scaled_points
 

@@ -1,6 +1,5 @@
-from typing import List
-from latex2json.expander.expander_core import ExpanderCore, is_relax_token
-from latex2json.tokens.types import Token, TokenType
+from latex2json.expander.expander_core import ExpanderCore
+from latex2json.tokens.types import Token
 
 import colorsys
 

@@ -291,6 +291,23 @@ def test_parse_int_float_arguments():
     expander.set_text(r"-\thirteenempty")
     assert expander.parse_integer() == -13
 
+    # works with +/-
+    expander.set_text(r"+22")
+    assert expander.parse_integer() == 22
+
+    expander.set_text(r"-22")
+    assert expander.parse_integer() == -22
+
+    expander.set_text(r"-22+44")
+    assert expander.parse_integer() == -22
+    assert expander.parse_integer() == 44
+
+    # test only 1 decimal for floats
+    expander.set_text(r"-1.2.3")
+    assert expander.parse_float() == -1.2
+    assert expander.parse_float() == 0.3
+    assert expander.eof()
+
 
 def test_parse_dimensions():
     expander = ExpanderCore()
