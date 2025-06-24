@@ -2,6 +2,14 @@ from latex2json.expander.expander import Expander
 from latex2json.registers.utils import int_to_roman
 
 
+def test_number_handler():
+    expander = Expander()
+
+    text = r"\setcounter{section}{10}\number \value{section}"
+    out = expander.expand(text)
+    assert expander.check_tokens_equal(out, expander.expand("10"))
+
+
 def test_num_handler():
     expander = Expander()
 

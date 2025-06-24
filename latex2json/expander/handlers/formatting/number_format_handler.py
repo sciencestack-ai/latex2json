@@ -63,7 +63,14 @@ def romannumeral_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     return expander.convert_str_to_tokens(int_to_roman(number))
 
 
+def number_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    val = expander.parse_integer() or 0
+    return expander.convert_str_to_tokens(str(val))
+
+
 def register_number_format_handlers(expander: ExpanderCore):
+    expander.register_handler("number", number_handler, is_global=True)
     expander.register_handler("num", num_handler, is_global=True)
     expander.register_handler("romannumeral", romannumeral_handler, is_global=True)
 
