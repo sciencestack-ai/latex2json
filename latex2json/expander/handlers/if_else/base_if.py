@@ -1,4 +1,4 @@
-from typing import List, Optional, Protocol
+from typing import List, Optional, Protocol, Tuple
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token, TokenType
@@ -32,12 +32,12 @@ class IfMacro(Macro):
                 expander.logger.warning(f"Warning: {error}")
             return None
 
-        block = process_if_else_block(expander, is_true)
-        if block:
-            expanded = expander.expand_tokens(block)
-            # expander.push_tokens(block)
-            return expanded
-        return []
+        blocks = parse_if_else_block_tokens(expander)
+        if blocks is None:
+            return []
+        expanded = expander.expand_tokens(blocks[0] if is_true else blocks[1])
+        # expander.push_tokens(block)
+        return expanded
 
 
 def is_fi_command(token: Token) -> bool:
@@ -53,9 +53,9 @@ def is_else_command(token: Token) -> bool:
 
 
 # returns the block to execute if the condition is true/false
-def process_if_else_block(
-    expander: ExpanderCore, is_equal: bool
-) -> Optional[List[Token]]:
+def parse_if_else_block_tokens(
+    expander: ExpanderCore,
+) -> Optional[Tuple[List[Token], List[Token]]]:
     tok = expander.peek()
     if tok is None:
         return None
@@ -89,10 +89,7 @@ def process_if_else_block(
     true_block = block[:else_pos] if else_pos is not None else block
     false_block = block[else_pos + 1 :] if else_pos is not None else []
 
-    if is_equal:
-        return true_block
-
-    return false_block
+    return true_block, false_block
 
 
 def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
@@ -145,6 +142,17 @@ def make_if_defined_eval(check_undefined=False) -> Macro:
     return evaluate_if_defined
 
 
+def evaluate_ifodd(
+    expander: ExpanderCore, token: Token
+) -> tuple[bool | None, str | None]:
+    expander.skip_whitespace()
+    num = expander.parse_integer()
+    if num is None:
+        return None, "\\ifodd expects a number"
+
+    return num % 2 == 1, None
+
+
 def register_base_ifs(expander: ExpanderCore):
     expander.register_macro("\\if", IfMacro("if", evaluate_base_if), is_global=True)
     expander.register_macro(
@@ -155,6 +163,13 @@ def register_base_ifs(expander: ExpanderCore):
     expander.register_macro(
         "\\iffalse",
         IfMacro("iffalse", lambda expander, token: (False, None)),
+        is_global=True,
+    )
+
+    # ifodd
+    expander.register_macro(
+        "\\ifodd",
+        IfMacro("ifodd", evaluate_ifodd),
         is_global=True,
     )
 

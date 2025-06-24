@@ -194,3 +194,23 @@ def test_mathmode_expansions_with_braces():
 
     for input, expected in expected_pairs:
         assert_token_sequence(expander.expand(input), expander.expand(expected))
+
+
+def test_tail_recursion_countdown():
+    expander = Expander()
+
+    text = r"""
+\def\countdown#1{%
+  \ifnum#1>0
+    Number: #1
+    \expandafter\countdown\expandafter{\number\numexpr#1-1\relax}%
+  \fi
+}
+\countdown{5}
+"""
+
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    sequence = out_str.split("\n")
+    sequence = [s.strip() for s in sequence if s.strip()]
+    assert sequence == ["Number: 5", "Number: 4", "Number: 3", "Number: 2", "Number: 1"]

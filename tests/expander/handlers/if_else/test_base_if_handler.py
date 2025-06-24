@@ -96,8 +96,14 @@ def test_if_true_false_handler():
     assert Expander.check_tokens_equal(out, expander.expand("TRUE"))
 
 
-def test_nested_if_true_false_handler():
+def test_if_true_false_handler():
     expander = Expander()
+
+    # single line
+    out = expander.expand(r"\def\foo{FOO}\iffalse\else\foo\fi")
+    assert expander.convert_tokens_to_str(out) == "FOO"
+
+    # nested case
     text = r"""
     \iftrue
         TRUE
@@ -166,3 +172,20 @@ def test_ifdefined_handler():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert Expander.check_tokens_equal(out, expander.expand("FALSE"))
+
+
+def test_ifodd_handler():
+    expander = Expander()
+    text = r"""
+    \newcount\mycount
+    \mycount=1
+
+    \ifodd \mycount
+        TRUE
+    \else
+        FALSE
+    \fi
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert expander.convert_tokens_to_str(out) == "TRUE"

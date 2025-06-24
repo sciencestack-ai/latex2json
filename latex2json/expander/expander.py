@@ -2,7 +2,6 @@ from logging import Logger
 from typing import Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 
 
 class Expander(ExpanderCore):
@@ -25,10 +24,12 @@ class Expander(ExpanderCore):
 
 if __name__ == "__main__":
     expander = Expander()
+    from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 
-    verbatim_env_tokens = expander.expand(
-        r"\begin{verbatim}\newcommand{test}{123}\end {fake}##1\end{verbatim}"
-    )
+    text = r"""\numexpr 1+1\relax"""
+
+    expander.set_text(text)
+    # out = expander.expand(text)
 
     # while not expander.eof():
     #     next_tokens = expander.next_non_expandable_tokens()
