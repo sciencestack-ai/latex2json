@@ -1,6 +1,7 @@
 from latex2json.expander.expander_core import ExpanderCore
 
 from latex2json.expander.handlers.if_else.base_if import register_base_ifs
+from latex2json.expander.handlers.if_else.ifcase import register_ifcase
 from latex2json.expander.handlers.if_else.ifcat import register_ifcat
 from latex2json.expander.handlers.if_else.ifdim import register_ifdim
 from latex2json.expander.handlers.if_else.ifnum import register_ifnum
@@ -19,3 +20,4 @@ def register_if_else(expander: ExpanderCore):
     register_newif(expander)
     register_atifs(expander)
     register_ifthenelse(expander)
+    register_ifcase(expander)

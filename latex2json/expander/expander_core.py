@@ -591,7 +591,8 @@ class ExpanderCore:
         if expand:
             # expand in case
             exp = self.expand_next()
-            self.push_tokens(exp)
+            if exp:
+                self.push_tokens(exp)
             self.skip_whitespace()
             tok = self.peek()
             if tok is None:
@@ -648,6 +649,7 @@ class ExpanderCore:
                     lambda tok, cur_str: tok.catcode == Catcode.LETTER
                     or (tok.value == " " and cur_str.strip() == "")
                 )
+
         return dimension_to_scaled_points(digits, unit), relax
 
     def parse_box(self) -> Optional[Box]:
@@ -690,6 +692,12 @@ class ExpanderCore:
         return Box(type=box_type, content=content)
 
     def parse_skip(self) -> Optional[int]:
+        parsed = self._parse_skip()
+        if parsed is None:
+            return None
+        return parsed[0]
+
+    def _parse_skip(self) -> Optional[Tuple[int, bool]]:
         """
         must be in this order:
         skip_value = base_component [plus_component] [minus_component]
@@ -698,6 +706,8 @@ class ExpanderCore:
         base_component = dimension | skip_register | expression
         plus_component = "plus" (dimension | skip_register | fill_spec)
         minus_component = "minus" (dimension | skip_register)
+
+        Returns: (int, bool) where int is the parsed value and bool is whether relax
         """
         # Parse base component (required)
         base_result = self._parse_dimensions()
@@ -706,7 +716,7 @@ class ExpanderCore:
 
         base_scaled_points, relax = base_result
         if relax:
-            return base_scaled_points
+            return base_scaled_points, True
 
         # Parse optional plus component
         self.skip_whitespace()
@@ -717,16 +727,16 @@ class ExpanderCore:
                 plus_scaled_points, relax = plus_result
                 base_scaled_points += plus_scaled_points
                 if relax:
-                    return base_scaled_points
+                    return base_scaled_points, True
 
         # Parse optional minus component
         self.skip_whitespace()
         tok = self.peek()
         if not tok:
-            return base_scaled_points
+            return base_scaled_points, False
         if self.is_relax_token(tok):
             self.consume()
-            return base_scaled_points
+            return base_scaled_points, True
 
         if self.parse_keyword("minus"):
             self.skip_whitespace()
@@ -734,8 +744,10 @@ class ExpanderCore:
             if minus_result:
                 minus_scaled_points, relax = minus_result
                 base_scaled_points -= minus_scaled_points
+                if relax:
+                    return base_scaled_points, True
 
-        return base_scaled_points  # Return just the base dimension
+        return base_scaled_points, False  # Return the base dimension and no relax
 
     def parse_keyword(self, keyword: str) -> bool:
         consumed_tokens: List[Token] = []
