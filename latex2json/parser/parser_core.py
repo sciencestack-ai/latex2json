@@ -1,3 +1,4 @@
+from copy import deepcopy
 import logging
 import re
 from typing import Dict, List, Optional, Callable
@@ -478,7 +479,7 @@ class ParserCore:
 
     def convert_nodes_to_str(self, nodes: List[ASTNode], postprocess=True) -> str:
         if postprocess:
-            nodes = self.postprocess_nodes(nodes)
+            nodes = self.postprocess_nodes(deepcopy(nodes))
         return "".join(node.detokenize() for node in nodes)
 
     def postprocess_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
@@ -522,10 +523,6 @@ class ParserCore:
 
         # then do a final merge of text nodes
         merged_nodes = merge_text_nodes(final_nodes)
-        for node in merged_nodes:
-            # latex newlines seem to strip trailing whitespace, so we strip
-            if isinstance(node, TextNode):
-                node.text = "\n".join(line.strip() for line in node.text.split("\n"))
         return merged_nodes
 
     def parse_tokens_until(

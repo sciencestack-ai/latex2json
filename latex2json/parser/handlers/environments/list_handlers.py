@@ -1,4 +1,5 @@
 from typing import List
+from latex2json.latex_maps.environments import LIST_ENVIRONMENTS
 from latex2json.nodes.base_nodes import ASTNode, CommandNode
 from latex2json.nodes.list_item_node import ListItemNode, ListNode
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
@@ -55,15 +56,12 @@ def list_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNo
     return [list_node]
 
 
-LIST_ENV_NAMES = ["itemize", "enumerate", "description"]
-LIST_ENV_NAMES.extend(name + "*" for name in LIST_ENV_NAMES[:])
-
-
 def register_list_handlers(parser: ParserCore):
     parser.register_handler("item", list_item_handler)
 
-    for env_name in LIST_ENV_NAMES:
+    for env_name in LIST_ENVIRONMENTS:
         parser.register_env_handler(env_name, list_handler)
+        parser.register_env_handler(env_name + "*", list_handler)
 
 
 if __name__ == "__main__":
