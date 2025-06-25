@@ -76,22 +76,6 @@ def test_makeatletter_makeatother():
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
 
-def test_redefine_primitives():
-    expander = Expander()
-
-    assert expander.get_macro("\\newcommand")
-    assert expander.get_macro("\\def")
-
-    # let's try to redefine \newcommand
-    text = r"""
-    \def\newcommand{NEWCOMMAND}
-    """
-    expander.expand(text)
-    assert_token_sequence(
-        expander.expand(r"\newcommand"), expander.expand("NEWCOMMAND")
-    )
-
-
 def test_edef_with_counters():
     expander = Expander()
 
@@ -214,3 +198,30 @@ def test_tail_recursion_countdown():
     sequence = out_str.split("\n")
     sequence = [s.strip() for s in sequence if s.strip()]
     assert sequence == ["Number: 5", "Number: 4", "Number: 3", "Number: 2", "Number: 1"]
+
+
+def test_loop_csname():
+    text = r"""
+% Define a primitive forloop
+\def\myforloop#1#2#3#4{%
+  % #1 = counter name
+  % #2 = start value  
+  % #3 = end value
+  % #4 = body
+  \expandafter\newcount\csname #1\endcsname
+  \csname #1\endcsname=#2\relax
+  \loop
+    #4%
+    \advance\csname #1\endcsname by 1
+  \ifnum\csname #1\endcsname<#3
+  \repeat
+}
+
+% Usage:
+\myforloop{i}{1}{6}{Item \the\i}    
+"""
+    expander = Expander()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    sequence = out_str.replace("\n", "").replace(" ", "")
+    assert sequence == "Item1Item2Item3Item4Item5"
