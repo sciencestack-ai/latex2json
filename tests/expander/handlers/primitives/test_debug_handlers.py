@@ -95,7 +95,12 @@ def test_string():
     assert_token_sequence(out, expected)
 
     out = expander.expand(r"\string\foo")
-    assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
+    assert out == [
+        Token(TokenType.CHARACTER, "\\", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "f", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "o", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "o", catcode=Catcode.LETTER),
+    ]
 
 
 def test_escapechar():

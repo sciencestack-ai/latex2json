@@ -71,14 +71,17 @@ def if_mathmode_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 
 
 def if_undefined_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    blocks = expander.parse_braced_blocks(3)
-    if len(blocks) != 3:
+    expander.skip_whitespace()
+    command_name = expander.parse_brace_name()
+    blocks = expander.parse_braced_blocks(2)
+    if len(blocks) != 2:
         expander.logger.warning("Warning: \\@ifundefined expects 3 blocks")
         return None
 
-    command_name = expander.convert_tokens_to_str(blocks[0])
-    is_undefined = expander.get_macro(command_name) is None
-    block = blocks[1] if is_undefined else blocks[2]
+    is_undefined = True
+    if command_name:
+        is_undefined = expander.get_macro(command_name) is None
+    block = blocks[0] if is_undefined else blocks[1]
     expander.push_tokens(block)
     return []
 
@@ -99,12 +102,43 @@ def ifdefinable_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     return []
 
 
+def make_ifloaded_handler(load_type: str = "package"):
+    def ifloaded_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        expander.skip_whitespace()
+        package_name = expander.parse_brace_name()
+        blocks = expander.parse_braced_blocks(2)
+        if len(blocks) != 2:
+            expander.logger.warning(f"Warning: \\@if{load_type}loaded expects 3 blocks")
+            return None
+
+        if not package_name:
+            return None
+        package_name = package_name.strip()
+
+        loaded_set = (
+            expander.loaded_packages
+            if load_type == "package"
+            else expander.loaded_classes
+        )
+        block = blocks[0] if package_name in loaded_set else blocks[1]
+        expander.push_tokens(block)
+        return []
+
+    return ifloaded_handler
+
+
 def register_atifs(expander: ExpanderCore):
     expander.register_handler("\\@ifstar", if_star_handler, is_global=True)
     expander.register_handler("\\@ifnextchar", if_nextchar_handler, is_global=True)
     expander.register_handler("\\@ifmmode", if_mathmode_handler, is_global=True)
     expander.register_handler("\\@ifundefined", if_undefined_handler, is_global=True)
     expander.register_handler("\\@ifdefinable", ifdefinable_handler, is_global=True)
+    expander.register_handler(
+        "\\@ifpackageloaded", make_ifloaded_handler("package"), is_global=True
+    )
+    expander.register_handler(
+        "\\@ifclassloaded", make_ifloaded_handler("class"), is_global=True
+    )
 
 
 if __name__ == "__main__":

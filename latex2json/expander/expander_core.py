@@ -1,6 +1,6 @@
 from logging import Logger
 import os
-from typing import Callable, List, Any, Dict, Optional, Tuple, Type, Union
+from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
 
 
 from latex2json.latex_maps.boxes import BOXES
@@ -111,6 +111,9 @@ class ExpanderCore:
         self.stream = TokenStream(self.tokenizer)
         self.state = ExpanderState(self.tokenizer)
         self.logger = logger if logger is not None else Logger("expander")
+
+        self.loaded_packages: Set[str] = set()
+        self.loaded_classes: Set[str] = set()
 
         self._init_macros()
 
@@ -377,13 +380,33 @@ class ExpanderCore:
     def push_text(self, text: str):
         self.stream.push_text(text)
 
+    def if_file_exists(self, file_path: str) -> bool:
+        return os.path.exists(file_path)
+
     def push_file(self, file_path: str):
-        if not os.path.exists(file_path):
+        if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
-            return []
+            return
 
         input_text = open(file_path).read()
         self.push_text(input_text)
+
+    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
+        if package_name in self.loaded_packages:
+            return
+
+        self.loaded_packages.add(package_name)
+
+        package_path = package_name
+        if not package_path.endswith(extension):
+            package_path += extension
+
+        if read_file and self.if_file_exists(package_path):
+            # force makeatletter before loading package
+            self.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, "makeatletter")])
+            # push makeatother to stack i.e. will be popped after package is loaded
+            self.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "makeatother")])
+            self.push_file(package_path)
 
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)

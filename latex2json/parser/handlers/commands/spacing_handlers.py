@@ -72,7 +72,18 @@ def register_spacing_handlers(parser: ParserCore):
             newline_handler,
         )
 
-    for space in ["quad", "qquad", "xspace", "space", "thinspace", ",", ";", ":", "!"]:
+    for space in [
+        "quad",
+        "qquad",
+        "xspace",
+        "space",
+        "thinspace",
+        ",",
+        ";",
+        ":",
+        "!",
+        " ",
+    ]:
         parser.register_handler(
             space,
             make_space_command(space),

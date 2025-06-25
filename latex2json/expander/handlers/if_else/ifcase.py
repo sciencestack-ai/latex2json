@@ -17,20 +17,18 @@ def if_case_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     if blocks is None:
         return []
 
-    else_block = blocks[1]
-    if int_val is None:
-        return expander.expand_tokens(else_block)
+    main_block = blocks[1]  # use the else block as default
+    if int_val is not None:
+        true_block = blocks[0]
+        or_blocks = split_tokens_by_predicate(
+            true_block,
+            is_or_token,
+        )
+        total_cases = len(or_blocks)
+        if 0 <= int_val < total_cases:
+            main_block = or_blocks[int_val]
 
-    true_block = blocks[0]
-    split_cases = split_tokens_by_predicate(
-        true_block,
-        is_or_token,
-    )
-    total_cases = len(split_cases)
-    if 0 <= int_val < total_cases:
-        return expander.expand_tokens(split_cases[int_val])
-
-    return expander.expand_tokens(else_block)
+    return expander.expand_tokens(main_block)
 
 
 def register_ifcase(expander: ExpanderCore):

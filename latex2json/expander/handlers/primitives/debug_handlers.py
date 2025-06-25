@@ -113,6 +113,14 @@ def string_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
     if not tok:
         return None
 
+    if tok.type == TokenType.CONTROL_SEQUENCE:
+        # convert all to character tokens
+        tok_str = "\\" + tok.value
+        out_tokens = [
+            Token(TokenType.CHARACTER, c, catcode=Catcode.LETTER) for c in tok_str
+        ]
+        return out_tokens
+
     return [tok]
 
 
@@ -121,7 +129,7 @@ def escapechar_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     expander.skip_whitespace()
     if expander.parse_equals():
         expander.skip_whitespace()
-        expander.parse_float()
+        expander.parse_integer()
     return []
 
 
