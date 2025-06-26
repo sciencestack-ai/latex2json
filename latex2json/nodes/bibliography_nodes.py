@@ -31,6 +31,10 @@ class BibEntryNode(ASTNode):
         self.entry_type = entry_type
         self.fields = fields
 
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
+
     def set_body(self, body: List[ASTNode]):
         self.set_children(body)
 

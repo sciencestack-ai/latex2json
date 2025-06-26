@@ -28,7 +28,7 @@ def bibitem_handler(parser: ParserCore, token: Token) -> List[BibEntryNode]:
     ]
 
 
-def split_into_bibitems(parser: ParserCore, nodes: List[ASTNode]) -> List[BibEntryNode]:
+def split_into_bibitems(nodes: List[ASTNode]) -> List[BibEntryNode]:
     out_items: List[BibEntryNode] = []
 
     buffer: List[ASTNode] = []
@@ -67,7 +67,7 @@ def bibliography_handler(
         return []
 
     env_nodes: List[ASTNode] = out.body
-    items = split_into_bibitems(parser, env_nodes)
+    items = split_into_bibitems(env_nodes)
 
     biblio_node = BibliographyNode(items)
     # re-assign labels from environment node
