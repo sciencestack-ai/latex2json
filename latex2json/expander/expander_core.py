@@ -112,6 +112,7 @@ class ExpanderCore:
         self.state = ExpanderState(self.tokenizer)
         self.logger = logger if logger is not None else Logger("expander")
 
+        self.cwd = "."
         self.loaded_packages: Set[str] = set()
         self.loaded_classes: Set[str] = set()
 
@@ -381,6 +382,8 @@ class ExpanderCore:
         self.stream.push_text(text)
 
     def if_file_exists(self, file_path: str) -> bool:
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(self.cwd, file_path)
         return os.path.exists(file_path)
 
     def push_file(self, file_path: str):

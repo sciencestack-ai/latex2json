@@ -24,6 +24,7 @@ from latex2json.tokens import (
     EnvironmentStartToken,
     TokenType,
 )
+from latex2json.utils.tex_utils import normalize_whitespace_and_lines
 
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.utils import (
@@ -75,25 +76,6 @@ class MacroPattern:
         self.math_mode_only = math_mode_only
 
 
-def normalize_whitespace_and_lines(text: str) -> str:
-    # Step 1: Replace two or more newlines (with optional surrounding spaces) with a unique marker.
-    # This marker should be something unlikely to appear in your text.
-    marker = "<PARA_BREAK>"
-    text = re.sub(r"(?:[ \t]*\n[ \t]*){2,}", marker, text)
-
-    # Step 2: Replace any remaining single newline (with optional surrounding spaces) with a single space.
-    text = re.sub(r"[ \t]*\n[ \t]*", " ", text)
-
-    # Step 3: Collapse multiple spaces into a single space.
-    text = re.sub(r"[ \t]+", " ", text)
-
-    # Step 4: Replace the marker with an actual newline (or any delimiter you prefer).
-    text = text.replace(marker, "\n")
-
-    # Optionally, trim leading and trailing whitespace.
-    return text  # .strip()
-
-
 class ParserCore:
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.logger = logger or logging.getLogger(__name__)
@@ -113,6 +95,10 @@ class ParserCore:
     @property
     def current_env(self) -> Optional[ASTNode]:
         return self._env_node_stack[-1] if self._env_node_stack else None
+
+    @property
+    def cwd(self):
+        return self.expander.cwd
 
     def set_text(self, text: str):
         self.expander.set_text(text)
@@ -629,6 +615,12 @@ class ParserCore:
             include_begin_end_tokens=False,
             scoped=scoped,
         )
+
+    def parse_brace_name(self) -> Optional[str]:
+        nodes = self.parse_brace_as_nodes()
+        if nodes:
+            return self.convert_nodes_to_str(nodes)
+        return None
 
     def parse_braced_blocks(self, n_blocks: int) -> Optional[List[ASTNode]]:
         blocks: List[List[ASTNode]] = []

@@ -44,11 +44,9 @@ def split_into_bibitems(parser: ParserCore, nodes: List[ASTNode]) -> List[BibEnt
                 if len(out_items) > 1:
                     # get previous author(s)
                     prev_bib = out_items[-2]
-                    prev_bib_str = parser.convert_nodes_to_str(prev_bib.children)
-                    if "," in prev_bib_str:
-                        # Extract author part from previous entry (up to first comma)
-                        author_part = prev_bib_str.split(",")[0]
-                        default_str = author_part
+                    author_str = prev_bib.get_author_str()
+                    if author_str:
+                        default_str = author_str
                 buffer.append(TextNode(default_str))
             else:
                 buffer.append(node)

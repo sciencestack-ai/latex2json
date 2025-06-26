@@ -1,5 +1,5 @@
 from latex2json.nodes.base_nodes import ASTNode
-from latex2json.parser.handlers.bibliography.bib_text_utils import (
+from latex2json.utils.tex_utils import (
     extract_nested_content,
 )
 from latex2json.parser.parser_core import ParserCore
@@ -80,11 +80,14 @@ def bib_handler(parser: ParserCore, token: Token) -> List[BibEntryNode]:
         return []
 
     parser.skip_whitespace()
-    # parse the 3rd block
+    # parse the 3rd block (parse as raw tokens so that the parser does not parse out '{' and '}')
     body_tokens = parser.parse_begin_end_as_tokens(
         is_begin_group_token,
         is_end_group_token,
     )
+    if body_tokens is None:
+        parser.logger.warning(f"\\bib block must have a body")
+        return []
 
     # parse first argument as cite key
     cite_key = parser.convert_nodes_to_str(blocks[0]).strip()

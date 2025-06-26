@@ -19,7 +19,7 @@ class BibEntryNode(ASTNode):
         label: Optional[str] = None,  # for bibitem e.g. \bibitem[...label...]{}
         # bibtex related below
         entry_type: Optional[str] = None,  # e.g. article/proceedings/etc.
-        fields: Optional[Dict[str, str]] = None,  # for bibtex e.g. author, title, etc.
+        fields: Dict[str, str] = {},  # for bibtex e.g. author, title, etc.
     ):
         super().__init__()
         self.citation_key = citation_key
@@ -63,6 +63,17 @@ class BibEntryNode(ASTNode):
 
     def __str__(self):
         return self.detokenize()
+
+    def get_author_str(self):
+        if self.format == "bibitem":
+            content = "".join(child.detokenize() for child in self.children).strip()
+            if "," in content:
+                return content.split(",")[0]
+
+        author_field = self.fields.get("author") or self.fields.get("authors")
+        if not author_field:
+            return None
+        return author_field
 
     @classmethod
     def from_bibtex(
