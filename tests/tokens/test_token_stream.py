@@ -29,10 +29,14 @@ def test_push_text():
     assert stream.consume() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
 
     # now insert new text
-    stream.push_text("abc")
+    stream.push_text("abcdefg")
     assert stream.consume() == Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)
     assert stream.consume() == Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER)
     assert stream.consume() == Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "d", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "e", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "f", catcode=Catcode.LETTER)
+    assert stream.consume() == Token(TokenType.CHARACTER, "g", catcode=Catcode.LETTER)
 
     # now resume back to the original text
     assert stream.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)

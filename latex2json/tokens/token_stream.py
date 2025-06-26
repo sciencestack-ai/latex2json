@@ -32,15 +32,18 @@ class StringSource(TokenSource):
 
     def __init__(self, content: str, shared_tokenizer: Tokenizer):
         self.content = content
-        self.tokenizer = shared_tokenizer
-        self.current_pos = 0
+        # Create new tokenizer with same settings
+        self.tokenizer = Tokenizer()
+        self.tokenizer.set_catcode_table(shared_tokenizer._catcodes)
+        self.tokenizer.set(content)
+        # self.current_pos = 0
 
     def activate(self):
-        self.tokenizer.set(self.content)
-        self.tokenizer.pos = self.current_pos
+        pass
 
     def deactivate(self):
-        self.current_pos = self.tokenizer.pos
+        pass
+        # self.current_pos = self.tokenizer.pos
 
     def consume(self) -> Optional[Token]:
         return self.tokenizer.get_next_token()

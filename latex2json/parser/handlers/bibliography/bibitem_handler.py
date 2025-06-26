@@ -78,6 +78,7 @@ def bibliography_handler(
 
 def register_bibitem_handler(parser: ParserCore):
     parser.register_handler("bibitem", bibitem_handler)
+    parser.register_handler("newblock", lambda parser, token: [])
     parser.register_env_handler("thebibliography", bibliography_handler)
 
 
