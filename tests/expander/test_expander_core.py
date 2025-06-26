@@ -62,6 +62,22 @@ def test_expand_tokens():
     assert expander.peek() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
 
 
+def test_expand_text():
+    expander = ExpanderCore()
+    text = "1234"
+    expander.set_text(text)
+    assert expander.consume() == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
+
+    out = expander.expand_text("abc")
+    assert out == expander.convert_str_to_tokens("abc")
+
+    # ensure stream continues
+    assert expander.consume() == Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER)
+    assert expander.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
+    assert expander.consume() == Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER)
+    assert expander.eof()
+
+
 def test_whitespace_and_match():
     tokenizer = Tokenizer()
     expander = ExpanderCore(tokenizer)

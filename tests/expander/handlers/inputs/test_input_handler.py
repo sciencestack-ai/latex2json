@@ -11,7 +11,7 @@ from tests.test_utils import (
 
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
-test_data_path = os.path.join(dir_path, "../../test_data")
+test_data_path = os.path.join(dir_path, "../../../samples")
 
 
 def test_input_handler():
@@ -19,7 +19,7 @@ def test_input_handler():
 
     # sample.tex contains a section
     text = r"""
-    \def\myinput{\input{%s/sample.tex}}
+    \def\myinput{\input{%s/example.tex}}
     
     For some \myinput
 

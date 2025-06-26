@@ -334,6 +334,15 @@ class ExpanderCore:
         self.set_text(text)
         return self.process()
 
+    def expand_text(self, text: str) -> List[Token]:
+        STOP_TOKEN = Token(TokenType.CHARACTER, r"\xx", catcode=Catcode.OTHER)
+        self.push_tokens([STOP_TOKEN])
+        self.push_text(text)
+        out = self.process(
+            stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
+        )
+        return out
+
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
         self.push_tokens(tokens + [STOP_TOKEN])
@@ -381,12 +390,17 @@ class ExpanderCore:
     def push_text(self, text: str):
         self.stream.push_text(text)
 
-    def if_file_exists(self, file_path: str) -> bool:
+    def get_cwd_path(self, file_path: str) -> str:
         if not os.path.isabs(file_path):
             file_path = os.path.join(self.cwd, file_path)
+        return file_path
+
+    def if_file_exists(self, file_path: str) -> bool:
+        file_path = self.get_cwd_path(file_path)
         return os.path.exists(file_path)
 
     def push_file(self, file_path: str):
+        file_path = self.get_cwd_path(file_path)
         if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
             return

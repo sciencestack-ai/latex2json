@@ -187,6 +187,10 @@ class ParserCore:
     def pop_scope(self):
         self.state.pop_scope()
 
+    def process_text(self, text: str) -> List[ASTNode]:
+        tokens = self.expander.expand_text(text)
+        return self.process_tokens(tokens)
+
     def process_tokens(self, tokens: List[Token], scoped=False) -> List[ASTNode]:
         """Parse a list of tokens into AST nodes, similar to expand_tokens in expander."""
         if len(tokens) == 0:
