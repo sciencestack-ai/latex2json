@@ -49,6 +49,9 @@ def list_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNo
     env_nodes: List[ASTNode] = out.body
     items = split_into_items(env_nodes)
 
+    if list_type == "list":
+        list_type = "itemize"  # default to itemize for list
+
     list_node = ListNode(items, list_type=list_type, is_inline=is_inline)
     # re-assign labels from environment node
     list_node.labels = out.labels

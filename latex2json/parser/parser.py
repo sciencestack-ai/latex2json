@@ -36,39 +36,70 @@ class Parser(ParserCore):
             self.register_handler(cmd, bib_file_handler)
 
     def parse_bib_file(self, file_path: str) -> List[BibEntryNode]:
-        bib_items = self.bib_parser.parse_file(file_path)
+        all_entries: List[BibEntryNode] = []
+
+        # Handle comma-separated list of files or single file
+        file_paths = [p.strip() for p in file_path.split(",") if p.strip()]
+
+        for path in file_paths:
+            # Apply current_file_dir to each path
+            full_path = path
+            if not os.path.isabs(full_path):
+                full_path = os.path.join(self.cwd, full_path)
+
+            try:
+                entries = self.bib_parser.parse_file(full_path)
+                all_entries.extend(entries)
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to parse bibliography file: {full_path}, error: {str(e)}"
+                )
+
+        # check and remove duplicate cite_keys
+        cite_keys = set()
+        non_duplicate_entries: List[BibEntryNode] = []
+        for entry in all_entries:
+            if entry.citation_key in cite_keys:
+                continue
+            cite_keys.add(entry.citation_key)
+            non_duplicate_entries.append(entry)
 
         # process each bibitem with parser to ensure all latex commands are expanded
-        for i, item in enumerate(bib_items):
+        bib_items = []
+        for i, item in enumerate(non_duplicate_entries):
             if item.format == "bibitem":
                 content_str = parser.convert_nodes_to_str(item.body)
                 # process the content_str
                 formatted_nodes = parser.process_text(content_str)
                 item.set_body(formatted_nodes)
+                bib_items.append(item)
             else:
                 fields = item.fields
                 for k, v in fields.items():
                     formatted_nodes = parser.process_text(v)
                     fields[k] = parser.convert_nodes_to_str(formatted_nodes)
-                bib_items[i] = BibEntryNode.from_bibtex(
+                entry = BibEntryNode.from_bibtex(
                     entry_type=item.entry_type,
                     citation_key=item.citation_key,
                     fields=fields,
                 )
+                bib_items.append(entry)
         return bib_items
 
 
 if __name__ == "__main__":
     from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 
+    samples_dir = os.path.dirname(os.path.abspath(__file__)) + "/../../tests/samples"
     text = r"""
     PRE BIBLIOGRAPHY
 
-    \bibliography{%s/bibtex}
-
+    \bibliography{%s/bibtex, %s/bib.bbl}
+    
     POST BIBLIOGRAPHY
 """ % (
-        os.path.dirname(os.path.abspath(__file__)) + "/../../tests/samples"
+        samples_dir,
+        samples_dir,
     )
 
     parser = Parser()

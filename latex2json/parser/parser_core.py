@@ -494,6 +494,8 @@ class ParserCore:
                     replacement_node = TextNode(name if name != "@" else "")
             elif isinstance(node, NewLineNode):
                 replacement_node = TextNode("\n")
+            elif isinstance(node, AlignmentNode):
+                replacement_node = TextNode("")  # empty
 
             if replacement_node:
                 replacement_node.add_styles(node.styles)

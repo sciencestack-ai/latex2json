@@ -24,7 +24,8 @@ def author_handler(parser: ParserCore, token: Token):
     author_nodes: List[AuthorNode] = []
     for per_author_nodes in authors:
         nodes = strip_whitespace_nodes(per_author_nodes)
-        author_nodes.append(AuthorNode(nodes))
+        if nodes:
+            author_nodes.append(AuthorNode(nodes))
 
     if author_nodes:
         return [AuthorsNode(author_nodes)]
@@ -72,6 +73,12 @@ def register_doc_content_handlers(parser: ParserCore):
 
     # keywords
     parser.register_handler("keywords", make_metadata_handler("keywords"))
+
+    # appendix
+    for appendix in ["appendix", "appendices"]:
+        parser.register_handler(
+            appendix, lambda parser, token: [MetadataNode("appendix", [])]
+        )
 
 
 if __name__ == "__main__":
