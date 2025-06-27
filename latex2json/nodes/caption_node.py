@@ -53,3 +53,13 @@ class CaptionNode(ASTNode):
         return check_asts_equal(self.body, other.body) and check_asts_equal(
             self.opt_arg, other.opt_arg
         )
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "caption"
+        result["content"] = [child.to_json() for child in self.body]
+        # if self.opt_arg: # TODO?
+        #     result["opt_arg"] = [child.to_json() for child in self.opt_arg]
+        if self.numbering:
+            result["numbering"] = self.numbering
+        return result

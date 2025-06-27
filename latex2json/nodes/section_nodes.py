@@ -3,6 +3,20 @@ from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
 
 
+SECTION_LEVELS = {
+    "part": 0,
+    "chapter": 1,
+    "section": 1,
+    "subsection": 2,
+    "subsubsection": 3,
+}
+
+PARAGRAPH_LEVELS = {
+    "paragraph": 1,
+    "subparagraph": 2,
+}
+
+
 class SectionNode(EnvironmentNode):
     def __init__(
         self,
@@ -35,3 +49,21 @@ class SectionNode(EnvironmentNode):
         if not same:
             return False
         return check_asts_equal(self.body, other.body)
+
+    def to_json(self):
+        result = ASTNode.to_json(self)
+        is_paragraph = "paragraph" in self.name
+        level = 0
+        if is_paragraph:
+            level = PARAGRAPH_LEVELS.get(self.name, 1)
+        else:
+            level = SECTION_LEVELS.get(self.name, 1)
+
+        result["type"] = "paragraph" if is_paragraph else "section"
+        result["title"] = [child.to_json() for child in self.body]
+        result["level"] = level
+        # if self.label:
+        #     result["label"] = self.label
+        if self.numbering:
+            result["numbering"] = self.numbering
+        return result

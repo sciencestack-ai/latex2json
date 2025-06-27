@@ -94,6 +94,18 @@ class BibEntryNode(ASTNode):
             fields=fields,
         )
 
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "bibitem"
+        result["key"] = self.citation_key
+        result["format"] = self.format
+        result["content"] = [child.to_json() for child in self.children]
+        if self.label:
+            result["label"] = self.label
+        if self.fields:
+            result["fields"] = self.fields
+        return result
+
 
 class BibliographyNode(ASTNode):
     def __init__(
@@ -132,3 +144,9 @@ class BibliographyNode(ASTNode):
 
     def __str__(self):
         return self.detokenize()
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "bibliography"
+        result["content"] = [item.to_json() for item in self.bib_items]
+        return result
