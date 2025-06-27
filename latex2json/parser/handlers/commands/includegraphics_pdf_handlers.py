@@ -1,4 +1,4 @@
-from latex2json.nodes.include_graphics_pdf_nodes import (
+from latex2json.nodes import (
     IncludeGraphicsNode,
     IncludePdfNode,
 )

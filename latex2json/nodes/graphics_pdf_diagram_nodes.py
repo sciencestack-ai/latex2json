@@ -62,3 +62,28 @@ class IncludePdfNode(ASTNode):
         if self.pages is not None:
             result["pages"] = self.pages
         return result
+
+
+class DiagramNode(ASTNode):
+    def __init__(self, env_name: str, diagram: str):
+        super().__init__()
+        self.env_name = env_name
+        self.diagram = diagram
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, DiagramNode):
+            return False
+        return self.diagram == other.diagram and self.env_name == other.env_name
+
+    def __str__(self):
+        return self.detokenize()
+
+    def detokenize(self):
+        return f"\\begin{{{self.env_name}}}\n{self.diagram}\n\\end{{{self.env_name}}}"
+
+    def to_json(self):
+        result = {}
+        result["type"] = "diagram"
+        result["name"] = self.env_name
+        result["content"] = self.diagram
+        return result

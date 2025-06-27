@@ -5,6 +5,20 @@ import os
 from latex2json.utils.encoding import detect_encoding, read_file
 
 
+def strip_trailing_whitespace_from_lines(text: str):
+    processed_text = ""
+    for char in text:
+        if char == "\n":
+            processed_text = processed_text.rstrip() + "\n"
+        else:
+            if char == " ":
+                if processed_text and processed_text[-1] == "\n":
+                    continue
+            processed_text += char
+
+    return processed_text
+
+
 def count_preceding_backslashes(text: str, pos: int) -> int:
     """Count number of backslashes immediately preceding the position."""
     count = 0

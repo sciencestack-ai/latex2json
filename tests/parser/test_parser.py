@@ -1,5 +1,4 @@
-from latex2json.nodes.base_nodes import DisplayType, TextNode, VerbatimNode
-from latex2json.nodes.include_graphics_pdf_nodes import IncludeGraphicsNode
+from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
 from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode

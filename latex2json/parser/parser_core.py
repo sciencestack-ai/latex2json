@@ -25,7 +25,10 @@ from latex2json.tokens import (
     TokenType,
 )
 from latex2json.tokens.types import APOSTROPHE_TOKEN, BACK_TICK_TOKEN
-from latex2json.utils.tex_utils import normalize_whitespace_and_lines
+from latex2json.utils.tex_utils import (
+    normalize_whitespace_and_lines,
+    strip_trailing_whitespace_from_lines,
+)
 
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.utils import (
@@ -528,6 +531,11 @@ class ParserCore:
 
         # then do a final merge of text nodes
         merged_nodes = merge_text_nodes(final_nodes)
+        # then strip out trailing spaces around newlines
+        for node in merged_nodes:
+            if isinstance(node, TextNode):
+                node.text = strip_trailing_whitespace_from_lines(node.text)
+
         return merged_nodes
 
     def parse_tokens_until(

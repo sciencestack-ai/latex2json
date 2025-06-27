@@ -155,6 +155,12 @@ def evaluate_ifodd(
 
 def register_base_ifs(expander: ExpanderCore):
     expander.register_macro("\\if", IfMacro("if", evaluate_base_if), is_global=True)
+
+    # else + fi (if we encounter these in the wild, it means our if handling went wrong)
+    expander.register_handler("else", lambda expander, token: [], is_global=True)
+    expander.register_handler("fi", lambda expander, token: [], is_global=True)
+
+    # iftrue + iffalse
     expander.register_macro(
         "\\iftrue",
         IfMacro("iftrue", lambda expander, token: (True, None)),

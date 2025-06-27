@@ -90,7 +90,18 @@ VERBATIM_ENVIRONMENTS = {
         "verbatim", has_direct_command=True, is_verbatim=True
     ),
     "lstlisting": EnvironmentDefinition("lstlisting", is_verbatim=True),
+    # algorithm
+    "algorithm": EnvironmentDefinition("algorithm", is_verbatim=True),
+    "algorithmic": EnvironmentDefinition("algorithmic", is_verbatim=True),
 }
+
+PICTURE_ENVIRONMENTS = {
+    # picture/tikz
+    "picture": EnvironmentDefinition("picture", is_verbatim=True),
+    "tikzpicture": EnvironmentDefinition("tikzpicture", is_verbatim=True),
+    "pgfpicture": EnvironmentDefinition("pgfpicture", is_verbatim=True),
+}
+
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
@@ -178,6 +189,7 @@ MATH_ENVIRONMENTS = {
 COMMON_ENVIRONMENTS = {
     **DOCUMENT_ENVIRONMENTS,
     **VERBATIM_ENVIRONMENTS,
+    **PICTURE_ENVIRONMENTS,
     **LAYOUT_ENVIRONMENTS,
     **FIGURE_ENVIRONMENTS,
     **TABLE_ENVIRONMENTS,
