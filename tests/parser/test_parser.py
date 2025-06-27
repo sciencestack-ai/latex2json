@@ -5,6 +5,18 @@ from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode
 
 
+def test_quotes():
+    parser = Parser()
+    text = r"""
+    `single quote' ``double quote''
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], TextNode)
+    expected = "'single quote' " + '"double quote"'
+    assert out[0].text == expected
+
+
 def test_labels_n_captions_n_figures():
     parser = Parser()
     text = r"""

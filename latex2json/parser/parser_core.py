@@ -24,6 +24,7 @@ from latex2json.tokens import (
     EnvironmentStartToken,
     TokenType,
 )
+from latex2json.tokens.types import APOSTROPHE_TOKEN, BACK_TICK_TOKEN
 from latex2json.utils.tex_utils import normalize_whitespace_and_lines
 
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
@@ -286,6 +287,18 @@ class ParserCore:
             return [TextNode(token.value)]
         elif is_alignment_token(token):
             return [AlignmentNode(token.value)]
+        elif token == BACK_TICK_TOKEN:
+            char = "'"
+            if self.peek() == BACK_TICK_TOKEN:
+                self.consume()
+                char = '"'
+            return [TextNode(char)]
+        elif token == APOSTROPHE_TOKEN:
+            char = "'"
+            if self.peek() == APOSTROPHE_TOKEN:
+                self.consume()
+                char = '"'
+            return [TextNode(char)]
         elif token.type == TokenType.CHARACTER:
             return [TextNode(token.value)]
         elif token.type == TokenType.MATH_SHIFT_INLINE:
@@ -687,11 +700,7 @@ if __name__ == "__main__":
 """.strip()
 
     text = r"""
-    \textbf{ \textit {NODE} }
-    \bf 
-    \begin{align}
-    1+1
-    \end{align}
+    `single quote' ``double quote''
     """
 
     parser.set_text(text)
