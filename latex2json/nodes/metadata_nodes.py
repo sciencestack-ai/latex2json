@@ -21,6 +21,13 @@ class MetadataNode(ASTNode):
     def __str__(self):
         return self.detokenize()
 
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = self.name
+        if self.children:
+            result["content"] = [child.to_json() for child in self.children]
+        return result
+
 
 class AuthorNode(MetadataNode):
     def __init__(self, body: List[ASTNode]):
@@ -43,3 +50,13 @@ class AuthorsNode(ASTNode):
 
     def __str__(self):
         return self.detokenize()
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "author"
+        content = []
+        for author in self.children:
+            author_childs = [child.to_json() for child in author.children]
+            content.append(author_childs)
+        result["content"] = content
+        return result

@@ -68,28 +68,11 @@ class EquationNode(ASTNode):
         end_str = f"\\end{{{env_name}}}"
         return begin_str + math_str + end_str
 
-
-# class DisplayEquationNode(ASTNode):
-#     def __init__(self, text: str, align=False, numbering: Optional[str] = None):
-#         self.text = text
-#         self.align = align
-#         self.numbering = numbering
-
-#     def __str__(self):
-#         return f"Equation({self.text})"
-
-#     def __eq__(self, other: ASTNode):
-#         if not isinstance(other, DisplayEquationNode):
-#             return False
-#         return (
-#             self.text == other.text
-#             and self.align == other.align
-#             and self.numbering == other.numbering
-#         )
-
-#     def detokenize(self):
-#         name = "align" if self.align else "equation"
-#         if self.numbering is not None:
-#             name += f"({self.numbering})"
-#         out = f"\\begin{{{name}}}{self.text}\\end{{{name}}}"
-#         return out
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "equation"
+        result["content"] = [child.to_json() for child in self.children]
+        result["display"] = self.equation_type.value
+        if self.numbering:
+            result["numbering"] = self.numbering
+        return result

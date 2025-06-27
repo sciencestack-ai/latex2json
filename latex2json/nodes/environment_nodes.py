@@ -57,3 +57,12 @@ class EnvironmentNode(ASTNode):
         out += f"\\end{{{self.name}}}"
 
         return out
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "environment"
+        result["name"] = self.name
+        result["content"] = [child.to_json() for child in self.body]
+        if self.numbering:
+            result["numbering"] = self.numbering
+        return result

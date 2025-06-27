@@ -46,6 +46,18 @@ class CellNode(ASTNode):
     def __str__(self):
         return self.detokenize()
 
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "tabular_cell"
+        result["content"] = (
+            [child.to_json() for child in self.children] if self.children else None
+        )
+        if self.rowspan > 1:
+            result["rowspan"] = self.rowspan
+        if self.colspan > 1:
+            result["colspan"] = self.colspan
+        return result
+
 
 class RowNode(ASTNode):
     def __init__(self, cells: List[CellNode] = []):
@@ -73,6 +85,12 @@ class RowNode(ASTNode):
 
     def __str__(self):
         return self.detokenize()
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "tabular_row"
+        result["content"] = [cell.to_json() for cell in self.cells]
+        return result
 
 
 class TabularNode(ASTNode):
@@ -122,3 +140,20 @@ class TabularNode(ASTNode):
 
     def __str__(self):
         return self.detokenize()
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "tabular"
+        content = []
+        for row in self.row_nodes:
+            row_json = []
+            for cell in row.cells:
+                if cell.is_null_cell() and cell.rowspan < 2 and cell.colspan < 2:
+                    row_json.append(None)
+                else:
+                    cell_json = cell.to_json()
+                    del cell_json["type"]
+                    row_json.append(cell_json)
+            content.append(row_json)
+        result["content"] = content
+        return result

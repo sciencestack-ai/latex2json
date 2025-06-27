@@ -122,7 +122,7 @@ def test_with_makecell():
     \end{tabular}
     """.strip()
 
-    out = parser.parse(text)
+    out = parser.parse(text, postprocess=True)
     assert len(out) == 1 and isinstance(out[0], TabularNode)
     tabular = out[0]
     assert len(tabular.row_nodes) == 2

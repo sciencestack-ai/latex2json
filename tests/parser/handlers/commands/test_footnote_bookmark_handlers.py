@@ -27,22 +27,22 @@ def test_footnote_handler():
     text = r"\footnote{My footnote}"
     out = parser.parse(text)
     assert len(out) == 1
-    assert out[0] == FootnoteNode("My footnote")
+    assert out[0] == FootnoteNode([TextNode("My footnote")])
 
     # footnote with title
     text = r"\footnote[My title]{My footnote}"
     out = parser.parse(text)
     assert len(out) == 1
-    assert out[0] == FootnoteNode("My footnote", "My title")
+    assert out[0] == FootnoteNode([TextNode("My footnote")], "My title")
 
     # footnotemark
     text = r"\footnotemark"
     out = parser.parse(text)
     assert len(out) == 1
-    assert out[0] == FootnoteNode("*")
+    assert out[0] == FootnoteNode([TextNode("*")])
 
     # footnotemark with title
     text = r"\footnotemark[My title]"
     out = parser.parse(text)
     assert len(out) == 1
-    assert out[0] == FootnoteNode("My title")
+    assert out[0] == FootnoteNode([TextNode("My title")])

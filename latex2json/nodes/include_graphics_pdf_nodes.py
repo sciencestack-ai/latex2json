@@ -23,6 +23,14 @@ class IncludeGraphicsNode(ASTNode):
         out += f"{{{self.path}}}"
         return out
 
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "includegraphics"
+        result["content"] = self.path
+        if self.page is not None:
+            result["page"] = self.page
+        return result
+
 
 class IncludePdfNode(ASTNode):
     def __init__(self, path: str, pages: Optional[str] = None):
@@ -46,3 +54,11 @@ class IncludePdfNode(ASTNode):
             out += f"[pages={page_str}]"
         out += f"{{{self.path}}}"
         return out
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "includepdf"
+        result["content"] = self.path
+        if self.pages is not None:
+            result["pages"] = self.pages
+        return result

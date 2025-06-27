@@ -3,9 +3,9 @@ from typing import List, Optional
 
 
 class DisplayType(Enum):
-    INLINE = 1
-    DISPLAY = 2
-    ALIGN = 3
+    INLINE = "inline"
+    DISPLAY = "display"
+    ALIGN = "align"
 
 
 class ASTNode:
@@ -60,6 +60,20 @@ class ASTNode:
     def detokenize(self):
         return "".join(child.detokenize() for child in self.children)
 
+    def to_json(self):
+        """Base to_json implementation that handles styles and labels.
+        Child classes should call this using super().to_json() and extend it with their own fields.
+        """
+        result = {}
+
+        if self.styles:
+            result["styles"] = self.styles.copy()
+
+        if self.labels:
+            result["labels"] = self.labels.copy()
+
+        return result
+
 
 def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):
     if len(ast1) != len(ast2):
@@ -68,10 +82,6 @@ def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):
         if node1 != node2:
             return False
     return True
-
-
-def flatten(lst: List[List[ASTNode]]) -> List[ASTNode]:
-    return [item for sublist in lst for item in sublist]
 
 
 class TextNode(ASTNode):
@@ -88,9 +98,6 @@ class TextNode(ASTNode):
     def split(self, delimiter: str) -> List["TextNode"]:
         return [TextNode(t) for t in self.text.split(delimiter)]
 
-    def to_chars(self) -> List["TextNode"]:
-        return [TextNode(c) for c in self.text]
-
     def __eq__(self, other: ASTNode):
         if not isinstance(other, TextNode):
             return False
@@ -98,6 +105,12 @@ class TextNode(ASTNode):
 
     def detokenize(self):
         return self.text
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "text"
+        result["text"] = self.text
+        return result
 
 
 class AlignmentNode(ASTNode):
@@ -115,6 +128,13 @@ class AlignmentNode(ASTNode):
 
     def detokenize(self):
         return self.value
+
+    def to_json(self):
+        # this node should not ever be needed to be json, but just in case
+        result = super().to_json()
+        result["type"] = "text"
+        result["text"] = self.value
+        return result
 
 
 class NewLineNode(ASTNode):
@@ -135,6 +155,13 @@ class NewLineNode(ASTNode):
     def detokenize(self):
         return self.value
 
+    def to_json(self):
+        # this node should not ever be needed to be json, but just in case
+        result = super().to_json()
+        result["type"] = "text"
+        result["text"] = "\n"
+        return result
+
 
 class GroupNode(ASTNode):
     def __init__(self, body: List[ASTNode]):
@@ -152,6 +179,12 @@ class GroupNode(ASTNode):
 
     def detokenize(self):
         return "{\n" + "".join(child.detokenize() for child in self.body) + "\n}"
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "group"
+        result["content"] = [child.to_json() for child in self.children]
+        return result
 
 
 class VerbatimNode(ASTNode):
@@ -184,6 +217,15 @@ class VerbatimNode(ASTNode):
 
     def detokenize(self):
         return self.text  # not exactly accurate, but good enough for now
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "code"
+        result["content"] = self.text
+        result["display"] = self.display.value if self.display else None
+        if self.title:
+            result["title"] = self.title
+        return result
 
 
 class CommandNode(ASTNode):
@@ -253,8 +295,14 @@ class CommandNode(ASTNode):
         out = self.name
         if not out.startswith("\\"):
             out = "\\" + out
-        for opt_arg in self.opt_args:
-            out += "[" + "".join(child.detokenize() for child in opt_arg) + "]"
-        for arg in self.args:
-            out += "{" + "".join(child.detokenize() for child in arg) + "}"
+        for child in self.opt_args:
+            out += "[" + child.detokenize() + "]"
+        for child in self.args:
+            out += "{" + child.detokenize() + "}"
         return out
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "command"
+        result["command"] = self.name
+        return result

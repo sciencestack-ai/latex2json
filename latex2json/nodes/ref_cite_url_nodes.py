@@ -1,4 +1,4 @@
-from latex2json.nodes.base_nodes import ASTNode
+from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from typing import List, Optional
 
 
@@ -29,6 +29,14 @@ class BaseRefCiteNode(ASTNode):
             out += f"[{self.title}]"
         out += f"{{{', '.join(self.references)}}}"
         return out
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = self.prefix
+        result["content"] = self.references
+        if self.title:
+            result["title"] = self.title
+        return result
 
 
 class RefNode(BaseRefCiteNode):
@@ -72,17 +80,28 @@ class URLNode(ASTNode):
         out += f"{{{self.url}}}"
         return out
 
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "url"
+        result["content"] = self.url
+        if self.title:
+            result["title"] = self.title
+        return result
+
 
 class FootnoteNode(ASTNode):
-    def __init__(self, text: str, title: Optional[str] = None):
+    def __init__(self, body: List[ASTNode], title: Optional[str] = None):
         super().__init__()
-        self.text = text
+        self.set_children(body)
         self.title = title
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, FootnoteNode):
             return False
-        return self.text == other.text and self.title == other.title
+        return (
+            check_asts_equal(self.children, other.children)
+            and self.title == other.title
+        )
 
     def __str__(self):
         return self.detokenize()
@@ -91,5 +110,14 @@ class FootnoteNode(ASTNode):
         out = f"\\footnote"
         if self.title:
             out += f"[{self.title}]"
-        out += f"{{{self.text}}}"
+        content = "".join(child.detokenize() for child in self.children)
+        out += f"{{{content}}}"
         return out
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "footnote"
+        result["content"] = [child.to_json() for child in self.children]
+        if self.title:
+            result["title"] = self.title
+        return result
