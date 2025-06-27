@@ -110,6 +110,29 @@ def test_caption_handler():
     assert_caption_instances(expander, expected_captions)
 
 
+def test_figure_wrapfigure_captions():
+    expander = Expander()
+    register_caption_handler(expander)
+
+    text = r"""
+    \begin{wrapfigure}{r}{0.5\textwidth}
+    \caption{CAPTION}
+    \end{wrapfigure}
+
+    \begin{figure}[h]
+    \caption{FIGURE}
+    \end{figure}
+    """
+    expander.set_text(text)
+
+    expected_captions = [
+        DummyCaption(cur_env="figure", numbering="1", caption_text="CAPTION"),
+        DummyCaption(cur_env="figure", numbering="2", caption_text="FIGURE"),
+    ]
+
+    assert_caption_instances(expander, expected_captions)
+
+
 def test_captionof_handler():
     expander = Expander()
     register_caption_handler(expander)

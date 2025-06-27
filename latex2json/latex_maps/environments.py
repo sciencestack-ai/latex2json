@@ -90,8 +90,10 @@ VERBATIM_ENVIRONMENTS = {
         "verbatim", has_direct_command=True, is_verbatim=True
     ),
     "lstlisting": EnvironmentDefinition("lstlisting", is_verbatim=True),
-    # algorithm
-    "algorithm": EnvironmentDefinition("algorithm", is_verbatim=True),
+}
+
+ALGORITHM_ENVIRONMENTS = {
+    "algorithm": EnvironmentDefinition("algorithm"),
     "algorithmic": EnvironmentDefinition("algorithmic", is_verbatim=True),
 }
 
@@ -119,14 +121,14 @@ FIGURE_ENVIRONMENTS = {
     "figure": EnvironmentDefinition(
         "figure", num_args=1, default_arg=[], has_direct_command=True
     ),
+    "wrapfigure": EnvironmentDefinition(
+        "figure",
+        num_args=3,
+        default_arg=[],
+    ),
     "subfigure": EnvironmentDefinition(
         "subfigure",
         num_args=2,
-        default_arg=[],
-    ),
-    "wrapfigure": EnvironmentDefinition(
-        "wrapfigure",
-        num_args=3,
         default_arg=[],
     ),
 }
@@ -140,9 +142,9 @@ TABLE_ENVIRONMENTS = {
 
 TABULAR_ENVIRONMENTS = {
     "tabular": EnvironmentDefinition("tabular", num_args=1, has_direct_command=True),
-    "tabularx": EnvironmentDefinition("tabularx", num_args=2),
-    "tabulary": EnvironmentDefinition("tabulary", num_args=1),
-    "longtable": EnvironmentDefinition("longtable", num_args=1),
+    "tabularx": EnvironmentDefinition("tabular", num_args=2),
+    "tabulary": EnvironmentDefinition("tabular", num_args=1),
+    "longtable": EnvironmentDefinition("tabular", num_args=1),
 }
 
 # List environments
@@ -196,6 +198,7 @@ COMMON_ENVIRONMENTS = {
     **TABULAR_ENVIRONMENTS,
     **LIST_ENVIRONMENTS,
     **MATH_ENVIRONMENTS,
+    **ALGORITHM_ENVIRONMENTS,
     # **THEOREM_ENVIRONMENTS,
 }
 

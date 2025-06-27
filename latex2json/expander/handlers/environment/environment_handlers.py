@@ -28,7 +28,7 @@ def floatname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 def register_base_environment_handlers(expander: ExpanderCore):
     """Register basic environments that just wrap their content."""
     for env_name, env_def in COMMON_ENVIRONMENTS.items():
-        expander.register_environment(env_def.copy())
+        expander.register_environment(env_name, env_def.copy())
 
     expander.register_handler("floatname", floatname_handler, is_global=True)
 

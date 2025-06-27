@@ -1065,12 +1065,15 @@ class ExpanderCore:
 
     def register_environment(
         self,
+        env_name: str,
         env_def: EnvironmentDefinition,
         is_global: bool = True,
     ) -> None:
         """Register a new environment with begin/end handlers."""
-        env_name = env_def.name
         self.state.set_environment_definition(env_name, env_def)
+
+        # there is a difference between input env_name and out_env_name. E.g. wrapfigure -> figure
+        out_env_name = env_def.name
 
         is_math = env_def.is_math
         is_verbatim = env_def.is_verbatim
@@ -1084,7 +1087,7 @@ class ExpanderCore:
             if counter_name:
                 state.step_counter(counter_name)
 
-            state.push_env_stack(env_name)
+            state.push_env_stack(out_env_name)
 
             if is_math:
                 state.push_mode(ProcessingMode.MATH_DISPLAY)
@@ -1105,7 +1108,7 @@ class ExpanderCore:
                 numbering = state.get_counter_as_format(counter_name)
 
             begin_token = EnvironmentStartToken(
-                env_name,
+                out_env_name,
                 display_name=env_def.display_name,
                 numbering=numbering,
                 is_math_env=is_math,
@@ -1147,7 +1150,7 @@ class ExpanderCore:
 
         def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
             state = expander.state
-            end_token = Token(TokenType.ENVIRONMENT_END, env_name)
+            end_token = Token(TokenType.ENVIRONMENT_END, out_env_name)
 
             state.pop_env_stack()
 

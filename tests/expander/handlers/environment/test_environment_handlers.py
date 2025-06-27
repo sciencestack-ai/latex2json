@@ -78,6 +78,18 @@ def test_basic_environments():
     assert out[-1] == Token(TokenType.ENVIRONMENT_END, "center")
 
 
+def test_environments_with_alt_names():
+    expander = Expander()
+
+    # check wrapfigure -> figure
+
+    out = expander.expand(
+        r"\begin{wrapfigure}{r}{0.5\textwidth}Content\end{wrapfigure}"
+    )
+    assert out[0] == EnvironmentStartToken("figure")
+    assert out[-1] == Token(TokenType.ENVIRONMENT_END, "figure")
+
+
 def test_environments_with_args():
     expander = Expander()
 
