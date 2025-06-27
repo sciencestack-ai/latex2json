@@ -93,6 +93,9 @@ class ExpanderState:
         self.pending_global = False
         # self.is_verbatim_mode = False
 
+        # appendix
+        self.in_appendix = False
+
     @property
     def mode(self) -> ProcessingMode:
         return self._mode_stack[-1]

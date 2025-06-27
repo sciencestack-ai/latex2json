@@ -63,4 +63,26 @@ def test_section_handler():
     expected = mock_section_token(expander, "subsubsection", "Hello")
     assert expander.check_tokens_equal(out, expected)
 
-    # test with subsubsection with *
+    out = expander.expand(r"\subsubsection {Hello}")
+    expected = mock_section_token(expander, "subsubsection", "Hello", numbering="2.1.1")
+    assert expander.check_tokens_equal(out, expected)
+
+    # test with paragraph
+    out = expander.expand(r"\paragraph {Hello}")
+    expected = mock_section_token(expander, "paragraph", "Hello", numbering="2.1.1.1")
+    assert expander.check_tokens_equal(out, expected)
+
+    # test appendix numbering
+    expander.expand(r"\appendix")
+    out = expander.expand(r"\section {Hello}")
+    expected = mock_section_token(expander, "section", "Hello", numbering="A")
+    assert expander.check_tokens_equal(out, expected)
+
+    out = expander.expand(r"\subsection{Hello}")
+    expected = mock_section_token(expander, "subsection", "Hello", numbering="A.1")
+    assert expander.check_tokens_equal(out, expected)
+
+    # increment section counter
+    out = expander.expand(r"\section{Hello}")
+    expected = mock_section_token(expander, "section", "Hello", numbering="B")
+    assert expander.check_tokens_equal(out, expected)
