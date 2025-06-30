@@ -11,17 +11,22 @@ ignored_declare_patterns = {
     # Font declarations
     "DeclareFontFamily": 3,
     "DeclareFontShape": 6,
-    "DeclareMathAlphabet": 5,
     "SetMathAlphabet": 6,
     "DeclareSymbolFont": 5,
     "DeclareSymbolFontAlphabet": 2,
     "DeclareFontSubstitution": 4,
-    "DeclareMathVersion": 1,
-    "DeclareMathSymbol": 4,
     # Package/class options
     "DeclareOption": "*{{",
     "DeclareOptionX": "*{{",
     "DeclareGraphicsExtensions": 1,
+    # MATH
+    "DeclareMathAlphabet": 5,
+    "DeclareMathVersion": 1,
+    # math symbol declarations http://labmaster.mi.infn.it/wwwasdoc.web.cern.ch/wwwasdoc/TL8/texmf/doc/latex/base/html/fntguide/node18.html
+    "DeclareMathSymbol": 4,
+    "DeclareMathDelimiter": 6,
+    "DeclareMathAccent": 4,
+    "DeclareMathRadical": 5,
 }
 
 
