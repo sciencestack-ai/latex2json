@@ -61,7 +61,6 @@ formatting_patterns = {
     "thepage": 0,
     "indent": 0,
     "noindent": 0,
-    "par": 0,
     "clearpage": 0,
     "cleardoublepage": 0,
     "nopagebreak": 0,
@@ -116,6 +115,9 @@ formatting_patterns = {
     "/": 0,  # \/ (in latex, this is like an empty space)
     # newwmdev
     "newmdenv": "[{",
+    # leavemode
+    "leavevmode": 0,  # % vertical mode → horizontal mode
+    "par": 0,  # % horizontal mode → vertical mode (end paragraph)
 }
 
 content_formatting_patterns = {
@@ -152,10 +154,29 @@ content_formatting_patterns = {
 }
 
 
+def vrule_hrule_handler(expander: ExpanderCore, token: Token):
+    seen_keywords = set()
+    dimensions = ["width", "height", "depth"]
+    while True:
+        expander.skip_whitespace()
+        found_dimension = False
+        for dim in dimensions:
+            if dim not in seen_keywords and expander.parse_keyword(f"{dim} "):
+                expander.parse_dimensions()
+                seen_keywords.add(dim)
+                found_dimension = True
+                break
+        if not found_dimension:
+            break
+    return []
+
+
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns)
     register_ignore_handlers_util(expander, content_formatting_patterns)
+    expander.register_handler(r"\vrule", vrule_hrule_handler)
+    expander.register_handler(r"\hrule", vrule_hrule_handler)
 
 
 if __name__ == "__main__":
@@ -170,3 +191,4 @@ if __name__ == "__main__":
     out3 = expander.expand(
         r"\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}"
     )
+    out4 = expander.expand(r"\vrule height 2pt depth -1.6pt width 23pt")

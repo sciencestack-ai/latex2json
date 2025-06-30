@@ -24,7 +24,6 @@ def test_ignore_separator_patterns():
 \specialrule{1pt}{2pt}{3pt}
 \addlinespace[5pt]
 \rule{1cm}{2cm}
-\hrule
 \morecmidrules
 \fboxsep{1pt}
 \Xhline{2pt}

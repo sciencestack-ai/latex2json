@@ -63,3 +63,10 @@ def test_ignore_formatting_handlers():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert out == []
+
+    # test vrule and hrule
+    out = expander.expand(r"\vrule height 2pt depth -1.6pt width 23pt")
+    assert out == []
+
+    out = expander.expand(r"\hrule width 23pt")
+    assert out == []
