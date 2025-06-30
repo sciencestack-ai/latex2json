@@ -408,22 +408,57 @@ class ExpanderCore:
         input_text = open(file_path).read()
         self.push_text(input_text)
 
-    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
-        if package_name in self.loaded_packages:
-            return
+    def expand_file(self, file_path: str):
+        file_path = self.get_cwd_path(file_path)
+        if not self.if_file_exists(file_path):
+            self.logger.warning(f"Input file {file_path} does not exist")
+            return None
 
-        self.loaded_packages.add(package_name)
+        input_text = open(file_path).read()
+        tokens = self.expand_text(input_text)
+        return tokens
 
-        package_path = package_name
+    def _load_package_or_class(
+        self,
+        package_or_class_name: str,
+        extension: str,
+        is_package: bool,
+        read_file=True,
+    ) -> Optional[List[Token]]:
+        loaded_set = self.loaded_packages if is_package else self.loaded_classes
+        if package_or_class_name in loaded_set:
+            return None
+
+        loaded_set.add(package_or_class_name)
+
+        package_path = package_or_class_name
         if not package_path.endswith(extension):
             package_path += extension
 
         if read_file and self.if_file_exists(package_path):
-            # force makeatletter before loading package
-            self.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, "makeatletter")])
-            # push makeatother to stack i.e. will be popped after package is loaded
-            self.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "makeatother")])
-            self.push_file(package_path)
+            was_in_package_or_class = self.state.in_package_or_class
+            self.state.in_package_or_class = True
+            self.push_scope()
+            # mock makeatletter and makeatother
+            self.set_catcode(ord("@"), Catcode.LETTER)
+            tokens = self.expand_file(package_path)
+            self.pop_scope()
+
+            self.state.in_package_or_class = was_in_package_or_class
+
+            return tokens
+
+        return None
+
+    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
+        return self._load_package_or_class(
+            package_name, extension, is_package=True, read_file=read_file
+        )
+
+    def load_class(self, class_name: str, extension: str = ".cls", read_file=True):
+        return self._load_package_or_class(
+            class_name, extension, is_package=False, read_file=read_file
+        )
 
     def peek(self, offset: int = 0) -> Optional[Token]:
         return self.stream.peek(offset)

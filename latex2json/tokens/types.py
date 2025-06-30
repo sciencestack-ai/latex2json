@@ -165,6 +165,8 @@ class CommandWithArgsToken(Token):
 
     def __str__(self) -> str:
         out = f"{self.type.name:18} -> {self.name}"
+        if self.numbering:
+            out += f"({self.numbering})"
         if self.opt_args:
             out += (
                 "[" + "".join([arg.value for arg in self.opt_args for arg in arg]) + "]"

@@ -1,6 +1,8 @@
 from logging import Logger
-from typing import Optional
+from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.macro_registry import Macro
+from latex2json.latex_maps.whitelist_commands import WHITELISTED_COMMANDS
 from latex2json.tokens.tokenizer import Tokenizer
 
 
@@ -14,12 +16,46 @@ class Expander(ExpanderCore):
 
         self._register_handlers_and_packages()
 
+        self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
+        self.white_listed_classes: List[str] = ["subfiles"]
+        self.white_listed_packages: List[str] = ["subfiles"]
+
     def _register_handlers_and_packages(self):
         from latex2json.expander.handlers import register_handlers
         from latex2json.expander.packages import register_packages
 
         register_handlers(self)
         register_packages(self)
+
+    # override
+    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
+        if package_name in self.white_listed_packages:
+            return None
+        return super().load_package(package_name, extension, read_file)
+
+    # override
+    def load_class(self, class_name: str, extension: str = ".cls", read_file=True):
+        if class_name in self.white_listed_classes:
+            return None
+        return super().load_class(class_name, extension, read_file)
+
+    # override
+    def register_macro(
+        self,
+        name: str,
+        macro: Macro,
+        is_global: bool = False,
+        is_user_defined: bool = False,
+    ):
+        # prevent redefinition of white-listed commands in package/class files
+        if self.state.in_package_or_class and is_user_defined:
+            if name in self.white_listed_commands:
+                self.logger.warning(
+                    f"Preventing redefinition of white-listed command inside package/class: \\{name}"
+                )
+                return
+
+        super().register_macro(name, macro, is_global, is_user_defined)
 
 
 if __name__ == "__main__":

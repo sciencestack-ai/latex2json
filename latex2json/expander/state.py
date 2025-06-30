@@ -96,6 +96,9 @@ class ExpanderState:
         # appendix
         self.in_appendix = False
 
+        # package/class
+        self.in_package_or_class = False
+
     @property
     def mode(self) -> ProcessingMode:
         return self._mode_stack[-1]

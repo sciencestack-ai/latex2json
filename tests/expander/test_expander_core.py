@@ -608,3 +608,15 @@ def test_counter_macros():
     assert expander.expand(r"\thesection") == expander.expand("0")
     expander.set_catcode(ord("@"), Catcode.LETTER)
     assert expander.expand(r"\c@section") == expander.expand("0")
+
+
+def test_scope_and_catcodes():
+    expander = ExpanderCore()
+
+    assert expander.get_catcode(ord("@")) == Catcode.OTHER
+
+    expander.push_scope()
+    expander.set_catcode(ord("@"), Catcode.LETTER)
+    assert expander.get_catcode(ord("@")) == Catcode.LETTER
+    expander.pop_scope()
+    assert expander.get_catcode(ord("@")) == Catcode.OTHER
