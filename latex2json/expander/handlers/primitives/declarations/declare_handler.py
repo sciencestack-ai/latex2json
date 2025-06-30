@@ -15,6 +15,7 @@ ignored_declare_patterns = {
     "SetMathAlphabet": 6,
     "DeclareSymbolFont": 5,
     "DeclareSymbolFontAlphabet": 2,
+    "DeclareFontSubstitution": 4,
     "DeclareMathVersion": 1,
     "DeclareMathSymbol": 4,
     # Package/class options

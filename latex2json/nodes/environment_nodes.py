@@ -24,9 +24,6 @@ class EnvironmentNode(ASTNode):
     def __str__(self):
         return self.detokenize()
 
-    def __repr__(self):
-        return self.__str__()
-
     def __eq__(self, other: ASTNode):
         if not isinstance(other, EnvironmentNode):
             return False
@@ -50,7 +47,7 @@ class EnvironmentNode(ASTNode):
         # Add body content
         if self.body:
             out += "\n"
-            out += "\n".join(child.detokenize() for child in self.body)
+            out += "".join(child.detokenize() for child in self.body)
             out += "\n"
 
         # End with \end{name}

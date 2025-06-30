@@ -38,6 +38,11 @@ class SectionNode(EnvironmentNode):
             out += f"{{{self.body}}}"
         return out
 
+    def detokenize(self) -> str:
+        out = "\\" + self.name
+        body_str = "".join(child.detokenize() for child in self.body)
+        return out + "{" + body_str + "}"
+
     def __eq__(self, other: ASTNode):
         if not isinstance(other, SectionNode):
             return False

@@ -24,7 +24,7 @@ class BaseRefCiteNode(ASTNode):
         return self.references == other.references
 
     def detokenize(self):
-        out = f"{self.prefix}"
+        out = f"\\{self.prefix}"
         if self.title:
             out += f"[{self.title}]"
         out += f"{{{', '.join(self.references)}}}"
