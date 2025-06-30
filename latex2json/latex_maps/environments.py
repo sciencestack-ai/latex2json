@@ -1,6 +1,14 @@
 import dataclasses
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 from latex2json.tokens.types import Token
+
+
+@dataclasses.dataclass
+class Hooks:
+    begin: List[Callable[..., List[Token]]] = dataclasses.field(
+        default_factory=list
+    )  # e.g. for AtBeginDocument etc
+    end: List[Callable[..., List[Token]]] = dataclasses.field(default_factory=list)
 
 
 @dataclasses.dataclass
@@ -36,8 +44,11 @@ class EnvironmentDefinition:
         self.is_verbatim = is_verbatim
         self.has_direct_command = has_direct_command
 
+        # other state e.g. hooks
+        self.hooks = Hooks()
+
     def copy(self) -> "EnvironmentDefinition":
-        return EnvironmentDefinition(
+        new_env = EnvironmentDefinition(
             name=self.name,
             begin_definition=self.begin_definition.copy(),
             end_definition=self.end_definition.copy(),
@@ -50,6 +61,8 @@ class EnvironmentDefinition:
             is_verbatim=self.is_verbatim,
             has_direct_command=self.has_direct_command,
         )
+        new_env.hooks = Hooks(begin=self.hooks.begin.copy(), end=self.hooks.end.copy())
+        return new_env
 
     def __str__(self) -> str:
         out = f"EnvDef('{self.name}'"

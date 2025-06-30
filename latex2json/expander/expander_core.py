@@ -1114,7 +1114,12 @@ class ExpanderCore:
                 is_math_env=is_math,
             )
 
-            out_tokens = [begin_token] + subbed
+            out_tokens: List[Token] = [begin_token]
+            for hook in env_def.hooks.begin:
+                out_tokens.extend(hook())
+
+            out_tokens.extend(subbed)
+
             if is_verbatim:
                 # if verbatim, we parse until we find the matching end environment token
                 def is_end_env_token(token: Token) -> bool:
@@ -1158,8 +1163,12 @@ class ExpanderCore:
                 state.pop_mode()
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
-            subbed = expander.expand_tokens(subbed)
-            return subbed + [end_token]
+            out_tokens = expander.expand_tokens(subbed)
+
+            for hook in env_def.hooks.end:
+                out_tokens.extend(hook())
+
+            return out_tokens + [end_token]
 
         # attach the handlers to the envdef instance
         env_def.begin_handler = begin_handler
