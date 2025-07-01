@@ -56,6 +56,7 @@ formatting_patterns = {
     "centering": 0,
     "raggedright": 0,
     "raggedleft": 0,
+    "nohyphens": 0,
     "allowdisplaybreaks": 0,
     "samepage": 0,
     "thepage": 0,

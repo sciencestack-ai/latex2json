@@ -51,7 +51,7 @@ class RefNode(BaseRefCiteNode):
 
 class CiteNode(BaseRefCiteNode):
     def __init__(self, references: str | List[str], title: Optional[str] = None):
-        super().__init__("cite", references, title)
+        super().__init__("citation", references, title)
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CiteNode):

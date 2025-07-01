@@ -72,6 +72,8 @@ def register_doc_content_handlers(parser: ParserCore):
 
     # abstract
     parser.register_env_handler("abstract", abstract_env_handler)
+    # \abstract{...} is not native latex, but some packages/classes define \abstract{...} via renewcommand
+    parser.register_handler("abstract", make_metadata_handler("abstract"))
 
     # title
     parser.register_handler(

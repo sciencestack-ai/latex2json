@@ -58,7 +58,7 @@ class EquationNode(ASTNode):
         if self.equation_type == DisplayType.INLINE:
             return "$" + math_str + "$"
 
-        if self.equation_type == DisplayType.DISPLAY and not self.numbering:
+        if self.equation_type == DisplayType.BLOCK and not self.numbering:
             return "$$" + math_str + "$$"
 
         env_name = "align" if self.equation_type == DisplayType.ALIGN else "equation"

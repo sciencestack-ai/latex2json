@@ -14,7 +14,7 @@ def make_picture_handler(env_name: str):
             lambda tok: tok == Token(TokenType.ENVIRONMENT_END, env_name),
             consume_predicate=True,
         )
-        return [DiagramNode(env_name, parser.convert_tokens_to_str(tokens))]
+        return [DiagramNode(env_name, parser.convert_tokens_to_str(tokens).strip())]
 
     return picture_handler
 

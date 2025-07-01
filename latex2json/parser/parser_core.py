@@ -333,7 +333,7 @@ class ParserCore:
     ) -> List[EquationNode]:
         self.is_math_mode = True
         math_nodes = self.process(lambda tok: tok == token)
-        eq_type = DisplayType.INLINE if is_inline else DisplayType.DISPLAY
+        eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
         self.is_math_mode = False
         return [EquationNode(math_nodes, eq_type)]
 
@@ -361,7 +361,7 @@ class ParserCore:
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
         if token.is_math_env:
-            eq_type = DisplayType.DISPLAY
+            eq_type = DisplayType.BLOCK
             if "align" in env_name or "eqnarray" in env_name:
                 eq_type = DisplayType.ALIGN
             env_node = EquationNode(

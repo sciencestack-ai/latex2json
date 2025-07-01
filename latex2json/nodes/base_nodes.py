@@ -4,7 +4,7 @@ from typing import List, Optional
 
 class DisplayType(Enum):
     INLINE = "inline"
-    DISPLAY = "display"
+    BLOCK = "block"
     ALIGN = "align"
 
 
