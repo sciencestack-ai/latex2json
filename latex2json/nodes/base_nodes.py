@@ -305,4 +305,8 @@ class CommandNode(ASTNode):
         result = super().to_json()
         result["type"] = "command"
         result["command"] = self.name
+        if self.args:
+            result["args"] = [child.to_json() for child in self.args]
+        if self.opt_args:
+            result["opt_args"] = [child.to_json() for child in self.opt_args]
         return result

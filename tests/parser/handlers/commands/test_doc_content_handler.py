@@ -52,3 +52,15 @@ def test_doc_content_handler():
             "affiliation", [TextNode("University of California, Los Angeles")]
         ),
     ]
+
+
+def test_appendices():
+    parser = Parser()
+    text = r"""
+    \begin{appendices}
+    APPENDIX A
+    \end{appendices}
+    """.strip()
+    out = parser.parse(text)
+
+    assert out == [MetadataNode("appendix", [TextNode("APPENDIX A")])]
