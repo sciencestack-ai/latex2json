@@ -109,7 +109,7 @@ class TextNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "text"
-        result["text"] = self.text
+        result["content"] = self.text
         return result
 
 
@@ -133,7 +133,7 @@ class AlignmentNode(ASTNode):
         # this node should not ever be needed to be json, but just in case
         result = super().to_json()
         result["type"] = "text"
-        result["text"] = self.value
+        result["content"] = self.value
         return result
 
 
@@ -159,7 +159,7 @@ class NewLineNode(ASTNode):
         # this node should not ever be needed to be json, but just in case
         result = super().to_json()
         result["type"] = "text"
-        result["text"] = "\n"
+        result["content"] = "\n"
         return result
 
 

@@ -4,6 +4,28 @@ from latex2json.nodes import ASTNode, CommandNode, TextNode, TabularNode
 from latex2json.parser.parser import Parser
 
 
+def strip_whitespace_json_tokens(tokens: List[Dict]):
+    if tokens:
+        while (
+            tokens and isinstance(tokens[0], dict) and tokens[0].get("type") == "text"
+        ):
+            text: str = tokens[0].get("content")
+            if text and text.strip():
+                tokens[0]["content"] = text.lstrip()
+                break
+            tokens.pop(0)
+
+        while (
+            tokens and isinstance(tokens[-1], dict) and tokens[-1].get("type") == "text"
+        ):
+            text: str = tokens[-1].get("content")
+            if text and text.strip():
+                tokens[-1]["content"] = text.rstrip()
+                break
+            tokens.pop(-1)
+    return tokens
+
+
 class JSONRenderer:
     def __init__(self, logger: Optional[logging.Logger] = None):
         self.parser = Parser(logger=logger)
@@ -13,7 +35,10 @@ class JSONRenderer:
         nodes = self.parser.parse(text, postprocess=True)
         json_tokens = self.convert_to_json(nodes)
         if organize_hierachy:
-            return self._recursive_organize(json_tokens)
+            organized = self._recursive_organize(json_tokens)
+            # Apply recursive whitespace stripping
+            organized = self._recursive_strip_whitespace(organized)
+            return organized
         return json_tokens
 
     def convert_to_json(self, nodes: List[ASTNode]) -> List[Dict]:
@@ -103,12 +128,32 @@ class JSONRenderer:
 
         return organized
 
+    def _recursive_strip_whitespace(self, tokens: List[Dict]) -> List[Dict]:
+        """Recursively strip whitespace from tokens and their nested content."""
+        if not isinstance(tokens, list):
+            return tokens
+
+        tokens = strip_whitespace_json_tokens(tokens)
+
+        for token in tokens:
+            if not isinstance(token, dict):
+                continue
+
+            if token["type"] in ["appendix", "section", "paragraph", "bibliography"]:
+                if "content" in token and isinstance(token["content"], list):
+                    token["content"] = self._recursive_strip_whitespace(
+                        token["content"]
+                    )
+
+        return tokens
+
 
 if __name__ == "__main__":
     renderer = JSONRenderer()
     text = r"""
     \def\aaa{AAA}
     \section{FIRST}
+    FIRST SEC
     \subsection{INTRODUCTION} \label{sec:introduction}
 \begin{tabular}{cc}
     \multicolumn{2}{c}{1} & \textbf{2} & 
@@ -122,11 +167,16 @@ if __name__ == "__main__":
 \end{tabular}
 
 \begin{thebibliography}{9}
-\bibitem{1}
+\bibitem{1} Bibitem 1
 \end{thebibliography}
 
 \begin{appendices} 
 \section{APPENDIX A}
+\subsection{APPENDIX A.1}
+\begin{table}
+\caption{TABLE 1}
+\end{table}
+
 \paragraph{PARA A}
 Paragraph SSS
 \end{appendices}
