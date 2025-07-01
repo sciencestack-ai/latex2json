@@ -63,3 +63,101 @@ class EnvironmentNode(ASTNode):
         if self.numbering:
             result["numbering"] = self.numbering
         return result
+
+
+class TableNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+        super().__init__("table", body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, TableNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "table"
+        return result
+
+
+class SubTableNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+        super().__init__("subtable", body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, SubTableNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "subtable"
+        return result
+
+
+class FigureNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+        super().__init__("figure", body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, FigureNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "figure"
+        return result
+
+
+class SubFigureNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+        super().__init__("subfigure", body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, SubFigureNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "subfigure"
+        return result
+
+
+class AlgorithmNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+        super().__init__("algorithm", body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, AlgorithmNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "algorithm"
+        return result
+
+
+class AlgorithmicNode(ASTNode):
+    def __init__(self, text: str):
+        super().__init__()
+        self.text = text
+
+    def __str__(self):
+        return self.detokenize()
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, AlgorithmicNode):
+            return False
+        return self.text == other.text
+
+    def detokenize(self):
+        return f"\\begin{{algorithmic}}\n{self.text}\\end{{algorithmic}}"
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "algorithmic"
+        result["content"] = self.text
+        return result
