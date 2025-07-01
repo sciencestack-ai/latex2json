@@ -18,8 +18,11 @@ class EnvironmentNode(ASTNode):
         self.display_name = display_name or name
 
     def set_body(self, body: List[ASTNode]):
-        self.body = strip_whitespace_nodes(body)
-        self.set_children(self.body)
+        self.set_children(strip_whitespace_nodes(body))
+
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
 
     def __str__(self):
         return self.detokenize()

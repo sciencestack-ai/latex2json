@@ -541,7 +541,8 @@ class ParserCore:
                 node.text = text.replace("~", " ")
             elif node.children and not isinstance(node, EquationNode):
                 # don't process equation nodes
-                node.set_children(self.postprocess_nodes(node.children))
+                new_children = self.postprocess_nodes(node.children)
+                node.set_children(new_children)
 
             final_nodes.append(node)
 

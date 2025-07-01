@@ -30,6 +30,7 @@ def newline_handler(parser: ParserCore, token: Token):
 
 def hspace_handler(parser: ParserCore, token: Token) -> Optional[List[Token]]:
     """Return as a command node for parser postprocessing later"""
+    parser.parse_asterisk()
     parser.skip_whitespace()
     parser.parse_brace_as_nodes()
 
@@ -38,6 +39,7 @@ def hspace_handler(parser: ParserCore, token: Token) -> Optional[List[Token]]:
 
 def vspace_handler(parser: ParserCore, token: Token) -> Optional[List[Token]]:
     """Return as a command node for parser postprocessing later"""
+    parser.parse_asterisk()
     parser.skip_whitespace()
     parser.parse_brace_as_nodes()
 

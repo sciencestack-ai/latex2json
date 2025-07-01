@@ -29,7 +29,8 @@ class ASTNode:
             # unparent children
             for child in self.children:
                 child.parent = None
-        self.children = children
+
+        self.children = children.copy()
         for child in self.children:
             child.parent = self
 
