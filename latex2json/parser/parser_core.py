@@ -1,5 +1,6 @@
 from copy import deepcopy
 import logging
+import os
 import re
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
@@ -103,6 +104,9 @@ class ParserCore:
     @property
     def cwd(self):
         return self.expander.cwd
+
+    def get_colors(self):
+        return self.expander.get_colors()
 
     def set_text(self, text: str):
         self.expander.set_text(text)
@@ -261,6 +265,18 @@ class ParserCore:
             self.set_text(text)
 
         out = self.process()
+        if postprocess:
+            out = self.postprocess_nodes(out)
+        return out
+
+    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
+        # set expander cwd
+        self.expander.cwd = os.path.dirname(file_path)
+        tokens = self.expander.expand_file(file_path)
+        if not tokens:
+            return None
+        self.logger.info(f"Parsed {len(tokens)} tokens from {file_path}")
+        out = self.process_tokens(tokens)
         if postprocess:
             out = self.postprocess_nodes(out)
         return out

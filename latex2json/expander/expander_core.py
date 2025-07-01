@@ -275,6 +275,10 @@ class ExpanderCore:
                 out = wrap_tokens_in_braces(out)
         return out
 
+    # Colors
+    def get_colors(self):
+        return self.state.color_registry.copy()
+
     # REGISTERS
     @property
     def registers(self) -> TexRegisters:
@@ -399,8 +403,11 @@ class ExpanderCore:
         file_path = self.get_cwd_path(file_path)
         return os.path.exists(file_path)
 
-    def push_file(self, file_path: str):
+    def push_file(self, file_path: str, extension: str = ".tex"):
         file_path = self.get_cwd_path(file_path)
+        if not file_path.endswith(extension):
+            file_path += extension
+
         if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
             return

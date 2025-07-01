@@ -1,6 +1,6 @@
 import logging
 from typing import Dict, List, Optional
-from latex2json.nodes import ASTNode, CommandNode, TextNode, TabularNode
+from latex2json.nodes import ASTNode
 from latex2json.parser.parser import Parser
 
 
@@ -31,17 +31,27 @@ class JSONRenderer:
         self.parser = Parser(logger=logger)
         self.logger = logger
 
+    def get_colors(self):
+        return self.parser.get_colors()
+
+    def parse_file(
+        self, file_path: str, organize_hierachy=True
+    ) -> Optional[Dict[str, List[Dict]]]:
+        nodes = self.parser.parse_file(file_path, postprocess=True)
+        if not nodes:
+            return None
+        return self.convert_nodes_to_json(nodes, organize_hierachy=organize_hierachy)
+
     def parse(self, text: str, organize_hierachy=True) -> Dict[str, List[Dict]]:
         nodes = self.parser.parse(text, postprocess=True)
-        json_tokens = self.convert_to_json(nodes)
-        if organize_hierachy:
-            organized = self._recursive_organize(json_tokens)
-            # Apply recursive whitespace stripping
-            organized = self._recursive_strip_whitespace(organized)
-            return organized
+        json_tokens = self.convert_nodes_to_json(
+            nodes, organize_hierachy=organize_hierachy
+        )
         return json_tokens
 
-    def convert_to_json(self, nodes: List[ASTNode]) -> List[Dict]:
+    def convert_nodes_to_json(
+        self, nodes: List[ASTNode], organize_hierachy=True
+    ) -> List[Dict]:
         output = []
 
         for node in nodes:
@@ -49,6 +59,12 @@ class JSONRenderer:
             if not out_dict:
                 continue
             output.append(out_dict)
+
+        if organize_hierachy:
+            organized = self._recursive_organize(output)
+            # Apply recursive whitespace stripping
+            organized = self._recursive_strip_whitespace(organized)
+            return organized
 
         return output
 
@@ -139,11 +155,14 @@ class JSONRenderer:
             if not isinstance(token, dict):
                 continue
 
-            if token["type"] in ["appendix", "section", "paragraph", "bibliography"]:
-                if "content" in token and isinstance(token["content"], list):
-                    token["content"] = self._recursive_strip_whitespace(
-                        token["content"]
-                    )
+            # if token.get("type") in [
+            #     "appendix",
+            #     "section",
+            #     "paragraph",
+            #     "bibliography",
+            # ]:
+            if "content" in token and isinstance(token["content"], list):
+                token["content"] = self._recursive_strip_whitespace(token["content"])
 
         return tokens
 
@@ -151,6 +170,9 @@ class JSONRenderer:
 if __name__ == "__main__":
     renderer = JSONRenderer()
     text = r"""
+
+    \definecolor{red}{rgb}{1,0,0}
+
     \def\aaa{AAA}
     \section{FIRST}
     FIRST SEC
@@ -181,5 +203,9 @@ if __name__ == "__main__":
 Paragraph SSS
 \end{appendices}
     """.strip()
-    json = renderer.parse(text)
-    print(json)
+    # json = renderer.parse(text)
+    # print(json)
+
+    json = renderer.parse_file(
+        "/Users/cj/Documents/python/latex2json/tests/samples/main.tex"
+    )

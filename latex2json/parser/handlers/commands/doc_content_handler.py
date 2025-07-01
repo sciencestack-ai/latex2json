@@ -45,6 +45,20 @@ def make_metadata_handler(name: str, has_short_bracket=False):
     return handler
 
 
+def document_env_handler(parser: ParserCore, token: Token):
+    env = parser.parse_environment(token)
+    document_node = MetadataNode("document", env.body)
+    document_node.labels = env.labels
+    return [document_node]
+
+
+def abstract_env_handler(parser: ParserCore, token: Token):
+    env = parser.parse_environment(token)
+    abstract_node = MetadataNode("abstract", env.body)
+    abstract_node.labels = env.labels
+    return [abstract_node]
+
+
 def appendices_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
     appendix_node = MetadataNode("appendix", env.body)
@@ -53,8 +67,12 @@ def appendices_env_handler(parser: ParserCore, token: Token):
 
 
 def register_doc_content_handlers(parser: ParserCore):
-    # # abstract
-    # parser.register_handler("abstract", make_metadata_handler("abstract"))
+    # document
+    parser.register_env_handler("document", document_env_handler)
+
+    # abstract
+    parser.register_env_handler("abstract", abstract_env_handler)
+
     # title
     parser.register_handler(
         "title", make_metadata_handler("title", has_short_bracket=True)

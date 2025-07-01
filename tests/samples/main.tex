@@ -1,0 +1,30 @@
+\documentclass[12pt]{article}
+
+\usepackage{package1}
+\usepackage{package2}
+
+\begin{document}
+
+\begin{abstract}
+My abstract
+\end{abstract}
+
+\section{Introduction} \label{sec:introduction}
+Refer to methods \ref{sec:methodology} 
+for details   on the \textit{data}. \\
+This is a newline.
+
+\input{example}
+
+\subsection{Example subsection}
+Post example here
+
+\appendix
+\section{Methodology} \label{sec:methodology}
+
+\subsection{Methodology Part 1} 
+Here is the methodology part 1. \cite[Hinton et al. 2006]{Hinton06}
+
+\addbibresource{bibtex, bibtex2.bib }
+
+\end{document}

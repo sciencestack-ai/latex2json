@@ -98,6 +98,8 @@ class BibEntryNode(ASTNode):
         result = super().to_json()
         result["type"] = "bibitem"
         result["key"] = self.citation_key
+        if self.entry_type:
+            result["entry_type"] = self.entry_type
         result["format"] = self.format
         result["content"] = [child.to_json() for child in self.children]
         if self.label:

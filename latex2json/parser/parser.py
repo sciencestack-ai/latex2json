@@ -68,16 +68,16 @@ class Parser(ParserCore):
         bib_items = []
         for i, item in enumerate(non_duplicate_entries):
             if item.format == "bibitem":
-                content_str = parser.convert_nodes_to_str(item.body)
+                content_str = self.convert_nodes_to_str(item.body)
                 # process the content_str
-                formatted_nodes = parser.process_text(content_str)
+                formatted_nodes = self.process_text(content_str)
                 item.set_body(formatted_nodes)
                 bib_items.append(item)
             else:
                 fields = item.fields
                 for k, v in fields.items():
-                    formatted_nodes = parser.process_text(v)
-                    fields[k] = parser.convert_nodes_to_str(formatted_nodes)
+                    formatted_nodes = self.process_text(v)
+                    fields[k] = self.convert_nodes_to_str(formatted_nodes)
                 entry = BibEntryNode.from_bibtex(
                     entry_type=item.entry_type,
                     citation_key=item.citation_key,
