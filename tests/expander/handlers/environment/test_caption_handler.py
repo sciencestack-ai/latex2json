@@ -85,9 +85,9 @@ def test_caption_handler():
         \caption* [XXX] {FIGURE 3}
     \end{figure}
 
-    \begin{figure}
+    \begin{figure*}
         \subcaption {FIGURE 4}
-    \end{figure}
+    \end{figure*}
     """
     expander.set_text(text)
 
@@ -104,7 +104,7 @@ def test_caption_handler():
         ),
         DummyCaption(cur_env="figure", numbering="2.1", caption_text="FIGURE 2"),
         DummyCaption(cur_env="figure", caption_text="FIGURE 3", opt_arg="XXX"),
-        DummyCaption(cur_env="figure", caption_text="FIGURE 4", numbering="2.2"),
+        DummyCaption(cur_env="figure*", caption_text="FIGURE 4"),
     ]
 
     assert_caption_instances(expander, expected_captions)
