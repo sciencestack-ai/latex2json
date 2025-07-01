@@ -281,14 +281,12 @@ class ExpanderState:
         """Get current counter value"""
         return self.counter_manager.get_counter_value(name)
 
-    def get_counter_as_format(
+    def get_counter_display(
         self,
         name: str,
-        style: Union[str, CounterFormat] = CounterFormat.ARABIC,
-        hierarchy: bool = True,
     ) -> str:
         """Format counter value according to style"""
-        return self.counter_manager.get_counter_as_format(name, style, hierarchy)
+        return self.counter_manager.get_counter_display(name)
 
     def counter_within(self, name: str, parent: Optional[str] = None) -> None:
         """Set the counter to be within the parent counter"""

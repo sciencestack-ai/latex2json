@@ -94,7 +94,7 @@ def test_caption_handler():
     expected_captions = [
         DummyCaption(cur_env="figure", numbering="1.1", caption_text="FIGURE"),
         DummyCaption(
-            cur_env="subfigure", numbering="1.1.1", caption_text="SUBFIGURE 2"
+            cur_env="subfigure", numbering="1.1.a", caption_text="SUBFIGURE 2"
         ),
         DummyCaption(
             cur_env="table",

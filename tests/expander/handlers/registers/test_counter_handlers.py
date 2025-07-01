@@ -127,7 +127,7 @@ def test_counter_within_without():
     # Stepping chapter should reset figure
     expander.expand(r"\stepcounter{chapter}")
     assert expander.state.get_counter_value("figure") == 0
-    assert expander.state.get_counter_as_format("figure") == "1.0"
+    assert expander.state.get_counter_display("figure") == "1.0"
 
     # Test counterwithout - removes the dependency
     expander.expand(r"\counterwithout{figure}{chapter}")
@@ -136,7 +136,7 @@ def test_counter_within_without():
     # Now stepping chapter should not reset figure
     expander.expand(r"\stepcounter{chapter}")
     assert expander.state.get_counter_value("figure") == 5
-    assert expander.state.get_counter_as_format("figure") == "5"
+    assert expander.state.get_counter_display("figure") == "5"
 
     # Test the representation format after counterwithin
     expander.expand(r"\counterwithin{figure}{chapter}")

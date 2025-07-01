@@ -1,6 +1,7 @@
 from typing import List, Optional, Callable
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.registers.counter_handlers import parse_counter_name
+from latex2json.registers.types import CounterFormat
 from latex2json.tokens import Token
 from latex2json.expander.macro_registry import Macro
 
@@ -16,7 +17,10 @@ def _make_format_handler(
             expander.logger.warning(rf"\{format_name}: Missing counter name argument")
             return None
 
-        value = expander.state.get_counter_as_format(counter_name, format_name)
+        value = expander.state.get_counter_value(counter_name)
+        if value is None:
+            return None
+        value = CounterFormat.from_str(format_name).format_value(value)
         return expander.convert_str_to_tokens(value)
 
     return handler

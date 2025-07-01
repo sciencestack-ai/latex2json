@@ -76,3 +76,26 @@ class EquationNode(ASTNode):
         if self.numbering:
             result["numbering"] = self.numbering
         return result
+
+
+class AlgorithmicNode(ASTNode):
+    def __init__(self, text: str):
+        super().__init__()
+        self.text = text
+
+    def __str__(self):
+        return self.detokenize()
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, AlgorithmicNode):
+            return False
+        return self.text == other.text
+
+    def detokenize(self):
+        return f"\\begin{{algorithmic}}\n{self.text}\\end{{algorithmic}}"
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "algorithmic"
+        result["content"] = self.text
+        return result

@@ -49,31 +49,6 @@ def test_counter_hierarchy():
     assert "subsubsection" in children
 
 
-def test_counter_formatting():
-    registers = TexRegisters()
-    manager = CounterManager(registers)
-
-    manager.new_counter("test")
-    manager.set_counter("test", 12)
-
-    assert manager.get_counter_as_format("test", CounterFormat.ARABIC) == "12"
-    assert manager.get_counter_as_format("test", CounterFormat.ROMAN) == "xii"
-    assert manager.get_counter_as_format("test", CounterFormat.ROMAN_UPPER) == "XII"
-    assert manager.get_counter_as_format("test", CounterFormat.ALPHA) == "l"
-    assert manager.get_counter_as_format("test", CounterFormat.ALPHA_UPPER) == "L"
-
-    # test hierarchy formatting
-    manager.set_counter("section", 1)
-    manager.set_counter("subsection", 3)
-    assert (
-        manager.get_counter_as_format("subsection", CounterFormat.ARABIC, True) == "1.3"
-    )
-    assert (
-        manager.get_counter_as_format("subsection", CounterFormat.ROMAN, True)
-        == "i.iii"
-    )
-
-
 def test_counter_within():
     registers = TexRegisters()
     manager = CounterManager(registers)

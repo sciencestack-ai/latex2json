@@ -31,6 +31,11 @@ def test_counter_formats():
     out = expander.expand(r"\arabic{section}")
     assert expander.convert_tokens_to_str(out) == "4"
 
+    # test nested e.g. subsection
+    expander.expand(r"\setcounter{subsection}{1}")
+    out = expander.expand(r"\arabic{subsection}")
+    assert expander.convert_tokens_to_str(out) == "1"
+
 
 def test_format_error_cases():
     expander = Expander()

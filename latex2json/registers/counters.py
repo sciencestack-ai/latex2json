@@ -17,6 +17,7 @@ class CounterInfo:
     name: str
     _parent: Optional["CounterInfo"] = None
     _children: List["CounterInfo"] = None
+    style: CounterFormat = CounterFormat.ARABIC
 
     def __post_init__(self):
         if self._children is None:
@@ -80,9 +81,9 @@ class CounterManager:
         self.new_counter("equation")
         self.new_counter("footnote")
         self.new_counter("figure")
-        self.new_counter("subfigure", parent="figure")
+        self.new_counter("subfigure", parent="figure", style=CounterFormat.ALPHA)
         self.new_counter("table")
-        self.new_counter("subtable", parent="table")
+        self.new_counter("subtable", parent="table", style=CounterFormat.ALPHA)
         self.new_counter("algorithm")
 
         # enum
@@ -98,14 +99,19 @@ class CounterManager:
     def has_counter(self, name: str) -> bool:
         return name in self.counters
 
-    def new_counter(self, name: str, parent: Optional[str] = None) -> None:
+    def new_counter(
+        self,
+        name: str,
+        parent: Optional[str] = None,
+        style: CounterFormat = CounterFormat.ARABIC,
+    ) -> None:
         """Create a new counter with optional parent relationship"""
         if name in self.counters:
             # self.logger.warning(f"Counter '{name}' already exists")
             return
 
         # Create counter info
-        counter_info = CounterInfo(name=name)
+        counter_info = CounterInfo(name=name, style=style)
         self.counters[name] = counter_info
 
         # Set up parent relationship if specified
@@ -201,44 +207,53 @@ class CounterManager:
         collect_descendants(counter)
         return descendants
 
-    def get_counter_as_format(
+    def get_counter_display(
         self,
         name: str,
-        style: Union[str, CounterFormat] = CounterFormat.ARABIC,
-        hierarchy: bool = False,
+        hierarchy: bool = True,
     ) -> str:
-        """Format counter value according to style
+        """Format counter value according to each counter's style
 
         Args:
             name: Counter name to format
-            style: Style to format the counter value
             hierarchy: If True, include parent counter values (e.g. 2.1.3)
         """
-        format_type = CounterFormat.from_str(style)
+        if not name in self.counters:
+            return ""
 
         if hierarchy:
             # Get full hierarchy path from root to this counter
             hierarchy_path = self.get_counter_hierarchy(name)
-            hierarchy_values: List[int] = []
-            # Format each counter value in the hierarchy
+            hierarchy_values: List[str] = []
+
+            # Format each counter value in the hierarchy using its own style
             for counter in hierarchy_path:
                 value = self.get_counter_value(counter)
                 if value is not None:
                     if value == 0 and len(hierarchy_values) == 0:
                         # skip 0 values if no existing values yet
                         continue
-                    hierarchy_values.append(value)
+                    counter_style = self.counters[counter].style
+                    format_type = CounterFormat.from_str(counter_style)
+                    formatted_value = format_type.format_value(value)
+                    hierarchy_values.append(formatted_value)
 
             if len(hierarchy_values) == 0:
-                return self.get_counter_as_format(name, style, hierarchy=False)
+                # Fall back to single counter formatting
+                value = self.get_counter_value(name)
+                if value is None:
+                    return ""
+                format_type = CounterFormat.from_str(self.counters[name].style)
+                return format_type.format_value(value)
 
-            formatted_values = ".".join(
-                [format_type.format_value(v) for v in hierarchy_values]
-            )
-            return formatted_values
+            return ".".join(hierarchy_values)
 
+        # Single counter formatting
         value = self.get_counter_value(name)
-        return format_type.format_value(value) if value is not None else ""
+        if value is None:
+            return ""
+        format_type = CounterFormat.from_str(self.counters[name].style)
+        return format_type.format_value(value)
 
     def debug_hierarchy(self) -> str:
         """Generate a debug representation of the counter hierarchy"""

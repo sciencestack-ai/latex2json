@@ -36,7 +36,7 @@ def make_section_handler(
             and expander.state.has_counter(counter_name)
         ):
             expander.state.step_counter(counter_name)  # e.g. section/subsection.. +1
-            numbering = expander.state.get_counter_as_format(counter_name)
+            numbering = expander.state.get_counter_display(counter_name)
 
         # double check appendix
         if numbering and expander.state.in_appendix and cmd_name in SECTIONS:

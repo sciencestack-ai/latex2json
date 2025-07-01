@@ -70,7 +70,7 @@ class RelaxMacro(Macro):
 def make_the_counter_handler(counter_name: str, formatted=True):
     def the_counter_handler(expander: "ExpanderCore", token: Token):
         value = (
-            expander.state.get_counter_as_format(counter_name)
+            expander.state.get_counter_display(counter_name)
             if formatted
             else expander.state.get_counter_value(counter_name)
         )
@@ -1140,7 +1140,7 @@ class ExpanderCore:
             # e.g. some newenvironment definitions place \refstepcounter in the begin definition
             numbering = None
             if counter_name:
-                numbering = state.get_counter_as_format(counter_name)
+                numbering = state.get_counter_display(counter_name)
 
             begin_token = EnvironmentStartToken(
                 out_env_name,

@@ -41,7 +41,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
 
     numbering = None
     if counter_name and expander.state.has_counter(counter_name):
-        numbering = expander.state.get_counter_as_format(counter_name)
+        numbering = expander.state.get_counter_display(counter_name)
     is_math = env_def.is_math if env_def else False
     begin_token = EnvironmentStartToken(name, numbering=numbering, is_math_env=is_math)
 

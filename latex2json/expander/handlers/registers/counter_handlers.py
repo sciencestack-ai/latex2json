@@ -77,7 +77,7 @@ def stepcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 def get_counter_value_as_tokens(
     expander: ExpanderCore, counter_name: str
 ) -> Optional[List[Token]]:
-    value = expander.state.get_counter_as_format(counter_name)
+    value = expander.state.get_counter_display(counter_name)
     if value is None:
         return None
     return expander.convert_str_to_tokens(str(value))
