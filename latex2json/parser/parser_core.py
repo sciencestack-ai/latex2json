@@ -13,17 +13,20 @@ from latex2json.nodes import (
     DisplayType,
     SectionNode,
     CommandNode,
+    AlignmentNode,
+    VerbatimNode,
+    CaptionNode,
+    TheoremNode,
     strip_whitespace_nodes,
     merge_text_nodes,
 )
-from latex2json.nodes.base_nodes import AlignmentNode, VerbatimNode
-from latex2json.nodes.caption_node import CaptionNode
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
     Token,
     CommandWithArgsToken,
     EnvironmentStartToken,
     TokenType,
+    EnvironmentType,
 )
 from latex2json.tokens.types import APOSTROPHE_TOKEN, BACK_TICK_TOKEN
 from latex2json.utils.tex_utils import (
@@ -360,14 +363,23 @@ class ParserCore:
         self, token: EnvironmentStartToken
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
-        if token.is_math_env:
+        if token.env_type == EnvironmentType.EQUATION:
             eq_type = DisplayType.BLOCK
-            if "align" in env_name or "eqnarray" in env_name:
-                eq_type = DisplayType.ALIGN
+
+            if "aligned" in env_name:
+                eq_type = DisplayType.ALIGNED
             elif "split" in env_name:
                 eq_type = DisplayType.SPLIT
+            elif "align" in env_name or "eqnarray" in env_name:
+                eq_type = DisplayType.ALIGN
             env_node = EquationNode(
                 math_nodes=[], numbering=token.numbering, equation_type=eq_type
+            )
+        elif token.env_type == EnvironmentType.THEOREM:
+            env_node = TheoremNode(
+                env_name,
+                numbering=token.numbering,
+                display_name=token.display_name,
             )
         else:
             env_node = EnvironmentNode(
@@ -384,7 +396,7 @@ class ParserCore:
         self.push_env_stack(env_node)
 
         was_math_mode = self.is_math_mode
-        if token.is_math_env:
+        if token.env_type == EnvironmentType.EQUATION:
             self.is_math_mode = True
 
         begin_predicate: TokenPredicate = (

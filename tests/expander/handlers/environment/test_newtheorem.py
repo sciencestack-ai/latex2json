@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.expander.expander import Expander
+from latex2json.tokens.types import EnvironmentType
 from tests.expander.handlers.environment.test_environment_handlers import mock_env_token
 
 
@@ -15,6 +16,7 @@ def test_newtheorem():
         content="DEF",
         numbering="1",
         display_name="Definition",
+        env_type=EnvironmentType.THEOREM,
     )
 
     # test unnumbered with asterisk
@@ -24,6 +26,7 @@ def test_newtheorem():
         "remark",
         content="REM",
         display_name="Remark",
+        env_type=EnvironmentType.THEOREM,
     )
 
     # test with shared and nested counters
@@ -51,6 +54,7 @@ def test_newtheorem():
                 content="This is a theorem",
                 numbering="2.1",
                 display_name="Theorem",
+                env_type=EnvironmentType.THEOREM,
             ),
         ),
         (
@@ -61,6 +65,7 @@ def test_newtheorem():
                 content="This is a lemma",
                 numbering="2.2",
                 display_name="Lemma",
+                env_type=EnvironmentType.THEOREM,
             ),
         ),
     ]

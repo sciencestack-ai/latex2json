@@ -3,7 +3,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.environments import EnvironmentDefinition
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import Token, TokenType, EnvironmentType
 
 
 def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -69,6 +69,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         display_name=display_name,
         counter_name=counter_name,
         has_direct_command=False,
+        env_type=EnvironmentType.THEOREM,
     )
     expander.register_environment(env_name, env_def, is_global=True)
 

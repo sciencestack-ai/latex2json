@@ -10,6 +10,7 @@ from latex2json.tokens.types import (
     END_BRACE_TOKEN,
     BEGIN_BRACKET_TOKEN,
     END_BRACKET_TOKEN,
+    EnvironmentType,
 )
 from tests.test_utils import assert_token_sequence
 from typing import List, Optional
@@ -22,7 +23,7 @@ def mock_env_token(
     opt_args: List[str] = [],
     req_args: List[str] = [],
     numbering: Optional[str] = None,
-    is_math_env: bool = False,
+    env_type: EnvironmentType = EnvironmentType.DEFAULT,
     display_name: Optional[str] = None,
 ):
     """Create a mock environment token sequence with optional arguments and numbering.
@@ -38,7 +39,7 @@ def mock_env_token(
     begin_token = EnvironmentStartToken(
         env_name,
         numbering=numbering,
-        is_math_env=is_math_env,
+        env_type=env_type,
         display_name=display_name,
     )
     end_token = Token(TokenType.ENVIRONMENT_END, env_name)
@@ -137,22 +138,30 @@ def test_math_environments_numbers():
 
     # Test equation environment (should be numbered)
     out = expander.expand(r"\begin{equation}1+1\end{equation}")
-    assert out[0] == EnvironmentStartToken("equation", numbering="1", is_math_env=True)
+    assert out[0] == EnvironmentStartToken(
+        "equation", numbering="1", env_type=EnvironmentType.EQUATION
+    )
 
     # Test equation* environment (should not be numbered)
     out = expander.expand(r"\begin{equation*}2+2\end{equation*}")
-    assert out[0] == EnvironmentStartToken("equation*", is_math_env=True)
+    assert out[0] == EnvironmentStartToken(
+        "equation*", env_type=EnvironmentType.EQUATION
+    )
 
     # Test align environment (notice the numbering is +1 since it shares same counter as equation)
     out = expander.expand(r"\begin{align}x &= y\end{align}")
-    assert out[0] == EnvironmentStartToken("align", numbering="2", is_math_env=True)
+    assert out[0] == EnvironmentStartToken(
+        "align", numbering="2", env_type=EnvironmentType.EQUATION
+    )
 
     # Test align* environment
     out = expander.expand(r"\begin{align*}x &= y\end{align*}")
-    assert out[0] == EnvironmentStartToken("align*", is_math_env=True)
+    assert out[0] == EnvironmentStartToken("align*", env_type=EnvironmentType.EQUATION)
 
     out = expander.expand(r"\begin{equation}x &= y\end{equation}")
-    assert out[0] == EnvironmentStartToken("equation", numbering="3", is_math_env=True)
+    assert out[0] == EnvironmentStartToken(
+        "equation", numbering="3", env_type=EnvironmentType.EQUATION
+    )
 
 
 def test_mock_env_token():
@@ -176,7 +185,7 @@ def test_mock_env_token():
     # Test with numbering
     actual = expander.expand(r"\begin{equation}1+1\end{equation}")
     expected = mock_env_token(
-        expander, "equation", "1+1", numbering="1", is_math_env=True
+        expander, "equation", "1+1", numbering="1", env_type=EnvironmentType.EQUATION
     )
     assert_token_sequence(actual, expected)
 
@@ -219,7 +228,11 @@ def test_floatname():
 
     fig = expander.expand(r"\begin{figure}[h]\end{figure}")
     assert fig == mock_env_token(
-        expander, "figure", content="", display_name="Fig.", is_math_env=False
+        expander,
+        "figure",
+        content="",
+        display_name="Fig.",
+        env_type=EnvironmentType.DEFAULT,
     )
 
 
@@ -229,7 +242,9 @@ def test_verbatim_environments():
     verbatim_env_tokens = expander.expand(
         r"\begin{verbatim}\newcommand{test}{123}\end {fake}##1\end{verbatim}"
     )
-    assert verbatim_env_tokens[0] == EnvironmentStartToken("verbatim")
+    assert verbatim_env_tokens[0] == EnvironmentStartToken(
+        "verbatim", env_type=EnvironmentType.VERBATIM
+    )
     # check that newcommand remains there unexpanded since this is a verbatim environment
     assert verbatim_env_tokens[1] == Token(TokenType.CONTROL_SEQUENCE, "newcommand")
 

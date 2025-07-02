@@ -28,6 +28,13 @@ class TokenType(Enum):
     INVALID = 15  # For invalid tokens or errors
 
 
+class EnvironmentType(Enum):
+    DEFAULT = "default"
+    EQUATION = "equation"
+    THEOREM = "theorem"
+    VERBATIM = "verbatim"
+
+
 # --- Define the Token Class ---
 # A token will store its type, value, and original position.
 # For CHARACTER tokens, the value will be the character itself, and catcode is stored.
@@ -87,20 +94,20 @@ class EnvironmentStartToken(Token):
         self,
         name: str,
         numbering: Optional[str] = None,
-        is_math_env: bool = False,
+        env_type: EnvironmentType = EnvironmentType.DEFAULT,
         display_name: Optional[str] = None,
     ):
         super().__init__(TokenType.ENVIRONMENT_START, value=name)
         self.name = name
         self.numbering = numbering
-        self.is_math_env = is_math_env
+        self.env_type = env_type
         self.display_name = display_name if display_name else name
 
     def copy(self) -> "EnvironmentStartToken":
         return EnvironmentStartToken(
             name=self.name,
             numbering=self.numbering,
-            is_math_env=self.is_math_env,
+            env_type=self.env_type,
             display_name=self.display_name,
         )
 
@@ -108,8 +115,8 @@ class EnvironmentStartToken(Token):
         out = f"{self.type.name:18} -> {self.name} ({self.display_name})"
         if self.numbering:
             out += f" [Numbering: {self.numbering}]"
-        if self.is_math_env:
-            out += " [Math]"
+        if self.env_type != EnvironmentType.DEFAULT:
+            out += f" [{self.env_type.name}]"
         return out
 
     def __eq__(self, other: Token) -> bool:
@@ -118,7 +125,7 @@ class EnvironmentStartToken(Token):
         return (
             super().__eq__(other)
             and self.numbering == other.numbering
-            and self.is_math_env == other.is_math_env
+            and self.env_type == other.env_type
             and self.display_name == other.display_name
         )
 

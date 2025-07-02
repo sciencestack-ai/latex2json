@@ -6,6 +6,7 @@ from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
     END_BRACE_TOKEN,
     EnvironmentStartToken,
+    EnvironmentType,
     Token,
     TokenType,
 )
@@ -36,14 +37,15 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         )
 
     counter_name = name
+    env_type = EnvironmentType.DEFAULT
     if env_def:
         counter_name = env_def.counter_name
+        env_type = env_def.env_type
 
     numbering = None
     if counter_name and expander.state.has_counter(counter_name):
         numbering = expander.state.get_counter_display(counter_name)
-    is_math = env_def.is_math if env_def else False
-    begin_token = EnvironmentStartToken(name, numbering=numbering, is_math_env=is_math)
+    begin_token = EnvironmentStartToken(name, numbering=numbering, env_type=env_type)
 
     return [begin_token]
 

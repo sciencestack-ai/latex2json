@@ -10,6 +10,7 @@ from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
     END_BRACE_TOKEN,
     EnvironmentStartToken,
+    EnvironmentType,
 )
 from latex2json.tokens.utils import (
     is_mathshift_token,
@@ -1104,8 +1105,8 @@ class ExpanderCore:
         # there is a difference between input env_name and out_env_name. E.g. wrapfigure -> figure
         out_env_name = env_def.name
 
-        is_math = env_def.is_math
-        is_verbatim = env_def.is_verbatim
+        is_math = env_def.env_type == EnvironmentType.EQUATION
+        is_verbatim = env_def.env_type == EnvironmentType.VERBATIM
 
         counter_name = env_def.counter_name
         if counter_name:
@@ -1140,7 +1141,7 @@ class ExpanderCore:
                 out_env_name,
                 display_name=env_def.display_name,
                 numbering=numbering,
-                is_math_env=is_math,
+                env_type=env_def.env_type,
             )
 
             out_tokens: List[Token] = [begin_token]

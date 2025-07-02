@@ -61,10 +61,31 @@ class EnvironmentNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "environment"
-        result["name"] = self.name
+        result["name"] = self.display_name or self.name
         result["content"] = [child.to_json() for child in self.body]
         if self.numbering:
             result["numbering"] = self.numbering
+        return result
+
+
+class TheoremNode(EnvironmentNode):
+    def __init__(
+        self,
+        name: str,
+        body: List[ASTNode] = [],
+        numbering: Optional[str] = None,
+        display_name: Optional[str] = None,
+    ):
+        super().__init__(name, body, numbering, display_name)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, TheoremNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "theorem"
         return result
 
 

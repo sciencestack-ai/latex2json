@@ -8,6 +8,7 @@ class DisplayType(Enum):
     BLOCK = "block"
     ALIGN = "align"
     SPLIT = "split"
+    ALIGNED = "aligned"  # diff from align
 
 
 class ASTNode:

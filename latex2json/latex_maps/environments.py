@@ -1,6 +1,7 @@
 import dataclasses
+from enum import Enum
 from typing import Any, Callable, List, Optional
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import EnvironmentType, Token
 
 
 @dataclasses.dataclass
@@ -27,8 +28,7 @@ class EnvironmentDefinition:
         num_args: int = 0,
         default_arg: Optional[List[Token]] = None,
         counter_name: Optional[str] = None,  # e.g. "equation"
-        is_math: bool = False,  # e.g, align, equation, etc.
-        is_verbatim: bool = False,
+        env_type: EnvironmentType = EnvironmentType.DEFAULT,
         has_direct_command: bool = False,  # e.g. \begin{document} -> \document + \enddocument
     ):
         self.name = name
@@ -40,8 +40,7 @@ class EnvironmentDefinition:
         self.num_args = num_args
         self.default_arg = default_arg
         self.counter_name = counter_name
-        self.is_math = is_math
-        self.is_verbatim = is_verbatim
+        self.env_type = env_type
         self.has_direct_command = has_direct_command
 
         # other state e.g. hooks
@@ -57,8 +56,7 @@ class EnvironmentDefinition:
                 self.default_arg.copy() if self.default_arg is not None else None
             ),
             counter_name=self.counter_name,
-            is_math=self.is_math,
-            is_verbatim=self.is_verbatim,
+            env_type=self.env_type,
             has_direct_command=self.has_direct_command,
         )
         new_env.hooks = Hooks(begin=self.hooks.begin.copy(), end=self.hooks.end.copy())
@@ -74,10 +72,8 @@ class EnvironmentDefinition:
             out += f", begin_definition={self.begin_definition}"
         if self.end_definition:
             out += f", end_definition={self.end_definition}"
-        if self.is_math:
-            out += ", is_math=True"
-        if self.is_verbatim:
-            out += ", is_verbatim=True"
+        if self.env_type != EnvironmentType.DEFAULT:
+            out += f", env_type={self.env_type.name}"
         if self.counter_name:
             out += f", counter_name={self.counter_name}"
         if self.has_direct_command:
@@ -98,23 +94,33 @@ DOCUMENT_ENVIRONMENTS = {
 }
 
 VERBATIM_ENVIRONMENTS = {
-    "quote": EnvironmentDefinition("quote", has_direct_command=True, is_verbatim=True),
-    "verbatim": EnvironmentDefinition(
-        "verbatim", has_direct_command=True, is_verbatim=True
+    "quote": EnvironmentDefinition(
+        "quote", has_direct_command=True, env_type=EnvironmentType.VERBATIM
     ),
-    "lstlisting": EnvironmentDefinition("lstlisting", is_verbatim=True),
+    "verbatim": EnvironmentDefinition(
+        "verbatim", has_direct_command=True, env_type=EnvironmentType.VERBATIM
+    ),
+    "lstlisting": EnvironmentDefinition(
+        "lstlisting", env_type=EnvironmentType.VERBATIM
+    ),
 }
 
 ALGORITHM_ENVIRONMENTS = {
     "algorithm": EnvironmentDefinition("algorithm"),
-    "algorithmic": EnvironmentDefinition("algorithmic", is_verbatim=True),
+    "algorithmic": EnvironmentDefinition(
+        "algorithmic", env_type=EnvironmentType.VERBATIM
+    ),
 }
 
 PICTURE_ENVIRONMENTS = {
     # picture/tikz
-    "picture": EnvironmentDefinition("picture", is_verbatim=True),
-    "tikzpicture": EnvironmentDefinition("tikzpicture", is_verbatim=True),
-    "pgfpicture": EnvironmentDefinition("pgfpicture", is_verbatim=True),
+    "picture": EnvironmentDefinition("picture", env_type=EnvironmentType.VERBATIM),
+    "tikzpicture": EnvironmentDefinition(
+        "tikzpicture", env_type=EnvironmentType.VERBATIM
+    ),
+    "pgfpicture": EnvironmentDefinition(
+        "pgfpicture", env_type=EnvironmentType.VERBATIM
+    ),
 }
 
 # Text formatting and layout environments
@@ -171,27 +177,40 @@ LIST_ENVIRONMENTS = {
 # Mathematical environments
 MATH_ENVIRONMENTS = {
     "equation": EnvironmentDefinition(
-        "equation", counter_name="equation", is_math=True, has_direct_command=True
+        "equation",
+        counter_name="equation",
+        env_type=EnvironmentType.EQUATION,
+        has_direct_command=True,
     ),
-    "align": EnvironmentDefinition("align", counter_name="equation", is_math=True),
-    "aligned": EnvironmentDefinition("aligned", is_math=True),
-    "gather": EnvironmentDefinition("gather", counter_name="equation", is_math=True),
+    "align": EnvironmentDefinition(
+        "align", counter_name="equation", env_type=EnvironmentType.EQUATION
+    ),
+    "aligned": EnvironmentDefinition("aligned", env_type=EnvironmentType.EQUATION),
+    "gather": EnvironmentDefinition(
+        "gather", counter_name="equation", env_type=EnvironmentType.EQUATION
+    ),
     "multline": EnvironmentDefinition(
-        "multline", counter_name="equation", is_math=True
+        "multline", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
     "eqnarray": EnvironmentDefinition(
-        "eqnarray", counter_name="equation", is_math=True
+        "eqnarray", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
-    "flalign": EnvironmentDefinition("flalign", counter_name="equation", is_math=True),
+    "flalign": EnvironmentDefinition(
+        "flalign", counter_name="equation", env_type=EnvironmentType.EQUATION
+    ),
     "alignat": EnvironmentDefinition(
         "alignat",
         num_args=1,
         counter_name="equation",
-        is_math=True,
+        env_type=EnvironmentType.EQUATION,
     ),
-    "dmath": EnvironmentDefinition("dmath", counter_name="equation", is_math=True),
-    "split": EnvironmentDefinition("split", is_math=True),
-    "array": EnvironmentDefinition("array", num_args=1, is_math=True),
+    "dmath": EnvironmentDefinition(
+        "dmath", counter_name="equation", env_type=EnvironmentType.EQUATION
+    ),
+    "split": EnvironmentDefinition("split", env_type=EnvironmentType.EQUATION),
+    "array": EnvironmentDefinition(
+        "array", num_args=1, env_type=EnvironmentType.EQUATION
+    ),
 }
 
 # # Theorem-like environments
