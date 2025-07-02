@@ -92,6 +92,10 @@ class CounterManager:
         self.new_counter("enumiii")  # enumerate level 3
         self.new_counter("enumiv")  # enumerate level 4
 
+    def reset_section_counters(self):
+        for section in SECTIONS:
+            self.set_counter(section, 0)
+
     def _get_internal_name(self, counter_name: str) -> str:
         """Convert a user-facing counter name to internal register name"""
         return f"{self._counter_prefix}{counter_name}"

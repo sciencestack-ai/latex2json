@@ -7,16 +7,6 @@ from latex2json.tokens import (
 )
 
 
-def convert_numbering_to_upper_alphabet(numbering: str) -> str:
-    # convert the first number to uppercase letter (1->A, 2->B, etc)
-    number_split = numbering.split(".")
-    first_num = int(number_split[0])
-    # Convert to A, B, C etc (1->A, 2->B, etc)
-    first_letter = chr(ord("A") + first_num - 1)
-    number_split[0] = first_letter
-    return ".".join(number_split)
-
-
 def make_section_handler(
     cmd_name: str,
     counter_name: Optional[str] = None,
@@ -38,11 +28,6 @@ def make_section_handler(
             expander.state.step_counter(counter_name)  # e.g. section/subsection.. +1
             numbering = expander.state.get_counter_display(counter_name)
 
-        # double check appendix
-        if numbering and expander.state.in_appendix and cmd_name in SECTIONS:
-            # convert the first number letter to upper alphabet
-            numbering = convert_numbering_to_upper_alphabet(numbering)
-
         expanded_opt_args = []
         if opt_arg:
             exp_opt_arg = expander.expand_tokens(opt_arg)
@@ -61,11 +46,7 @@ def make_section_handler(
 
 
 def appendix_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    # reset all section counters
-    for cmd_name in SECTIONS:
-        expander.state.set_counter(cmd_name, 0)
-
-    expander.state.in_appendix = True
+    expander.state.set_is_appendix(True)
     return [token]  # return the raw token itself for parsing later
 
 

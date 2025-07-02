@@ -111,6 +111,23 @@ class ExpanderState:
     def check_is_math_mode(mode: ProcessingMode) -> bool:
         return mode in [ProcessingMode.MATH_INLINE, ProcessingMode.MATH_DISPLAY]
 
+    # appendix
+    def set_is_appendix(self, is_appendix: bool):
+        if is_appendix == self.in_appendix:
+            return
+        self.in_appendix = is_appendix
+
+        # reset all section counters
+        self.counter_manager.reset_section_counters()
+
+        TOP_SECTION = "section"
+        counter = self.counter_manager.counters.get(TOP_SECTION)
+        if counter:
+            if is_appendix:
+                counter.style = CounterFormat.ALPHA_UPPER
+            else:
+                counter.style = CounterFormat.ARABIC
+
     def push_mode(self, mode: ProcessingMode):
         """Push a new mode onto the stack."""
         self._set_mode_values(mode)
