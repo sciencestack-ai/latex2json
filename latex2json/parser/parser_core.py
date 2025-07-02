@@ -16,7 +16,7 @@ from latex2json.nodes import (
     strip_whitespace_nodes,
     merge_text_nodes,
 )
-from latex2json.nodes.base_nodes import AlignmentNode, NewLineNode, VerbatimNode
+from latex2json.nodes.base_nodes import AlignmentNode, VerbatimNode
 from latex2json.nodes.caption_node import CaptionNode
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
@@ -364,6 +364,8 @@ class ParserCore:
             eq_type = DisplayType.BLOCK
             if "align" in env_name or "eqnarray" in env_name:
                 eq_type = DisplayType.ALIGN
+            elif "split" in env_name:
+                eq_type = DisplayType.SPLIT
             env_node = EquationNode(
                 math_nodes=[], numbering=token.numbering, equation_type=eq_type
             )
@@ -425,13 +427,10 @@ class ParserCore:
             ):
                 return macro_pattern.handler(self, token)
 
-        if is_newline_token(token):
-            return [NewLineNode(cmd_name)]
-        else:
-            if self.expander.state.font_registry.get(cmd_name):
-                # ignore defined font commands for now
-                # self.set_font(cmd_name)
-                return []
+        if self.expander.state.font_registry.get(cmd_name):
+            # ignore defined font commands for now
+            # self.set_font(cmd_name)
+            return []
 
         return [CommandNode(cmd_name)]
 
@@ -519,13 +518,13 @@ class ParserCore:
                     replacement_node = TextNode(" ")
                 elif name == "newline":
                     replacement_node = TextNode("\n")
+                elif name == "\\":
+                    replacement_node = TextNode("\n")
                 elif (
                     len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
                 ):
                     # e.g. \& -> &, \# -> #, \@ -> ""
                     replacement_node = TextNode(name if name != "@" else "")
-            elif isinstance(node, NewLineNode):
-                replacement_node = TextNode("\n")
             elif isinstance(node, AlignmentNode):
                 replacement_node = TextNode("")  # empty
 

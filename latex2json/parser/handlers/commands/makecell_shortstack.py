@@ -3,7 +3,7 @@ from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens import Token
 from latex2json.parser.handlers.environments.tabular_handler import split_into_rows
-from latex2json.nodes.base_nodes import CommandNode, NewLineNode, TextNode
+from latex2json.nodes.base_nodes import CommandNode
 
 
 def makecell_handler(parser: ParserCore, token: Token):

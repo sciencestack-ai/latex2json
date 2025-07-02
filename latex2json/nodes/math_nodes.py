@@ -10,6 +10,36 @@ from latex2json.nodes.base_nodes import (
 from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 
 
+def strip_balanced_braces(text: str) -> str:
+    # Strip balanced braces from start/end using stack matching
+    while text and text.startswith("{"):
+        # Check if braces are balanced and match at start/end
+        stack = []
+        balanced = True
+        should_strip = False
+
+        for i, char in enumerate(text):
+            if char == "{":
+                stack.append(i)
+            elif char == "}":
+                if not stack:
+                    balanced = False
+                    break
+                start_pos = stack.pop()
+                # If this is the closing brace and matches opening,
+                # and there are no other unmatched braces
+                if not stack and i == len(text) - 1 and start_pos == 0:
+                    should_strip = True
+
+        # Only continue if we found a matching pair to strip
+        if not balanced or not should_strip:
+            break
+
+        text = text[1:-1]
+
+    return text
+
+
 class EquationNode(ASTNode):
     def __init__(
         self,
@@ -84,6 +114,11 @@ class EquationNode(ASTNode):
                 nodes.append(child.copy())
         nodes = merge_text_nodes(nodes)
         content_json = [node.to_json() for node in nodes]
+
+        # strip outer {...} braces from text
+        for token in content_json:
+            if token.get("type") == "text":
+                token["content"] = strip_balanced_braces(token["content"])
         result["content"] = content_json
 
         return result

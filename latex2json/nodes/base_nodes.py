@@ -7,6 +7,7 @@ class DisplayType(Enum):
     INLINE = "inline"
     BLOCK = "block"
     ALIGN = "align"
+    SPLIT = "split"
 
 
 class ASTNode:
@@ -139,32 +140,6 @@ class AlignmentNode(ASTNode):
         result = super().to_json()
         result["type"] = "text"
         result["content"] = self.value
-        return result
-
-
-class NewLineNode(ASTNode):
-    """Represents a LaTeX line break (\\) - not to be confused with \n"""
-
-    def __init__(self, value: str):
-        super().__init__()
-        self.value = value  # Usually "\\"
-
-    def __str__(self):
-        return f"NewLineNode({self.value})"
-
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, NewLineNode):
-            return False
-        return self.value == other.value
-
-    def detokenize(self):
-        return self.value
-
-    def to_json(self):
-        # this node should not ever be needed to be json, but just in case
-        result = super().to_json()
-        result["type"] = "text"
-        result["content"] = "\n"
         return result
 
 
