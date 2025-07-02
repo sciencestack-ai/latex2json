@@ -149,24 +149,29 @@ def substitute_token_args(
 
     out: List[Token] = []
 
-    for token in definition:
+    for i, token in enumerate(definition):
         if token.type == TokenType.PARAMETER:
+            # replace parameter with argument
             index = int(token.value) - 1
             if index < len(args):
+                arg = args[index]
                 if math_mode:
-                    math_out = wrap_tokens_in_braces(args[index])
-                    out.extend(math_out)
-                else:
-                    out.extend(args[index])
+                    # check if prev/next token is { and }. If so, we dont need to wrap in braces
+                    is_prev_brace = i > 0 and definition[i - 1] == BEGIN_BRACE_TOKEN
+                    is_next_brace = (
+                        i < len(definition) - 1 and definition[i + 1] == END_BRACE_TOKEN
+                    )
+                    if not (is_prev_brace and is_next_brace):
+                        arg = wrap_tokens_in_braces(arg)
+                out.extend(arg)
         else:
             out.append(token)
 
-    # if math_mode:
-    #     out = [
-    #         WHITESPACE_TOKEN.copy(),
-    #         *out,
-    #         WHITESPACE_TOKEN.copy(),
-    #     ]
+    if math_mode and out:
+        # check if first or last token is a trailing character. If so, wrap in braces
+        if out[0].type == TokenType.CHARACTER or out[-1].type == TokenType.CHARACTER:
+            if not (out[0] == BEGIN_BRACE_TOKEN and out[-1] == END_BRACE_TOKEN):
+                out = wrap_tokens_in_braces(out)
 
     return out
 

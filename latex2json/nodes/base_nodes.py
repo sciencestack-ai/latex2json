@@ -1,3 +1,4 @@
+from copy import deepcopy
 from enum import Enum
 from typing import List, Optional
 
@@ -74,6 +75,9 @@ class ASTNode:
             result["labels"] = self.labels.copy()
 
         return result
+
+    def copy(self):
+        return deepcopy(self)
 
 
 def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):

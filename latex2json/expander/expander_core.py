@@ -14,7 +14,6 @@ from latex2json.tokens.types import (
 from latex2json.tokens.utils import (
     is_mathshift_token,
     substitute_token_args,
-    wrap_tokens_in_braces,
 )
 from latex2json.expander.macro_registry import (
     Handler,
@@ -252,9 +251,6 @@ class ExpanderCore:
         is_math = self.is_math_mode
         tokens = [t.copy() for t in tokens]
         if is_math:
-            # wrap all args in braces e.g. {x}
-            for i, arg in enumerate(args):
-                args[i] = wrap_tokens_in_braces(arg)
             # convert token definitions to mathmode catcodes
             for i, token in enumerate(tokens):
                 if token.type == TokenType.CONTROL_SEQUENCE:
@@ -263,16 +259,7 @@ class ExpanderCore:
                 if ord_char in MATHMODE_CATCODES:
                     tokens[i].catcode = MATHMODE_CATCODES[ord_char]
 
-        out = substitute_token_args(tokens, args)
-        if is_math and out:
-            has_trailing_character = False
-            if (
-                out[0].type == TokenType.CHARACTER
-                or out[-1].type == TokenType.CHARACTER
-            ):
-                has_trailing_character = True
-            if has_trailing_character:
-                out = wrap_tokens_in_braces(out)
+        out = substitute_token_args(tokens, args, math_mode=is_math)
         return out
 
     # Colors

@@ -7,7 +7,7 @@ from latex2json.nodes.base_nodes import (
     TextNode,
 )
 
-from latex2json.nodes.utils import strip_whitespace_nodes
+from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 
 
 class EquationNode(ASTNode):
@@ -71,8 +71,19 @@ class EquationNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "equation"
-        result["content"] = [child.to_json() for child in self.children]
         result["display"] = self.equation_type.value
         if self.numbering:
             result["numbering"] = self.numbering
+
+        # convert command nodes to text nodes
+        nodes = []
+        for child in self.children:
+            if isinstance(child, CommandNode):
+                nodes.append(TextNode("\\" + child.name))
+            else:
+                nodes.append(child.copy())
+        nodes = merge_text_nodes(nodes)
+        content_json = [node.to_json() for node in nodes]
+        result["content"] = content_json
+
         return result
