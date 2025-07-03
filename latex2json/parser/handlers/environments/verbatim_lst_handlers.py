@@ -8,7 +8,7 @@ def verbatim_handler(parser: ParserCore, token: Token):
         lambda tok: tok == Token(TokenType.ENVIRONMENT_END, "verbatim"),
         consume_predicate=True,
     )
-    return [VerbatimNode(parser.convert_tokens_to_str(tokens))]
+    return [VerbatimNode(parser.convert_tokens_to_str(tokens).strip())]
 
 
 def lstlisting_handler(parser: ParserCore, token: Token):
@@ -20,8 +20,8 @@ def lstlisting_handler(parser: ParserCore, token: Token):
     )
     return [
         VerbatimNode(
-            parser.convert_tokens_to_str(tokens),
-            title=parser.convert_nodes_to_str(title),
+            parser.convert_tokens_to_str(tokens).strip(),
+            title=parser.convert_nodes_to_str(title).strip(),
         )
     ]
 

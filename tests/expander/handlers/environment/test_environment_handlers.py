@@ -149,14 +149,14 @@ def test_math_environments_numbers():
     )
 
     # Test align environment (notice the numbering is +1 since it shares same counter as equation)
-    out = expander.expand(r"\begin{align}x &= y\end{align}")
+    out = expander.expand(r"\begin{gather}x &= y\end{gather}")
     assert out[0] == EnvironmentStartToken(
-        "align", numbering="2", env_type=EnvironmentType.EQUATION
+        "gather", numbering="2", env_type=EnvironmentType.EQUATION
     )
 
     # Test align* environment
-    out = expander.expand(r"\begin{align*}x &= y\end{align*}")
-    assert out[0] == EnvironmentStartToken("align*", env_type=EnvironmentType.EQUATION)
+    out = expander.expand(r"\begin{dmath*}x &= y\end{dmath*}")
+    assert out[0] == EnvironmentStartToken("dmath*", env_type=EnvironmentType.EQUATION)
 
     out = expander.expand(r"\begin{equation}x &= y\end{equation}")
     assert out[0] == EnvironmentStartToken(

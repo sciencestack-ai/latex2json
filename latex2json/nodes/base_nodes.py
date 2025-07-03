@@ -6,9 +6,6 @@ from typing import List, Optional
 class DisplayType(Enum):
     INLINE = "inline"
     BLOCK = "block"
-    ALIGN = "align"
-    SPLIT = "split"
-    ALIGNED = "aligned"  # diff from align
 
 
 class ASTNode:

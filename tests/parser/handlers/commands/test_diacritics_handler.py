@@ -1,6 +1,6 @@
 import pytest
 
-from latex2json.nodes import CommandNode, TextNode, EquationNode
+from latex2json.nodes import CommandNode, TextNode
 from latex2json.parser.parser import Parser
 
 

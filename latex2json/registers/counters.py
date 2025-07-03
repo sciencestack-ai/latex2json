@@ -79,6 +79,8 @@ class CounterManager:
         # Independent counters
         self.new_counter("page")
         self.new_counter("equation")
+        # subequation counter does not necessarily exist in latex, but we do this for subequations
+        self.new_counter("subequation", parent="equation", style=CounterFormat.ALPHA)
         self.new_counter("footnote")
         self.new_counter("figure")
         self.new_counter("subfigure", parent="figure", style=CounterFormat.ALPHA)

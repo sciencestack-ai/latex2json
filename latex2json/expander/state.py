@@ -99,6 +99,9 @@ class ExpanderState:
         # package/class
         self.in_package_or_class = False
 
+        # in subequations
+        self.in_subequations = False
+
     @property
     def mode(self) -> ProcessingMode:
         return self._mode_stack[-1]
@@ -127,6 +130,14 @@ class ExpanderState:
                 counter.style = CounterFormat.ALPHA_UPPER
             else:
                 counter.style = CounterFormat.ARABIC
+
+    def set_in_subequations(self, in_subequations: bool):
+        if in_subequations == self.in_subequations:
+            return
+        self.in_subequations = in_subequations
+        if in_subequations:
+            # incr equation counter
+            self.counter_manager.step_counter("equation")
 
     def push_mode(self, mode: ProcessingMode):
         """Push a new mode onto the stack."""
@@ -284,7 +295,17 @@ class ExpanderState:
 
     def step_counter(self, name: str) -> None:
         """Increment counter by 1 and reset all children"""
+        if name == "equation" and self.in_subequations:
+            name = "subequation"
         self.counter_manager.step_counter(name)
+
+    def get_counter_display(
+        self,
+        name: str,
+    ) -> str:
+        if name == "equation" and self.in_subequations:
+            name = "subequation"
+        return self.counter_manager.get_counter_display(name)
 
     def set_counter(self, name: str, value: int) -> None:
         """Set counter value"""
@@ -297,13 +318,6 @@ class ExpanderState:
     def get_counter_value(self, name: str) -> Optional[int]:
         """Get current counter value"""
         return self.counter_manager.get_counter_value(name)
-
-    def get_counter_display(
-        self,
-        name: str,
-    ) -> str:
-        """Format counter value according to style"""
-        return self.counter_manager.get_counter_display(name)
 
     def counter_within(self, name: str, parent: Optional[str] = None) -> None:
         """Set the counter to be within the parent counter"""

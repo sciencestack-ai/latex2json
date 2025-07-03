@@ -28,7 +28,24 @@ def floatname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 def register_base_environment_handlers(expander: ExpanderCore):
     """Register basic environments that just wrap their content."""
     for env_name, env_def in COMMON_ENVIRONMENTS.items():
-        expander.register_environment(env_name, env_def.copy())
+        env_def_instance = env_def.copy()
+        if env_name == "subequations":
+
+            def insubequation():
+                expander.state.set_in_subequations(True)
+                return []
+
+            def outsubequation():
+                expander.state.set_in_subequations(False)
+                return []
+
+            env_def_instance.hooks.begin.append(
+                insubequation,
+            )
+            env_def_instance.hooks.end.append(
+                outsubequation,
+            )
+        expander.register_environment(env_name, env_def_instance)
 
     expander.register_handler("floatname", floatname_handler, is_global=True)
 

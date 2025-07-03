@@ -44,12 +44,16 @@ class EquationNode(ASTNode):
     def __init__(
         self,
         math_nodes: List[ASTNode],
+        env_name: str = "equation",
         equation_type: DisplayType = DisplayType.INLINE,
         numbering: Optional[str] = None,
+        args: Optional[List[str]] = None,
     ):
         super().__init__()
         self.numbering = numbering
         self.equation_type = equation_type
+        self.env_name = env_name
+        self.args = args
 
         self.set_body(math_nodes)
 
@@ -66,6 +70,8 @@ class EquationNode(ASTNode):
         if self.equation_type != other.equation_type:
             return False
         if self.numbering != other.numbering:
+            return False
+        if self.env_name != other.env_name:
             return False
         return check_asts_equal(self.children, other.children)
 
@@ -91,9 +97,7 @@ class EquationNode(ASTNode):
         if self.equation_type == DisplayType.BLOCK and not self.numbering:
             return "$$" + math_str + "$$"
 
-        env_name = "align" if self.equation_type == DisplayType.ALIGN else "equation"
-        if not self.numbering:
-            env_name += "*"
+        env_name = self.env_name
         begin_str = f"\\begin{{{env_name}}}"
         end_str = f"\\end{{{env_name}}}"
         return begin_str + math_str + end_str
@@ -101,7 +105,10 @@ class EquationNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "equation"
+        result["name"] = self.env_name
         result["display"] = self.equation_type.value
+        if self.args:
+            result["args"] = self.args
         if self.numbering:
             result["numbering"] = self.numbering
 
@@ -109,7 +116,12 @@ class EquationNode(ASTNode):
         nodes = []
         for child in self.children:
             if isinstance(child, CommandNode):
-                nodes.append(TextNode("\\" + child.name))
+                # if we're converting to a string, we need to be careful about textnodes rightafter commands
+                # so we add a space after the command
+                cmd_str = "\\" + child.name
+                if cmd_str[-1].isalpha():
+                    cmd_str += " "
+                nodes.append(TextNode(cmd_str))
             else:
                 nodes.append(child.copy())
         nodes = merge_text_nodes(nodes)

@@ -338,7 +338,7 @@ class ParserCore:
         math_nodes = self.process(lambda tok: tok == token)
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
         self.is_math_mode = False
-        return [EquationNode(math_nodes, eq_type)]
+        return [EquationNode(math_nodes, equation_type=eq_type)]
 
     def push_env_stack(self, node: ASTNode):
         """Push a node onto the environment stack."""
@@ -363,17 +363,16 @@ class ParserCore:
         self, token: EnvironmentStartToken
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
-        if token.env_type == EnvironmentType.EQUATION:
+        if token.env_type in [
+            EnvironmentType.EQUATION,
+            EnvironmentType.EQUATION_ALIGN,
+        ]:
             eq_type = DisplayType.BLOCK
-
-            if "aligned" in env_name:
-                eq_type = DisplayType.ALIGNED
-            elif "split" in env_name:
-                eq_type = DisplayType.SPLIT
-            elif "align" in env_name or "eqnarray" in env_name:
-                eq_type = DisplayType.ALIGN
             env_node = EquationNode(
-                math_nodes=[], numbering=token.numbering, equation_type=eq_type
+                math_nodes=[],
+                numbering=token.numbering,
+                equation_type=eq_type,
+                env_name=env_name,
             )
         elif token.env_type == EnvironmentType.THEOREM:
             env_node = TheoremNode(

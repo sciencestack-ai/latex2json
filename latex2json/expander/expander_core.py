@@ -14,6 +14,8 @@ from latex2json.tokens.types import (
 )
 from latex2json.tokens.utils import (
     is_mathshift_token,
+    split_tokens_by_predicate,
+    strip_whitespace_tokens,
     substitute_token_args,
 )
 from latex2json.expander.macro_registry import (
@@ -369,6 +371,11 @@ class ExpanderCore:
                 final_expanded_tokens.extend(processed)
 
         return final_expanded_tokens
+
+    def expand_until(
+        self, stop_token_logic: TokenPredicate, consume_stop_token: bool = True
+    ) -> List[Token]:
+        return self.process(stop_token_logic, consume_stop_token=consume_stop_token)
 
     def push_scope(self):
         self.state.push_scope()
@@ -1105,7 +1112,11 @@ class ExpanderCore:
         # there is a difference between input env_name and out_env_name. E.g. wrapfigure -> figure
         out_env_name = env_def.name
 
-        is_math = env_def.env_type == EnvironmentType.EQUATION
+        is_math = env_def.env_type in [
+            EnvironmentType.EQUATION,
+            EnvironmentType.EQUATION_ALIGN,
+        ]
+        is_align = env_def.env_type == EnvironmentType.EQUATION_ALIGN
         is_verbatim = env_def.env_type == EnvironmentType.VERBATIM
 
         counter_name = env_def.counter_name
@@ -1142,6 +1153,7 @@ class ExpanderCore:
                 display_name=env_def.display_name,
                 numbering=numbering,
                 env_type=env_def.env_type,
+                args=args,
             )
 
             out_tokens: List[Token] = [begin_token]
@@ -1150,7 +1162,7 @@ class ExpanderCore:
 
             out_tokens.extend(subbed)
 
-            if is_verbatim:
+            if is_verbatim or is_align:
                 # if verbatim, we parse until we find the matching end environment token
                 def is_end_env_token(token: Token) -> bool:
                     is_end_env_ctrl = (
@@ -1163,23 +1175,80 @@ class ExpanderCore:
                         )
                         # check next tok is the env name
                         parsed_env_name = expander.parse_brace_name() or ""
-                        if parsed_env_name == env_name:
-                            return True
-                        else:
-                            expander.push_tokens(
-                                tokens_to_return
-                                + [BEGIN_BRACE_TOKEN.copy()]
-                                + expander.convert_str_to_tokens(parsed_env_name)
-                                + [END_BRACE_TOKEN.copy()]
+                        is_end_env_name = parsed_env_name == env_name
+
+                        # if the end env name is the same as the begin env name,
+                        # we need to push the \end token back to the stream (so that later end_handler can handle it)
+                        if is_end_env_name:
+                            tokens_to_return.insert(0, token)
+                        # push {...} of \end{...} back to stream
+                        expander.push_tokens(
+                            tokens_to_return
+                            + expander.convert_str_to_tokens(
+                                "{" + parsed_env_name + "}"
                             )
-                            return False
+                        )
+                        return is_end_env_name
                     return False
 
-                body_block = expander.parse_tokens_until(
-                    is_end_env_token, verbatim=True
-                )
-                out_tokens.extend(body_block)
-                out_tokens.extend(end_handler(expander, None))
+                if is_verbatim:
+                    # parse raw, verbatim
+                    body_block = expander.parse_tokens_until(
+                        is_end_env_token, verbatim=True
+                    )
+                    out_tokens.extend(body_block)
+                else:
+                    # is_align
+                    # align environments have a special case where we need to parse the body block for \\, and number those accordingly
+                    body_block = expander.expand_until(
+                        stop_token_logic=is_end_env_token, consume_stop_token=False
+                    )
+
+                    def is_newline_token(tok: Token) -> bool:
+                        return (
+                            tok.value == "\\" and tok.type == TokenType.CONTROL_SEQUENCE
+                        )
+
+                    split_body_block = split_tokens_by_predicate(
+                        body_block, is_newline_token
+                    )
+                    is_numbered = env_name.isalpha()  # False if there is *
+
+                    equation_tokens = []
+                    for block in split_body_block:
+                        is_local_numbered = is_numbered
+
+                        # check for \nonumber
+                        newblock = []
+                        for tok in block:
+                            if (
+                                tok.type == TokenType.CONTROL_SEQUENCE
+                                and tok.value == "nonumber"
+                            ):
+                                is_local_numbered = False
+                            else:
+                                newblock.append(tok)
+                        newblock = strip_whitespace_tokens(newblock)
+
+                        numbering = None
+                        if is_local_numbered:
+                            state.step_counter("equation")
+                            numbering = state.get_counter_display("equation")
+                        # add an env start token of Equation
+                        equation_tokens.append(
+                            EnvironmentStartToken(
+                                "equation",
+                                numbering=numbering,
+                                env_type=EnvironmentType.EQUATION,
+                            )
+                        )
+                        equation_tokens.extend(newblock)
+                        # add an env end token of Equation
+                        equation_tokens.append(
+                            Token(TokenType.ENVIRONMENT_END, "equation")
+                        )
+
+                    out_tokens.extend(equation_tokens)
 
             return out_tokens
 

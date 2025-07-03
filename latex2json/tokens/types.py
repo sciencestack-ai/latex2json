@@ -31,6 +31,7 @@ class TokenType(Enum):
 class EnvironmentType(Enum):
     DEFAULT = "default"
     EQUATION = "equation"
+    EQUATION_ALIGN = "align"
     THEOREM = "theorem"
     VERBATIM = "verbatim"
 

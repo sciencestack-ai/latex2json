@@ -15,7 +15,7 @@ def process_csname_block(
     if tok is None:
         return None
 
-    block1 = expander.process(is_endcsname_command)
+    block1 = expander.expand_until(is_endcsname_command, consume_stop_token=True)
     block1 = [b for b in block1 if not is_whitespace_token(b)]
 
     return block1

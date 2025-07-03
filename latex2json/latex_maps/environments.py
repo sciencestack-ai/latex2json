@@ -176,41 +176,47 @@ LIST_ENVIRONMENTS = {
 
 # Mathematical environments
 MATH_ENVIRONMENTS = {
+    # standalone equation environments
     "equation": EnvironmentDefinition(
         "equation",
         counter_name="equation",
         env_type=EnvironmentType.EQUATION,
         has_direct_command=True,
     ),
-    "align": EnvironmentDefinition(
-        "align", counter_name="equation", env_type=EnvironmentType.EQUATION
-    ),
-    "aligned": EnvironmentDefinition("aligned", env_type=EnvironmentType.EQUATION),
     "gather": EnvironmentDefinition(
         "gather", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
     "multline": EnvironmentDefinition(
         "multline", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
-    "eqnarray": EnvironmentDefinition(
-        "eqnarray", counter_name="equation", env_type=EnvironmentType.EQUATION
-    ),
-    "flalign": EnvironmentDefinition(
-        "flalign", counter_name="equation", env_type=EnvironmentType.EQUATION
-    ),
-    "alignat": EnvironmentDefinition(
-        "alignat",
-        num_args=1,
-        counter_name="equation",
-        env_type=EnvironmentType.EQUATION,
-    ),
     "dmath": EnvironmentDefinition(
         "dmath", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
+    # inner environments inside equation/align
+    "aligned": EnvironmentDefinition("aligned", env_type=EnvironmentType.EQUATION),
+    "alignedat": EnvironmentDefinition(
+        "alignedat", num_args=1, env_type=EnvironmentType.EQUATION
+    ),
+    "gathered": EnvironmentDefinition("gathered", env_type=EnvironmentType.EQUATION),
     "split": EnvironmentDefinition("split", env_type=EnvironmentType.EQUATION),
     "array": EnvironmentDefinition(
         "array", num_args=1, env_type=EnvironmentType.EQUATION
     ),
+    # align environments
+    "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "eqnarray": EnvironmentDefinition(
+        "eqnarray", env_type=EnvironmentType.EQUATION_ALIGN
+    ),
+    "flalign": EnvironmentDefinition(
+        "flalign", env_type=EnvironmentType.EQUATION_ALIGN
+    ),
+    "alignat": EnvironmentDefinition(
+        "alignat",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_ALIGN,
+    ),
+    # subequations
+    "subequations": EnvironmentDefinition("subequations"),
 }
 
 # # Theorem-like environments
