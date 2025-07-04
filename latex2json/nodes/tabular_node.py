@@ -48,7 +48,7 @@ class CellNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "tabular_cell"
+        result["type"] = "cell"
         result["content"] = (
             [child.to_json() for child in self.children] if self.children else None
         )
@@ -70,6 +70,10 @@ class RowNode(ASTNode):
         """Returns the total number of columns this row spans."""
         return sum(cell.colspan for cell in self.cells)
 
+    @property
+    def rows(self) -> int:
+        return len(self.cells)
+
     def is_null_row(self) -> bool:
         """Check if this is an empty row."""
         return all(len(cell.children) == 0 for cell in self.cells)
@@ -88,7 +92,7 @@ class RowNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "tabular_row"
+        result["type"] = "row"
         result["content"] = [cell.to_json() for cell in self.cells]
         return result
 

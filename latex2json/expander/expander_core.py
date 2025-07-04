@@ -1116,6 +1116,7 @@ class ExpanderCore:
         is_math = env_def.env_type in [
             EnvironmentType.EQUATION,
             EnvironmentType.EQUATION_ALIGN,
+            # EnvironmentType.EQUATION_MATRIX_OR_ARRAY, # not needed since these are nested inside equation/align
         ]
         is_align = env_def.env_type == EnvironmentType.EQUATION_ALIGN
         is_verbatim = env_def.env_type == EnvironmentType.VERBATIM

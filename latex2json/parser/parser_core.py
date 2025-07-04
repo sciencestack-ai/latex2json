@@ -10,6 +10,7 @@ from latex2json.nodes import (
     EnvironmentNode,
     TextNode,
     EquationNode,
+    EquationArrayNode,
     DisplayType,
     SectionNode,
     CommandNode,
@@ -395,7 +396,11 @@ class ParserCore:
         self.push_env_stack(env_node)
 
         was_math_mode = self.is_math_mode
-        if token.env_type in [EnvironmentType.EQUATION, EnvironmentType.EQUATION_ALIGN]:
+        if token.env_type in [
+            EnvironmentType.EQUATION,
+            EnvironmentType.EQUATION_ALIGN,
+            EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+        ]:
             self.is_math_mode = True
 
         begin_predicate: TokenPredicate = (
@@ -549,7 +554,9 @@ class ParserCore:
                 # collapse multiple spaces into single space (latex)
                 text = normalize_whitespace_and_lines(text)
                 node.text = text.replace("~", " ")
-            elif node.children and not isinstance(node, EquationNode):
+            elif node.children and not isinstance(
+                node, (EquationNode, EquationArrayNode)
+            ):
                 # don't process equation nodes
                 new_children = self.postprocess_nodes(node.children)
                 node.set_children(new_children)

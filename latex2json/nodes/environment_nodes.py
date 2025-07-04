@@ -6,16 +6,16 @@ from latex2json.nodes.utils import strip_whitespace_nodes
 class EnvironmentNode(ASTNode):
     def __init__(
         self,
-        name: str,
+        env_name: str,
         body: List[ASTNode] = [],
         numbering: Optional[str] = None,
         display_name: Optional[str] = None,
     ):
         super().__init__()
-        self.name = name
+        self.env_name = env_name
         self.numbering = numbering
         self.set_body(body)
-        self.display_name = display_name or name
+        self.display_name = display_name or env_name
 
     def set_body(self, body: List[ASTNode]):
         self.set_children(strip_whitespace_nodes(body))
@@ -24,13 +24,17 @@ class EnvironmentNode(ASTNode):
     def body(self) -> List[ASTNode]:
         return self.children
 
+    @property
+    def name(self) -> str:
+        return self.display_name or self.env_name
+
     def __str__(self):
         return self.detokenize()
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, EnvironmentNode):
             return False
-        same = self.name == other.name
+        same = self.env_name == other.env_name
         if not same:
             return False
         same = self.display_name == other.display_name
@@ -41,7 +45,7 @@ class EnvironmentNode(ASTNode):
     def detokenize(self) -> str:
         """Convert the environment node back to LaTeX source code."""
         # Start with \begin{name}
-        out = f"\\begin{{{self.name}}}"
+        out = f"\\begin{{{self.env_name}}}"
 
         # Add numbering if present
         if self.numbering:
@@ -54,14 +58,14 @@ class EnvironmentNode(ASTNode):
             out += "\n"
 
         # End with \end{name}
-        out += f"\\end{{{self.name}}}"
+        out += f"\\end{{{self.env_name}}}"
 
         return out
 
     def to_json(self):
         result = super().to_json()
         result["type"] = "environment"
-        result["name"] = self.display_name or self.name
+        result["name"] = self.display_name or self.env_name
         result["content"] = [child.to_json() for child in self.body]
         if self.numbering:
             result["numbering"] = self.numbering

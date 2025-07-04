@@ -32,6 +32,7 @@ class EnvironmentType(Enum):
     DEFAULT = "default"
     EQUATION = "equation"
     EQUATION_ALIGN = "align"
+    EQUATION_MATRIX_OR_ARRAY = "matrix_or_array"
     THEOREM = "theorem"
     VERBATIM = "verbatim"
 

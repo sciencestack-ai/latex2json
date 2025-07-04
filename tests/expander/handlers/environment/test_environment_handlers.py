@@ -377,9 +377,13 @@ def test_subequations_and_align():
             "equation", env_type=EnvironmentType.EQUATION, numbering="7"
         ),
         # \begin{matrix}
-        EnvironmentStartToken("matrix", env_type=EnvironmentType.EQUATION),
+        EnvironmentStartToken(
+            "matrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+        ),
         Token(TokenType.ENVIRONMENT_END, "matrix"),
-        EnvironmentStartToken("pmatrix", env_type=EnvironmentType.EQUATION),
+        EnvironmentStartToken(
+            "pmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+        ),
         Token(TokenType.ENVIRONMENT_END, "pmatrix"),
         Token(TokenType.ENVIRONMENT_END, "equation"),
         # \end{align}
@@ -395,11 +399,13 @@ def test_subequations_and_align():
     a & b \\
         c & d
     \end{matrix}
-    \\
-    \begin{pmatrix} % number 9
+    \\ \nonumber
+    \begin{pmatrix} % no number!
     a & b \\
         c & d
     \end{pmatrix}
+    \\ 
+    1 & 2  %  number 9
     \end{align}
     """
     expected_env_token_sequence = [
@@ -409,15 +415,21 @@ def test_subequations_and_align():
             "equation", env_type=EnvironmentType.EQUATION, numbering="8"
         ),
         # \begin{matrix}
-        EnvironmentStartToken("matrix", env_type=EnvironmentType.EQUATION),
+        EnvironmentStartToken(
+            "matrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+        ),
         Token(TokenType.ENVIRONMENT_END, "matrix"),
         Token(TokenType.ENVIRONMENT_END, "equation"),
         # \begin{pmatrix}
+        EnvironmentStartToken("equation", env_type=EnvironmentType.EQUATION),
+        EnvironmentStartToken(
+            "pmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+        ),
+        Token(TokenType.ENVIRONMENT_END, "pmatrix"),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
         EnvironmentStartToken(
             "equation", env_type=EnvironmentType.EQUATION, numbering="9"
         ),
-        EnvironmentStartToken("pmatrix", env_type=EnvironmentType.EQUATION),
-        Token(TokenType.ENVIRONMENT_END, "pmatrix"),
         Token(TokenType.ENVIRONMENT_END, "equation"),
         # \end{align}
         Token(TokenType.ENVIRONMENT_END, "align"),

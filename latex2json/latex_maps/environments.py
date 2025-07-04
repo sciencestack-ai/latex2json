@@ -193,20 +193,41 @@ MATH_ENVIRONMENTS = {
         "dmath", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
     # inner environments inside equation/align
-    "aligned": EnvironmentDefinition("aligned", env_type=EnvironmentType.EQUATION),
-    "alignedat": EnvironmentDefinition(
-        "alignedat", num_args=1, env_type=EnvironmentType.EQUATION
-    ),
     "gathered": EnvironmentDefinition("gathered", env_type=EnvironmentType.EQUATION),
-    "split": EnvironmentDefinition("split", env_type=EnvironmentType.EQUATION),
+    "aligned": EnvironmentDefinition(
+        "aligned", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "alignedat": EnvironmentDefinition(
+        "alignedat", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "split": EnvironmentDefinition(
+        "split", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
     "array": EnvironmentDefinition(
-        "array", num_args=1, env_type=EnvironmentType.EQUATION
+        "array", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # matrix envs (also inner envs)
-    "matrix": EnvironmentDefinition("matrix", env_type=EnvironmentType.EQUATION),
-    "pmatrix": EnvironmentDefinition("pmatrix", env_type=EnvironmentType.EQUATION),
-    "bmatrix": EnvironmentDefinition("bmatrix", env_type=EnvironmentType.EQUATION),
-    "vmatrix": EnvironmentDefinition("vmatrix", env_type=EnvironmentType.EQUATION),
+    "matrix": EnvironmentDefinition(
+        "matrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "pmatrix": EnvironmentDefinition(
+        "pmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),  # parentheses ()
+    "bmatrix": EnvironmentDefinition(
+        "bmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),  # brackets []
+    "Bmatrix": EnvironmentDefinition(
+        "Bmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),  # braces {}
+    "vmatrix": EnvironmentDefinition(
+        "vmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),  # vert bars | |
+    "Vmatrix": EnvironmentDefinition(
+        "Vmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),  # double vert bars || ||
+    "smallmatrix": EnvironmentDefinition(
+        "smallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray": EnvironmentDefinition(

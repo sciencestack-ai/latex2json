@@ -7,6 +7,7 @@ from latex2json.nodes.base_nodes import (
     TextNode,
 )
 
+from latex2json.nodes.tabular_node import CellNode, RowNode
 from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 
 
@@ -47,13 +48,11 @@ class EquationNode(ASTNode):
         env_name: str = "equation",
         equation_type: DisplayType = DisplayType.INLINE,
         numbering: Optional[str] = None,
-        args: Optional[List[str]] = None,
     ):
         super().__init__()
         self.numbering = numbering
         self.equation_type = equation_type
         self.env_name = env_name
-        self.args = args
 
         self.set_body(math_nodes)
 
@@ -113,10 +112,9 @@ class EquationNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "equation"
-        result["name"] = self.env_name
         result["display"] = self.equation_type.value
-        if self.args:
-            result["args"] = self.args
+        if self.equation_type != DisplayType.INLINE:
+            result["name"] = self.env_name
         if self.numbering:
             result["numbering"] = self.numbering
 
@@ -141,4 +139,70 @@ class EquationNode(ASTNode):
                 token["content"] = strip_balanced_braces(token["content"])
         result["content"] = content_json
 
+        return result
+
+
+class EquationArrayNode(ASTNode):
+    def __init__(
+        self,
+        env_name: str,  # can be "align", "array", "matrix", etc
+        row_nodes: List[RowNode] = [],
+        row_numberings: Optional[List[Optional[str]]] = None,
+    ):
+        super().__init__()
+        self.env_name = env_name
+        self.row_numberings = row_numberings
+        self.set_children(row_nodes)
+
+    @property
+    def row_nodes(self) -> List[RowNode]:
+        return self.children
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, EquationArrayNode):
+            return False
+        if self.row_numberings != other.row_numberings:
+            return False
+        if self.env_name != other.env_name:
+            return False
+        return all(a == b for a, b in zip(self.children, other.children))
+
+    def detokenize(self, add_numbering: bool = False) -> str:
+        """Convert the equation array node back to LaTeX source code."""
+        if not self.row_nodes:
+            return f"\\begin{{{self.env_name}}}\n\\end{{{self.env_name}}}"
+
+        out = f"\\begin{{{self.env_name}}}\n"
+
+        for i, row in enumerate(self.row_nodes):
+            out += row.detokenize()
+            if add_numbering and 0 <= i < len(self.row_numberings):
+                out += f" ({self.row_numberings[i]})"
+            if i < len(self.row_nodes) - 1:
+                out += " \\\\\n"
+
+        out += f"\n\\end{{{self.env_name}}}"
+        return out
+
+    def __str__(self):
+        out_str = self.detokenize(add_numbering=True)
+        return out_str
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = "equation_array"
+        result["name"] = self.env_name
+
+        content = []
+        for i, row in enumerate(self.row_nodes):
+            row_json = row.to_json()
+            row_content = []
+            for cell in row.cells:
+                cell_json = cell.to_json()
+                row_content.append(cell_json["content"])
+            row_json["content"] = row_content
+            if self.row_numberings and 0 <= i < len(self.row_numberings):
+                row_json["numbering"] = self.row_numberings[i]
+            content.append(row_json)
+        result["rows"] = content
         return result

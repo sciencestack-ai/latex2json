@@ -1,6 +1,20 @@
-from latex2json.nodes.math_nodes import EquationNode
+from typing import List, Optional
+from latex2json.latex_maps.environments import MATH_ENVIRONMENTS
+from latex2json.nodes import (
+    AlignmentNode,
+    EquationNode,
+    ASTNode,
+    EquationArrayNode,
+    RowNode,
+    CellNode,
+)
+from latex2json.nodes.utils import (
+    split_nodes_by_predicate,
+    split_nodes_into_rows,
+    strip_whitespace_nodes,
+)
 from latex2json.parser.parser_core import ParserCore
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import EnvironmentStartToken, EnvironmentType, Token
 
 
 def ensuremath_handler(parser: ParserCore, token: Token):
@@ -8,5 +22,104 @@ def ensuremath_handler(parser: ParserCore, token: Token):
     return [EquationNode(nodes)]
 
 
+def split_nodes_into_columns(nodes: List[ASTNode]) -> List[List[ASTNode]]:
+    """Split nodes into columns based on AlignmentNode and convert to CellNodes"""
+    return split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
+
+
+def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
+    env = parser.parse_environment(token)
+
+    env_def = parser.expander.get_environment_definition(env.env_name)
+    if not env_def or env_def.env_type != EnvironmentType.EQUATION_ALIGN:
+        # if env is not equation_align, it means the env might have been redefined
+        return [env]
+
+    row_nodes: List[RowNode] = []
+    row_numberings: List[Optional[str]] = []
+    for node in env.children:
+        if isinstance(node, EquationNode):
+            column_nodes: List[CellNode] = []
+            childs = node.children
+            columns = split_nodes_into_columns(childs)
+            for column in columns:
+                column = strip_whitespace_nodes(column)
+                column_nodes.append(CellNode(column))
+
+            r_node = RowNode(column_nodes)
+            r_node.labels = node.labels
+            row_nodes.append(r_node)
+            row_numberings.append(node.numbering)
+
+    eq_array_node = EquationArrayNode(
+        env.env_name, row_nodes=row_nodes, row_numberings=row_numberings
+    )
+    eq_array_node.labels = env.labels
+    return [eq_array_node]
+
+
+def matrix_or_array_handler(parser: ParserCore, token: EnvironmentStartToken):
+    env = parser.parse_environment(token)
+
+    env_def = parser.expander.get_environment_definition(env.env_name)
+    if not env_def or env_def.env_type != EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
+        # if env is not matrix_or_array, it means the env might have been redefined
+        return [env]
+
+    childs = env.children
+    rows = split_nodes_into_rows(childs)  # split \\
+    row_nodes: List[RowNode] = []
+    for r, row in enumerate(rows):
+        columns = split_nodes_into_columns(row)  # split &
+        column_nodes: List[CellNode] = []
+        for c, column in enumerate(columns):
+            column = strip_whitespace_nodes(column)
+            column_nodes.append(CellNode(column))
+        row_nodes.append(RowNode(column_nodes))
+
+    eq_array_node = EquationArrayNode(env.env_name, row_nodes=row_nodes)
+    eq_array_node.labels = env.labels
+    return [eq_array_node]
+
+
 def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("ensuremath", ensuremath_handler)
+
+    for env_name, env_def in MATH_ENVIRONMENTS.items():
+        # fetch env_def from parser/expander directly, in case it has been redefined
+        if env_def.env_type == EnvironmentType.EQUATION_ALIGN:
+            parser.register_env_handler(env_name, equation_align_handler)
+
+        elif env_def.env_type == EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
+            parser.register_env_handler(env_name, matrix_or_array_handler)
+
+
+if __name__ == "__main__":
+
+    from latex2json.parser import Parser
+
+    parser = Parser()
+    text = r"""
+    \begin{align} 
+    a & b \label{eq:1} \\
+    \begin{matrix}  % number 8
+    a & b \\
+        c & d
+    \end{matrix} 
+    \\ 
+    \begin{array}{2} % number 9
+    a & b \\
+        c & d
+    \end{array} 44 \ref{eq:1} & 55 
+    \end{align}
+
+    \begin{equation}
+    \begin{pmatrix}
+    1 & 2 
+    \end{pmatrix}
+    \end{equation}
+
+    $1+4 \ref{eq:1}$
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
