@@ -61,6 +61,10 @@ class EquationNode(ASTNode):
         body = strip_whitespace_nodes(body)
         self.set_children(body)
 
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
+
     def __str__(self):
         return self.detokenize() + (f" ({self.numbering})" if self.numbering else "")
 

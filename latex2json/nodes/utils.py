@@ -1,5 +1,6 @@
 from typing import List, TypeVar, Callable
 from latex2json.nodes.base_nodes import (
+    CommandNode,
     TextNode,
     ASTNode,
 )
@@ -77,3 +78,12 @@ def split_nodes_by_predicate(
         groups.append(current_group)
 
     return groups
+
+
+def is_newline_command(node: ASTNode) -> bool:
+    return isinstance(node, CommandNode) and node.name == "\\"
+
+
+def split_nodes_into_rows(nodes: List[ASTNode]) -> List[List[ASTNode]]:
+    """Split nodes into rows based on \\\\"""
+    return split_nodes_by_predicate(nodes, is_newline_command)

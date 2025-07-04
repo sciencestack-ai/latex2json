@@ -2,8 +2,8 @@ from latex2json.nodes.tabular_node import CellNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens import Token
-from latex2json.parser.handlers.environments.tabular_handler import split_into_rows
 from latex2json.nodes.base_nodes import CommandNode
+from latex2json.nodes.utils import split_nodes_into_rows
 
 
 def makecell_handler(parser: ParserCore, token: Token):
@@ -19,7 +19,7 @@ def makecell_handler(parser: ParserCore, token: Token):
 
     out_nodes = []
     if content_nodes:
-        rows = split_into_rows(content_nodes)
+        rows = split_nodes_into_rows(content_nodes)
         for row in rows:
             out_nodes.extend(strip_whitespace_nodes(row))
             out_nodes.append(CommandNode("newline"))

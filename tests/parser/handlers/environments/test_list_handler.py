@@ -1,6 +1,6 @@
 import pytest
 
-from latex2json.nodes.base_nodes import TextNode, CommandNode
+from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.list_item_node import ListItemNode, ListNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser

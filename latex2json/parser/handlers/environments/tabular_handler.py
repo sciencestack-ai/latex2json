@@ -1,20 +1,15 @@
 from typing import Dict, List, Callable
 from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
-from latex2json.nodes.utils import strip_whitespace_nodes, split_nodes_by_predicate
+from latex2json.nodes.utils import (
+    strip_whitespace_nodes,
+    split_nodes_by_predicate,
+    split_nodes_into_rows,
+)
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
-from latex2json.nodes import ASTNode, AlignmentNode, CommandNode
+from latex2json.nodes import ASTNode, AlignmentNode
 
 from latex2json.parser.parser_core import ParserCore
-
-
-def is_newline_command(node: ASTNode) -> bool:
-    return isinstance(node, CommandNode) and node.name == "\\"
-
-
-def split_into_rows(nodes: List[ASTNode]) -> List[List[ASTNode]]:
-    """Split nodes into rows based on \\\\"""
-    return split_nodes_by_predicate(nodes, is_newline_command)
 
 
 def split_nodes_into_columns(nodes: List[ASTNode]) -> List[CellNode]:
@@ -53,7 +48,7 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     row_nodes: List[RowNode] = []
     if env_nodes:
         # Split into rows and columns using node-based splitting
-        rows = split_into_rows(env_nodes)
+        rows = split_nodes_into_rows(env_nodes)
         row_nodes = [RowNode(split_nodes_into_columns(row)) for row in rows]
 
         # strip null rows

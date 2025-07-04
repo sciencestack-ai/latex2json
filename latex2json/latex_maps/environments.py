@@ -202,6 +202,11 @@ MATH_ENVIRONMENTS = {
     "array": EnvironmentDefinition(
         "array", num_args=1, env_type=EnvironmentType.EQUATION
     ),
+    # matrix envs (also inner envs )
+    "matrix": EnvironmentDefinition("matrix", env_type=EnvironmentType.EQUATION),
+    "pmatrix": EnvironmentDefinition("pmatrix", env_type=EnvironmentType.EQUATION),
+    "bmatrix": EnvironmentDefinition("bmatrix", env_type=EnvironmentType.EQUATION),
+    "vmatrix": EnvironmentDefinition("vmatrix", env_type=EnvironmentType.EQUATION),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray": EnvironmentDefinition(

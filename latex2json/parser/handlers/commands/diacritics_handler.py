@@ -1,5 +1,5 @@
 import unicodedata
-from latex2json.nodes.base_nodes import CommandNode, TextNode
+from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser_core import Handler, ParserCore
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token, TokenType

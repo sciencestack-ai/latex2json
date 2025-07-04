@@ -1,6 +1,6 @@
 from typing import List
 from latex2json.latex_maps.environments import LIST_ENVIRONMENTS
-from latex2json.nodes.base_nodes import ASTNode, CommandNode
+from latex2json.nodes.base_nodes import ASTNode
 from latex2json.nodes.list_item_node import ListItemNode, ListNode
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
 from latex2json.parser.parser_core import ParserCore

@@ -395,7 +395,7 @@ class ParserCore:
         self.push_env_stack(env_node)
 
         was_math_mode = self.is_math_mode
-        if token.env_type == EnvironmentType.EQUATION:
+        if token.env_type in [EnvironmentType.EQUATION, EnvironmentType.EQUATION_ALIGN]:
             self.is_math_mode = True
 
         begin_predicate: TokenPredicate = (

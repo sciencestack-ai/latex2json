@@ -270,9 +270,7 @@ class CommandNode(ASTNode):
         return True
 
     def detokenize(self):
-        out = self.name
-        if not out.startswith("\\"):
-            out = "\\" + out
+        out = "\\" + self.name
         for child in self.opt_args:
             out += "[" + child.detokenize() + "]"
         for child in self.args:

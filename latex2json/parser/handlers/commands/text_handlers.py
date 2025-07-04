@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from latex2json.nodes import ASTNode
-from latex2json.nodes.base_nodes import CommandNode, TextNode
+from latex2json.nodes.base_nodes import TextNode
 from latex2json.parser.parser_core import Handler, ParserCore
 from latex2json.latex_maps.fonts import (
     FontStyle,
@@ -20,13 +20,14 @@ def make_legacy_text_handler(style: FontStyle) -> Handler:
     return legacy_text_handler
 
 
-def make_text_handler(style: FontStyle) -> Handler:
+def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
     def text_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         parser.skip_whitespace()
         nodes = parser.parse_brace_as_nodes()
-        for node in nodes:
-            # Use the frontend style mapping for consistent CSS-like values
-            node.add_styles([style.value], insert_at_front=True)
+        if style:
+            for node in nodes:
+                # Use the frontend style mapping for consistent CSS-like values
+                node.add_styles([style.value], insert_at_front=True)
         return nodes
 
     return text_handler

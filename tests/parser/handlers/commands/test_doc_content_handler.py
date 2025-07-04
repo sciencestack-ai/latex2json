@@ -1,7 +1,6 @@
 import pytest
 
 from latex2json.nodes import (
-    CommandNode,
     TextNode,
     MetadataNode,
     AuthorNode,
