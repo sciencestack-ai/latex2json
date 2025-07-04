@@ -253,3 +253,108 @@ def test_verbatim_environments():
         verbatim_env_tokens[-4:-1], expander.convert_str_to_tokens("##1")
     )
     assert verbatim_env_tokens[-1] == Token(TokenType.ENVIRONMENT_END, "verbatim")
+
+
+def test_subequations_and_align():
+    expander = Expander()
+
+    text = r"""
+    \def\fracc{\frac}
+    \begin{subequations}
+    \begin{align}
+    a &= b \fracc{1}{2} \label{eq:1} \\ % eq number 1.a
+    1+1  \\ % eq number 1.b
+    c &= d \nonumber % no number!
+    \end{align} 
+    \begin{equation} % eq number 1.c
+    2+2=4 
+    \end{equation}
+    \begin{align*} 
+    aaa                % no number!
+    \end{align*}
+    \end{subequations}
+
+    \begin{equation} % eq number 2
+    55
+    \label{eq:2}
+    \end{equation}
+
+    \begin{eqnarray}
+    a &= b \\ % eq number 3
+    c &= d % eq number 4
+    \end{eqnarray}
+
+    \begin{subequations}
+    \begin{equation} % eq number 5.a
+    1+1
+    \end{equation}
+    \end{subequations}
+    """
+
+    out = expander.expand(text)
+
+    expected_env_token_sequence = [
+        EnvironmentStartToken("subequations"),
+        # \begin{align}
+        EnvironmentStartToken("align", env_type=EnvironmentType.EQUATION_ALIGN),
+        # equations inside align are numbered. Inside subequations, they are numbered as 1.a, 1.b, etc
+        EnvironmentStartToken(
+            "equation", numbering="1.a", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        EnvironmentStartToken(
+            "equation", numbering="1.b", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        EnvironmentStartToken(
+            "equation", env_type=EnvironmentType.EQUATION
+        ),  # \nonumber means not numbered
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \end{align}
+        Token(TokenType.ENVIRONMENT_END, "align"),
+        # \begin{equation}
+        EnvironmentStartToken(
+            "equation", numbering="1.c", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \begin{align*}. all equations inside align* are not numbered
+        EnvironmentStartToken("align*", env_type=EnvironmentType.EQUATION_ALIGN),
+        EnvironmentStartToken("equation", env_type=EnvironmentType.EQUATION),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \end{align*}
+        Token(TokenType.ENVIRONMENT_END, "align*"),
+        # \end{subequations}
+        Token(TokenType.ENVIRONMENT_END, "subequations"),
+        # \begin{equation}
+        EnvironmentStartToken(
+            "equation", numbering="2", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \begin{eqnarray}
+        EnvironmentStartToken("eqnarray", env_type=EnvironmentType.EQUATION_ALIGN),
+        EnvironmentStartToken(
+            "equation", numbering="3", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        EnvironmentStartToken(
+            "equation", numbering="4", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        Token(TokenType.ENVIRONMENT_END, "eqnarray"),
+        # \begin{subequations}
+        EnvironmentStartToken("subequations"),
+        EnvironmentStartToken(
+            "equation", numbering="5.a", env_type=EnvironmentType.EQUATION
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        Token(TokenType.ENVIRONMENT_END, "subequations"),
+    ]
+
+    i = 0
+    for tok in out:
+        if tok == expected_env_token_sequence[i]:
+            i += 1
+            if i >= len(expected_env_token_sequence):
+                break
+
+    assert i == len(expected_env_token_sequence)

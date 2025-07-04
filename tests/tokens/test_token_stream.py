@@ -38,6 +38,9 @@ def test_push_text():
     assert stream.consume() == Token(TokenType.CHARACTER, "f", catcode=Catcode.LETTER)
     assert stream.consume() == Token(TokenType.CHARACTER, "g", catcode=Catcode.LETTER)
 
+    # test peek
+    assert stream.peek(2) == Token(TokenType.CHARACTER, "5", catcode=Catcode.OTHER)
+
     # now resume back to the original text
     assert stream.consume() == Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER)
     assert stream.consume() == Token(TokenType.CHARACTER, "4", catcode=Catcode.OTHER)

@@ -1153,7 +1153,7 @@ class ExpanderCore:
                 display_name=env_def.display_name,
                 numbering=numbering,
                 env_type=env_def.env_type,
-                args=args,
+                # args=args,
             )
 
             out_tokens: List[Token] = [begin_token]
@@ -1170,18 +1170,17 @@ class ExpanderCore:
                         and token.value == "end"
                     )
                     if is_end_env_ctrl:
+                        # parse {...} after \end to get the env name
+
+                        # tokens_to_return is any whitespace between \end and {...}
                         tokens_to_return = expander.parse_tokens_until(
                             is_begin_group_token, verbatim=True
                         )
-                        # check next tok is the env name
+                        # check {...} is the env name
                         parsed_env_name = expander.parse_brace_name() or ""
                         is_end_env_name = parsed_env_name == env_name
 
-                        # if the end env name is the same as the begin env name,
-                        # we need to push the \end token back to the stream (so that later end_handler can handle it)
-                        if is_end_env_name:
-                            tokens_to_return.insert(0, token)
-                        # push {...} of \end{...} back to stream
+                        # push {...} of \end{...} back to stream (since we're not supposed to parse it in this predicate function)
                         expander.push_tokens(
                             tokens_to_return
                             + expander.convert_str_to_tokens(
