@@ -289,9 +289,32 @@ def test_subequations_and_align():
     1+1
     \end{equation}
     \end{subequations}
+
+    % empty subequations also increment
+    \begin{subequations} % theoretically number 6, but no equations inside to number
+    \end{subequations}
+
+    \begin{align} 
+    \begin{matrix}  % these 2 matrix blocks are together as one equation (number 7), since there is no \\ split between them
+    a & b \\
+        c & d
+    \end{matrix}
+    \begin{pmatrix}
+    a & b \\
+        c & d
+    \end{pmatrix}
+    \end{align}
     """
 
-    out = expander.expand(text)
+    def assert_env_sequence(out: List[Token], expected_env_token_sequence: List[Token]):
+        i = 0
+        for tok in out:
+            if tok == expected_env_token_sequence[i]:
+                i += 1
+                if i >= len(expected_env_token_sequence):
+                    break
+
+        assert i == len(expected_env_token_sequence)
 
     expected_env_token_sequence = [
         EnvironmentStartToken("subequations"),
@@ -348,13 +371,56 @@ def test_subequations_and_align():
         ),
         Token(TokenType.ENVIRONMENT_END, "equation"),
         Token(TokenType.ENVIRONMENT_END, "subequations"),
+        # \begin{align}
+        EnvironmentStartToken("align", env_type=EnvironmentType.EQUATION_ALIGN),
+        EnvironmentStartToken(
+            "equation", env_type=EnvironmentType.EQUATION, numbering="7"
+        ),
+        # \begin{matrix}
+        EnvironmentStartToken("matrix", env_type=EnvironmentType.EQUATION),
+        Token(TokenType.ENVIRONMENT_END, "matrix"),
+        EnvironmentStartToken("pmatrix", env_type=EnvironmentType.EQUATION),
+        Token(TokenType.ENVIRONMENT_END, "pmatrix"),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \end{align}
+        Token(TokenType.ENVIRONMENT_END, "align"),
     ]
+    assert_env_sequence(expander.expand(text), expected_env_token_sequence)
 
-    i = 0
-    for tok in out:
-        if tok == expected_env_token_sequence[i]:
-            i += 1
-            if i >= len(expected_env_token_sequence):
-                break
+    # now check \\ between matrix blocks are split inside align
 
-    assert i == len(expected_env_token_sequence)
+    text = r"""
+    \begin{align}
+    \begin{matrix}  % number 8
+    a & b \\
+        c & d
+    \end{matrix}
+    \\
+    \begin{pmatrix} % number 9
+    a & b \\
+        c & d
+    \end{pmatrix}
+    \end{align}
+    """
+    expected_env_token_sequence = [
+        # \begin{align}
+        EnvironmentStartToken("align", env_type=EnvironmentType.EQUATION_ALIGN),
+        EnvironmentStartToken(
+            "equation", env_type=EnvironmentType.EQUATION, numbering="8"
+        ),
+        # \begin{matrix}
+        EnvironmentStartToken("matrix", env_type=EnvironmentType.EQUATION),
+        Token(TokenType.ENVIRONMENT_END, "matrix"),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \begin{pmatrix}
+        EnvironmentStartToken(
+            "equation", env_type=EnvironmentType.EQUATION, numbering="9"
+        ),
+        EnvironmentStartToken("pmatrix", env_type=EnvironmentType.EQUATION),
+        Token(TokenType.ENVIRONMENT_END, "pmatrix"),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        # \end{align}
+        Token(TokenType.ENVIRONMENT_END, "align"),
+    ]
+    out = expander.expand(text)
+    assert_env_sequence(out, expected_env_token_sequence)

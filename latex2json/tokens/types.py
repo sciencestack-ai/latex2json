@@ -129,7 +129,7 @@ class EnvironmentStartToken(Token):
         if not isinstance(other, EnvironmentStartToken):
             return False
         return (
-            super().__eq__(other)
+            self.name == other.name
             and self.numbering == other.numbering
             and self.env_type == other.env_type
             and self.display_name == other.display_name

@@ -4,6 +4,7 @@ from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
     END_BRACE_TOKEN,
     WHITESPACE_TOKEN,
+    EnvironmentStartToken,
     Token,
     TokenType,
 )
@@ -131,8 +132,8 @@ def wrap_tokens_in_braces(tokens: List[Token]) -> List[Token]:
 def is_alignment_token(tok: Token) -> bool:
     return (
         # tok.type == TokenType.CHARACTER and
-        tok.catcode
-        == Catcode.ALIGNMENT_TAB
+        tok.catcode == Catcode.ALIGNMENT_TAB
+        or (tok.value == "&" and tok.catcode == Catcode.ACTIVE)  # mathmode
     )
 
 
@@ -195,6 +196,41 @@ def split_tokens_by_predicate(
         if is_separator(tok):
             groups.append(current_group)
             current_group = []
+        else:
+            current_group.append(tok)
+
+    if current_group:
+        groups.append(current_group)
+
+    return groups
+
+
+def segment_tokens_by_begin_end(tokens: List[Token]) -> List[List[Token]]:
+    """Segment tokens into groups based on begin and end tokens.
+
+    Args:
+        tokens: List of tokens to segment
+
+    Returns:
+        List of token groups
+    """
+    groups: List[List[Token]] = []
+    current_group: List[Token] = []
+    env_name: str | None = None
+
+    for tok in tokens:
+        if isinstance(tok, EnvironmentStartToken):
+            groups.append(current_group)
+            current_group = [tok]  # Start new group with begin token
+            env_name = tok.name
+        elif tok.type == TokenType.ENVIRONMENT_END:
+            if tok.value == env_name:  # Found matching end token
+                current_group.append(tok)
+                groups.append(current_group)
+                current_group = []
+                env_name = None
+            else:
+                current_group.append(tok)
         else:
             current_group.append(tok)
 

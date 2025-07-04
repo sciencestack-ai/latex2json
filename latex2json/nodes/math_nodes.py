@@ -98,12 +98,16 @@ class EquationNode(ASTNode):
         if self.equation_type == DisplayType.INLINE:
             return "$" + math_str + "$"
 
-        if self.equation_type == DisplayType.BLOCK and not self.numbering:
+        if (
+            self.equation_type == DisplayType.BLOCK
+            and self.env_name == "equation"
+            and not self.numbering
+        ):
             return "$$" + math_str + "$$"
 
         env_name = self.env_name
-        begin_str = f"\\begin{{{env_name}}}"
-        end_str = f"\\end{{{env_name}}}"
+        begin_str = f"\\begin{{{env_name}}}\n"
+        end_str = f"\n\\end{{{env_name}}}"
         return begin_str + math_str + end_str
 
     def to_json(self):

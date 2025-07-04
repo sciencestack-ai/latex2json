@@ -14,6 +14,7 @@ from latex2json.tokens.types import (
 )
 from latex2json.tokens.utils import (
     is_mathshift_token,
+    segment_tokens_by_begin_end,
     split_tokens_by_predicate,
     strip_whitespace_tokens,
     substitute_token_args,
@@ -1202,16 +1203,36 @@ class ExpanderCore:
                     body_block = expander.expand_until(
                         stop_token_logic=is_end_env_token, consume_stop_token=False
                     )
+                    # first, segment into \begin...\end blocks.
+                    # This is so that \\ nested inside inner \begin e.g. \begin{matrix} ... \\ ... \end{matrix} inside \begin{align} are not prematurely split
+                    segments = segment_tokens_by_begin_end(body_block)
+                    split_body_block: List[List[Token]] = [[]]
 
                     def is_newline_token(tok: Token) -> bool:
                         return (
                             tok.value == "\\" and tok.type == TokenType.CONTROL_SEQUENCE
                         )
 
-                    split_body_block = split_tokens_by_predicate(
-                        body_block, is_newline_token
-                    )
+                    # split into \\ or \begin...\end
+                    for segment in segments:
+                        if not segment:
+                            continue
+                        if segment[0].type == TokenType.ENVIRONMENT_START:
+                            split_body_block[-1].extend(segment)
+                        else:
+                            for token in segment:
+                                if is_newline_token(token):
+                                    split_body_block.append([])
+                                else:
+                                    split_body_block[-1].append(token)
+
                     is_numbered = env_name.isalpha()  # False if there is *
+
+                    def is_nonumber_token(tok: Token) -> bool:
+                        return (
+                            tok.type == TokenType.CONTROL_SEQUENCE
+                            and tok.value == "nonumber"
+                        )
 
                     equation_tokens = []
                     for block in split_body_block:
@@ -1220,14 +1241,13 @@ class ExpanderCore:
                         # check for \nonumber
                         newblock = []
                         for tok in block:
-                            if (
-                                tok.type == TokenType.CONTROL_SEQUENCE
-                                and tok.value == "nonumber"
-                            ):
+                            if is_nonumber_token(tok):
                                 is_local_numbered = False
                             else:
                                 newblock.append(tok)
                         newblock = strip_whitespace_tokens(newblock)
+                        if not newblock:
+                            continue
 
                         numbering = None
                         if is_local_numbered:

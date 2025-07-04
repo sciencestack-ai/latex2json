@@ -293,18 +293,21 @@ class ExpanderState:
         """Create a new counter with optional parent relationship"""
         self.counter_manager.new_counter(name, parent)
 
-    def step_counter(self, name: str) -> None:
+    def step_counter(self, name: str, strict=False) -> None:
         """Increment counter by 1 and reset all children"""
-        if name == "equation" and self.in_subequations:
-            name = "subequation"
+        if not strict:
+            if name == "equation" and self.in_subequations:
+                name = "subequation"
         self.counter_manager.step_counter(name)
 
     def get_counter_display(
         self,
         name: str,
+        strict=False,
     ) -> str:
-        if name == "equation" and self.in_subequations:
-            name = "subequation"
+        if not strict:
+            if name == "equation" and self.in_subequations:
+                name = "subequation"
         return self.counter_manager.get_counter_display(name)
 
     def set_counter(self, name: str, value: int) -> None:
