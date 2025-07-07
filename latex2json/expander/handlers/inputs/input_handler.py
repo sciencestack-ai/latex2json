@@ -8,6 +8,7 @@ def input_handler(expander: ExpanderCore, token: Token):
         expander.logger.warning("No input file provided")
         return None
 
+    expander.logger.info(f"Expanding input file: {input_file}")
     expander.push_file(input_file)
     return []
 

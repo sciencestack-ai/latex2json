@@ -8,6 +8,7 @@ from latex2json.nodes import (
     RowNode,
     CellNode,
 )
+from latex2json.nodes.base_nodes import DisplayType
 from latex2json.nodes.utils import (
     split_nodes_by_predicate,
     split_nodes_into_rows,
@@ -85,6 +86,11 @@ def matrix_or_array_handler(parser: ParserCore, token: EnvironmentStartToken):
     return [eq_array_node]
 
 
+def inline_math_handler(parser: ParserCore, token: EnvironmentStartToken):
+    env = parser.parse_environment(token)
+    return [EquationNode(env.children, equation_type=DisplayType.INLINE)]
+
+
 def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("ensuremath", ensuremath_handler)
 
@@ -97,6 +103,10 @@ def register_math_env_handlers(parser: ParserCore):
         elif env_def.env_type == EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
             parser.register_env_handler(env_name, matrix_or_array_handler)
             parser.register_env_handler(env_name + "*", matrix_or_array_handler)
+
+        elif env_name == "math":
+            # inline!
+            parser.register_env_handler("math", inline_math_handler)
 
 
 if __name__ == "__main__":

@@ -9,16 +9,30 @@ from latex2json.nodes import (
 )
 
 
+from latex2json.nodes.base_nodes import DisplayType
 from latex2json.parser.parser import Parser
 
 
-def test_ensuremath_handler():
+def test_ensure_begin_math_handler():
     parser = Parser()
 
     text = r"\ensuremath{x^2}"
     out = parser.parse(text)
     assert len(out) == 1 and isinstance(out[0], EquationNode)
     assert out == [EquationNode([TextNode("x^2")])]
+
+    text = r"\begin{math} x^2 \end{math}"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    assert out == [EquationNode([TextNode("x^2")], equation_type=DisplayType.INLINE)]
+
+    # check that equation is number 1
+    text = r"\begin{equation} x^2 \end{equation}"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    assert out == [
+        EquationNode([TextNode("x^2")], equation_type=DisplayType.BLOCK, numbering="1")
+    ]
 
 
 def test_math_env_handlers():

@@ -193,7 +193,11 @@ class EquationArrayNode(ASTNode):
 
         for i, row in enumerate(self.row_nodes):
             out += row.detokenize()
-            if add_numbering and 0 <= i < len(self.row_numberings):
+            if (
+                add_numbering
+                and self.row_numberings
+                and 0 <= i < len(self.row_numberings)
+            ):
                 out += f" ({self.row_numberings[i]})"
             if i < len(self.row_nodes) - 1:
                 out += " \\\\\n"

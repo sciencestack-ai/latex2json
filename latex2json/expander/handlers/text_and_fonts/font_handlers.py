@@ -51,6 +51,7 @@ def register_font_handlers(expander: ExpanderCore):
 
     ignore_patterns = {
         "newfam": "\\",  # e.g. \newfam\fontfam
+        "fontfamily": "{",
         "textfont": "\\=\\",  # e.g. \textfont\fontfam=\xxxx
         "scriptfont": "\\=\\",
         "scriptscriptfont": "\\=\\",

@@ -119,6 +119,8 @@ formatting_patterns = {
     # leavemode
     "leavevmode": 0,  # % vertical mode → horizontal mode
     "par": 0,  # % horizontal mode → vertical mode (end paragraph)
+    # hyphenchar
+    "hyphenchar": "\\=i",
 }
 
 content_formatting_patterns = {

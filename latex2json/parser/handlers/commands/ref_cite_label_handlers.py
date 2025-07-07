@@ -7,6 +7,10 @@ from latex2json.tokens.types import Token
 def label_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     label_nodes = parser.parse_brace_as_nodes()
+    if not label_nodes:
+        # parser.logger.warning("Warning: \\label expects a label")
+        return None
+
     env_node = parser.current_env
     if env_node:
         label_str = parser.convert_nodes_to_str(label_nodes)

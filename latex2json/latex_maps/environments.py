@@ -171,7 +171,9 @@ TABULAR_ENVIRONMENTS = {
 # List environments
 LIST_ENVIRONMENTS = {
     "itemize": EnvironmentDefinition("itemize", has_direct_command=True),
-    "enumerate": EnvironmentDefinition("enumerate", has_direct_command=True),
+    "enumerate": EnvironmentDefinition(
+        "enumerate", num_args=1, default_arg=[], has_direct_command=True
+    ),  # enumitem package has [] arg
     "description": EnvironmentDefinition("description", has_direct_command=True),
     "list": EnvironmentDefinition("list", num_args=2, has_direct_command=True),
 }
@@ -184,6 +186,10 @@ MATH_ENVIRONMENTS = {
         counter_name="equation",
         env_type=EnvironmentType.EQUATION,
         has_direct_command=True,
+    ),
+    "math": EnvironmentDefinition(  # equivalent to inline math
+        "math",
+        env_type=EnvironmentType.EQUATION,
     ),
     "gather": EnvironmentDefinition(
         "gather", counter_name="equation", env_type=EnvironmentType.EQUATION
@@ -198,6 +204,9 @@ MATH_ENVIRONMENTS = {
     "gathered": EnvironmentDefinition("gathered", env_type=EnvironmentType.EQUATION),
     "aligned": EnvironmentDefinition(
         "aligned", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "cases": EnvironmentDefinition(
+        "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     "alignedat": EnvironmentDefinition(
         "alignedat", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
@@ -247,11 +256,11 @@ MATH_ENVIRONMENTS = {
     "subequations": EnvironmentDefinition("subequations"),
 }
 
-# # Theorem-like environments
-# THEOREM_ENVIRONMENTS = {
-#     "theorem": EnvironmentDefinition("theorem", step_counter=True),
-#     "proof": EnvironmentDefinition("proof"),
-# }
+# Theorem-like environments
+THEOREM_ENVIRONMENTS = {
+    # "theorem": EnvironmentDefinition("theorem", step_counter=True),
+    "proof": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
+}
 
 # Combine all environment dictionaries
 COMMON_ENVIRONMENTS = {
@@ -265,7 +274,7 @@ COMMON_ENVIRONMENTS = {
     **LIST_ENVIRONMENTS,
     **MATH_ENVIRONMENTS,
     **ALGORITHM_ENVIRONMENTS,
-    # **THEOREM_ENVIRONMENTS,
+    **THEOREM_ENVIRONMENTS,
 }
 
 STAR_VARIANTS = [
@@ -282,9 +291,9 @@ STAR_VARIANTS = [
     "tabular",
     "tabularx",
     "longtable",
-    "theorem",  # when using amsthm package
-    "lemma",  # when using amsthm package
     "proof",  # when using amsthm package
+    # "theorem",  # when using amsthm package
+    # "lemma",  # when using amsthm package
 ]
 
 for env in STAR_VARIANTS:

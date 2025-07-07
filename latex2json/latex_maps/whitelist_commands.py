@@ -1,5 +1,6 @@
 # These commands should not be overrwritten by newcommand/newenvironment
 WHITELISTED_COMMANDS = [
+    "bibliography",
     "newcommand",
     "def",
     "begin",

@@ -438,6 +438,8 @@ class ExpanderCore:
         if not package_path.endswith(extension):
             package_path += extension
 
+        self.logger.debug(f"Loading package/class: {package_path}")
+
         if read_file and self.if_file_exists(package_path):
             was_in_package_or_class = self.state.in_package_or_class
             self.state.in_package_or_class = True

@@ -59,6 +59,10 @@ def test_ignore_formatting_handlers():
     \interfootnotelinepenalty=1000
     \subjclass{Primary 01A80}
     \subjclass[xx]{Secondary 01A80}
+
+    \hyphenchar\font45
+
+    \fontsize{.4\dimexpr(\f@size pt)}{0}
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
