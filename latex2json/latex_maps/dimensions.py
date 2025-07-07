@@ -88,6 +88,7 @@ BUILTIN_DIMENSIONS = [
     "smallskipamount",  # Amount of \smallskip
     "medskipamount",  # Amount of \medskip
     "bigskipamount",  # Amount of \bigskip
+    "offinterlineskip",
 ]
 
 

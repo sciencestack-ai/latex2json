@@ -120,16 +120,33 @@ class EquationNode(ASTNode):
 
         # convert command nodes to text nodes
         nodes = []
-        for child in self.children:
+        childs = self.children
+
+        def should_add_space_after(i: int) -> bool:
+            # if we're converting to a string, we need to be careful about textnodes rightafter commands
+            # so we add a space after the command
+
+            if i >= len(childs) - 1:
+                return False
+
+            child = childs[i]
             if isinstance(child, CommandNode):
-                # if we're converting to a string, we need to be careful about textnodes rightafter commands
-                # so we add a space after the command
-                cmd_str = "\\" + child.name
-                if cmd_str[-1].isalpha():
-                    cmd_str += " "
+                if not child.name[-1].isalpha():
+                    return False
+            next_node = childs[i + 1]
+            if isinstance(next_node, TextNode):
+                if next_node.text and next_node.text[0].isalpha():
+                    return True
+            return False
+
+        for i, child in enumerate(childs):
+            if isinstance(child, CommandNode):
+                cmd_str = child.detokenize()
                 nodes.append(TextNode(cmd_str))
             else:
                 nodes.append(child.copy())
+            if should_add_space_after(i):
+                nodes.append(TextNode(" "))
         nodes = merge_text_nodes(nodes)
         content_json = [node.to_json() for node in nodes]
 
@@ -197,10 +214,14 @@ class EquationArrayNode(ASTNode):
         for i, row in enumerate(self.row_nodes):
             row_json = row.to_json()
             row_content = []
+
             for cell in row.cells:
-                cell_json = cell.to_json()
-                row_content.append(cell_json["content"])
+                # convert each cell to equation node to ensure json output consistency
+                eq_node = EquationNode(cell.children)
+                eq_node_json = eq_node.to_json()
+                row_content.append(eq_node_json["content"])
             row_json["content"] = row_content
+
             if self.row_numberings and 0 <= i < len(self.row_numberings):
                 row_json["numbering"] = self.row_numberings[i]
             content.append(row_json)

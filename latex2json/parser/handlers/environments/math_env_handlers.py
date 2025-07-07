@@ -70,6 +70,9 @@ def matrix_or_array_handler(parser: ParserCore, token: EnvironmentStartToken):
     rows = split_nodes_into_rows(childs)  # split \\
     row_nodes: List[RowNode] = []
     for r, row in enumerate(rows):
+        # row = strip_whitespace_nodes(row)
+        # if not row:
+        #     continue
         columns = split_nodes_into_columns(row)  # split &
         column_nodes: List[CellNode] = []
         for c, column in enumerate(columns):
@@ -115,11 +118,9 @@ if __name__ == "__main__":
 
     \begin{equation}
     \begin{pmatrix}
-    1 & 2 
+    1 & 2 \ref{eq:1} & \text{mat}
     \end{pmatrix}
     \end{equation}
-
-    $1+4 \ref{eq:1}$
     """.strip()
 
     out = parser.parse(text, postprocess=True)
