@@ -222,7 +222,11 @@ class EquationArrayNode(ASTNode):
                 row_content.append(eq_node_json["content"])
             row_json["content"] = row_content
 
-            if self.row_numberings and 0 <= i < len(self.row_numberings):
+            if (
+                self.row_numberings
+                and 0 <= i < len(self.row_numberings)
+                and self.row_numberings[i]
+            ):
                 row_json["numbering"] = self.row_numberings[i]
             content.append(row_json)
         result["rows"] = content

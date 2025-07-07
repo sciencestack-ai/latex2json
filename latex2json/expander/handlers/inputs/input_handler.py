@@ -13,7 +13,7 @@ def input_handler(expander: ExpanderCore, token: Token):
 
 
 def register_file_input_handlers(expander: ExpanderCore):
-    for command in ["input", "include"]:
+    for command in ["input", "include", "subfile", "subfileinclude"]:
         expander.register_handler(
             command,
             input_handler,

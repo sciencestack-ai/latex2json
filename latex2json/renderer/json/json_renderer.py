@@ -40,10 +40,12 @@ class JSONRenderer:
         nodes = self.parser.parse_file(file_path, postprocess=True)
         if not nodes:
             return None
+        self.logger.info(f"Parsed {len(nodes)} nodes, converting to json...")
         return self.convert_nodes_to_json(nodes, organize_hierachy=organize_hierachy)
 
     def parse(self, text: str, organize_hierachy=True) -> Dict[str, List[Dict]]:
         nodes = self.parser.parse(text, postprocess=True)
+        self.logger.info(f"Parsed {len(nodes)} nodes, converting to json...")
         json_tokens = self.convert_nodes_to_json(
             nodes, organize_hierachy=organize_hierachy
         )
@@ -170,42 +172,185 @@ class JSONRenderer:
 if __name__ == "__main__":
     renderer = JSONRenderer()
     text = r"""
+    \title{My Title}
 
-    \definecolor{red}{rgb}{1,0,0}
+    \author{
+        Mr X \somecmd \\
+        University of XYZ \\
+    }
 
-    \def\aaa{AAA}
-    \section{FIRST}
-    FIRST SEC
-    \subsection{INTRODUCTION} \label{sec:introduction}
-\begin{tabular}{cc}
-    \multicolumn{2}{c}{1} & \textbf{2} & 
-        \begin{itemize}
-            \item item1 \aaa
+    \begin{document}
 
-        \end{itemize} 
+    \begin{abstract}
+    This is my abstract, \texttiny{cool yes?}
+    \end{abstract}
+
+    \paragraph{This is my paragraph}
+    YEAAA baby
+
+    \section{Intro $1+1$} \label{sec:intro}
+
+        Some text here, $1+1=2$:
+        \begin{equation}
+            E = mc^2 \\ x = 1
+        \end{equation}
+
+        \begin{figure}[h]
+            \includegraphics[page=1]{mypdf.pdf}
+            \caption{My figure, from \cite[\textsc{p. 42}]{bibkey1}}
+            \begin{subfigure}[b]{0.45\textwidth}
+                \caption{Subfigure caption}
+            \end{subfigure}
+        \end{figure}
+
+        \subsection{SubIntro}
+        My name is \textbf{John Doe} \textbf{Sss} ahama \verb|my code|
+
+        \begin{theorem}[$T=1$]
+            Theorem 1
+        \end{theorem}
+        
+        % \begin{proof}
+        %    \bf Proof of theorem 1
+        % \end{proof}
+
+        \subsection*{SubIntro2}
+        SUBINTRO 2
+        \paragraph{Paragraph me}
+        Hi there this is paragraph
+
+        \begin{theorem*}
+            Theorem 2
+        \end{theorem*}
+
+        \hyperref[sec:intro]{\textbf{Back to intro}}
+        \subsection{Last sub section}
+            \subsubsection{S3}
+            \subsubsection{S4}
+
+    \section{Conclusion}
+        TLDR: Best paper
+
+        \subsection{mini conclusion}
+        Mini conclude
+        
+        \begin{align*}
+            F = ma
+        \end{align*}
+
+        \begin{proposition}
+            Proposition X
+        \end{proposition}
+
+        \begin{algorithm}
+            \caption{Binary Search}
+        \end{algorithm}        
+
+        \begin{tabular}{|c|c|}
+            \hline
+            Cell 1 & \textbf{Cell 2} & 3 \\
+            \hline
+            \multicolumn{2}{|c|}{Spanning Cell} &  \\
+            & H1 \& H2 & 
+            \hline
+        \end{tabular}
+
+        \begin{description}
+        \item[\textbf{Hello}] World
+        \item[Hello] % nested env
+            \paragraph{This nested env inside}
+                \begin{enumerate}
+                \item 1
+                \item 2
+                \end{enumerate}
+            World
+        \end{description}
+
+        \begin{tikzpicture}
+            \draw (0,0) -- (1,1);
+        \end{tikzpicture}
+
+    \appendix
+
+    \section{My Appendix Section}
+        Here goes my appendix...
     
-       & 5 \\ 
-    3 & 4 & 
-\end{tabular}
+        \subsection{Sub appendix 1}
+        Yea this appendix is nice
 
-\begin{thebibliography}{9}
-\bibitem{1} Bibitem 1
-\end{thebibliography}
+        \subsection{Sub appendix 2}
 
-\begin{appendices} 
-\section{APPENDIX A}
-\subsection{APPENDIX A.1}
-\begin{table}
-\caption{TABLE 1}
-\end{table}
+    \begin{thebibliography}{99}
+    \bibitem[Title]{bibkey1} Some content \tt cool
+    \end{thebibliography}
 
-\paragraph{PARA A}
-Paragraph SSS
-\end{appendices}
+    \end{document}
     """.strip()
-    # json = renderer.parse(text)
-    # print(json)
 
-    json = renderer.parse_file(
-        "/Users/cj/Documents/python/latex2json/tests/samples/main.tex"
-    )
+    text = r"""
+    \newtheorem{theorem}{Theorem}
+
+    \newcommand{\pow}[2][2]{#2^{#1}}
+    \newcommand{\dmodel}{d_{\text{model}}}
+
+    \newcommand{\tensor}[3]{\mathbf{#1}_{#2}^{#3}}
+    
+    % Command with 1 optional and 2 required arguments
+    \newcommand{\norm}[3][2]{\|#2\|_{#3}^{#1}}
+    
+    \newcommand{\integral}[4][0]{\int_{#1}^{#2} #3 d#4}
+    
+    % Command using other defined commands
+    \newcommand{\tensorNorm}[4]{\norm{\tensor{#1}{#2}{#3}}{#4}}
+
+    \begin{theorem} \label{thm:1}
+    
+    $\tensor{T}{i}{j}$ and $\norm[p]{x}{2}$ and $\norm{y}{1}$
+    $\integral{b}{f(x)}{x}$ and $\integral[a]{b}{g(x)}{x}$
+    $\tensorNorm{T}{i}{j}{\infty}$
+
+    \end{theorem}
+
+    \begin{equation} \label{eq:1}
+    \int_{3} \& \{
+    \end{equation}
+
+    \begin{align}
+equation1 &= expression1 \label{eq:first} \\
+equation2 &= expression2 \nonumber \label{eq:second} \\
+equation3 &= expression3 \label{eq:third}
+\end{align}
+
+\def\xxx{x+1}
+
+\begin{equation} \label{eq:arr}
+\begin{array}{c}
+long expression &= first part \ref{eq:1} \\
+                &\quad + second part \xxx \\
+                &\quad + third part 
+\end{array}
+\end{equation}
+
+\begin{comment}
+Some comment
+\end{comment}
+
+\begin{appendices}
+\section{Appendix 1}
+Appendix 1 content
+
+\section{Appendix 2}
+Appendix 2 content
+\end{appendices}
+"""
+
+    text = r"""
+    \title{\bf{\LARGE{A Fully First-Order Method for Stochastic Bilevel Optimization}}}
+    hHahah
+"""
+
+    json = renderer.parse(text)
+
+    # json = renderer.parse_file(
+    #     "/Users/cj/Documents/python/latex2json/tests/samples/main.tex"
+    # )
