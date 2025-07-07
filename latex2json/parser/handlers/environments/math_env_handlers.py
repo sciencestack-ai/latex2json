@@ -92,9 +92,11 @@ def register_math_env_handlers(parser: ParserCore):
         # fetch env_def from parser/expander directly, in case it has been redefined
         if env_def.env_type == EnvironmentType.EQUATION_ALIGN:
             parser.register_env_handler(env_name, equation_align_handler)
+            parser.register_env_handler(env_name + "*", equation_align_handler)
 
         elif env_def.env_type == EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
             parser.register_env_handler(env_name, matrix_or_array_handler)
+            parser.register_env_handler(env_name + "*", matrix_or_array_handler)
 
 
 if __name__ == "__main__":

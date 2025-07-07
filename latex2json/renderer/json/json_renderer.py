@@ -65,7 +65,7 @@ class JSONRenderer:
         if organize_hierachy:
             organized = self._recursive_organize(output)
             # Apply recursive whitespace stripping
-            organized = self._recursive_strip_whitespace(organized)
+            organized = self._recursive_postprocess(organized)
             return organized
 
         return output
@@ -120,8 +120,13 @@ class JSONRenderer:
                     token["content"] = []
                 else:
                     token["content"] = self._recursive_organize(token["content"])
+
+                if organized and organized[-1]["type"] == "appendix":
+                    # if previous token is also an appendix, merge content
+                    organized[-1]["content"] += token["content"]
+                    continue
                 root = token["content"]  # Switch root to appendix content
-                organized.append(token)
+                organized.append(token)  # add appendix token itself to organized
                 continue
 
             # Handle other nested content
@@ -146,11 +151,12 @@ class JSONRenderer:
 
         return organized
 
-    def _recursive_strip_whitespace(self, tokens: List[Dict]) -> List[Dict]:
+    def _recursive_postprocess(self, tokens: List[Dict]) -> List[Dict]:
         """Recursively strip whitespace from tokens and their nested content."""
         if not isinstance(tokens, list):
             return tokens
 
+        # strip whitespace from tokens
         tokens = strip_whitespace_json_tokens(tokens)
 
         for token in tokens:
@@ -163,8 +169,24 @@ class JSONRenderer:
             #     "paragraph",
             #     "bibliography",
             # ]:
-            if "content" in token and isinstance(token["content"], list):
-                token["content"] = self._recursive_strip_whitespace(token["content"])
+            if token.get("type") == "equation":
+                # strip off display attribute if inline
+                if token.get("display") == "inline":
+                    del token["display"]
+                content = token.get("content")
+                if content and isinstance(content, list):
+                    # check if all content is "text"
+                    if all(
+                        isinstance(item, dict) and item.get("type") == "text"
+                        for item in content
+                    ):
+                        # if so, merge into a single string
+                        token["content"] = "".join(
+                            item.get("content", "") for item in content
+                        )
+                        continue
+            elif "content" in token and isinstance(token["content"], list):
+                token["content"] = self._recursive_postprocess(token["content"])
 
         return tokens
 

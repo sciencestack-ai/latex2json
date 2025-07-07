@@ -83,25 +83,35 @@ def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]
 
 
 def register_text_handlers(parser: ParserCore):
+    """
+    Register text handling.
+    Most of the handlers are only registered in text mode.
+    Leave math-mode for katex
+    """
+
     # Register legacy handlers
     for cmd, style_obj in LEGACY_TO_FONT_STYLE.items():
-        parser.register_handler(cmd, make_legacy_text_handler(style_obj))
+        parser.register_handler(
+            cmd, make_legacy_text_handler(style_obj), text_mode_only=True
+        )
 
     # Register handlers for commands that have FontStyle objects
     for cmd, style_obj in LATEX_TO_FONT_STYLE.items():
-        parser.register_handler(cmd, make_text_handler(style_obj))
+        parser.register_handler(cmd, make_text_handler(style_obj), text_mode_only=True)
 
     # Color handlers
-    parser.register_handler("textcolor", textcolor_handler)
-    parser.register_handler("color", legacy_color_handler)
-    parser.register_handler("normalcolor", reset_color_handler)
+    parser.register_handler("textcolor", textcolor_handler, text_mode_only=True)
+    parser.register_handler("color", legacy_color_handler, text_mode_only=True)
+    parser.register_handler("normalcolor", reset_color_handler, text_mode_only=True)
 
     # citetext
     parser.register_handler("citetext", citetext_handler)
 
     # other
     for backslash in ["backslash", "textbackslash", "arraybackslash"]:
-        parser.register_handler(backslash, lambda parser, token: [TextNode(r"\\")])
+        parser.register_handler(
+            backslash, lambda parser, token: [TextNode(r"\\")], text_mode_only=True
+        )
 
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
 
