@@ -3,6 +3,8 @@ from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode
 
+import os
+
 
 def test_quotes():
     parser = Parser()
@@ -101,3 +103,18 @@ def test_verbatim_handler():
     assert out[0] == VerbatimNode(
         "Hello", display=DisplayType.INLINE, title="language=Python"
     )
+
+
+def test_parse_file():
+    parser = Parser()
+
+    dir_path = os.path.dirname(os.path.abspath(__file__))
+    sample_dir_path = os.path.join(dir_path, "../samples")
+    out = parser.parse_file(os.path.join(sample_dir_path, "main.tex"))
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    # assert isinstance(out[0], EnvironmentNode)
+    # assert out[0].name == "document"
+    # assert len(out[0].body) == 2
+    # assert out[0].body[0].name == "subfile"
+    # assert out[0].body[1].name == "subfile"

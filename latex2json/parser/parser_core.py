@@ -274,8 +274,8 @@ class ParserCore:
 
     def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
         # set expander cwd
-        self.expander.cwd = os.path.dirname(file_path)
-        tokens = self.expander.expand_file(file_path)
+        self.expander.cwd = os.path.abspath(os.path.dirname(file_path))
+        tokens = self.expander.expand_file(os.path.basename(file_path))
         if not tokens:
             return None
         self.logger.info(f"Parsed {len(tokens)} tokens from {file_path}")

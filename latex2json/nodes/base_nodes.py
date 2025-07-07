@@ -45,8 +45,11 @@ class ASTNode:
         else:
             total_styles = total_styles + styles
 
+        # check parent styles to prevent child dupes
+        parent_styles = self.parent.styles if self.parent else []
+
         for style in total_styles:
-            if style not in self._styles:
+            if style not in self._styles and style not in parent_styles:
                 self._styles.append(style)
 
     @property
