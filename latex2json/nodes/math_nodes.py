@@ -144,7 +144,7 @@ class EquationNode(ASTNode):
                 cmd_str = child.detokenize()
                 nodes.append(TextNode(cmd_str))
             else:
-                nodes.append(child.copy())
+                nodes.append(child)
             if should_add_space_after(i):
                 nodes.append(TextNode(" "))
         nodes = merge_text_nodes(nodes)

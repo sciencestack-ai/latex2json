@@ -1,4 +1,3 @@
-from copy import deepcopy
 import logging
 import os
 import re
@@ -516,7 +515,7 @@ class ParserCore:
 
     def convert_nodes_to_str(self, nodes: List[ASTNode], postprocess=True) -> str:
         if postprocess:
-            nodes = self.postprocess_nodes(deepcopy(nodes))
+            nodes = self.postprocess_nodes(nodes)
         return "".join(node.detokenize() for node in nodes)
 
     def postprocess_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
@@ -669,7 +668,7 @@ class ParserCore:
             return True
         return False
 
-    def parse_brace_as_nodes(self, scoped=False) -> Optional[List[ASTNode]]:
+    def parse_brace_as_nodes(self, scoped=True) -> Optional[List[ASTNode]]:
         return self.parse_begin_end_as_nodes(
             is_begin_group_token,
             is_end_group_token,

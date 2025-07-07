@@ -45,8 +45,24 @@ def register_base_environment_handlers(expander: ExpanderCore):
             env_def_instance.hooks.end.append(
                 outsubequation,
             )
-        expander.register_environment(env_name, env_def_instance)
+        elif env_name == "appendices":
 
+            def inappendices():
+                expander.state.set_is_appendix(True)
+                return []
+
+            def outappendices():
+                expander.state.set_is_appendix(False)
+                return []
+
+            env_def_instance.hooks.begin.append(
+                inappendices,
+            )
+            env_def_instance.hooks.end.append(
+                outappendices,
+            )
+
+        expander.register_environment(env_name, env_def_instance)
     expander.register_handler("floatname", floatname_handler, is_global=True)
 
     # table stuff to ignore?

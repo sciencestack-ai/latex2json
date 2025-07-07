@@ -1,14 +1,18 @@
+from latex2json.latex_maps.environments import COMMON_ENVIRONMENTS
 from latex2json.nodes.base_nodes import VerbatimNode
 from latex2json.parser.parser_core import ParserCore
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import EnvironmentType, Token, TokenType
 
 
-def verbatim_handler(parser: ParserCore, token: Token):
-    tokens = parser.parse_tokens_until(
-        lambda tok: tok == Token(TokenType.ENVIRONMENT_END, "verbatim"),
-        consume_predicate=True,
-    )
-    return [VerbatimNode(parser.convert_tokens_to_str(tokens).strip())]
+def make_verbatim_handler(env_name: str):
+    def verbatim_handler(parser: ParserCore, token: Token):
+        tokens = parser.parse_tokens_until(
+            lambda tok: tok == Token(TokenType.ENVIRONMENT_END, env_name),
+            consume_predicate=True,
+        )
+        return [VerbatimNode(parser.convert_tokens_to_str(tokens).strip())]
+
+    return verbatim_handler
 
 
 def lstlisting_handler(parser: ParserCore, token: Token):
@@ -27,8 +31,11 @@ def lstlisting_handler(parser: ParserCore, token: Token):
 
 
 def register_verbatim_lst_handlers(parser: ParserCore):
-    parser.register_env_handler("verbatim", verbatim_handler)
-    parser.register_env_handler("lstlisting", lstlisting_handler)
+    for env, env_def in COMMON_ENVIRONMENTS.items():
+        if env == "lstlisting":
+            parser.register_env_handler(env, lstlisting_handler)
+        elif env_def.env_type == EnvironmentType.VERBATIM:
+            parser.register_env_handler(env, make_verbatim_handler(env))
 
 
 if __name__ == "__main__":

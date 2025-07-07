@@ -91,6 +91,7 @@ DOCUMENT_ENVIRONMENTS = {
     "thebibliography": EnvironmentDefinition(
         "thebibliography", num_args=1, has_direct_command=True
     ),
+    "appendices": EnvironmentDefinition("appendices"),
 }
 
 VERBATIM_ENVIRONMENTS = {
@@ -103,6 +104,7 @@ VERBATIM_ENVIRONMENTS = {
     "lstlisting": EnvironmentDefinition(
         "lstlisting", env_type=EnvironmentType.VERBATIM
     ),
+    "comment": EnvironmentDefinition("comment", env_type=EnvironmentType.VERBATIM),
 }
 
 ALGORITHM_ENVIRONMENTS = {
