@@ -36,9 +36,9 @@ def mock_section_token(
 def test_section_handler():
     expander = Expander()
 
-    expander.expand(r"\def\title{TITLE}")
+    expander.expand(r"\def\titlex{TITLE}")
 
-    out = expander.expand(r"\section{\title}")
+    out = expander.expand(r"\section{\titlex}")
     expected = mock_section_token(expander, "section", "TITLE", numbering="1")
     assert expander.check_tokens_equal(out, expected)
 

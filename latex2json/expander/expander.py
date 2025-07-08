@@ -48,10 +48,10 @@ class Expander(ExpanderCore):
         is_user_defined: bool = False,
     ):
         # prevent redefinition of white-listed commands in package/class files
-        if self.state.in_package_or_class and is_user_defined:
+        if is_user_defined:
             if name in self.white_listed_commands:
                 self.logger.warning(
-                    f"Preventing redefinition of white-listed command inside package/class: \\{name}"
+                    f"Preventing redefinition of white-listed command \\{name}"  # inside package/class: \\{name}"
                 )
                 return
 

@@ -142,8 +142,8 @@ def test_newcommand_expansion():
 
     # Test argument expansion
     text = r"""
-    \newcommand{\bold}[1]{\textbf{#1}}
-    \newcommand{\greeting}[1]{\bold{Hello, #1!}}
+    \newcommand{\bolder}[1]{\textbf{#1}}
+    \newcommand{\greeting}[1]{\bolder{Hello, #1!}}
     """.strip()
     expander.expand(text)
     assert_token_sequence(

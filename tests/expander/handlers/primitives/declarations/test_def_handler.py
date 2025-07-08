@@ -275,7 +275,7 @@ def test_def_with_global():
     )
 
     # now test with global
-    text = r"""{ \global\def\foo{FOO} }"""
+    text = r"""{ \global\def\foo {FOO} }"""
     expander.expand(text)
     assert expander.get_macro("foo")
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("FOO"))
@@ -291,7 +291,7 @@ def test_nested_defs2():
     register_def(expander)
 
     text = r"""
-    \def\foo#1{
+    \def\foo#1 {
         \def\bar##1{BAR #1 ##1}
         \def\barx{\bar{BRO}}
     }

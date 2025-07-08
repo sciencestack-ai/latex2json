@@ -4,7 +4,7 @@ from latex2json.expander.macro_registry import Macro
 from dataclasses import dataclass
 
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import is_begin_group_token
+from latex2json.tokens.utils import is_begin_group_token, strip_whitespace_tokens
 
 
 @dataclass
@@ -102,11 +102,10 @@ class DefMacro(Macro):
 def get_def_usage_pattern_and_definition(
     expander: ExpanderCore,
 ) -> Tuple[List[Token], List[Token]]:
-    raw_usage_pattern_tokens: List[Token] = []
-
     raw_usage_pattern_tokens = expander.parse_tokens_until(
         lambda tok: is_begin_group_token(tok)
     )
+    raw_usage_pattern_tokens = strip_whitespace_tokens(raw_usage_pattern_tokens)
 
     tok = expander.peek()
     if is_begin_group_token(tok):
