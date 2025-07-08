@@ -154,6 +154,8 @@ content_formatting_patterns = {
     "today": 0,
     # counter
     "AddEnumerateCounter": 3,
+    # newlabel
+    "newlabel": 2,
 }
 
 

@@ -12,6 +12,7 @@ from latex2json.expander.handlers.primitives.catcode import register_catcode
 from latex2json.expander.handlers.primitives.debug_handlers import (
     register_debug_handlers,
 )
+from latex2json.expander.handlers.primitives.exec_handlers import register_exec_handlers
 
 
 def register_primitives(expander: ExpanderCore):
@@ -23,3 +24,4 @@ def register_primitives(expander: ExpanderCore):
     register_debug_handlers(expander)
     register_expand_handlers(expander)
     register_csname_handlers(expander)
+    register_exec_handlers(expander)
