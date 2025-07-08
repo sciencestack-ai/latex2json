@@ -63,7 +63,7 @@ def make_generic_command_handler(
                     opt_args.append(opt_arg)
             elif char == "{":
                 req_arg = expander.parse_brace_as_tokens(expand=expand)
-                if not req_arg:  # Required argument not found
+                if req_arg is None:  # Required argument not found
                     expander.logger.warning(
                         f"Required argument not found for command {command_name}"
                     )

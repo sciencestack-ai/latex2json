@@ -202,6 +202,7 @@ MATH_ENVIRONMENTS = {
     ),
     # inner environments inside equation/align
     "gathered": EnvironmentDefinition("gathered", env_type=EnvironmentType.EQUATION),
+    "multlined": EnvironmentDefinition("multlined", env_type=EnvironmentType.EQUATION),
     "aligned": EnvironmentDefinition(
         "aligned", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),

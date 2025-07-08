@@ -2,6 +2,7 @@ from typing import List, Optional
 from latex2json.nodes.base_nodes import CommandNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import WHITESPACE_TOKEN, Token, TokenType
+from latex2json.tokens.utils import is_whitespace_token
 
 
 def ignorespaces_handler(parser: ParserCore, token: Token):
@@ -17,7 +18,13 @@ def linebreak_handler(parser: ParserCore, token: Token):
 
 
 def make_space_command(command: str):
+    is_smart_space = command == "xspace"
+
     def spacecommand_handler(parser: ParserCore, token: Token):
+        if is_smart_space:
+            next_tok = parser.peek()
+            if next_tok and is_whitespace_token(next_tok):
+                return []
         return [CommandNode("space")]
 
     return spacecommand_handler
