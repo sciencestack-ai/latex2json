@@ -58,7 +58,8 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 def register_expand_handlers(expander: ExpanderCore):
     """Register expansion-related primitive handlers."""
     expander.register_handler("\\noexpand", noexpand_handler, is_global=True)
-    expander.register_handler("\\expandafter", expandafter_handler, is_global=True)
+    for expand_cmd in ["\\expandafter", "\\@xp"]:
+        expander.register_handler(expand_cmd, expandafter_handler, is_global=True)
     expander.register_handler("\\unexpanded", unexpanded_handler, is_global=True)
 
 

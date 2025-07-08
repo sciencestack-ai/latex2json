@@ -1,4 +1,5 @@
 from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
+from latex2json.nodes.environment_nodes import TheoremNode
 from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode
@@ -102,6 +103,26 @@ def test_verbatim_handler():
     assert isinstance(out[0], VerbatimNode)
     assert out[0] == VerbatimNode(
         "Hello", display=DisplayType.INLINE, title="language=Python"
+    )
+
+
+def test_theorem_handler():
+    parser = Parser()
+    text = r"""
+    \newtheorem{theorem}{Theorem}
+    \begin{theorem}[Estimate for the gradient]
+    Hello
+    \end{theorem}
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], TheoremNode)
+    assert out[0] == TheoremNode(
+        "theorem",
+        title=[TextNode("Estimate for the gradient")],
+        body=[TextNode("Hello")],
+        numbering="1",
+        display_name="Theorem",
     )
 
 

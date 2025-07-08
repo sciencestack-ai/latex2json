@@ -375,8 +375,12 @@ class ParserCore:
                 env_name=env_name,
             )
         elif token.env_type == EnvironmentType.THEOREM:
+            self.skip_whitespace()
+            title_nodes = self.parse_bracket_as_nodes() or []
+            title_nodes = self.postprocess_nodes(title_nodes)
             env_node = TheoremNode(
                 env_name,
+                title=title_nodes,
                 numbering=token.numbering,
                 display_name=token.display_name,
             )
@@ -447,6 +451,8 @@ class ParserCore:
             # self.set_font(cmd_name)
             return []
 
+        # if not self.is_math_mode and (cmd_name.isalnum() or "@" in cmd_name):
+        #     self.logger.info(f"Unknown command: {cmd_name}")
         return [CommandNode(cmd_name)]
 
     def _handle_command_w_args(self, token: CommandWithArgsToken) -> List[ASTNode]:

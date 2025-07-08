@@ -79,17 +79,44 @@ class TheoremNode(EnvironmentNode):
         body: List[ASTNode] = [],
         numbering: Optional[str] = None,
         display_name: Optional[str] = None,
+        title: List[ASTNode] = [],
     ):
         super().__init__(name, body, numbering, display_name)
+        self.title = title
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, TheoremNode):
             return False
-        return super().__eq__(other)
+        same = super().__eq__(other)
+        if not same:
+            return False
+        return check_asts_equal(self.title, other.title)
+
+    def detokenize(self) -> str:
+        """Convert the theorem node back to LaTeX source code."""
+        # Start with \begin{name}
+        out = f"\\begin{{{self.env_name}}}"
+
+        # Add title if present
+        if self.title:
+            out += f"[{''.join(child.detokenize() for child in self.title)}]"
+
+        # Add body content
+        if self.body:
+            out += "\n"
+            out += "".join(child.detokenize() for child in self.body)
+            out += "\n"
+
+        # End with \end{name}
+        out += f"\\end{{{self.env_name}}}"
+
+        return out
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "theorem"
+        result["type"] = "math_env"  # "theorem"
+        if self.title:
+            result["title"] = [child.to_json() for child in self.title]
         return result
 
 
