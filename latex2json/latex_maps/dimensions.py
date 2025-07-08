@@ -91,6 +91,10 @@ BUILTIN_DIMENSIONS = [
     "offinterlineskip",
 ]
 
+for incr in ["i", "ii", "iii", "iv", "v"]:
+    BUILTIN_DIMENSIONS.append(f"leftmargin{incr}")
+    BUILTIN_DIMENSIONS.append(f"rightmargin{incr}")
+
 
 LATEX_DIMENSION_UNITS = {
     "pt": 65536,  # Point (1 pt = 65536 sp)

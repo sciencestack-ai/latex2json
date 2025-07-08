@@ -163,7 +163,9 @@ class CounterManager:
 
     def _reset_children(self, parent_name: str) -> None:
         """Recursively reset all child counters to 0"""
-        counter_info = self.counters[parent_name]
+        counter_info = self.counters.get(parent_name)
+        if not counter_info:
+            return
 
         for child in counter_info.children:
             # Reset the child counter

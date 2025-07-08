@@ -176,8 +176,8 @@ def vrule_hrule_handler(expander: ExpanderCore, token: Token):
 
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
-    register_ignore_handlers_util(expander, formatting_patterns)
-    register_ignore_handlers_util(expander, content_formatting_patterns)
+    register_ignore_handlers_util(expander, formatting_patterns, expand=False)
+    register_ignore_handlers_util(expander, content_formatting_patterns, expand=False)
     expander.register_handler(r"\vrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
 

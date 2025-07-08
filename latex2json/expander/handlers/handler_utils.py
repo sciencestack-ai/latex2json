@@ -4,7 +4,9 @@ from latex2json.expander.macro_registry import Handler
 from latex2json.tokens.types import CommandWithArgsToken, Token, TokenType
 
 
-def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
+def make_generic_command_handler(
+    command_name: str, arg_spec: str, expand: bool = True
+) -> Handler:
     def generic_command_handler(expander: ExpanderCore, token: Token) -> list:
         r"""
         Generic handler for LaTeX commands based on their argument specification.
@@ -56,11 +58,11 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
                     break
                 expander.consume()
             elif char == "[":
-                opt_arg = expander.parse_bracket_as_tokens(expand=True)
+                opt_arg = expander.parse_bracket_as_tokens(expand=expand)
                 if opt_arg:
                     opt_args.append(opt_arg)
             elif char == "{":
-                req_arg = expander.parse_brace_as_tokens(expand=True)
+                req_arg = expander.parse_brace_as_tokens(expand=expand)
                 if not req_arg:  # Required argument not found
                     expander.logger.warning(
                         f"Required argument not found for command {command_name}"
@@ -73,16 +75,20 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
     return generic_command_handler
 
 
-def make_N_blocks_ignore_handler(command: str, n_blocks: int) -> Handler:
+def make_N_blocks_ignore_handler(
+    command: str, n_blocks: int, expand: bool = False
+) -> Handler:
     def ignore_handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
-        blocks = expander.parse_braced_blocks(n_blocks, expand=True)
+        blocks = expander.parse_braced_blocks(n_blocks, expand=expand)
         return []
 
     return ignore_handler
 
 
-def make_argspec_ignore_handler(command: str, argspec: str) -> Handler:
-    handler = make_generic_command_handler(command, argspec)
+def make_argspec_ignore_handler(
+    command: str, argspec: str, expand: bool = False
+) -> Handler:
+    handler = make_generic_command_handler(command, argspec, expand=expand)
 
     def ignore_handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
         tokens = handler(expander, token)
@@ -92,14 +98,14 @@ def make_argspec_ignore_handler(command: str, argspec: str) -> Handler:
 
 
 def register_ignore_handlers_util(
-    expander: ExpanderCore, ignore_patterns: dict[str, int | str]
+    expander: ExpanderCore, ignore_patterns: dict[str, int | str], expand: bool = False
 ):
     """Register all formatting-related command handlers"""
     for command, spec in ignore_patterns.items():
         if isinstance(spec, str):
-            handler = make_argspec_ignore_handler(command, spec)
+            handler = make_argspec_ignore_handler(command, spec, expand=expand)
         else:
-            handler = make_N_blocks_ignore_handler(command, spec)
+            handler = make_N_blocks_ignore_handler(command, spec, expand=expand)
         expander.register_handler(
             command,
             handler,

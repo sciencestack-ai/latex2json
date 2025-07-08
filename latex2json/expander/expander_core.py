@@ -800,7 +800,7 @@ class ExpanderCore:
 
         # Parse optional plus component
         self.skip_whitespace()
-        if self.parse_keyword("plus"):
+        if self.parse_keyword("plus") or self.parse_keyword("@plus"):
             self.skip_whitespace()
             plus_result = self._parse_dimensions()
             if plus_result:
@@ -818,7 +818,7 @@ class ExpanderCore:
             self.consume()
             return base_scaled_points, True
 
-        if self.parse_keyword("minus"):
+        if self.parse_keyword("minus") or self.parse_keyword("@minus"):
             self.skip_whitespace()
             minus_result = self._parse_dimensions()
             if minus_result:
