@@ -5,25 +5,34 @@ from latex2json.parser.parser import Parser
 
 
 def strip_whitespace_json_tokens(tokens: List[Dict]):
-    if tokens:
-        while (
-            tokens and isinstance(tokens[0], dict) and tokens[0].get("type") == "text"
-        ):
-            text: str = tokens[0].get("content")
-            if text and text.strip():
-                tokens[0]["content"] = text.lstrip()
-                break
-            tokens.pop(0)
+    if not tokens:
+        return tokens
 
-        while (
-            tokens and isinstance(tokens[-1], dict) and tokens[-1].get("type") == "text"
-        ):
-            text: str = tokens[-1].get("content")
-            if text and text.strip():
-                tokens[-1]["content"] = text.rstrip()
-                break
-            tokens.pop(-1)
-    return tokens
+    # First strip whitespace from start/end tokens
+    while tokens and isinstance(tokens[0], dict) and tokens[0].get("type") == "text":
+        text: str = tokens[0].get("content")
+        if text and text.strip():
+            tokens[0]["content"] = text.lstrip()
+            break
+        tokens.pop(0)
+
+    while tokens and isinstance(tokens[-1], dict) and tokens[-1].get("type") == "text":
+        text: str = tokens[-1].get("content")
+        if text and text.strip():
+            tokens[-1]["content"] = text.rstrip()
+            break
+        tokens.pop(-1)
+
+    # Then remove all empty text tokens in between
+    stripped_tokens = []
+    for token in tokens:
+        if isinstance(token, dict) and token.get("type") == "text":
+            if token.get("content").strip():
+                stripped_tokens.append(token)
+        else:
+            stripped_tokens.append(token)
+
+    return stripped_tokens
 
 
 class JSONRenderer:
@@ -163,12 +172,6 @@ class JSONRenderer:
             if not isinstance(token, dict):
                 continue
 
-            # if token.get("type") in [
-            #     "appendix",
-            #     "section",
-            #     "paragraph",
-            #     "bibliography",
-            # ]:
             if token.get("type") == "equation":
                 # strip off display attribute if inline
                 if token.get("display") == "inline":

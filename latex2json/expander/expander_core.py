@@ -56,6 +56,13 @@ RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 TokenPredicate = Callable[[Token], bool]
 
 
+def is_nonumber_token(tok: Token) -> bool:
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value in [
+        "nonumber",
+        "notag",
+    ]
+
+
 class EmptyMacro(Macro):
     def __init__(self):
         super().__init__("empty", lambda expander, token: [], definition=[])
@@ -1166,7 +1173,7 @@ class ExpanderCore:
 
             out_tokens.extend(subbed)
 
-            if is_verbatim or is_align:
+            if is_verbatim or is_align or is_math:
                 # if verbatim, we parse until we find the matching end environment token
                 def is_end_env_token(token: Token) -> bool:
                     is_end_env_ctrl = (
@@ -1200,7 +1207,7 @@ class ExpanderCore:
                         is_end_env_token, verbatim=True
                     )
                     out_tokens.extend(body_block)
-                else:
+                elif is_align:
                     # is_align
                     # align environments have a special case where we need to parse the body block for \\, and number those accordingly
                     body_block = expander.expand_until(
@@ -1230,12 +1237,6 @@ class ExpanderCore:
                                     split_body_block[-1].append(token)
 
                     is_numbered = env_name.isalpha()  # False if there is *
-
-                    def is_nonumber_token(tok: Token) -> bool:
-                        return (
-                            tok.type == TokenType.CONTROL_SEQUENCE
-                            and tok.value == "nonumber"
-                        )
 
                     equation_tokens = []
                     for block in split_body_block:
@@ -1271,6 +1272,31 @@ class ExpanderCore:
                         )
 
                     out_tokens.extend(equation_tokens)
+                else:
+                    # typical math block
+                    # parse out math env block to see if \nonumber \notag is present
+                    body_block = expander.expand_until(
+                        stop_token_logic=is_end_env_token, consume_stop_token=False
+                    )
+                    if numbering:
+                        newblock = []
+                        for tok in body_block:
+                            if is_nonumber_token(tok):
+                                numbering = None
+                            else:
+                                newblock.append(tok)
+                        body_block = newblock
+
+                        if numbering is None:
+                            # means \nonumber \notag is present
+                            # undo step_counter with -1
+                            if (
+                                counter_name
+                            ):  # should always be true if numbering is not None to begin with
+                                state.add_to_counter(counter_name, -1)
+                            begin_token.numbering = None
+
+                    out_tokens.extend(body_block)
 
             return out_tokens
 

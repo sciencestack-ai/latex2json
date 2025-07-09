@@ -200,7 +200,7 @@ def test_mock_env_token():
     # assert_token_sequence(actual, expected)
 
 
-def test_math_environments():
+def test_equation_environments():
     expander = Expander()
 
     assert not expander.state.is_math_mode
@@ -218,6 +218,28 @@ def test_math_environments():
     expander.expand(r"\end{align}")
     assert expander.state.mode == base_mode
     assert not expander.state.is_math_mode
+
+    # test that equation with \nonumber is not numbered
+    text = r"""
+    \begin{equation} \nonumber
+    1+1 
+    \end{equation}
+""".strip()
+    out = expander.expand(text)
+    assert out[0] == EnvironmentStartToken(
+        "equation", numbering=None, env_type=EnvironmentType.EQUATION
+    )
+
+    # test with normal \nonumber
+    text = r"""
+    \begin{equation}
+    1+1 
+    \end{equation}
+""".strip()
+    out = expander.expand(text)
+    assert out[0] == EnvironmentStartToken(
+        "equation", numbering="1", env_type=EnvironmentType.EQUATION
+    )
 
 
 def test_floatname():

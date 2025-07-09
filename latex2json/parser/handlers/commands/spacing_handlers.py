@@ -23,7 +23,12 @@ def make_space_command(command: str):
     def spacecommand_handler(parser: ParserCore, token: Token):
         if is_smart_space:
             next_tok = parser.peek()
-            if next_tok and is_whitespace_token(next_tok):
+            is_next_alpha = (
+                next_tok
+                and next_tok.type == TokenType.CHARACTER
+                and next_tok.value.isalpha()
+            )
+            if not is_next_alpha:
                 return []
         return [CommandNode("space")]
 
