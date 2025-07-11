@@ -7,8 +7,14 @@ from latex2json.tokens.types import Token
 
 
 class Parser(ParserCore):
-    def __init__(self, logger: Optional[logging.Logger] = None):
-        super().__init__(logger)
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        prevent_whitelisted_redefinitions: bool = True,
+    ):
+        super().__init__(
+            logger, prevent_whitelisted_redefinitions=prevent_whitelisted_redefinitions
+        )
 
         self.bib_parser = BibParser(logger=self.logger)
 
@@ -91,18 +97,32 @@ if __name__ == "__main__":
     from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 
     samples_dir = os.path.dirname(os.path.abspath(__file__)) + "/../../tests/samples"
+    #     text = r"""
+    #     PRE BIBLIOGRAPHY
+
+    #     \bibliography{%s/bibtex, %s/bib.bbl}
+
+    #     POST BIBLIOGRAPHY
+    # """ % (
+    #         samples_dir,
+    #         samples_dir,
+    #     )
+
     text = r"""
-    PRE BIBLIOGRAPHY
+\renewenvironment{abstract}%
+{%
+  \begin{quote}%
+}
+{
+  \end{quote}%
+}
 
-    \bibliography{%s/bibtex, %s/bib.bbl}
-    
-    POST BIBLIOGRAPHY
-""" % (
-        samples_dir,
-        samples_dir,
-    )
+\begin{abstract}
+ABSTRACT
+\end{abstract}
+"""
 
-    parser = Parser()
+    parser = Parser(prevent_whitelisted_redefinitions=False)
     out = parser.parse(text, postprocess=True)
     # out = strip_whitespace_nodes(out)
     # out = [node for node in out if not is_whitespace_node(node)]

@@ -1150,10 +1150,10 @@ class ExpanderCore:
                 env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
             )
 
-            subbed = []
-            if args is not None:
-                subbed = expander.substitute_token_args(env_def.begin_definition, args)
-                subbed = expander.expand_tokens(subbed)
+            subbed = expander.substitute_token_args(
+                env_def.begin_definition, args or []
+            )
+            expander.push_tokens(subbed)
 
             # evaluate the counter post begin definition expansion
             # e.g. some newenvironment definitions place \refstepcounter in the begin definition
@@ -1172,8 +1172,6 @@ class ExpanderCore:
             out_tokens: List[Token] = [begin_token]
             for hook in env_def.hooks.begin:
                 out_tokens.extend(hook())
-
-            out_tokens.extend(subbed)
 
             if is_verbatim or is_align or is_math:
                 # if verbatim, we parse until we find the matching end environment token

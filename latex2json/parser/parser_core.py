@@ -85,9 +85,16 @@ class MacroPattern:
 
 
 class ParserCore:
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        prevent_whitelisted_redefinitions: bool = True,
+    ):
         self.logger = logger or logging.getLogger(__name__)
-        self.expander = Expander(logger=logger)
+        self.expander = Expander(
+            logger=logger,
+            prevent_whitelisted_redefinitions=prevent_whitelisted_redefinitions,
+        )
 
         self.token_buffer: List[Token] = []
 

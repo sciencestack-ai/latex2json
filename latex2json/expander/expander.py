@@ -15,11 +15,13 @@ class Expander(ExpanderCore):
         self,
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
+        prevent_whitelisted_redefinitions: bool = True,
     ):
         super().__init__(tokenizer, logger)
 
         self._register_handlers_and_packages()
 
+        self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
         self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
         self.white_listed_classes: List[str] = ["subfiles"]
@@ -52,7 +54,7 @@ class Expander(ExpanderCore):
         is_global: bool = True,
         is_user_defined: bool = False,
     ) -> None:
-        if is_user_defined:
+        if is_user_defined and self.prevent_whitelisted_redefinitions:
             if env_name in self.white_listed_environments:
                 self.logger.warning(
                     f"Preventing redefinition of white-listed environment {env_name}"
@@ -71,7 +73,7 @@ class Expander(ExpanderCore):
         is_user_defined: bool = False,
     ):
         # prevent redefinition of white-listed commands in package/class files
-        if is_user_defined:
+        if is_user_defined and self.prevent_whitelisted_redefinitions:
             if name in self.white_listed_commands:
                 self.logger.warning(
                     f"Preventing redefinition of white-listed command \\{name}"  # inside package/class: \\{name}"
@@ -82,13 +84,24 @@ class Expander(ExpanderCore):
 
 
 if __name__ == "__main__":
-    expander = Expander()
     from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 
-    text = r"""\numexpr 1+1\relax"""
+    expander = Expander(prevent_whitelisted_redefinitions=False)
+    text = r"""
+\renewenvironment{abstract}%
+{%
+  \begin{quote}
+}
+{
+  \end{quote}%
+}
 
-    expander.set_text(text)
-    # out = expander.expand(text)
+\begin{abstract}
+ABSTRACT
+\end{abstract}
+"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
 
     # while not expander.eof():
     #     next_tokens = expander.next_non_expandable_tokens()

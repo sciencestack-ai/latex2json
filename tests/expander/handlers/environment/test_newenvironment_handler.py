@@ -2,7 +2,7 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.types import EnvironmentStartToken, Token, TokenType
-from latex2json.tokens.utils import strip_whitespace_tokens
+from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
 
@@ -147,3 +147,28 @@ def test_newenvironment_with_counter():
     out = expander.expand(r"\begin{myenv}Hello\end{myenv}")
     assert out[0] == EnvironmentStartToken("myenv")
     assert expander.state.get_counter_value("myenv") == 2
+
+
+def test_newenvironment_with_nested_begin_block():
+    expander = Expander(prevent_whitelisted_redefinitions=False)
+
+    text = r"""
+\renewenvironment{abstract}%
+{%
+  \begin{quote}
+}
+{
+  \end{quote}%
+}
+
+\begin{abstract}
+ABSTRACT
+\end{abstract}
+""".strip()
+    out = expander.expand(text)
+    out = [t for t in out if not is_whitespace_token(t)]
+    assert out[0] == EnvironmentStartToken("abstract")
+    assert out[1] == EnvironmentStartToken("quote")
+    assert out[2:-2] == expander.expand("ABSTRACT")
+    assert out[-2] == Token(TokenType.ENVIRONMENT_END, "quote")
+    assert out[-1] == Token(TokenType.ENVIRONMENT_END, "abstract")

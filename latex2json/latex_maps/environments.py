@@ -92,12 +92,10 @@ DOCUMENT_ENVIRONMENTS = {
         "thebibliography", num_args=1, has_direct_command=True
     ),
     "appendices": EnvironmentDefinition("appendices"),
+    "quote": EnvironmentDefinition("quote", has_direct_command=True),
 }
 
 VERBATIM_ENVIRONMENTS = {
-    "quote": EnvironmentDefinition(
-        "quote", has_direct_command=True, env_type=EnvironmentType.VERBATIM
-    ),
     "verbatim": EnvironmentDefinition(
         "verbatim", has_direct_command=True, env_type=EnvironmentType.VERBATIM
     ),

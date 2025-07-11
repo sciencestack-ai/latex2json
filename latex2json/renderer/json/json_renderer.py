@@ -193,6 +193,10 @@ class JSONRenderer:
 
             if token.get("type") == "command":
                 self.logger.info(f"Found unknown command: {token.get('command')}")
+            elif token.get("type") == "environment":
+                if token.get("name") == "quote":
+                    # make quote type
+                    token["type"] = "quote"
 
         return tokens
 
