@@ -2,7 +2,14 @@ from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
+    EnvironmentStartToken,
+    EnvironmentType,
+    Token,
+    TokenType,
+)
 
 
 def is_begin_float_token(token: Token) -> bool:
@@ -16,48 +23,51 @@ def is_end_float_token(token: Token) -> bool:
 def float_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle float tokens."""
     expander.skip_whitespace()
-    env_name_tokens = expander.parse_brace_as_tokens(expand=True)
-    if not env_name_tokens:
+    env_name = expander.parse_brace_name()
+    if not env_name:
         expander.logger.warning("\\@float: Missing environment name")
         return None
 
-    # parse the corresponding \end@float too
-    body_tokens = expander.parse_begin_end_as_tokens(
-        begin_predicate=is_begin_float_token,
-        end_predicate=is_end_float_token,
-        check_first_token=False,
+    expander.state.push_env_stack(env_name)
+
+    env_def = expander.get_environment_definition(env_name)
+
+    display_name = env_name
+    env_type = EnvironmentType.DEFAULT
+    if env_def:
+        display_name = env_def.display_name
+        env_type = env_def.env_type
+    begin_token = EnvironmentStartToken(
+        env_name,
+        display_name=display_name,
+        env_type=env_type,
     )
 
-    env_brace_tokens = [
-        BEGIN_BRACE_TOKEN.copy(),
-        *env_name_tokens,
-        END_BRACE_TOKEN.copy(),
-    ]
+    return [begin_token]
 
-    # push back to stream as \begin{env_name}...\end{env_name}
-    begin_env_token = Token(TokenType.CONTROL_SEQUENCE, "begin")
-    end_env_token = Token(TokenType.CONTROL_SEQUENCE, "end")
-    out_tokens = [
-        begin_env_token,
-        *env_brace_tokens,
-        *body_tokens,
-        end_env_token,
-        *env_brace_tokens,
-    ]
-    expander.push_tokens(out_tokens)
-    return []
+
+def endfloat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""Handle \end@float tokens."""
+    env_name = expander.state.pop_env_stack()
+    if not env_name:
+        expander.logger.warning("\\end@float: No float environment to end")
+        return []
+
+    end_token = Token(TokenType.ENVIRONMENT_END, env_name)
+
+    return [end_token]
 
 
 def register_float_handler(expander: ExpanderCore):
     r"""Register the \@namedef command with the expander."""
-    expander.register_macro(
+    expander.register_handler(
         "\\@float",
-        Macro("\\@float", float_handler),
+        float_handler,
         is_global=True,
     )
 
     # wild \end@float should not happen if parsed properly
-    expander.register_handler("\\end@float", lambda expander, token: [], is_global=True)
+    expander.register_handler("\\end@float", endfloat_handler, is_global=True)
 
 
 if __name__ == "__main__":

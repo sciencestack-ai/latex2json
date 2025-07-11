@@ -103,4 +103,4 @@ WHITELISTED_COMMANDS = [
 ]
 
 
-WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure"]
+WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure", "equation"]

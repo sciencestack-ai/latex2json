@@ -202,7 +202,8 @@ class ExpanderState:
     def pop_env_stack(self):
         """Pops the current environment stack from the stack, ending the current scope."""
         if self._env_stack:
-            self._env_stack.pop()
+            return self._env_stack.pop()
+        return None
 
     def push_scope(self):
         """Pushes a new state layer onto the stack, starting a new scope."""

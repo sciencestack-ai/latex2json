@@ -17,3 +17,18 @@ def test_float_handler():
     out = strip_whitespace_tokens(out)
     assert out[0] == EnvironmentStartToken("figure")
     assert out[-1] == Token(type=TokenType.ENVIRONMENT_END, value="figure")
+
+    # test float env nested inside its own renewenvironment env (ensure no infinite recursion)
+    text = r"""
+\makeatletter
+\renewenvironment{table}
+  {\@float{table}}
+  {\end@float}
+\makeatother
+
+\begin{table}TABLE\end{table}
+""".strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out[0] == EnvironmentStartToken("table")
+    assert out[-1] == Token(type=TokenType.ENVIRONMENT_END, value="table")
