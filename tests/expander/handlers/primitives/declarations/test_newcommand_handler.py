@@ -18,7 +18,7 @@ def test_basic_newcommand():
 
     # Command with arguments
     text = r"""
-    \newcommand{\greet}[2]{Hello #2 and #1!}
+    \newcommand{\greet  }[2]{Hello #2 and #1!}
     """.strip()
     expander.expand(text)
     assert expander.get_macro("\\greet")
@@ -94,7 +94,7 @@ def test_newcommand_redefinition():
 
     # Define command
     text = r"""
-    \newcommand{\greeting} {Hello}
+    \newcommand{\greeting } {Hello}
     """.strip()
     expander.expand(text)
 

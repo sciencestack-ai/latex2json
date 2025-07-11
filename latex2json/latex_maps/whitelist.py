@@ -101,3 +101,6 @@ WHITELISTED_COMMANDS = [
     "smaller",
     "larger",
 ]
+
+
+WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure"]

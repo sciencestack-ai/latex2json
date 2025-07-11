@@ -30,6 +30,7 @@ formatting_patterns = {
     "usefont": 4,
     # You might also add:
     "geometry": 1,  # \geometry{margin=1in}
+    "newgeometry": 1,
     "setstretch": 1,  # \setstretch{1.5} - line spacing
     # Package processing
     "ProcessOptions": 0,  # Actually takes no arguments

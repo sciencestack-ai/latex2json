@@ -1020,6 +1020,7 @@ class ExpanderCore:
 
         # Parse command name
         cmd = self.parse_immediate_token()
+        cmd = strip_whitespace_tokens(cmd)
         if (
             not cmd
             or len(cmd) < 0
@@ -1115,6 +1116,7 @@ class ExpanderCore:
         env_name: str,
         env_def: EnvironmentDefinition,
         is_global: bool = True,
+        is_user_defined: bool = False,
     ) -> None:
         """Register a new environment with begin/end handlers."""
         self.state.set_environment_definition(env_name, env_def)

@@ -338,7 +338,7 @@ if __name__ == "__main__":
 
     logging.getLogger("asyncio").setLevel(logging.WARNING)
 
-    logger = setup_logger(level=logging.INFO, log_file="logs/tex_reader.log")
+    logger = setup_logger(level=logging.DEBUG, log_file="logs/tex_reader.log")
 
     tex_reader = TexReader(logger)
 

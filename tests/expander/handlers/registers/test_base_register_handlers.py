@@ -36,6 +36,8 @@ def test_register_macros():
 def test_builtin_dimens():
     expander = Expander()
 
+    expander.expand(r"\makeatletter")
+
     # e.g. \textwidth, \textheight, \parindent, etc
     for builtin_dimen in BUILTIN_DIMENSIONS:
         expander.expand(f"\\{builtin_dimen}=10pt")

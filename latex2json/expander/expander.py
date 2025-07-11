@@ -2,7 +2,11 @@ from logging import Logger
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
-from latex2json.latex_maps.whitelist_commands import WHITELISTED_COMMANDS
+from latex2json.latex_maps.environments import EnvironmentDefinition
+from latex2json.latex_maps.whitelist import (
+    WHITELISTED_COMMANDS,
+    WHITELISTED_ENVIRONMENTS,
+)
 from latex2json.tokens.tokenizer import Tokenizer
 
 
@@ -17,6 +21,7 @@ class Expander(ExpanderCore):
         self._register_handlers_and_packages()
 
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
+        self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
         self.white_listed_classes: List[str] = ["subfiles"]
         self.white_listed_packages: List[str] = ["subfiles"]
 
@@ -38,6 +43,24 @@ class Expander(ExpanderCore):
         if class_name in self.white_listed_classes:
             return None
         return super().load_class(class_name, extension, read_file)
+
+    # override
+    def register_environment(
+        self,
+        env_name: str,
+        env_def: EnvironmentDefinition,
+        is_global: bool = True,
+        is_user_defined: bool = False,
+    ) -> None:
+        if is_user_defined:
+            if env_name in self.white_listed_environments:
+                self.logger.warning(
+                    f"Preventing redefinition of white-listed environment {env_name}"
+                )
+                return
+        return super().register_environment(
+            env_name, env_def, is_global, is_user_defined
+        )
 
     # override
     def register_macro(

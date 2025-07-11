@@ -71,7 +71,9 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         has_direct_command=False,
         env_type=EnvironmentType.THEOREM,
     )
-    expander.register_environment(env_name, env_def, is_global=True)
+    expander.register_environment(
+        env_name, env_def, is_global=True, is_user_defined=True
+    )
 
     return []
 

@@ -76,10 +76,20 @@ def bibliography_handler(
     return [biblio_node]
 
 
+def natexlab_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    parser.skip_whitespace()
+    label = parser.parse_brace_name()
+    if not label:
+        return []
+
+    return [TextNode(label)]
+
+
 def register_bibitem_handler(parser: ParserCore):
     parser.register_handler("bibitem", bibitem_handler)
     parser.register_handler("newblock", lambda parser, token: [])
     parser.register_env_handler("thebibliography", bibliography_handler)
+    parser.register_handler("natexlab", natexlab_handler)
 
 
 if __name__ == "__main__":
@@ -87,7 +97,7 @@ if __name__ == "__main__":
 
     text = r"""
     \begin{thebibliography}{99}
-		\bibitem{Melrosenotes}
+		\bibitem[MelRose 2001\natexlab{a}]{Melrosenotes}
 		Richard~B. Melrose, \emph{Differential analysis on manifolds with corners},
 		Book in preparation.
 		

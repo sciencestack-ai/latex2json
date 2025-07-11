@@ -54,7 +54,9 @@ class NewEnvironmentMacro(Macro):
             has_direct_command=name.isalpha(),
         )
 
-        expander.register_environment(name, env_def, is_global=True)
+        expander.register_environment(
+            name, env_def, is_global=True, is_user_defined=True
+        )
 
         return []
 

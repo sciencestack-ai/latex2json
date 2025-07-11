@@ -89,6 +89,9 @@ BUILTIN_DIMENSIONS = [
     "medskipamount",  # Amount of \medskip
     "bigskipamount",  # Amount of \bigskip
     "offinterlineskip",
+    # @
+    "p@",
+    "z@",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:

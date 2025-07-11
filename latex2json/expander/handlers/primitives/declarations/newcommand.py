@@ -54,6 +54,8 @@ def newcommand_handler(
         )
         return None
 
+    name = name.strip()
+
     out = get_newcommand_args_and_definition(expander)
     if out is None:
         return None
@@ -85,7 +87,7 @@ def register_newcommand(expander: ExpanderCore):
     )
     expander.register_macro(
         "\\providecommand",
-        NewCommandMacro("\\providecommand", allow_redefine=False),
+        NewCommandMacro("\\providecommand", allow_redefine=True),
         is_global=True,
     )
 

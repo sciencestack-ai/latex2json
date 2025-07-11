@@ -19,13 +19,13 @@ def make_length_setter_handler(command_name: str):
         expander.skip_whitespace()
         length_name = expander.parse_command_name()
         if not length_name:
-            expander.logger.warning(f"Warning: \\{command_name} expects a length name")
+            # expander.logger.warning(f"Warning: \\{command_name} expects a length name")
             return None
 
         expander.skip_whitespace()
         block = expander.parse_brace_as_tokens()
         if not block:
-            expander.logger.warning(f"Warning: \\{command_name} expects a length value")
+            expander.logger.info(f"\\{command_name} expects a length value")
             return None
 
         expander.push_tokens(block + [RELAX_TOKEN.copy()])
@@ -37,9 +37,7 @@ def make_length_setter_handler(command_name: str):
             expander.consume()
 
         if parsed is None:
-            expander.logger.warning(
-                f"Warning: \\{command_name} expects proper dimensions"
-            )
+            expander.logger.info(f"\\{command_name} expects proper dimensions")
             return None
 
         return [length_name, parsed]
