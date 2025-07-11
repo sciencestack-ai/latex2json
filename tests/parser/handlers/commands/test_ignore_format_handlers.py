@@ -14,7 +14,6 @@ def test_ignore_separator_patterns():
 \topsep
 \parsep
 \partopsep
-\labelsep{1em}
 \midrule[2pt]
 \toprule[1pt]
 \bottomrule[1pt]

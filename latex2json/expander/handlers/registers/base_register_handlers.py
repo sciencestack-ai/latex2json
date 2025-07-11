@@ -33,21 +33,23 @@ def set_register_value_handler(
     expander: ExpanderCore,
     register_type: RegisterType,
     reg_id: Union[int, str],
-    check_equals=True,
 ) -> bool:
-    if check_equals and not expander.parse_equals():
-        return False
+    # if check_equals and expander.parse_equals():
+    #     return False
+    is_assignment = expander.parse_equals()
 
     # if = is found, it's an assignment
     expander.skip_whitespace()
     value = parse_register_setter(expander, register_type)
 
     if value is None:
-        expander.logger.warning(
-            f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
-        )
+        if is_assignment:
+            expander.logger.warning(
+                f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
+            )
         return False
-    expander.set_register(register_type, reg_id, value)
+    if is_assignment:
+        expander.set_register(register_type, reg_id, value)
     return True
 
 

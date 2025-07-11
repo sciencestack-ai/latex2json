@@ -61,7 +61,7 @@ def test_math_env_handlers():
 
     childs = out[0].children
     align_node_json = out[0].to_json()
-    childs_json = align_node_json["rows"]
+    childs_json = align_node_json["content"]
 
     # check childs labels + numbering
     assert len(childs) == 3

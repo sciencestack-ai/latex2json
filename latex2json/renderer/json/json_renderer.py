@@ -191,6 +191,9 @@ class JSONRenderer:
             elif "content" in token and isinstance(token["content"], list):
                 token["content"] = self._recursive_postprocess(token["content"])
 
+            if token.get("type") == "command":
+                self.logger.info(f"Found unknown command: {token.get('command')}")
+
         return tokens
 
 

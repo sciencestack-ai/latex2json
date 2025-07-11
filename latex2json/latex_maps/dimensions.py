@@ -100,6 +100,7 @@ LATEX_DIMENSION_UNITS = {
     "pt": 65536,  # Point (1 pt = 65536 sp)
     "mm": 186467,  # Millimeter (1 mm ≈ 2.845275 pt)
     "cm": 1864667,  # Centimeter (1 cm = 10 mm)
+    "truecm": 1864667,  #
     "in": 4736286,  # Inch (1 in = 72.27 pt)
     "ex": 295245,  # Roughly the height of lowercase 'x' (≈ 4.5 pt)
     "em": 655360,  # Roughly width of 'M' (≈ 10 pt)

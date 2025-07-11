@@ -41,6 +41,10 @@ def test_builtin_dimens():
         expander.expand(f"\\{builtin_dimen}=10pt")
         assert expander.get_register_value(RegisterType.DIMEN, builtin_dimen) > 0
 
+        # also test regular without = assignment e.g. \parindent 10pt
+        out = expander.expand(f"\\{builtin_dimen} 10pt")
+        assert out == []
+
 
 def test_new_register_macros():
     expander = Expander()

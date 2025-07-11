@@ -233,5 +233,5 @@ class EquationArrayNode(ASTNode):
             ):
                 row_json["numbering"] = self.row_numberings[i]
             content.append(row_json)
-        result["rows"] = content
+        result["content"] = content
         return result
