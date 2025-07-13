@@ -225,3 +225,20 @@ def test_loop_csname():
     out_str = expander.convert_tokens_to_str(out)
     sequence = out_str.replace("\n", "").replace(" ", "")
     assert sequence == "Item1Item2Item3Item4Item5"
+
+
+def test_character_iteration():
+    # taken from fancyhdr package
+    text = r"""
+\makeatletter
+\def\@forc#1#2#3{\expandafter\f@rc\expandafter#1\expandafter{#2}{#3}}
+\def\f@rc#1#2#3{\def\temp@ty{#2}\ifx\@empty\temp@ty\else
+                                    \f@@rc#1#2\f@@rc{#3}\fi}
+\def\f@@rc#1#2#3\f@@rc#4{\def#1{*#2*}#4\f@rc#1{#3}{#4}}
+
+\@forc\x{hello}{\x}
+"""
+    expander = Expander()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "*h**e**l**l**o*"

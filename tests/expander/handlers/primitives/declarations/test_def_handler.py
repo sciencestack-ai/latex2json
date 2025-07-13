@@ -178,9 +178,34 @@ def test_parse_args_from_usage_pattern():
         ]
         assert_token_sequence(out, expected_parsed_args)
 
+    def test4():
+        # test with control sequence between arguments
+        expander.set_text(r"a\xxx{123}")
+        usage_pattern = [
+            Token(TokenType.PARAMETER, "1"),
+            Token(
+                TokenType.PARAMETER, "2"
+            ),  # note empty! since \xxx is a control sequence identical to \xxx in usage pattern
+            Token(TokenType.CONTROL_SEQUENCE, "xxx"),
+            Token(TokenType.PARAMETER, "3"),
+        ]
+        out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
+        arg1 = [
+            Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        ]
+        arg2 = []  # note empty!
+        arg3 = [
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+            Token(TokenType.CHARACTER, "3", catcode=Catcode.OTHER),
+        ]
+        expected_parsed_args = [arg1, arg2, arg3]
+        assert_token_sequence(out, expected_parsed_args)
+
     test1()
     test2()
     test3()
+    test4()
 
 
 def test_def_handler():
@@ -238,10 +263,24 @@ def test_def_handler():
         expected = expander.expand("SbaS")
         assert_token_sequence(out, expected)
 
+    def test5():
+        # test with control sequence between arguments
+        text = r"""\def\xxx#1#2\xxx#3{1) #1, 2) #2, 3) #3}"""
+        expander.expand(text)
+        assert expander.get_macro("xxx")
+        out = expander.expand(r"\xxx a\xxx{TRES}")
+        expected = expander.expand("1) a, 2) , 3) TRES")
+        assert_token_sequence(out, expected)
+
+        out = expander.expand(r"\xxx ab\xxx3")
+        expected = expander.expand("1) a, 2) b, 3) 3")
+        assert_token_sequence(out, expected)
+
     test1()
     test2()
     test3()
     test4()
+    test5()
 
 
 def test_def_redefine():

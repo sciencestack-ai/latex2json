@@ -1,6 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 
 
@@ -42,7 +42,7 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
         return None
     expander.skip_whitespace()
     tok2 = expander.peek()
-    if tok2 is None:
+    if tok2 is None or tok2.type != TokenType.CONTROL_SEQUENCE:
         # \expandafter doesnt strictly need 2 tokens
         # put back tok1
         expander.push_tokens([tok1])

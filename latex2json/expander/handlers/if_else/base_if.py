@@ -2,6 +2,7 @@ from typing import List, Optional, Protocol, Tuple
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 
 class ConditionEvaluator(Protocol):
@@ -89,7 +90,7 @@ def parse_if_else_block_tokens(
     true_block = block[:else_pos] if else_pos is not None else block
     false_block = block[else_pos + 1 :] if else_pos is not None else []
 
-    return true_block, false_block
+    return strip_whitespace_tokens(true_block), strip_whitespace_tokens(false_block)
 
 
 def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
@@ -197,7 +198,6 @@ def register_base_ifs(expander: ExpanderCore):
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
-    from latex2json.tokens.utils import strip_whitespace_tokens
 
     expander = Expander()
     text = r"""

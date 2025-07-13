@@ -21,12 +21,16 @@ def get_parsed_args_from_usage_pattern(
 
     N = len(usage_pattern)
 
-    for i, pat in enumerate(usage_pattern):
+    i = 0
+    while i < N:
+        pat = usage_pattern[i]
         tok = expander.peek()
         if tok is None:
             return parsed_args
 
         if pat.type == TokenType.PARAMETER:
+            next_pat = usage_pattern[i + 1] if i + 1 < N else None
+
             # expects argument
             expander.skip_whitespace()
             tokens = expander.parse_immediate_token()
@@ -35,11 +39,22 @@ def get_parsed_args_from_usage_pattern(
                     f"Warning: expected an argument but found nothing"
                 )
                 return parsed_args
+            if len(tokens) == 1 and tokens[0].type == TokenType.CONTROL_SEQUENCE:
+                # check if control sequence is identical to next arg in usage pattern
+                # if so, we skip the next arg
+                if next_pat and next_pat.type == TokenType.CONTROL_SEQUENCE:
+                    if tokens[0].value == next_pat.value:
+                        parsed_args.append([])
+                        i += 2
+                        continue
 
             # find the next literal
             next_literal_token = None
-            if i + 1 < N and usage_pattern[i + 1].type == TokenType.CHARACTER:
-                next_literal_token = usage_pattern[i + 1]
+            if next_pat and next_pat.type in [
+                TokenType.CHARACTER,
+                TokenType.CONTROL_SEQUENCE,
+            ]:
+                next_literal_token = next_pat
 
             if next_literal_token:
                 tok = expander.peek()
@@ -53,14 +68,16 @@ def get_parsed_args_from_usage_pattern(
             while len(parsed_args) <= index:
                 parsed_args.append([])
             parsed_args[index] = tokens
+            i += 1
             continue
         else:
             if tok == pat:
                 expander.consume()
+                i += 1
                 continue
             else:
                 expander.logger.warning(
-                    f"Warning: expected {pat.value} but found {tok.value}"
+                    f"Warning: expected {pat.to_str()} but found {tok}"
                 )
                 return parsed_args
 
