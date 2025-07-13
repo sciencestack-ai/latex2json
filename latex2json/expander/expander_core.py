@@ -1076,6 +1076,7 @@ class ExpanderCore:
         num_args: int,
         default_arg: Optional[List[Token]] = None,
         force_braces_for_req_args=False,
+        command_name: Optional[str] = None,
     ) -> List[List[Token]]:
         if num_args > 0:
             # e.g. \cmd {arg}
@@ -1099,7 +1100,7 @@ class ExpanderCore:
                 tokens = self.parse_immediate_token()
             if tokens is None:
                 self.logger.warning(
-                    f"Warning: expected argument {i+1} but found nothing"
+                    f"Warning: {command_name} expected argument {i+1} but found nothing"
                 )
                 return None
             args.append(tokens)
@@ -1147,7 +1148,10 @@ class ExpanderCore:
                 state.push_mode(ProcessingMode.MATH_DISPLAY)
 
             args = expander.get_parsed_args(
-                env_def.num_args, env_def.default_arg, force_braces_for_req_args=True
+                env_def.num_args,
+                env_def.default_arg,
+                force_braces_for_req_args=True,
+                command_name=f"\\begin{{{env_name}}}",
             )
 
             subbed = expander.substitute_token_args(

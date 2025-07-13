@@ -29,7 +29,9 @@ class NewCommandMacro(Macro):
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             # Parse exactly num_args arguments
-            args = expander.get_parsed_args(out.num_args, out.default_arg)
+            args = expander.get_parsed_args(
+                out.num_args, out.default_arg, command_name=self.name
+            )
             if args is None:
                 return None
 
@@ -44,7 +46,7 @@ class NewCommandMacro(Macro):
 
 
 def newcommand_handler(
-    expander: ExpanderCore, token: Token, allow_redefine: bool
+    expander: ExpanderCore, token: Token, allow_redefine: bool = True
 ) -> Optional[NewCommandResult]:
     expander.parse_asterisk()
     name = expander.parse_command_name()

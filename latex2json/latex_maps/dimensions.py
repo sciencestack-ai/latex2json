@@ -9,6 +9,7 @@ BUILTIN_DIMENSIONS = [
     "textheight",  # Height of text area
     "paperwidth",  # Total page width
     "paperheight",  # Total page height
+    "linewidth",
     "columnwidth",  # Width of column (in multicolumn)
     "columnsep",  # Space between columns
     "columnseprule",  # Width of rule between columns
@@ -89,6 +90,9 @@ BUILTIN_DIMENSIONS = [
     "medskipamount",  # Amount of \medskip
     "bigskipamount",  # Amount of \bigskip
     "offinterlineskip",
+    # hsize/vsize
+    "hsize",
+    "vsize",
     # @
     "p@",
     "z@",

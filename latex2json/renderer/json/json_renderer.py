@@ -37,8 +37,8 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
 
 class JSONRenderer:
     def __init__(self, logger: Optional[logging.Logger] = None):
-        self.parser = Parser(logger=logger)
-        self.logger = logger
+        self.logger = logger or logging.getLogger(__name__)
+        self.parser = Parser(logger=self.logger)
 
     def get_colors(self):
         return self.parser.get_colors()

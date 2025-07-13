@@ -127,7 +127,9 @@ PICTURE_ENVIRONMENTS = {
 LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
     "spacing": EnvironmentDefinition("spacing", num_args=1),
-    "minipage": EnvironmentDefinition("minipage", num_args=1, has_direct_command=True),
+    "minipage": EnvironmentDefinition(
+        "minipage", num_args=2, default_arg=[], has_direct_command=True
+    ),
     "multicols": EnvironmentDefinition("multicols", num_args=1),
     "adjustbox": EnvironmentDefinition("adjustbox", num_args=1),
     "adjustwidth": EnvironmentDefinition("adjustwidth", num_args=2),

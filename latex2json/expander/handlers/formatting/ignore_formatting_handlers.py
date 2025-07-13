@@ -79,13 +79,6 @@ formatting_patterns = {
     # lists and items
     "lstset": "{",
     "setlist": "[{",
-    # Width-related commands
-    "linewidth": 0,
-    "columnwidth": 0,
-    "textwidth": 0,
-    "hsize": 0,
-    "labelwidth": 0,
-    "width": 0,
     # toolset
     "mathtoolsset": "[",
     # penalty
