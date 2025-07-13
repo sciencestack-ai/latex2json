@@ -104,3 +104,6 @@ WHITELISTED_COMMANDS = [
 
 
 WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure", "equation", "document"]
+
+WHITELISTED_PACKAGES = ["subfiles", "fancyhdr"]
+WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()

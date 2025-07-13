@@ -457,6 +457,8 @@ class ParserCore:
             # ignore defined font commands for now
             # self.set_font(cmd_name)
             return []
+        elif cmd_name == "relax":
+            return []
 
         # if not self.is_math_mode and (cmd_name.isalnum() or "@" in cmd_name):
         #     self.logger.info(f"Unknown command: {cmd_name}")

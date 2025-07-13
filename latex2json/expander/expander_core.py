@@ -450,11 +450,13 @@ class ExpanderCore:
         if read_file and self.if_file_exists(package_path):
             was_in_package_or_class = self.state.in_package_or_class
             self.state.in_package_or_class = True
-            self.push_scope()
+            # self.push_scope()
             # mock makeatletter and makeatother
+            old_at_catcode = self.get_catcode(ord("@"))
             self.set_catcode(ord("@"), Catcode.LETTER)
             tokens = self.expand_file(package_path)
-            self.pop_scope()
+            self.set_catcode(ord("@"), old_at_catcode)
+            # self.pop_scope()
 
             self.state.in_package_or_class = was_in_package_or_class
 

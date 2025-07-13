@@ -6,6 +6,8 @@ from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.whitelist import (
     WHITELISTED_COMMANDS,
     WHITELISTED_ENVIRONMENTS,
+    WHITELISTED_PACKAGES,
+    WHITELISTED_CLASSES,
 )
 from latex2json.tokens.tokenizer import Tokenizer
 
@@ -24,8 +26,8 @@ class Expander(ExpanderCore):
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
         self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
-        self.white_listed_classes: List[str] = ["subfiles"]
-        self.white_listed_packages: List[str] = ["subfiles"]
+        self.white_listed_classes: List[str] = WHITELISTED_CLASSES.copy()
+        self.white_listed_packages: List[str] = WHITELISTED_PACKAGES.copy()
 
     def _register_handlers_and_packages(self):
         from latex2json.expander.handlers import register_handlers
