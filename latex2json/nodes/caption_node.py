@@ -11,7 +11,6 @@ class CaptionNode(ASTNode):
     ):
         super().__init__()
         self.opt_arg = opt_arg
-        self.body = body
         self.opt_arg = opt_arg
         self.numbering = numbering
 
@@ -23,6 +22,10 @@ class CaptionNode(ASTNode):
         self._arg_boundaries[1] = len(body)
 
         self.set_children(all_args)
+
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children[self._arg_boundaries[0] :]
 
     def __str__(self):
         out = "Caption"
