@@ -1,10 +1,10 @@
 import pytest
 
-from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.expander_core import RELAX_TOKEN
+from latex2json.expander.expander import Expander
 from latex2json.expander.handlers.primitives.declarations.def_handler import (
     get_def_usage_pattern_and_definition,
     get_parsed_args_from_usage_pattern,
-    register_def,
 )
 
 from latex2json.tokens.catcodes import Catcode
@@ -13,7 +13,7 @@ from tests.test_utils import assert_token_sequence
 
 
 def test_get_def_usage_pattern_and_definition():
-    expander = ExpanderCore()
+    expander = Expander()
 
     def test1():
         text = r"\def\test[[#1:#2]{T #1:#2 ENDT}"
@@ -89,7 +89,7 @@ def test_get_def_usage_pattern_and_definition():
 
 
 def test_parse_args_from_usage_pattern():
-    expander = ExpanderCore()
+    expander = Expander()
 
     def test1():
         # usage: [[#1:#2]
@@ -209,9 +209,7 @@ def test_parse_args_from_usage_pattern():
 
 
 def test_def_handler():
-    expander = ExpanderCore()
-
-    register_def(expander)
+    expander = Expander()
 
     def test1():
         assert not expander.get_macro("test")
@@ -284,8 +282,7 @@ def test_def_handler():
 
 
 def test_def_redefine():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     \def\foo{FOO}
@@ -301,8 +298,7 @@ def test_def_redefine():
 
 
 def test_def_with_global():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     # not exist due to scope
     text = r"""{ \def\foo{FOO} }"""
@@ -326,8 +322,7 @@ def test_def_with_global():
 
 
 def test_nested_defs2():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     \def\foo#1 {
@@ -346,8 +341,7 @@ def test_nested_defs2():
 
 
 def test_gdef():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     {
@@ -372,8 +366,7 @@ def test_gdef():
 
 
 def test_edef():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     # test instant expansion
     text = r"""
@@ -417,8 +410,7 @@ def test_edef():
 
 
 def test_xdef():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     {
@@ -437,8 +429,7 @@ def test_xdef():
 
 
 def test_nested_defs():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     \def\foo#1{
@@ -474,8 +465,7 @@ def test_nested_defs():
 
 
 def test_more_defs():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     \def\numberone{ONE}
@@ -495,8 +485,7 @@ def test_more_defs():
 
 
 def test_def_nesting_doesnot_affect_control_sequence():
-    expander = ExpanderCore()
-    register_def(expander)
+    expander = Expander()
 
     text = r"""
     \def\abs#1{AB #1 S}
@@ -509,3 +498,22 @@ def test_def_nesting_doesnot_affect_control_sequence():
     assert expander.get_macro("ab")
 
     assert_token_sequence(expander.expand(r"\ab{xbc}"), expander.expand("AB x Sbc"))
+
+
+def test_weird_nested_noexpand_case():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+
+    \newcommand\def@ult[1]{
+        \edef\temp@a{\lowercase{\edef\noexpand\temp@a{#1}}}\temp@a
+    }
+
+    \def@ult{ABCDEF} % basically defines \temp@a as abcdef
+    \temp@a % -> abcdef
+    """
+
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "abcdef"

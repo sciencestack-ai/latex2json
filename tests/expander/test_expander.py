@@ -260,3 +260,14 @@ def test_character_iteration():
     out = expander.expand(r"\if@in{h}{abcdef}{TRUE}{FALSE}")  # h is not in abcdef
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "FALSE"
+
+    # custom for loop
+    text = r"""
+\newcommand{\f@nfor}[3]{\edef\@fortmp{#2}%
+    \expandafter\@forloop#2,\@nil,\@nil\@@#1{#3}}
+
+    \f@nfor\tempa{a,b,c,d}{\tempa->}
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "a->b->c->d->"

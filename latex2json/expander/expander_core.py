@@ -842,15 +842,7 @@ class ExpanderCore:
         return base_scaled_points, False  # Return the base dimension and no relax
 
     def parse_keyword(self, keyword: str) -> bool:
-        consumed_tokens: List[Token] = []
-        for c in keyword:
-            tok = self.consume()
-            consumed_tokens.append(tok)
-            if tok is None or tok.value != c or tok.type == TokenType.CONTROL_SEQUENCE:
-                # push back all consumed tokens
-                self.push_tokens(consumed_tokens)
-                return False
-        return True
+        return self.parse_keyword_sequence([keyword], skip_whitespaces=False)
 
     # includes \control sequences
     # e.g. self.parse_keyword_sequence([",", r"\@nil", r"\@@"], skip_whitespaces=True)
@@ -858,26 +850,36 @@ class ExpanderCore:
         self, keywords: List[str], skip_whitespaces=True
     ) -> bool:
         consumed_tokens: List[Token] = []
+
         rt = True
-        for c in keywords:
+        for word in keywords:
             if skip_whitespaces:
                 self.skip_whitespace()
             tok = self.peek()
             if tok is None:
                 rt = False
                 break
-            if c.startswith("\\"):
-                # check is control sequence
-                if tok.type != TokenType.CONTROL_SEQUENCE or tok.value != c[1:]:
+            elif word.startswith("\\"):
+                if tok.type != TokenType.CONTROL_SEQUENCE or tok.value != word[1:]:
                     rt = False
                     break
-            elif not self.parse_keyword(c):
-                rt = False
+                self.consume()
+                consumed_tokens.append(tok)
+            else:
+                # check character by character
+                for c in word:
+                    tok = self.consume()
+                    consumed_tokens.append(tok)
+                    if (
+                        tok is None
+                        or tok.value != c
+                        or tok.type == TokenType.CONTROL_SEQUENCE
+                    ):
+                        rt = False
+                        break
+            if not rt:
                 break
-            self.consume()
-            consumed_tokens.append(tok)
         if not rt:
-            # push back all consumed tokens
             self.push_tokens(consumed_tokens)
         return rt
 

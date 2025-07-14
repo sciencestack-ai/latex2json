@@ -1,5 +1,9 @@
 # These commands should not be overrwritten by newcommand/newenvironment
 WHITELISTED_COMMANDS = [
+    # expand
+    "noexpand",
+    "expandafter",
+    # sections
     "bibliography",
     "newcommand",
     "def",
@@ -105,5 +109,5 @@ WHITELISTED_COMMANDS = [
 
 WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure", "equation", "document"]
 
-WHITELISTED_PACKAGES = ["subfiles", "fancyhdr"]
+WHITELISTED_PACKAGES = ["subfiles"]  # "fancyhdr"]
 WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()

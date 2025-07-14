@@ -84,6 +84,10 @@ def get_parsed_args_from_usage_pattern(
     return parsed_args
 
 
+def is_noexpand_token(tok: Token) -> bool:
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "noexpand"
+
+
 class DefMacro(Macro):
     def __init__(self, name: str, is_lazy=True, is_global=False):
         super().__init__(name)
@@ -93,6 +97,15 @@ class DefMacro(Macro):
         self.handler = lambda expander, node: self._expand(expander, node)
 
     def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        expander.skip_whitespace()
+        tok = expander.peek()
+        # deal with weird case where \noexpand comes right after \def \edef etc. This is only possible if \noexpand is inside an existing \def or \newcommand block etc
+        if tok and is_noexpand_token(tok):  # \noexpand
+            # consume \noexpand itself
+            expander.consume()
+            # return the raw \def token itself since it is inside the definition
+            return [token]
+
         out = def_handler(expander, token)
         if out is None:
             return None
@@ -133,17 +146,13 @@ def get_def_usage_pattern_and_definition(
 
 
 def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
-    expander.skip_whitespace()
-    cmd = expander.peek()
-    if not cmd or cmd.type != TokenType.CONTROL_SEQUENCE:
+    cmd = expander.parse_command_name()
+    if not cmd:
         expander.logger.warning(
             f"Warning: \\def expects a command node, but found {cmd}"
         )
         return None
 
-    expander.consume()
-
-    name = cmd.value
     usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
 
     if usage_pattern is None or definition is None:
@@ -153,7 +162,7 @@ def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
         return None
 
     return DefResult(
-        name=name,
+        name=cmd,
         definition=definition,
         usage_pattern=usage_pattern,
     )
