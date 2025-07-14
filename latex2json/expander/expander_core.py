@@ -493,10 +493,7 @@ class ExpanderCore:
         #     return [tok]
 
         if tok.type == TokenType.CONTROL_SEQUENCE:
-            macro = self.state.get_macro(tok.value)
-            if macro and macro.handler:
-                processed = macro.handler(self, tok)
-                return processed
+            return self._exec_macro(tok)
         else:
             self.state.pending_global = False
             if is_begin_group_token(tok):
@@ -510,6 +507,12 @@ class ExpanderCore:
                     else ProcessingMode.MATH_DISPLAY
                 )
                 self.state.toggle_math_mode(mode_type)
+        return [tok]
+
+    def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
+        macro = self.get_macro(tok.value)
+        if macro and macro.handler:
+            return macro.handler(self, tok)
         return [tok]
 
     def next_non_expandable_tokens(self) -> Optional[List[Token]]:
@@ -848,6 +851,35 @@ class ExpanderCore:
                 self.push_tokens(consumed_tokens)
                 return False
         return True
+
+    # includes \control sequences
+    # e.g. self.parse_keyword_sequence([",", r"\@nil", r"\@@"], skip_whitespaces=True)
+    def parse_keyword_sequence(
+        self, keywords: List[str], skip_whitespaces=True
+    ) -> bool:
+        consumed_tokens: List[Token] = []
+        rt = True
+        for c in keywords:
+            if skip_whitespaces:
+                self.skip_whitespace()
+            tok = self.peek()
+            if tok is None:
+                rt = False
+                break
+            if c.startswith("\\"):
+                # check is control sequence
+                if tok.type != TokenType.CONTROL_SEQUENCE or tok.value != c[1:]:
+                    rt = False
+                    break
+            elif not self.parse_keyword(c):
+                rt = False
+                break
+            self.consume()
+            consumed_tokens.append(tok)
+        if not rt:
+            # push back all consumed tokens
+            self.push_tokens(consumed_tokens)
+        return rt
 
     def parse_equals(self) -> bool:
         if self.match(value="=", catcode=Catcode.OTHER):

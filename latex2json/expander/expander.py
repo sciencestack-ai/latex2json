@@ -10,6 +10,7 @@ from latex2json.latex_maps.whitelist import (
     WHITELISTED_CLASSES,
 )
 from latex2json.tokens.tokenizer import Tokenizer
+from latex2json.tokens.types import Token
 
 
 class Expander(ExpanderCore):
@@ -18,10 +19,13 @@ class Expander(ExpanderCore):
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
         prevent_whitelisted_redefinitions: bool = True,
+        prevent_package_macro_execution: bool = False,
     ):
         super().__init__(tokenizer, logger)
 
         self._register_handlers_and_packages()
+
+        self.prevent_package_macro_execution = prevent_package_macro_execution
 
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
@@ -47,6 +51,12 @@ class Expander(ExpanderCore):
         if class_name in self.white_listed_classes:
             return None
         return super().load_class(class_name, extension, read_file)
+
+    # override
+    def _exec_macro(self, tok: Token) -> List[Token] | None:
+        if self.state.in_package_or_class and self.prevent_package_macro_execution:
+            return [tok]
+        return super()._exec_macro(tok)
 
     # override
     def register_environment(

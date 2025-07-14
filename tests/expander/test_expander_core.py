@@ -231,7 +231,7 @@ def test_parse_bracket_as_tokens():
     )
 
 
-def test_parse_keyword():
+def test_parse_keyword_and_sequences():
     expander = ExpanderCore()
 
     expander.set_text("plus")
@@ -242,6 +242,21 @@ def test_parse_keyword():
     expander.set_text("minus")
     assert not expander.parse_keyword("minux")
     assert expander.parse_keyword("minus")
+    assert expander.eof()
+
+    # test parse_keyword_sequence
+    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.set_text(r"\@nil, \@nil\@@")
+    assert expander.parse_keyword_sequence([r"\@nil", ",", r"\@nil", r"\@@"])
+    assert expander.eof()
+
+    # test wrong sequence
+    expander.set_text(r"\@nil, \@nil\@@")
+    assert not expander.parse_keyword_sequence([r"\@nil", "XXX", r"\@nil", r"\@@"])
+    assert not expander.eof()
+    # check that the stream is back to the original state
+    assert expander.peek() == Token(TokenType.CONTROL_SEQUENCE, "@nil")
+    assert expander.parse_keyword_sequence([r"\@nil", ",", r"\@nil", r"\@@"])
     assert expander.eof()
 
 

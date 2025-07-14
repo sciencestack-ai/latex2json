@@ -41,3 +41,15 @@ def test_nested_for_loop():
         for x in range(3):
             expected.append(f"({x},{y})")
     assert sequence == expected
+
+
+def test_at_for_loop_handler():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+    \@forloop a,b,c,\@nil, \@nil \@@\myvar{[\myvar] }
+""".strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"[a] [b] [c]"

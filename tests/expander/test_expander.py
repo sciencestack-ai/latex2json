@@ -228,7 +228,9 @@ def test_loop_csname():
 
 
 def test_character_iteration():
-    # taken from fancyhdr package
+    # examples taken from fancyhdr package
+
+    # iterate over characters in a string
     text = r"""
 \makeatletter
 \def\@forc#1#2#3{\expandafter\f@rc\expandafter#1\expandafter{#2}{#3}}
@@ -242,3 +244,19 @@ def test_character_iteration():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "*h**e**l**l**o*"
+
+    # command to check if character is inside
+    text = r"""
+\newcommand{\if@in}[4]{%
+    \edef\temp@a{#2}\def\temp@b##1#1##2\temp@b{\def\temp@b{##1}}%
+    \expandafter\temp@b#2#1\temp@b\ifx\temp@a\temp@b #4\else #3\fi}
+
+    \if@in{c}{abcdef}{TRUE}{FALSE} % c is in abcdef
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "TRUE"
+
+    out = expander.expand(r"\if@in{h}{abcdef}{TRUE}{FALSE}")  # h is not in abcdef
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "FALSE"

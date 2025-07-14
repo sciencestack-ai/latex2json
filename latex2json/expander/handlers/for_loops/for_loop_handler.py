@@ -1,7 +1,12 @@
 from typing import List
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.handlers.for_loops.for_each_handler import (
+    is_comma_token,
+    replace_for_each_item_body,
+)
 from latex2json.expander.handlers.if_else.ifnum import evaluate_ifnum
 from latex2json.tokens import Token, TokenType
+from latex2json.tokens.utils import split_tokens_by_predicate
 
 
 def for_loop_handler(expander: ExpanderCore, token: Token):
@@ -47,8 +52,59 @@ def for_loop_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def is_at_nil_token(tok: Token) -> bool:
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "@nil"  # \@nil
+
+
+def at_for_loop_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    list_tokens: List[Token] = []
+    while not expander.eof():
+        tokens = expander.process(is_at_nil_token, consume_stop_token=True)
+        if tokens is None:
+            break
+        list_tokens.extend(tokens)
+
+        # \@nil,\@nil\@@ is the end of the list. First \@nil is already consumed by the process()
+        is_end_sequence = expander.parse_keyword_sequence(
+            [",", r"\@nil", r"\@@"], skip_whitespaces=True
+        )
+        if is_end_sequence:
+            break
+
+    expander.skip_whitespace()
+    tok = expander.peek()
+    if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+        expander.logger.warning(
+            r"Warning: \@forloop expected variable after \@nil,\@nil\@@"
+        )
+        return None
+    expander.consume()
+
+    # same logic as \@for ... \do {...}
+    variables = [tok]
+
+    body_tokens = expander.parse_brace_as_tokens()
+    if body_tokens is None:
+        expander.logger.warning(r"\@forloop expected {...} after variable")
+        return None
+    elif len(body_tokens) == 0 or len(list_tokens) == 0:
+        return []
+
+    list_items = split_tokens_by_predicate(list_tokens, is_comma_token)
+
+    result_tokens: List[Token] = []
+    for item in list_items:
+        out_tokens = replace_for_each_item_body(body_tokens, variables, [item])
+        result_tokens.extend(out_tokens)
+
+    expander.push_tokens(result_tokens)
+    return []
+
+
 def register_for_loop_handler(expander: ExpanderCore):
     expander.register_handler("forloop", for_loop_handler, is_global=True)
+    expander.register_handler("@forloop", at_for_loop_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -63,5 +119,10 @@ if __name__ == "__main__":
     \arabic{x}                  % print x in arabic notation
 }
 """
+
+    text = r"""
+    \makeatletter
+    \@forloop a,b,c,\@nil, \@nil \@@\myvar{[\myvar] }
+""".strip()
     out = expander.expand(text)
     print(out)
