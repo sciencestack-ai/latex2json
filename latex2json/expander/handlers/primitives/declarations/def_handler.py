@@ -1,8 +1,9 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import is_begin_group_token, strip_whitespace_tokens
 
@@ -14,72 +15,106 @@ class DefResult:
     usage_pattern: List[Token]
 
 
+@dataclass
+class PatternSegment:
+    is_param: bool = False
+    tokens: List[Token] = field(default_factory=list)
+    keyword_sequence: Optional[List[str]] = None
+
+
+def split_usage_pattern_into_segments(
+    tokens: List[Token],
+) -> List[PatternSegment]:
+    segments: List[PatternSegment] = []
+    current_group: List[Token] = []
+
+    for tok in tokens:
+        if tok.type == TokenType.PARAMETER:
+            if current_group:
+                segments.append(PatternSegment(is_param=False, tokens=current_group))
+                current_group = []
+            segments.append(PatternSegment(is_param=True, tokens=[tok]))
+        else:
+            current_group.append(tok)
+
+    if current_group:
+        segments.append(PatternSegment(is_param=False, tokens=current_group))
+
+    for segment in segments:
+        if not segment.is_param:
+            segment.keyword_sequence = [t.to_str() for t in segment.tokens]
+
+    return segments
+
+
 def get_parsed_args_from_usage_pattern(
     expander: ExpanderCore, usage_pattern: List[Token]
 ) -> List[List[Token]]:
     parsed_args: List[List[Token]] = []
 
-    N = len(usage_pattern)
+    # split usage pattern into segments
+    segments = split_usage_pattern_into_segments(usage_pattern)
 
+    N = len(segments)
     i = 0
     while i < N:
-        pat = usage_pattern[i]
-        tok = expander.peek()
-        if tok is None:
+        segment = segments[i]
+
+        if not segment.is_param:
+
+            if expander.parse_keyword_sequence(
+                segment.keyword_sequence, skip_whitespaces=False
+            ):
+                i += 1
+                continue
+
+            # did not match, return immediately
             return parsed_args
 
-        if pat.type == TokenType.PARAMETER:
-            next_pat = usage_pattern[i + 1] if i + 1 < N else None
-
-            # expects argument
+        else:
+            # segment is param e.g. #1 #2
             expander.skip_whitespace()
+            next_keyword_sequence = None
+            if i + 1 < N:
+                # check if next segment is a keyword sequence
+                # prioritize keyword grabbing/matching
+                next_segment = segments[i + 1]
+                if not next_segment.is_param:
+                    next_keyword_sequence = next_segment.keyword_sequence
+                    if expander.parse_keyword_sequence(
+                        next_keyword_sequence, skip_whitespaces=False
+                    ):
+                        i += 2
+                        continue
+
+            # parameter matching
             tokens = expander.parse_immediate_token()
             if tokens is None:
                 expander.logger.warning(
                     f"Warning: expected an argument but found nothing"
                 )
                 return parsed_args
-            if len(tokens) == 1 and tokens[0].type == TokenType.CONTROL_SEQUENCE:
-                # check if control sequence is identical to next arg in usage pattern
-                # if so, we skip the next arg
-                if next_pat and next_pat.type == TokenType.CONTROL_SEQUENCE:
-                    if tokens[0].value == next_pat.value:
-                        parsed_args.append([])
-                        i += 2
-                        continue
 
-            # find the next literal
-            next_literal_token = None
-            if next_pat and next_pat.type in [
-                TokenType.CHARACTER,
-                TokenType.CONTROL_SEQUENCE,
-            ]:
-                next_literal_token = next_pat
-
-            if next_literal_token:
-                tok = expander.peek()
-                # if there is a next literal token, we keep consuming until we find it
-                while tok and tok != next_literal_token:
-                    tokens.append(expander.consume())
-                    tok = expander.peek()
-
-            index = int(pat.value) - 1
+            param_tok = segment.tokens[0]  # must be a parameter token
+            index = int(param_tok.value) - 1
             # Extend parsed_args with empty lists if needed
             while len(parsed_args) <= index:
                 parsed_args.append([])
-            parsed_args[index] = tokens
             i += 1
-            continue
-        else:
-            if tok == pat:
-                expander.consume()
-                i += 1
-                continue
-            else:
-                expander.logger.warning(
-                    f"Warning: expected {pat.to_str()} but found {tok}"
-                )
-                return parsed_args
+
+            # keep grabbing tokens until next_keyword_sequence is matched
+            while next_keyword_sequence and not expander.eof():
+                if expander.parse_keyword_sequence(
+                    next_keyword_sequence, skip_whitespaces=False
+                ):
+                    i += 1
+                    break
+                tok = expander.consume()
+                if tok is None:
+                    break
+                tokens.append(tok)
+
+            parsed_args[index] = tokens
 
     return parsed_args
 
@@ -101,8 +136,6 @@ class DefMacro(Macro):
         tok = expander.peek()
         # deal with weird case where \noexpand comes right after \def \edef etc. This is only possible if \noexpand is inside an existing \def or \newcommand block etc
         if tok and is_noexpand_token(tok):  # \noexpand
-            # consume \noexpand itself
-            expander.consume()
             # return the raw \def token itself since it is inside the definition
             return [token]
 
@@ -201,11 +234,23 @@ if __name__ == "__main__":
     # # expected = expander.expand("BAR HI BAR")
     # print(out)
 
-    text = r"""
-    \def\foo{FOO}
-    \def\bar{\foo}
-    \def\foo{BAR}
-    """.strip()
+    # text = r"""
+    # \def\foo{FOO}
+    # \def\bar{\foo}
+    # \def\foo{BAR}
+    # """.strip()
 
-    expander.expand(text)
-    print(expander.expand(r"\bar"))
+    # expander.expand(text)
+    # print(expander.expand(r"\bar"))
+
+    expander.set_text(r"[[HI:{123}\cmd]")
+    usage_pattern = [
+        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
+        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
+        Token(TokenType.PARAMETER, "1"),
+        Token(TokenType.CHARACTER, ":", catcode=Catcode.OTHER),
+        Token(TokenType.PARAMETER, "2"),
+        Token(TokenType.CHARACTER, "]", catcode=Catcode.OTHER),
+    ]
+    out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
+    print(out)

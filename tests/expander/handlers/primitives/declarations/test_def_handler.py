@@ -91,7 +91,7 @@ def test_get_def_usage_pattern_and_definition():
 def test_parse_args_from_usage_pattern():
     expander = Expander()
 
-    def test1():
+    def test_with_brackets():
         # usage: [[#1:#2]
         expander.set_text(r"[[HI:{123}\cmd]")
         usage_pattern = [
@@ -120,7 +120,7 @@ def test_parse_args_from_usage_pattern():
         ]
         assert_token_sequence(out, expected_parsed_args)
 
-    def test2():
+    def test_regular():
         # usage: #1#2#3
         expander.set_text(r"{abc}a\cmd")
         usage_pattern = [
@@ -148,7 +148,7 @@ def test_parse_args_from_usage_pattern():
         ]
         assert_token_sequence(out, expected_parsed_args)
 
-    def test3():
+    def test_with_braces():
         # usage: (#1, #2)
         expander.set_text(r"(aaa, {bbb}a)")
         usage_pattern = [
@@ -178,7 +178,7 @@ def test_parse_args_from_usage_pattern():
         ]
         assert_token_sequence(out, expected_parsed_args)
 
-    def test4():
+    def test_with_control_sequence():
         # test with control sequence between arguments
         expander.set_text(r"a\xxx{123}")
         usage_pattern = [
@@ -202,10 +202,34 @@ def test_parse_args_from_usage_pattern():
         expected_parsed_args = [arg1, arg2, arg3]
         assert_token_sequence(out, expected_parsed_args)
 
-    test1()
-    test2()
-    test3()
-    test4()
+    def test_prioritize_keyword_sequence():
+        # test prioritizing keyword sequence over parameter
+        # mock
+        # \def\yyy#1haha#2{MUHAHA #1, #2 AHAHAH}
+        # \yyy hah haha eee % note that the parser should exact match the 'haha' in the middle, and not the first 'hah'
+        # thus, #1 -> 'hah ', #2 -> e
+
+        expander.set_text(r"hah haha eee")
+
+        usage_pattern = [
+            Token(TokenType.PARAMETER, "1"),
+            Token(TokenType.CHARACTER, "h", catcode=Catcode.LETTER),
+            Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+            Token(TokenType.CHARACTER, "ha", catcode=Catcode.LETTER),
+            Token(TokenType.PARAMETER, "2"),
+        ]
+        out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
+
+        arg1 = expander.convert_str_to_tokens("hah ")
+        arg2 = expander.convert_str_to_tokens("e")
+        expected_parsed_args = [arg1, arg2]
+        assert_token_sequence(out, expected_parsed_args)
+
+    test_with_brackets()
+    test_regular()
+    test_with_braces()
+    test_with_control_sequence()
+    test_prioritize_keyword_sequence()
 
 
 def test_def_handler():

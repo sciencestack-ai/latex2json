@@ -4,7 +4,7 @@ from latex2json.expander.handlers.if_else.base_if import IfMacro
 
 def register_if_format_handlers(expander: ExpanderCore):
 
-    LATEX_INTERNAL_IFS = {
+    LATEX_FORMATTING_IFS = {
         "if@twoside": False,
         "if@titlepage": False,
         "if@openright": False,
@@ -17,8 +17,7 @@ def register_if_format_handlers(expander: ExpanderCore):
         "if@newlist": False,
     }
 
-    # iftrue + iffalse
-    for name, condition in LATEX_INTERNAL_IFS.items():
+    for name, condition in LATEX_FORMATTING_IFS.items():
         expander.register_macro(
             name,
             IfMacro(name, lambda expander, token: (condition, None)),

@@ -271,3 +271,54 @@ def test_character_iteration():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "a->b->c->d->"
+
+    # putting it all together into def@ult
+    text = r"""
+\def\@forc#1#2#3{\expandafter\f@rc\expandafter#1\expandafter{#2}{#3}}
+\def\f@rc#1#2#3{\def\temp@ty{#2}\ifx\@empty\temp@ty\else
+                                    \f@@rc#1#2\f@@rc{#3}\fi}
+\def\f@@rc#1#2#3\f@@rc#4{\def#1{#2}#4\f@rc#1{#3}{#4}}
+\newcommand{\if@in}[4]{%
+    \edef\temp@a{#2}\def\temp@b##1#1##2\temp@b{\def\temp@b{##1}}%
+    \expandafter\temp@b#2#1\temp@b\ifx\temp@a\temp@b #4\else #3\fi}
+
+
+\newcommand\def@ult[3]{%
+  \edef\temp@a{\lowercase{\edef\noexpand\temp@a{#3}}}\temp@a
+  \def#1{}%
+  \@forc\tmpf@ra{#2}%
+    {\expandafter\if@in\tmpf@ra\temp@a{\edef#1{#1\tmpf@ra}}{}}%
+  \ifx\@empty#1\def#1{#2}\fi
+}
+
+% Test 1: all overlap
+\def@ult\cs{xyz}{YXZ}
+Test 1: \cs % → "xyz"
+
+% Test 2: partial overlap
+\def@ult\cs{abcde}{ACE}
+Test 2: \cs % → "ace"
+
+% Test 3: no overlap, fallback to defaults
+\def@ult\cs{abc}{XYZ}
+Test 3: \cs % → "abc"
+
+% Test 4: mixed case input
+\def@ult\cs{aeiou}{U}
+Test 4: \cs % → "u"
+
+% Test 5: empty argument
+\def@ult\cs{abcd}{}
+Test 5: \cs % → "abcd"
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    split = out_str.split("\n")
+    split = [s.strip() for s in split if s.strip()]
+    assert split == [
+        "Test 1: xyz",
+        "Test 2: ace",
+        "Test 3: abc",
+        "Test 4: u",
+        "Test 5: abcd",
+    ]

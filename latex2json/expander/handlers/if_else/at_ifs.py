@@ -1,4 +1,5 @@
 from typing import List, Optional
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token
 from latex2json.expander.expander_core import ExpanderCore
 
@@ -128,17 +129,19 @@ def make_ifloaded_handler(load_type: str = "package"):
 
 
 def register_atifs(expander: ExpanderCore):
-    expander.register_handler("\\@ifstar", if_star_handler, is_global=True)
-    expander.register_handler("\\@ifnextchar", if_nextchar_handler, is_global=True)
-    expander.register_handler("\\@ifmmode", if_mathmode_handler, is_global=True)
-    expander.register_handler("\\@ifundefined", if_undefined_handler, is_global=True)
-    expander.register_handler("\\@ifdefinable", ifdefinable_handler, is_global=True)
-    expander.register_handler(
-        "\\@ifpackageloaded", make_ifloaded_handler("package"), is_global=True
-    )
-    expander.register_handler(
-        "\\@ifclassloaded", make_ifloaded_handler("class"), is_global=True
-    )
+
+    if_handlers = {
+        "\\@ifstar": if_star_handler,
+        "\\@ifnextchar": if_nextchar_handler,
+        "\\@ifmmode": if_mathmode_handler,
+        "\\@ifundefined": if_undefined_handler,
+        "\\@ifdefinable": ifdefinable_handler,
+        "\\@ifpackageloaded": make_ifloaded_handler("package"),
+        "\\@ifclassloaded": make_ifloaded_handler("class"),
+    }
+    for name, handler in if_handlers.items():
+        macro = Macro(name, handler, MacroType.IF)
+        expander.register_macro(name, macro, is_global=True)
 
 
 if __name__ == "__main__":

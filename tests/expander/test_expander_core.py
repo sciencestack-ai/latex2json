@@ -259,6 +259,10 @@ def test_parse_keyword_and_sequences():
     assert expander.parse_keyword_sequence([r"\@nil", ",", r"\@nil", r"\@@"])
     assert expander.eof()
 
+    expander.set_text("haha")
+    assert expander.parse_keyword_sequence(["h", "a", "h", "a"])
+    assert expander.eof()
+
 
 # test helper functions
 def test_parse_int_float_arguments():
