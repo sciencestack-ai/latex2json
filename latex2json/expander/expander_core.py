@@ -611,14 +611,19 @@ class ExpanderCore:
             tok = self.peek()
         return out, False
 
-    def parse_immediate_token(self) -> List[Token] | None:
+    def parse_immediate_token(self, expand=False) -> List[Token] | None:
         tok = self.peek()
         if not tok:
             return None
 
+        tokens = []
         if is_begin_group_token(tok):
-            return self.parse_brace_as_tokens()
-        return [self.consume()]
+            tokens = self.parse_brace_as_tokens()
+        else:
+            tokens = [self.consume()]
+        if expand:
+            return self.expand_tokens(tokens)
+        return tokens
 
     def parse_integer(self, expand_registers=True) -> Optional[int]:
         sequence, relax = self._expand_and_combine_as_str(
@@ -1377,16 +1382,29 @@ class ExpanderCore:
             )
 
     def parse_braced_blocks(
-        self, N_blocks: int = 2, expand=False, brackets=False
+        self, N_blocks: int = 2, expand=False, check_immediate_tokens=False
     ) -> List[List[Token]]:
         blocks = []
         for _ in range(N_blocks):
             self.skip_whitespace()
             block = (
                 self.parse_brace_as_tokens(expand=expand)
-                if not brackets
-                else self.parse_bracket_as_tokens(expand=expand)
+                if not check_immediate_tokens
+                else self.parse_immediate_token(expand=expand)
             )
+            if block is None:
+                break
+            blocks.append(block)
+
+        return blocks
+
+    def parse_bracket_blocks(
+        self, N_blocks: int = 2, expand=False
+    ) -> List[List[Token]]:
+        blocks = []
+        for _ in range(N_blocks):
+            self.skip_whitespace()
+            block = self.parse_bracket_as_tokens(expand=expand)
             if block is None:
                 break
             blocks.append(block)

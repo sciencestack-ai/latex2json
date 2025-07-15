@@ -161,10 +161,7 @@ def make_savebox_handler(extended=False):
 
         if extended:
             # ignore blocks..
-            blocks = expander.parse_braced_blocks(
-                N_blocks=2,
-                brackets=True,
-            )
+            blocks = expander.parse_bracket_blocks(N_blocks=2)
 
         expander.skip_whitespace()
         box_content = expander.parse_brace_as_tokens(expand=True)

@@ -65,12 +65,11 @@ def typeout_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     if not tok:
         return None
 
-    tok = expander.parse_immediate_token()
+    tok = expander.parse_immediate_token(expand=True)
     if not tok:
         return None
 
-    exp = expander.expand_tokens(tok)
-    exp_str = expander.convert_tokens_to_str(exp)
+    exp_str = expander.convert_tokens_to_str(tok)
     expander.logger.debug(f"\\typeout: {exp_str}")
     return []
 

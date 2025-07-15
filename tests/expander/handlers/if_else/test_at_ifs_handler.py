@@ -1,7 +1,6 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.expander.handlers.if_else.at_ifs import register_atifs
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import (
     assert_tokens_endwith,
@@ -12,7 +11,6 @@ from tests.test_utils import (
 
 def test_ifstar_handler():
     expander = Expander()
-    register_atifs(expander)
     test_with_star = r"""
     \makeatletter
     \def\cmd{\@ifstar{star}{nostar}}
@@ -27,7 +25,6 @@ def test_ifstar_handler():
 
 def test_nested_ifstar():
     expander = Expander()
-    register_atifs(expander)
     nested_test = r"""
     \makeatletter
     \def\outer{\@ifstar{\inner*}{\inner}}
@@ -50,7 +47,6 @@ def test_nested_ifstar():
 
 def test_ifstar_inside_iftrue():
     expander = Expander()
-    register_atifs(expander)
     test_code = r"""
     \makeatletter
     \def\cmd{\iftrue\@ifstar{star}{nostar}\fi}  % this is always nostar since \fi is right after \@ifstar block
@@ -67,7 +63,6 @@ def test_ifstar_inside_iftrue():
 
 def test_ifnextchar_handler():
     expander = Expander()
-    register_atifs(expander)
     test_code = r"""
     \makeatletter
     \def\cmd{\@ifnextchar[{OPT}{NO OPT}} 
@@ -78,3 +73,21 @@ def test_ifnextchar_handler():
     out = expander.expand(test_code)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "OPT[", out_str
+
+
+def test_undefined_handler():
+    expander = Expander()
+    text = r"""
+    \makeatletter
+    \@ifundefined{cmd}{undefined}{defined}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "undefined"
+
+    text = r"""
+    \@ifundefined\cmd{undefined}\relax
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "undefined"

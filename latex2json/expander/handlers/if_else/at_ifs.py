@@ -73,8 +73,8 @@ def if_mathmode_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 
 def if_undefined_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
-    command_name = expander.parse_brace_name()
-    blocks = expander.parse_braced_blocks(2)
+    command_name = expander.parse_command_name()
+    blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
         expander.logger.warning("Warning: \\@ifundefined expects 3 blocks")
         return None
@@ -89,12 +89,11 @@ def if_undefined_handler(expander: ExpanderCore, token: Token) -> Optional[List[
 
 def ifdefinable_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
-    tokens = expander.parse_immediate_token()
-    if tokens is None or len(tokens) < 1:
-        expander.logger.warning("Warning: \\@ifdefinable expects a token")
+    command_name = expander.parse_command_name()
+    if command_name is None:
+        expander.logger.warning("Warning: \\@ifdefinable expects a command name")
         return None
 
-    command_name = tokens[0].value
     is_definable = expander.get_macro(command_name) is None
     expander.skip_whitespace()
     block = expander.parse_brace_as_tokens()

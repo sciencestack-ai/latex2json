@@ -57,13 +57,13 @@ def make_generic_command_handler(
                 if opt_arg:
                     opt_args.append(opt_arg)
             elif char == "{":
-                req_arg = expander.parse_immediate_token()
+                req_arg = expander.parse_immediate_token(expand=expand)
                 if req_arg is None:  # Required argument not found
                     expander.logger.warning(
                         f"Required argument not found for command {command_name}"
                     )
                     break
-                args.append(expander.expand_tokens(req_arg))
+                args.append(req_arg)
 
         return [CommandWithArgsToken(name=command_name, args=args, opt_args=opt_args)]
 

@@ -19,6 +19,7 @@ BUILTIN_DIMENSIONS = [
     "evensidemargin",  # Left margin on even pages
     "topmargin",  # Top margin
     "headheight",  # Height of page headers
+    "headwidth",
     "headsep",  # Space between header and text
     "footskip",  # Distance from baseline to footer
     "hoffset",  # Horizontal page offset
