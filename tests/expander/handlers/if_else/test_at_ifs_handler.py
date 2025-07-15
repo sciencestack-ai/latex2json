@@ -63,3 +63,18 @@ def test_ifstar_inside_iftrue():
     result = strip_whitespace_tokens(expander.expand(r"\cmd*"))
     expected = strip_whitespace_tokens(expander.expand("nostar*"))
     assert_token_sequence(result, expected)
+
+
+def test_ifnextchar_handler():
+    expander = Expander()
+    register_atifs(expander)
+    test_code = r"""
+    \makeatletter
+    \def\cmd{\@ifnextchar[{OPT}{NO OPT}} 
+    \makeatother
+
+    \cmd [ % OPT (DOES NOT CONSUME [)
+    """.strip()
+    out = expander.expand(test_code)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "OPT[", out_str

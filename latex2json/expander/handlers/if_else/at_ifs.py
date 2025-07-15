@@ -41,7 +41,7 @@ def if_nextchar_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
         return None
 
     expander.skip_whitespace()
-    tok2 = expander.consume()
+    tok2 = expander.peek()
     if tok2 is None:
         expander.logger.warning(
             "Warning: \\@ifnextchar expects a token after \\@ifnextchar[{}{}"

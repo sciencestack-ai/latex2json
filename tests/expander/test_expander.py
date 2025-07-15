@@ -272,8 +272,14 @@ def test_character_iteration():
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "a->b->c->d->"
 
+
+def test_fancyhdr():
+    expander = Expander()
+
     # putting it all together into def@ult
     text = r"""
+    \makeatletter
+
 \def\@forc#1#2#3{\expandafter\f@rc\expandafter#1\expandafter{#2}{#3}}
 \def\f@rc#1#2#3{\def\temp@ty{#2}\ifx\@empty\temp@ty\else
                                     \f@@rc#1#2\f@@rc{#3}\fi}
@@ -322,3 +328,49 @@ Test 5: \cs % → "abcd"
         "Test 4: u",
         "Test 5: abcd",
     ]
+
+    # FINAL BOSS: \f@ncyhf \fancyhf
+    text = r"""
+
+    \newcommand{\f@nfor}[3]{\edef\@fortmp{#2}%
+    \expandafter\@forloop#2,\@nil,\@nil\@@#1{#3}}
+    
+    \def\ifancy@mpty#1{\def\temp@a{#1}\ifx\temp@a\@empty}
+
+    \def\fancy@def#1#2{\ifancy@mpty{#2}\fancy@gbl\def#1{\leavevmode}\else
+                                    \fancy@gbl\def#1{#2\strut}\fi}
+
+    \let\fancy@gbl\global
+
+    \newcommand{\fancyhf}{\@ifnextchar[{\f@ncyhf\fancyhf{}}%
+                                    {\f@ncyhf\fancyhf{}[]}}
+        
+
+    \def\f@ncyhf#1#2[#3]#4{%
+        \def\temp@c{}%
+        \@forc\tmpf@ra{#3}%
+            {\expandafter\if@in\tmpf@ra{eolcrhf,EOLCRHF}%
+                {}{\edef\temp@c{\temp@c\tmpf@ra}}}%
+        \ifx\@empty\temp@c\else
+            \@fancyerrmsg{Illegal char `\temp@c' in \string#1 argument:
+            [#3]}%
+        \fi
+        \f@nfor\temp@c{#3}%
+            {\def@ult\f@@@eo{eo}\temp@c
+            \if@twoside\else
+            \if\f@@@eo e\@fancywarning
+                {\string#1's `E' option without twoside option is useless}\fi\fi
+            \def@ult\f@@@lcr{lcr}\temp@c
+            \def@ult\f@@@hf{hf}{#2\temp@c}%
+            \@forc\f@@eo\f@@@eo
+                {\@forc\f@@lcr\f@@@lcr
+                    {\@forc\f@@hf\f@@@hf
+                        {\expandafter\fancy@def\csname
+                        f@ncy\f@@eo\f@@lcr\f@@hf\endcsname
+                        {#4}}}}}}
+    \fancyhf{}
+    """
+    # all this should expand to... nothing!
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == ""
