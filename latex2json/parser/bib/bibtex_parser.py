@@ -56,7 +56,7 @@ class BibTexParser:
 
     def parse(self, content: str) -> List[BibEntryNode]:
         """Parse BibTeX content and return list of BibEntry objects"""
-        self.logger.info("Starting BibTeX parsing")
+        self.logger.debug("Starting BibTeX parsing")
 
         # Check if this is compiled BibTeX and convert if needed
         if is_compiled_bibtex(content):
