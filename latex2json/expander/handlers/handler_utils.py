@@ -13,7 +13,7 @@ def make_generic_command_handler(
         Spec can contain:
         - * : star (asterisk)
         - [ : optional bracket argument
-        - { : required brace argument
+        - { : required brace argument or immediate token
         - = : required equals sign
         - \ : required backslash
         - f : parse float
@@ -26,11 +26,6 @@ def make_generic_command_handler(
 
         args: List[List[Token]] = []
         opt_args: List[List[Token]] = []
-        has_star = False
-
-        if spec[0] == "*":
-            has_star = expander.parse_asterisk()
-            spec = spec[1:]
 
         for char in spec:
             expander.skip_whitespace()
@@ -62,13 +57,13 @@ def make_generic_command_handler(
                 if opt_arg:
                     opt_args.append(opt_arg)
             elif char == "{":
-                req_arg = expander.parse_brace_as_tokens(expand=expand)
+                req_arg = expander.parse_immediate_token()
                 if req_arg is None:  # Required argument not found
                     expander.logger.warning(
                         f"Required argument not found for command {command_name}"
                     )
                     break
-                args.append(req_arg)
+                args.append(expander.expand_tokens(req_arg))
 
         return [CommandWithArgsToken(name=command_name, args=args, opt_args=opt_args)]
 

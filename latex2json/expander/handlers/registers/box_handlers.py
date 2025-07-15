@@ -289,7 +289,7 @@ def make_content_box_handler(command: str, argspec: str) -> Handler:
         expander: ExpanderCore, token: Token
     ) -> Optional[list[Token]]:
         tokens = handler(expander, token)
-        if tokens and isinstance(tokens[0], CommandWithArgsToken):
+        if tokens and isinstance(tokens[0], CommandWithArgsToken) and tokens[0].args:
             # the last arg is the text content itself
             last_arg = tokens[0].args[-1]
             if isinstance(last_arg, list):

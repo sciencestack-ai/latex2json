@@ -171,12 +171,19 @@ def vrule_hrule_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def newline_handler(expander: ExpanderCore, token: Token):
+    # parse out any e.g. \\[0.5em]
+    expander.parse_bracket_as_tokens()
+    return [token]
+
+
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns, expand=False)
     register_ignore_handlers_util(expander, content_formatting_patterns, expand=False)
     expander.register_handler(r"\vrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
+    expander.register_handler("\\", newline_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -185,10 +192,12 @@ if __name__ == "__main__":
     expander = Expander()
     register_ignore_format_handlers(expander)
 
-    # Test some formatting commands
-    out1 = expander.expand(r"\floatname{figure}{Fig.}")
-    out2 = expander.expand(r"\pagestyle{fancy}")
-    out3 = expander.expand(
-        r"\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}"
-    )
-    out4 = expander.expand(r"\vrule height 2pt depth -1.6pt width 23pt")
+    # # Test some formatting commands
+    # out1 = expander.expand(r"\floatname{figure}{Fig.}")
+    # out2 = expander.expand(r"\pagestyle{fancy}")
+    # out3 = expander.expand(
+    #     r"\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}"
+    # )
+    # out4 = expander.expand(r"\vrule height 2pt depth -1.6pt width 23pt")
+
+    out = expander.expand(r"\\[0.5em]")

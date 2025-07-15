@@ -74,3 +74,7 @@ def test_ignore_formatting_handlers():
 
     out = expander.expand(r"\hrule width 23pt")
     assert out == []
+
+    # test \\[0.5em] -> \\
+    out = expander.expand(r"\\[0.5em] after")
+    assert out == expander.expand(r"\\ after")

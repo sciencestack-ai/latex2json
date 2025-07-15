@@ -126,6 +126,9 @@ PICTURE_ENVIRONMENTS = {
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
+    "flushleft": EnvironmentDefinition("flushleft"),
+    "flushright": EnvironmentDefinition("flushright"),
+    "small": EnvironmentDefinition("small"),
     "spacing": EnvironmentDefinition("spacing", num_args=1),
     "minipage": EnvironmentDefinition(
         "minipage", num_args=2, default_arg=[], has_direct_command=True
@@ -209,6 +212,9 @@ MATH_ENVIRONMENTS = {
     ),
     "cases": EnvironmentDefinition(
         "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "dcases": EnvironmentDefinition(
+        "dcases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     "alignedat": EnvironmentDefinition(
         "alignedat", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
