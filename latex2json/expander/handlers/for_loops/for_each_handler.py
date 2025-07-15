@@ -61,6 +61,9 @@ def for_each_handler(expander: ExpanderCore, token: Token):
 
     # split list tokens into groups by ','
     list_items = split_tokens_by_predicate(list_tokens, is_comma_token)
+    # for the case of trailing ',', basically means next is empty item
+    if list_tokens and is_comma_token(list_tokens[-1]):
+        list_items.append([])
 
     N_vars = len(variables)
 
@@ -82,19 +85,17 @@ def for_each_handler(expander: ExpanderCore, token: Token):
             strip_whitespace_tokens(arg, lstrip=True, rstrip=False) for arg in split
         ]
         total_split_args = len(split_args)
-        if total_split_args == 0:
-            continue
+        if total_split_args > 0:
+            # \define \var1, \var2, etc. as local macros that hold the item tokens
+            for i, var in enumerate(variables):
 
-        # \define \var1, \var2, etc. as local macros that hold the item tokens
-        for i, var in enumerate(variables):
+                var_name = var.to_str()
+                item_tokens = split_args[i % total_split_args]
 
-            var_name = var.to_str()
-            item_tokens = split_args[i % total_split_args]
-
-            # define the variable name as a local macro that holds the item tokens
-            expander.register_handler(
-                var_name, make_handler(item_tokens), is_global=False
-            )
+                # define the variable name as a local macro that holds the item tokens
+                expander.register_handler(
+                    var_name, make_handler(item_tokens), is_global=False
+                )
         # then exec/expand the body tokens
         result_tokens.extend(expander.expand_tokens(body_tokens))
 

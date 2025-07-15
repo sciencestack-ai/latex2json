@@ -41,10 +41,13 @@ def test_foreach_empty_list():
 
     text = r"\foreach \x in {} {Should not appear}"
     out = expander.expand(text)
-    strip_whitespace_tokens(out)
+    assert out == []
 
-    # Should produce no output
-    assert len(out) == 0
+    # HOWEVER, empty delimited list e.g. {,,,} SHOULD STILL BE HANDLED
+    text = r"\foreach \x in {,,,} {Should appear}"
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "Should appear" * 4
 
 
 def test_foreach_variable_not_used():
