@@ -231,6 +231,9 @@ class ExpanderState:
         self.current.set_macro(name, definition, is_global or self.pending_global)
         self.pending_global = False
 
+    def delete_macro(self, name: str, is_global: bool = True):
+        self.current.delete_macro(name, is_global=is_global)
+
     # CATCODES
     def set_catcode(self, char_ord: int, catcode: Catcode):
         if not self.pending_global:

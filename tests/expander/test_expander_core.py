@@ -639,3 +639,22 @@ def test_scope_and_catcodes():
     assert expander.get_catcode(ord("@")) == Catcode.LETTER
     expander.pop_scope()
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
+
+
+def test_macro_scopes():
+    expander = ExpanderCore()
+
+    tokens_123 = expander.convert_str_to_tokens("123")
+    tokens_abc = expander.convert_str_to_tokens("abc")
+
+    expander.register_handler("test", lambda expander, token: tokens_123)
+    assert expander.expand(r"\test") == tokens_123
+
+    # now redefine \test in a new scope
+    expander.push_scope()
+    expander.register_handler("test", lambda expander, token: tokens_abc)
+    assert expander.expand(r"\test") == tokens_abc
+
+    # now pop the scope. Make sure it is still the old \test
+    expander.pop_scope()
+    assert expander.expand(r"\test") == tokens_123

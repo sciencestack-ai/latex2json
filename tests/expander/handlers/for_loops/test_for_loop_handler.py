@@ -46,6 +46,7 @@ def test_nested_for_loop():
 def test_at_for_loop_handler():
     expander = Expander()
 
+    # equivalent to \@for \var := {a,b,c} \do {[\var]}
     text = r"""
     \makeatletter
     \@forloop a,b,c,\@nil, \@nil \@@\myvar{[\myvar] }

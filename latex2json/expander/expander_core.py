@@ -227,6 +227,9 @@ class ExpanderCore:
     def get_macro(self, name: str) -> Optional[Macro]:
         return self.state.get_macro(name)
 
+    def delete_macro(self, name: str, is_global: bool = True):
+        self.state.delete_macro(name, is_global=is_global)
+
     def get_all_macros(self) -> Dict[str, Macro]:
         return self.state.get_all_macros()
 
