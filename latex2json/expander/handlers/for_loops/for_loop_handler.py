@@ -1,13 +1,8 @@
 from typing import List
-from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
-from latex2json.expander.handlers.for_loops.for_each_handler import (
-    is_comma_token,
-    replace_for_each_item_body,
-)
+from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.ifnum import evaluate_ifnum
 from latex2json.tokens import Token, TokenType
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
-from latex2json.tokens.utils import split_tokens_by_predicate, strip_whitespace_tokens
 
 
 def for_loop_handler(expander: ExpanderCore, token: Token):

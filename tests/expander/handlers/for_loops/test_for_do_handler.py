@@ -29,7 +29,7 @@ def test_for_do_handler():
         text = r"""
         \def\xxx#1{*#1*} % this is done to check that the \item macro is expanded correctly
         \@for\item:={apple,banana,cherry}\do{%
-            \xxx\item % \item is a macro, so this will be expanded to \xxx{apple}, and NOT \xxx apple
+            \xxx\item % \item is a macro, so this will be expanded to \xxx\item -> *\item* -> *apple*, and NOT \xxxapple -> *a*pple
         }"""
         out = expander.expand(text)
 

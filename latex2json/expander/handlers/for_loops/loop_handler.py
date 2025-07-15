@@ -1,7 +1,5 @@
-from typing import List
-from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro
-from latex2json.expander.macro_registry import MacroType
 from latex2json.tokens import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 

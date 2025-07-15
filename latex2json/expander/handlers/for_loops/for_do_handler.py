@@ -1,10 +1,9 @@
 from typing import List
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
-from latex2json.tokens.utils import split_tokens_by_predicate, strip_whitespace_tokens
-from latex2json.expander.handlers.for_loops.for_each_handler import (
-    replace_for_each_item_body,
+from latex2json.tokens.utils import (
+    split_tokens_by_predicate,
+    strip_whitespace_tokens,
     is_comma_token,
 )
 
