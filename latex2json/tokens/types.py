@@ -70,6 +70,8 @@ class Token:
     def to_str(self) -> str:
         if self.type == TokenType.CONTROL_SEQUENCE:
             return f"\\{self.value}"
+        elif self.type == TokenType.ENVIRONMENT_END:
+            return f"\\end{{{self.value}}}"
         return self.value
 
     def copy(self) -> "Token":
@@ -116,6 +118,9 @@ class EnvironmentStartToken(Token):
             # args=self.args.copy() if self.args else None,
         )
 
+    def to_str(self):
+        return f"\\begin{{{self.name}}}"
+
     def __str__(self) -> str:
         out = f"{self.type.name:18} -> {self.name} ({self.display_name})"
         if self.numbering:
@@ -159,6 +164,16 @@ class CommandWithArgsToken(Token):
     @property
     def num_opt_args(self) -> int:
         return len(self.opt_args)
+
+    def to_str(self):
+        out = f"\\{self.name}"
+        if self.opt_args:
+            for arg in self.opt_args:
+                out += "[" + "".join([a.to_str() for a in arg]) + "]"
+        if self.args:
+            for arg in self.args:
+                out += "{" + "".join([a.to_str() for a in arg]) + "}"
+        return out
 
     def copy(self) -> "CommandWithArgsToken":
         return CommandWithArgsToken(
