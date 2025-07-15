@@ -7,7 +7,7 @@ from latex2json.nodes.base_nodes import (
     TextNode,
 )
 
-from latex2json.nodes.tabular_node import CellNode, RowNode
+from latex2json.nodes.tabular_node import RowNode
 from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 
 

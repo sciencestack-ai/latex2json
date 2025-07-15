@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
+from latex2json.nodes.base_nodes import ASTNode, TextNode, check_asts_equal
 
 
 class CellNode(ASTNode):
@@ -18,9 +18,23 @@ class CellNode(ASTNode):
     def body(self) -> List[ASTNode]:
         return self.children
 
-    def is_null_cell(self) -> bool:
+    def is_single_null_cell(self) -> bool:
         """Check if this is an empty cell."""
-        return len(self.children) == 0
+        return self.rowspan == 1 and self.colspan == 1 and len(self.children) == 0
+
+    def is_plain_text_cell(self) -> bool:
+        if len(self.children) != 1:
+            return False
+        if self.rowspan > 1 or self.colspan > 1:
+            # multirow/multicolumn cells are not plain text cells
+            return False
+        single_node = self.children[0]
+        if not isinstance(single_node, TextNode):
+            return False
+        if single_node.styles:
+            # if the text node has styling, it's not a plain text cell
+            return False
+        return True
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CellNode):
@@ -152,8 +166,13 @@ class TabularNode(ASTNode):
         for row in self.row_nodes:
             row_json = []
             for cell in row.cells:
-                if cell.is_null_cell() and cell.rowspan < 2 and cell.colspan < 2:
+                if cell.is_single_null_cell():
                     row_json.append(None)
+                elif cell.is_plain_text_cell():
+                    # append single text str?
+                    text_node = cell.children[0]
+                    text_json = text_node.to_json()
+                    row_json.append(text_json["content"])
                 else:
                     cell_json = cell.to_json()
                     del cell_json["type"]

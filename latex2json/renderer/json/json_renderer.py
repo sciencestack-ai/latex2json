@@ -168,8 +168,10 @@ class JSONRenderer:
         # strip whitespace from tokens
         tokens = strip_whitespace_json_tokens(tokens)
 
-        for token in tokens:
+        for i, token in enumerate(tokens):
             if not isinstance(token, dict):
+                if isinstance(token, list):
+                    tokens[i] = self._recursive_postprocess(token)
                 continue
 
             if token.get("type") == "equation":
@@ -202,7 +204,10 @@ class JSONRenderer:
 
 
 if __name__ == "__main__":
-    renderer = JSONRenderer()
+    from latex2json.utils.logger import setup_logger
+
+    logger = setup_logger(level=logging.INFO)
+    renderer = JSONRenderer(logger=logger)
     text = r"""
     \title{My Title}
 
@@ -377,8 +382,14 @@ Appendix 2 content
 """
 
     text = r"""
-    \title{\bf{\LARGE{A Fully First-Order Method for Stochastic Bilevel Optimization}}}
-    hHahah
+    \begin{tabular}{|c|c|}
+        \hline
+        Cell 1 & \textbf{Cell 2} & 3 \\
+        \hline
+        \multicolumn{2}{|c|}{Spanning Cell} & \somecmd \\
+        & H1 & \textbf{H2} & 
+        \hline
+    \end{tabular}
 """
 
     json = renderer.parse(text)
