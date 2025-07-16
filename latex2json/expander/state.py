@@ -70,7 +70,7 @@ class StateLayer:
 class ExpanderState:
     """Manages the stack of StateLayer objects."""
 
-    def __init__(self, tokenizer: Tokenizer, logger: Optional[Logger]):
+    def __init__(self, tokenizer: Tokenizer, logger: Optional[Logger] = None):
         # Initialize with the base global state layer
         self._stack: List[StateLayer] = [StateLayer()]
         self.logger = logger or logging.getLogger(__name__)

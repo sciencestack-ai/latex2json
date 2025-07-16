@@ -3,6 +3,7 @@ import os
 import re
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
+from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.sections import SECTIONS
 from latex2json.nodes import (
     ASTNode,
@@ -98,7 +99,7 @@ class ParserCore:
 
         self.token_buffer: List[Token] = []
 
-        self.is_math_mode = False
+        self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
         self._env_node_stack: List[ASTNode] = []
         self.state = ParserState()
 
@@ -106,6 +107,21 @@ class ParserCore:
         self.macro_patterns: List[MacroPattern] = []
         self.env_handlers: Dict[str, EnvHandler] = {}
         self.cite_aliases: Dict[str, str] = {}
+
+    def push_mode(self, mode: ProcessingMode):
+        self._mode_stack.append(mode)
+
+    def pop_mode(self):
+        if len(self._mode_stack) <= 1:
+            return
+        self._mode_stack.pop()
+
+    @property
+    def is_math_mode(self) -> bool:
+        return self._mode_stack[-1] in [
+            ProcessingMode.MATH_INLINE,
+            ProcessingMode.MATH_DISPLAY,
+        ]
 
     @property
     def current_env(self) -> Optional[ASTNode]:
@@ -341,10 +357,12 @@ class ParserCore:
     def _handle_math_shift(
         self, token: Token, is_inline: bool = True
     ) -> List[EquationNode]:
-        self.is_math_mode = True
+        self.push_mode(
+            ProcessingMode.MATH_INLINE if is_inline else ProcessingMode.MATH_DISPLAY
+        )
         math_nodes = self.process(lambda tok: tok == token)
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
-        self.is_math_mode = False
+        self.pop_mode()
         return [EquationNode(math_nodes, equation_type=eq_type)]
 
     def push_env_stack(self, node: ASTNode):
@@ -405,13 +423,14 @@ class ParserCore:
         env_node = self._generate_env_node(token)
         self.push_env_stack(env_node)
 
-        was_math_mode = self.is_math_mode
-        if token.env_type in [
+        is_math = token.env_type in [
             EnvironmentType.EQUATION,
             EnvironmentType.EQUATION_ALIGN,
             EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
-        ]:
-            self.is_math_mode = True
+        ]
+
+        if is_math:
+            self.push_mode(ProcessingMode.MATH_DISPLAY)
 
         begin_predicate: TokenPredicate = (
             lambda tok: tok.type == TokenType.ENVIRONMENT_START
@@ -429,7 +448,8 @@ class ParserCore:
             self.logger.warning(f"Unmatched environment: {env_name}")
 
         self.pop_env_stack(env_node)
-        self.is_math_mode = was_math_mode
+        if is_math:
+            self.pop_mode()
         return env_node
 
     def _check_macro_valid(self, macro: Macro | MacroPattern) -> bool:
