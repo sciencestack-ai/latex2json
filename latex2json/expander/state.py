@@ -1,4 +1,6 @@
 import enum
+from logging import Logger
+import logging
 from typing import List, Optional, Dict, Any, Tuple, Union
 
 from latex2json.expander.macro_registry import Macro, MacroRegistry
@@ -68,9 +70,10 @@ class StateLayer:
 class ExpanderState:
     """Manages the stack of StateLayer objects."""
 
-    def __init__(self, tokenizer: Tokenizer):
+    def __init__(self, tokenizer: Tokenizer, logger: Optional[Logger]):
         # Initialize with the base global state layer
         self._stack: List[StateLayer] = [StateLayer()]
+        self.logger = logger or logging.getLogger(__name__)
         self.tokenizer = tokenizer
 
         # registers and counters
@@ -141,8 +144,8 @@ class ExpanderState:
 
     def push_mode(self, mode: ProcessingMode):
         """Push a new mode onto the stack."""
-        self._set_mode_values(mode)
         self._mode_stack.append(mode)
+        self._set_mode_values()
 
     def pop_mode(self):
         """Pop the current mode and restore the previous one."""
@@ -150,17 +153,16 @@ class ExpanderState:
             return
             # raise RuntimeError("Cannot pop the base mode")
         self._mode_stack.pop()
-        new_mode = self.mode
-        self._set_mode_values(new_mode)
+        self._set_mode_values()
 
-    def toggle_math_mode(self, mode: ProcessingMode):
-        if self.is_math_mode:
+    def toggle_mode(self, mode: ProcessingMode):
+        if self.mode == mode:
             self.pop_mode()
         else:
             self.push_mode(mode)
 
-    def _set_mode_values(self, mode: ProcessingMode):
-        if self.check_is_math_mode(mode):
+    def _set_mode_values(self):
+        if self.is_math_mode:
             self._set_math_catcode_values()
         else:
             self._unset_math_catcode_values()
@@ -174,8 +176,8 @@ class ExpanderState:
                 self.tokenizer.set_catcode(char_ord, catcode)
 
     def _unset_math_catcode_values(self):
-        for ord_char, old_catcode in self._catcode_text_mode_values:
-            self.tokenizer.set_catcode(ord_char, old_catcode)
+        for char_ord, old_catcode in self._catcode_text_mode_values:
+            self.tokenizer.set_catcode(char_ord, old_catcode)
         self._catcode_text_mode_values.clear()  # Clear the list after restoring values
 
     # --- Stack Management ---
@@ -215,7 +217,7 @@ class ExpanderState:
         """Pops the current state layer from the stack, ending the current scope."""
         if len(self._stack) <= 1:
             # Cannot pop the base global scope
-            print("[WARNING]: Cannot pop the base ExpanderState scope!")
+            self.logger.warning("Cannot pop the base ExpanderState scope!")
             return
         last_state = self._stack.pop()
         last_state.apply_old_values_to_state(self)

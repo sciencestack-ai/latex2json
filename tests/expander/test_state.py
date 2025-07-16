@@ -106,37 +106,65 @@ def test_state_scopes():
     test_register_scopes()
 
 
-def test_math_mode_catcodes():
+def test_mode_catcode_changes():
     tokenizer = Tokenizer()
     state = ExpanderState(tokenizer)
 
-    # Check initial catcodes
-    assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
-    assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
-    assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
+    def test_math_mode_catcodes():
+        # Check initial catcodes
+        assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
+        assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
+        assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
 
-    # Enter math mode
-    state.push_mode(ProcessingMode.MATH_INLINE)
+        # Enter math mode
+        state.push_mode(ProcessingMode.MATH_DISPLAY)
+        state.push_mode(ProcessingMode.MATH_INLINE)  # test double!
 
-    # Check math mode catcodes
-    assert state.get_catcode(ord("_")) == Catcode.ACTIVE
-    assert state.get_catcode(ord("^")) == Catcode.ACTIVE
-    assert state.get_catcode(ord("&")) == Catcode.ACTIVE
+        # Check math mode catcodes
+        assert state.get_catcode(ord("_")) == Catcode.ACTIVE
+        assert state.get_catcode(ord("^")) == Catcode.ACTIVE
+        assert state.get_catcode(ord("&")) == Catcode.ACTIVE
 
-    # Exit math mode
-    state.pop_mode()
+        # Exit math mode
+        state.pop_mode()
+        state.pop_mode()  # test double
 
-    # Check catcodes are restored
-    assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
-    assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
-    assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
+        # Check catcodes are restored
+        assert state.get_catcode(ord("_")) == Catcode.SUBSCRIPT
+        assert state.get_catcode(ord("^")) == Catcode.SUPERSCRIPT
+        assert state.get_catcode(ord("&")) == Catcode.ALIGNMENT_TAB
 
-    # Test nested scopes with math mode
-    state.set_catcode(ord("_"), 5)
-    state.push_scope()
-    state.push_mode(ProcessingMode.MATH_INLINE)
-    assert state.get_catcode(ord("_")) == Catcode.ACTIVE
+        # Test nested scopes with math mode
+        state.set_catcode(ord("_"), 5)
+        state.push_scope()
+        state.push_mode(ProcessingMode.MATH_INLINE)
+        assert state.get_catcode(ord("_")) == Catcode.ACTIVE
 
-    state.pop_mode()
-    state.pop_scope()
-    assert state.get_catcode(ord("_")) == 5
+        state.pop_mode()
+        state.pop_scope()
+        assert state.get_catcode(ord("_")) == 5
+
+    def test_text_mode_catcodes():
+        assert state.mode == ProcessingMode.TEXT
+
+        # let's arbitrarily set _ to catcode.superscript (instead of subscript)
+        state.set_catcode(ord("_"), Catcode.SUPERSCRIPT)
+        assert state.get_catcode(ord("_")) == Catcode.SUPERSCRIPT
+
+        state.push_mode(ProcessingMode.MATH_DISPLAY)
+        assert state.get_catcode(ord("_")) == Catcode.ACTIVE
+
+        # then, push textmode again
+        state.push_mode(ProcessingMode.TEXT)
+        # note that it goes to superscript
+        assert state.get_catcode(ord("_")) == Catcode.SUPERSCRIPT
+
+        state.pop_mode()  # pop out of text mode
+        assert state.get_catcode(ord("_")) == Catcode.ACTIVE  # back to mathmode catcode
+
+        state.pop_mode()  # pop out of math mode
+
+        assert state.get_catcode(ord("_")) == Catcode.SUPERSCRIPT
+
+    test_math_mode_catcodes()
+    test_text_mode_catcodes()

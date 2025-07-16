@@ -285,15 +285,6 @@ def make_base_parse_box_handler(
     return base_parse_box_handler
 
 
-def box_manipulation_handler(expander: ExpanderCore, token: Token):
-    """parse dimensions and ignored"""
-    expander.skip_whitespace()
-    dims = expander.parse_dimensions()
-    expander.skip_whitespace()
-
-    return []
-
-
 def make_advanced_parse_box_handler(
     command: str, argspec: str
 ) -> Callable[[ExpanderCore], Optional[Box]]:
@@ -319,6 +310,15 @@ def make_advanced_parse_box_handler(
         return None
 
     return content_box_handler
+
+
+def box_manipulation_handler(expander: ExpanderCore, token: Token):
+    """parse dimensions and ignored"""
+    expander.skip_whitespace()
+    dims = expander.parse_dimensions()
+    expander.skip_whitespace()
+
+    return []
 
 
 def register_box_handlers(expander: ExpanderCore):

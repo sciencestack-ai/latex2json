@@ -115,10 +115,10 @@ class ExpanderCore:
             tokenizer: Optional tokenizer instance. If None, creates a new one with fresh catcodes.
             logger: Logger instance for debugging.
         """
+        self.logger = logger if logger is not None else Logger("expander")
         self.tokenizer = tokenizer if tokenizer is not None else Tokenizer()
         self.stream = TokenStream(self.tokenizer)
-        self.state = ExpanderState(self.tokenizer)
-        self.logger = logger if logger is not None else Logger("expander")
+        self.state = ExpanderState(self.tokenizer, logger=self.logger)
 
         self.cwd = "."
         self.loaded_packages: Set[str] = set()
@@ -507,7 +507,7 @@ class ExpanderCore:
                     if tok.type == TokenType.MATH_SHIFT_INLINE
                     else ProcessingMode.MATH_DISPLAY
                 )
-                self.state.toggle_math_mode(mode_type)
+                self.state.toggle_mode(mode_type)
         return [tok]
 
     def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
@@ -768,7 +768,14 @@ class ExpanderCore:
             self.logger.warning(f"Unknown box command: \\{tok.value}")
             return None
 
-        return box_macro.parse_box(self)
+        is_math = self.is_math_mode
+        # box is always in text mode
+        if is_math:
+            self.state.push_mode(ProcessingMode.TEXT)
+        out = box_macro.parse_box(self)
+        if is_math:
+            self.state.pop_mode()
+        return out
 
     def parse_skip(self) -> Optional[int]:
         parsed = self._parse_skip()
