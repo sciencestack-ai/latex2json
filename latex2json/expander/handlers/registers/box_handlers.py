@@ -1,6 +1,6 @@
-from typing import List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
-from latex2json.expander.macro_registry import Handler, Macro
+from latex2json.expander.macro_registry import BoxMacro, Handler, Macro, MacroType
 from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
@@ -106,7 +106,7 @@ def box_n_copy_handler(copy=False):
             expander.logger.warning(f"Warning: {prefix} expects a box, but found {box}")
             return None
 
-        out_tokens = box.content.copy()
+        out_tokens = box.to_tokens()
         if not copy:
             # \box0 flushes the box
             box.content = []
@@ -197,7 +197,7 @@ def usebox_handler(expander: ExpanderCore, token: Token):
 
     box = expander.get_register_value(REGISTER_TYPE, box_name)
     if isinstance(box, Box):
-        return box.content.copy()
+        return box.to_tokens()
 
     return []
 
@@ -242,7 +242,7 @@ def newsavebox_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-def direct_box_handler(expander: ExpanderCore, token: Token):
+def box_use_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     # push the current box token to the stack so that we can parse_box
     expander.push_tokens([token])
@@ -250,7 +250,39 @@ def direct_box_handler(expander: ExpanderCore, token: Token):
     if box is None:
         return None
 
-    return box.content
+    return box.to_tokens()
+
+
+def make_base_parse_box_handler(
+    box_type: str,
+) -> Callable[[ExpanderCore], Optional[Box]]:
+    def base_parse_box_handler(expander: ExpanderCore) -> Optional[Box]:
+        expander.consume()
+        expander.skip_whitespace()
+
+        tok = expander.peek()
+        if tok is None:
+            return None
+
+        operator = None
+        if expander.parse_keyword("to "):
+            operator = "to"
+        elif expander.parse_keyword("spread "):
+            operator = "spread"
+
+        if operator:
+            expander.skip_whitespace()
+            dims = expander.parse_dimensions()
+            expander.skip_whitespace()
+
+        content = expander.parse_brace_as_tokens(expand=True)
+        if content is None:
+            expander.logger.warning(f"Could not find {...} after \\{box_type}")
+            return None
+
+        return Box(type=box_type, content=content)
+
+    return base_parse_box_handler
 
 
 def box_manipulation_handler(expander: ExpanderCore, token: Token):
@@ -262,7 +294,7 @@ def box_manipulation_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-CONTENT_BOX_SPECS = {
+ADVANCED_BOX_SPECS = {
     "fbox": "{",  # \fbox{text}
     "parbox": "[[[{{",  # \parbox[pos][height][inner-pos]{width}{text}
     "makebox": "[[{",  # \makebox[width]{text}
@@ -279,22 +311,26 @@ CONTENT_BOX_SPECS = {
 }
 
 
-def make_content_box_handler(command: str, argspec: str) -> Handler:
+def make_advanced_parse_box_handler(
+    command: str, argspec: str
+) -> Callable[[ExpanderCore], Optional[Box]]:
     handler = make_generic_command_handler(command, argspec)
 
-    def content_box_handler(
-        expander: ExpanderCore, token: Token
-    ) -> Optional[list[Token]]:
-        tokens = handler(expander, token)
+    def content_box_handler(expander: ExpanderCore) -> Optional[Box]:
+        tok = expander.consume()
+        tokens = handler(expander, tok)
         if tokens and isinstance(tokens[0], CommandWithArgsToken) and tokens[0].args:
             # the last arg is the text content itself
             last_arg = tokens[0].args[-1]
             if isinstance(last_arg, list):
                 out_tokens = strip_whitespace_tokens(last_arg)
                 if command == "mbox":
-                    return [t for t in out_tokens if t.type != TokenType.END_OF_LINE]
-                return out_tokens
-        return []
+                    # TODO?
+                    out_tokens = [
+                        t for t in out_tokens if t.type != TokenType.END_OF_LINE
+                    ]
+                return Box(type=command, content=out_tokens)
+        return None
 
     return content_box_handler
 
@@ -324,14 +360,23 @@ def register_box_handlers(expander: ExpanderCore):
         )
 
     # box content
-    for cmd, spec in CONTENT_BOX_SPECS.items():
-        expander.register_handler(
-            cmd, make_content_box_handler(cmd, spec), is_global=True
-        )
-
-    # hbox, vbox, vtop
+    # BASE: hbox, vbox, vtop
     for cmd in BOXES:
-        expander.register_handler(cmd, direct_box_handler, is_global=True)
+        macro = BoxMacro(
+            cmd,
+            handler=box_use_handler,
+            parse_box_handler=make_base_parse_box_handler(cmd),
+        )
+        expander.register_macro(cmd, macro, is_global=True)
+
+    # ADVANCED: e.g. fbox, raisebox, etc
+    for cmd, spec in ADVANCED_BOX_SPECS.items():
+        macro = BoxMacro(
+            cmd,
+            handler=box_use_handler,
+            parse_box_handler=make_advanced_parse_box_handler(cmd, spec),
+        )
+        expander.register_macro(cmd, macro, is_global=True)
 
     # box manipulation handlers (parse dimensions and ignored)
     for cmd in ["moveleft", "moveright", "raise", "lower"]:

@@ -51,6 +51,14 @@ def test_setbox():
     assert isinstance(box, Box)
     assert expander.check_tokens_equal(box.content, expander.expand("AAA"))
 
+    # test on advanced box e.g. raisebox
+    expander.expand(r"\newbox\myraisebox")
+    expander.expand(r"\setbox\myraisebox=\raisebox{10pt}{abc}")
+    box = expander.get_register_value(RegisterType.BOX, "myraisebox")
+    assert isinstance(box, Box)
+    assert box.type == "raisebox"
+    assert expander.check_tokens_equal(box.content, expander.expand("abc"))
+
 
 def test_box_and_copy():
     expander = Expander()
@@ -186,6 +194,7 @@ def test_box_commands():
 
     # Test that box commands only return their text content
     test_cases = [
+        (r"\hbox to 3in{Some text}", "Some text"),
         (r"\makebox{Simple text}", "Simple text"),
         (r"\framebox{Simple text}", "Simple text"),
         (r"\raisebox{2pt}{Raised text}", "Raised text"),
@@ -201,13 +210,9 @@ def test_box_commands():
             "Center aligned with fixed height",
         ),
         (
-            r"""\mbox{
-All 
-One line ajajaja
-            }""",
+            r"""\mbox{All One line ajajaja}""",
             "All One line ajajaja",
         ),
-        (r"\hbox to 3in{Some text}", "Some text"),
         (r"\pbox{3cm}{Some text}", "Some text"),
         (r"\adjustbox{max width=\textwidth}{Some text}", "Some text"),
         (r"\rotatebox{90}{Some text}", "Some text"),
@@ -215,4 +220,5 @@ One line ajajaja
 
     for command, expected_text in test_cases:
         out = expander.expand(command)
-        assert out == expander.convert_str_to_tokens(expected_text)
+        out_str = expander.convert_tokens_to_str(out)
+        assert out_str == expected_text

@@ -628,7 +628,7 @@ class ParserCore:
         brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
 
         # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
-        while brace_depth > 0:
+        while brace_depth > 0 and not self.eof():
             current_token = self.peek()
 
             if current_token is None:

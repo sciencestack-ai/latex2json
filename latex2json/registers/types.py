@@ -96,3 +96,6 @@ class Box:
     width: int = 0  # Width in scaled points
     height: int = 0  # Height in scaled points
     depth: int = 0  # Depth in scaled points
+
+    def to_tokens(self) -> List[Token]:
+        return self.content.copy()

@@ -20,6 +20,7 @@ from latex2json.tokens.utils import (
     substitute_token_args,
 )
 from latex2json.expander.macro_registry import (
+    BoxMacro,
     Handler,
     Macro,
     MacroRegistry,
@@ -531,6 +532,9 @@ class ExpanderCore:
 
         tok = self.peek()
         if tok is None:
+            self.consume()
+            if not self.eof():
+                return self.parse_token(verbatim=verbatim)
             return None
         if is_param_token(tok):
             param = self.parse_parameter_token()
@@ -762,34 +766,12 @@ class ExpanderCore:
         tok = self.peek()
         if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
             return None
-        box_type = tok.value
-        if box_type not in BOXES:
-            self.logger.warning(f"Unknown box command: \\{box_type}")
-            return None
-        self.consume()
-        self.skip_whitespace()
-
-        tok = self.peek()
-        if tok is None:
+        box_macro = self.get_macro(tok.value)
+        if not isinstance(box_macro, BoxMacro):
+            self.logger.warning(f"Unknown box command: \\{tok.value}")
             return None
 
-        operator = None
-        if self.parse_keyword("to "):
-            operator = "to"
-        elif self.parse_keyword("spread "):
-            operator = "spread"
-
-        if operator:
-            self.skip_whitespace()
-            dims = self.parse_dimensions()
-            self.skip_whitespace()
-
-        content = self.parse_brace_as_tokens(expand=True)
-        if content is None:
-            self.logger.warning(f"Could not find {...} after \\{box_type}")
-            return None
-
-        return Box(type=box_type, content=content)
+        return box_macro.parse_box(self)
 
     def parse_skip(self) -> Optional[int]:
         parsed = self._parse_skip()

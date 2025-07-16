@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Callable, Optional, TYPE_CHECKING
 
+from latex2json.registers.types import Box
 from latex2json.tokens.types import Token
 
 if TYPE_CHECKING:
@@ -15,6 +16,7 @@ class MacroType(Enum):
     CHAR = "char"
     IF = "if"
     REGISTER = "register"
+    BOX = "box"  # e.g. for box commands \hbox, raisebox etc
 
     def __str__(self) -> str:
         return self.value
@@ -49,6 +51,20 @@ class Macro:
         self.definition = definition
         self.type = type
         self.is_user_defined = is_user_defined
+
+
+class BoxMacro(Macro):
+    def __init__(
+        self,
+        name: str,
+        handler: Handler,
+        parse_box_handler: Callable[["ExpanderCore"], Optional[Box]],
+    ):
+        super().__init__(name, handler, type=MacroType.BOX)
+        self._parse_box_handler = parse_box_handler
+
+    def parse_box(self, expander: "ExpanderCore") -> Optional[Box]:
+        return self._parse_box_handler(expander)
 
 
 class MacroRegistry:

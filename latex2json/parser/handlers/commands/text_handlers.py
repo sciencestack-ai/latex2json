@@ -74,7 +74,13 @@ def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     if len(blocks) != 2:
         parser.logger.warning("Warning: \\frac expects 2 arguments")
         return []
-    return TextNode("(") + blocks[0] + TextNode(") / (") + blocks[1] + TextNode(")")
+    return [
+        TextNode("("),
+        *blocks[0],
+        TextNode(") / ("),
+        *blocks[1],
+        TextNode(")"),
+    ]
 
 
 def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:

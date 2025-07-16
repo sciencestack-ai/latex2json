@@ -79,8 +79,9 @@ formatting_patterns = {
     # lists and items
     "lstset": "{",
     "setlist": "[{",
-    # toolset
+    # toolset/palette
     "mathtoolsset": "[",
+    "mathpalette": 0,
     # penalty
     "penalty": "=f",
     "clubpenalty": "=f",
