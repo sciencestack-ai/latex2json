@@ -3,12 +3,9 @@ import os
 from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
 
 
-from latex2json.latex_maps.boxes import BOXES
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
-    BEGIN_BRACE_TOKEN,
-    END_BRACE_TOKEN,
     EnvironmentStartToken,
     EnvironmentType,
 )

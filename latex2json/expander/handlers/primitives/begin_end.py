@@ -3,8 +3,6 @@ from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
-    BEGIN_BRACE_TOKEN,
-    END_BRACE_TOKEN,
     EnvironmentStartToken,
     EnvironmentType,
     Token,

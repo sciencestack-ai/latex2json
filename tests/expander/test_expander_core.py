@@ -19,6 +19,7 @@ from latex2json.tokens.types import (
     Token,
     TokenType,
 )
+from latex2json.tokens.utils import wrap_tokens_in_braces
 from tests.test_utils import assert_token_sequence
 
 TEST_CHARS = [
@@ -36,11 +37,7 @@ def test_expander_core():
     text = "{abcd}"
     tokens = expander.expand(text)
 
-    expected = [
-        BEGIN_BRACE_TOKEN,
-        *TEST_CHARS,
-        END_BRACE_TOKEN,
-    ]
+    expected = wrap_tokens_in_braces(TEST_CHARS)
     assert_token_sequence(tokens, expected)
 
     # parse_brace_as_tokens

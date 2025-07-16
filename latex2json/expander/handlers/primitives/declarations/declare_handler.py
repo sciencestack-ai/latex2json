@@ -7,6 +7,8 @@ from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
 from typing import Optional
 
+from latex2json.tokens.utils import wrap_tokens_in_braces
+
 ignored_declare_patterns = {
     # Font declarations
     "DeclareFontFamily": 3,
@@ -59,9 +61,7 @@ def declare_math_operator_handler(
         Token(TokenType.CONTROL_SEQUENCE, "mathop"),
         BEGIN_BRACE_TOKEN.copy(),
         Token(TokenType.CONTROL_SEQUENCE, "mathrm"),
-        BEGIN_BRACE_TOKEN.copy(),
-        *definition,
-        END_BRACE_TOKEN.copy(),
+        *wrap_tokens_in_braces(definition),
         END_BRACE_TOKEN.copy(),
         Token(TokenType.CONTROL_SEQUENCE, "limits" if has_star else "nolimits"),
     ]

@@ -3,8 +3,6 @@ from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import (
-    BEGIN_BRACE_TOKEN,
-    END_BRACE_TOKEN,
     EnvironmentStartToken,
     EnvironmentType,
     Token,

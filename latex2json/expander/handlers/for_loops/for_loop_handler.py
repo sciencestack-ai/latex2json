@@ -2,7 +2,7 @@ from typing import List
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.ifnum import evaluate_ifnum
 from latex2json.tokens import Token, TokenType
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
+from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
 def for_loop_handler(expander: ExpanderCore, token: Token):
@@ -84,9 +84,7 @@ def at_for_loop_handler(expander: ExpanderCore, token: Token):
         Token(TokenType.CONTROL_SEQUENCE, "@for"),
         variable_token,
         *expander.convert_str_to_tokens(":="),
-        BEGIN_BRACE_TOKEN.copy(),  # {
-        *list_tokens,
-        END_BRACE_TOKEN.copy(),  # }
+        *wrap_tokens_in_braces(list_tokens),
         Token(TokenType.CONTROL_SEQUENCE, "do"),
     ]
     expander.push_tokens(out_tokens)

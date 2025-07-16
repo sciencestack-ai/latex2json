@@ -3,10 +3,6 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.types import (
-    BEGIN_BRACE_TOKEN,
-    END_BRACE_TOKEN,
-    BEGIN_BRACKET_TOKEN,
-    END_BRACKET_TOKEN,
     CommandWithArgsToken,
     Token,
     TokenType,

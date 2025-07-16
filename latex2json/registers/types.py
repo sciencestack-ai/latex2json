@@ -2,8 +2,9 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any, Optional, Union, List
 
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, TokenType
 from latex2json.registers.utils import int_to_roman, int_to_alpha
+from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
 class RegisterType(Enum):
@@ -93,9 +94,22 @@ class Box:
     content: List[Token] = field(
         default_factory=list
     )  # Forward reference for Token type
+    args: Optional[List[List[Token]]] = None
     width: int = 0  # Width in scaled points
     height: int = 0  # Height in scaled points
     depth: int = 0  # Depth in scaled points
 
-    def to_tokens(self) -> List[Token]:
-        return self.content.copy()
+    def to_tokens(self, content_only=True) -> List[Token]:
+        if content_only:
+            return self.content.copy()
+
+        # return the full box command with args + content
+        box_cmd = self.type.lstrip("\\")
+        out_tokens = [
+            Token(type=TokenType.CONTROL_SEQUENCE, value=box_cmd)
+        ]  # e.g \hbox
+        if self.args:
+            for arg in self.args:
+                out_tokens += wrap_tokens_in_braces(arg)
+        out_tokens += wrap_tokens_in_braces(self.content.copy())
+        return out_tokens

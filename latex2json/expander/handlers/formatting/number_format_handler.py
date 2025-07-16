@@ -4,7 +4,7 @@ from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
 
 
 def num_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:

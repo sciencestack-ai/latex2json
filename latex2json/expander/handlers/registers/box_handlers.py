@@ -1,14 +1,13 @@
 from typing import Callable, List, Optional, Tuple, Union
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
-from latex2json.expander.macro_registry import BoxMacro, Handler, Macro, MacroType
-from latex2json.latex_maps.boxes import BOXES
+from latex2json.expander.macro_registry import BoxMacro, Macro
+from latex2json.latex_maps.boxes import ADVANCED_BOX_SPECS, BASE_BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import CommandWithArgsToken, TokenType
 from latex2json.expander.handlers.registers.base_register_handlers import (
     RegisterMacro,
-    make_register_macro,
 )
 from latex2json.tokens.utils import strip_whitespace_tokens
 
@@ -242,7 +241,7 @@ def newsavebox_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-def box_use_handler(expander: ExpanderCore, token: Token):
+def base_box_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     # push the current box token to the stack so that we can parse_box
     expander.push_tokens([token])
@@ -294,23 +293,6 @@ def box_manipulation_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-ADVANCED_BOX_SPECS = {
-    "fbox": "{",  # \fbox{text}
-    "parbox": "[[[{{",  # \parbox[pos][height][inner-pos]{width}{text}
-    "makebox": "[[{",  # \makebox[width]{text}
-    "framebox": "[[{",  # \framebox[width][pos]{text}
-    "raisebox": "{[[{",  # \raisebox{distance}[extend-above][extend-below]{text}
-    "colorbox": "{{",  # \colorbox{color}{text}
-    "fcolorbox": "{{{",  # \fcolorbox{border}{bg}{text}
-    "scalebox": "{{",  # \scalebox{scale}{text}
-    "mbox": "{",  # \mbox{text}, strip out all EOL
-    "pbox": "{{",  # \pbox{x}{text}
-    "resizebox": "{{{",  # \resizebox{width}{height}{text}
-    "rotatebox": "{{",  # \rotatebox{angle}{text}
-    "adjustbox": "{{",  # \adjustbox{max width=\textwidth}{text}
-}
-
-
 def make_advanced_parse_box_handler(
     command: str, argspec: str
 ) -> Callable[[ExpanderCore], Optional[Box]]:
@@ -319,17 +301,19 @@ def make_advanced_parse_box_handler(
     def content_box_handler(expander: ExpanderCore) -> Optional[Box]:
         tok = expander.consume()
         tokens = handler(expander, tok)
-        if tokens and isinstance(tokens[0], CommandWithArgsToken) and tokens[0].args:
-            # the last arg is the text content itself
-            last_arg = tokens[0].args[-1]
-            if isinstance(last_arg, list):
-                out_tokens = strip_whitespace_tokens(last_arg)
-                if command == "mbox":
-                    # TODO?
-                    out_tokens = [
-                        t for t in out_tokens if t.type != TokenType.END_OF_LINE
-                    ]
-                return Box(type=command, content=out_tokens)
+        if tokens and isinstance(tokens[0], CommandWithArgsToken):
+            args = tokens[0].args
+            if args:
+                # the last arg is the text content itself
+                last_arg = args[-1]
+                if isinstance(last_arg, list):
+                    content_tokens = strip_whitespace_tokens(last_arg)
+                    # if command == "mbox":
+                    #     # TODO?
+                    #     content_tokens = [
+                    #         t for t in content_tokens if t.type != TokenType.END_OF_LINE
+                    #     ]
+                    return Box(type=command, content=content_tokens, args=args[:-1])
         return None
 
     return content_box_handler
@@ -361,10 +345,10 @@ def register_box_handlers(expander: ExpanderCore):
 
     # box content
     # BASE: hbox, vbox, vtop
-    for cmd in BOXES:
+    for cmd in BASE_BOXES:
         macro = BoxMacro(
             cmd,
-            handler=box_use_handler,
+            handler=base_box_handler,
             parse_box_handler=make_base_parse_box_handler(cmd),
         )
         expander.register_macro(cmd, macro, is_global=True)
@@ -373,7 +357,7 @@ def register_box_handlers(expander: ExpanderCore):
     for cmd, spec in ADVANCED_BOX_SPECS.items():
         macro = BoxMacro(
             cmd,
-            handler=box_use_handler,
+            handler=base_box_handler,
             parse_box_handler=make_advanced_parse_box_handler(cmd, spec),
         )
         expander.register_macro(cmd, macro, is_global=True)
@@ -401,8 +385,8 @@ if __name__ == "__main__":
     expander.expand(r"\setbox0=\vbox{123}")
     out0 = expander.get_register_value(RegisterType.BOX, 0)
 
-    expander.expand(r"\setbox\mybox=\hbox to 5pt{abc}")
-    outmybox = expander.get_register_value(RegisterType.BOX, "mybox")
+    expander.expand(r"\setbox\mybox=\raisebox{1in}{RAISE}")
+    outmybox: Box = expander.get_register_value(RegisterType.BOX, "mybox")
     # print(out0)
     # print(outmybox)
 
@@ -412,3 +396,5 @@ if __name__ == "__main__":
     # print(boxcopymybox)
 
     out = expander.expand(r"\wd \mybox=15pt")
+
+    tokss = outmybox.to_tokens(content_only=False)

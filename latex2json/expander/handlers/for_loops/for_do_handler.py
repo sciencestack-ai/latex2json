@@ -1,6 +1,6 @@
 from typing import List
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import (
     split_tokens_by_predicate,
     strip_whitespace_tokens,
