@@ -256,7 +256,7 @@ def make_base_parse_box_handler(
     box_type: str,
 ) -> Callable[[ExpanderCore], Optional[Box]]:
     def base_parse_box_handler(expander: ExpanderCore) -> Optional[Box]:
-        expander.consume()
+        expander.consume()  # consume the command token itself
         expander.skip_whitespace()
 
         tok = expander.peek()
@@ -274,6 +274,7 @@ def make_base_parse_box_handler(
             dims = expander.parse_dimensions()
             expander.skip_whitespace()
 
+        # all content tokens are expanded at time of definition
         content = expander.parse_brace_as_tokens(expand=True)
         if content is None:
             expander.logger.warning(f"Could not find {...} after \\{box_type}")
@@ -296,10 +297,11 @@ def box_manipulation_handler(expander: ExpanderCore, token: Token):
 def make_advanced_parse_box_handler(
     command: str, argspec: str
 ) -> Callable[[ExpanderCore], Optional[Box]]:
-    handler = make_generic_command_handler(command, argspec)
+    # all content tokens are expanded at time of definition
+    handler = make_generic_command_handler(command, argspec, expand=True)
 
     def content_box_handler(expander: ExpanderCore) -> Optional[Box]:
-        tok = expander.consume()
+        tok = expander.consume()  # consume the command token itself
         tokens = handler(expander, tok)
         if tokens and isinstance(tokens[0], CommandWithArgsToken):
             args = tokens[0].args

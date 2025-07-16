@@ -61,6 +61,8 @@ class BoxMacro(Macro):
         parse_box_handler: Callable[["ExpanderCore"], Optional[Box]],
     ):
         super().__init__(name, handler, type=MacroType.BOX)
+        # make sure the parse_box_handler consumes the starting box command token!
+        # parses e.g. \raisebox token and returns an Optional[Box] object
         self._parse_box_handler = parse_box_handler
 
     def parse_box(self, expander: "ExpanderCore") -> Optional[Box]:

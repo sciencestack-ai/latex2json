@@ -58,6 +58,12 @@ def test_setbox():
     assert isinstance(box, Box)
     assert box.type == "raisebox"
     assert expander.check_tokens_equal(box.content, expander.expand("abc"))
+    # check box.to_tokens
+    assert expander.convert_tokens_to_str(box.to_tokens(content_only=True)) == "abc"
+    assert (
+        expander.convert_tokens_to_str(box.to_tokens(content_only=False))
+        == r"\raisebox{10pt}{abc}"
+    )
 
 
 def test_box_and_copy():

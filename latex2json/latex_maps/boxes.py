@@ -20,7 +20,7 @@ ADVANCED_BOX_SPECS = {
     "adjustbox": "{{",  # \adjustbox{max width=\textwidth}{text}
 }
 
-KATEX_SUPPORTED = [
+KATEX_SUPPORTED_BOXES = [
     "hbox",
     "fbox",
     "raisebox",
