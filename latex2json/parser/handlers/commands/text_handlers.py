@@ -29,6 +29,8 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
             parser.push_mode(ProcessingMode.TEXT)
             nodes = parser.parse_brace_as_nodes()
             parser.pop_mode()
+            if not nodes:
+                return []
 
             cmd_name = token.to_str()  # e.g. '\textbf'
             # if mathmode, we wrap it as one single TextNode containing the raw string
@@ -37,6 +39,8 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
             return [TextNode(out_str)]
         else:
             nodes = parser.parse_brace_as_nodes()
+            if not nodes:
+                return []
             if style:
                 for node in nodes:
                     # Use the frontend style mapping for consistent CSS-like values
@@ -58,8 +62,10 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     if parser.is_math_mode:
         # we need to push textmode to handle e.g. $.. \textcolor{red}{...$1+1$...} .. $
         parser.push_mode(ProcessingMode.TEXT)
-        nodes = parser.parse_brace_as_nodes() or []
+        nodes = parser.parse_brace_as_nodes()
         parser.pop_mode()
+        if not nodes:
+            return []
 
         cmd_name = token.to_str()  # '\textcolor'
         # if mathmode, we wrap it as one single TextNode containing the raw string
@@ -68,6 +74,8 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         return [TextNode(out_str)]
     else:
         nodes = parser.parse_brace_as_nodes()
+        if not nodes:
+            return []
         for node in nodes:
             node.add_styles(["color=" + color_name], insert_at_front=True)
         return nodes
