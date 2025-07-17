@@ -122,9 +122,7 @@ def strip_whitespace_tokens(
 
 
 def wrap_tokens_in_braces(tokens: List[Token]) -> List[Token]:
-    if not tokens:
-        return tokens
-    if tokens[0] == BEGIN_BRACE_TOKEN and tokens[-1] == END_BRACE_TOKEN:
+    if tokens and tokens[0] == BEGIN_BRACE_TOKEN and tokens[-1] == END_BRACE_TOKEN:
         return tokens
     return [
         BEGIN_BRACE_TOKEN.copy(),

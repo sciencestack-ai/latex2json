@@ -117,6 +117,8 @@ formatting_patterns = {
     "strut": 0,
     # hyphenchar
     "hyphenchar": "\\=i",
+    # @onlypreamble is a special command that is used to ignore commands that are only allowed in the preamble
+    "@onlypreamble": "{",
 }
 
 content_formatting_patterns = {
@@ -152,6 +154,10 @@ content_formatting_patterns = {
     "AddEnumerateCounter": 3,
     # newlabel
     "newlabel": 2,
+    # width/height/depth standalone
+    "width": 0,
+    "height": 0,
+    "depth": 0,
 }
 
 

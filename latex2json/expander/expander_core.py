@@ -347,6 +347,8 @@ class ExpanderCore:
         return out
 
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
+        if not tokens:
+            return []
         STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
         self.push_tokens(tokens + [STOP_TOKEN])
         out = self.process(

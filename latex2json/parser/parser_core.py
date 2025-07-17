@@ -697,7 +697,7 @@ class ParserCore:
             check_first_token=check_first_token,
             include_begin_end_tokens=include_begin_end_tokens,
         )
-        if tokens:
+        if tokens is not None:
             return self.process_tokens(tokens, scoped=scoped)
         return None
 
