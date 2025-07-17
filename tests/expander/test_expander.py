@@ -2,7 +2,13 @@ import pytest
 
 from latex2json.expander.expander import Expander
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
+from latex2json.tokens.types import (
+    BEGIN_BRACE_TOKEN,
+    END_BRACE_TOKEN,
+    EnvironmentStartToken,
+    Token,
+    TokenType,
+)
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -95,6 +101,64 @@ def test_edef_with_counters():
         ],
     )
     assert_token_sequence(bar, expander.expand("123"))
+
+
+def test_equation_numbering_with_tags_notags():
+    expander = Expander()
+    text = r"""
+    \begin{equation}
+    \tag{1} % manually set tag=1
+    \end{equation}
+
+    \begin{equation} % first auto increment tag=1 
+    \end{equation}
+
+    \begin{equation} % no tag!
+    \notag
+    \end{equation}
+
+    \begin{equation} % tag=EU
+    \tag{EU}
+    \end{equation}
+
+    \begin{equation} % second auto increment tag=2
+    \end{equation}
+
+    \begin{equation*}
+    \end{equation*}
+    """
+    out = expander.expand(text)
+    begin_eq_tokens = [
+        t for t in out if isinstance(t, EnvironmentStartToken) and "equation" in t.name
+    ]
+    assert len(begin_eq_tokens) == 6
+
+    assert begin_eq_tokens[0].numbering == "1"
+    # note that latex does not check for conflicts
+    assert begin_eq_tokens[1].numbering == "1"
+    assert begin_eq_tokens[2].numbering is None
+    assert begin_eq_tokens[3].numbering == "EU"
+    assert begin_eq_tokens[4].numbering == "2"
+    assert begin_eq_tokens[5].numbering is None
+
+    # now test with \begin{align}
+    text = r"""
+    \begin{align}
+        row1 \\ %tag=3 (auto increment)
+        row2 \nonumber \\ % no tag!
+        row3 \tag{XXX} \\ % manually set tag
+        row4 % tag = 4 (auto increment)
+    \end{align}
+    """
+    out = expander.expand(text)
+    inside_align_eq_tokens = [
+        t for t in out if isinstance(t, EnvironmentStartToken) and "equation" in t.name
+    ]
+    assert len(inside_align_eq_tokens) == 4
+    assert inside_align_eq_tokens[0].numbering == "3"
+    assert inside_align_eq_tokens[1].numbering is None
+    assert inside_align_eq_tokens[2].numbering == "XXX"
+    assert inside_align_eq_tokens[3].numbering == "4"
 
 
 def test_makeatletter_futurelet_ifx_lookahead():

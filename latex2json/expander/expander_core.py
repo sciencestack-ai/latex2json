@@ -7,6 +7,7 @@ from latex2json.latex_maps.boxes import BASE_BOXES
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
+    CommandWithArgsToken,
     EnvironmentStartToken,
     EnvironmentType,
 )
@@ -43,10 +44,7 @@ from latex2json.tokens.utils import (
     is_begin_group_token,
     is_end_bracket_token,
     is_end_group_token,
-    is_signed_integer_token,
-    is_digit_token,
     is_param_token,
-    is_whitespace_token,
 )
 
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
@@ -139,10 +137,16 @@ class ExpanderCore:
         self._init_counter_macros()
         self._init_math_macros()
 
-        # def newline_handler(expander: "ExpanderCore", token: Token):
-        #     return [Token(TokenType.END_OF_LINE, "\n\n")]
+        # init tag macro for equation numbering
+        def tag_handler(expander: "ExpanderCore", token: Token):
+            expander.skip_whitespace()
+            tag_tokens = expander.parse_brace_as_tokens(expand=True)
+            if tag_tokens is None:
+                return None
+            tag_str = expander.convert_tokens_to_str(tag_tokens)
+            return [CommandWithArgsToken("tag", numbering=tag_str)]
 
-        # self.register_handler("\\newline", newline_handler, is_global=True)
+        self.register_handler("\\tag", tag_handler, is_global=True)
 
     def _init_math_macros(self):
         def make_begin_end_math_handlers(mode: ProcessingMode):
@@ -1308,21 +1312,27 @@ class ExpanderCore:
 
                     equation_tokens = []
                     for block in split_body_block:
-                        is_local_numbered = is_numbered
+                        is_auto_numbered = is_numbered
+                        numbering = None
 
                         # check for \nonumber
                         newblock = []
                         for tok in block:
                             if is_nonumber_token(tok):
-                                is_local_numbered = False
+                                is_auto_numbered = False
+                            elif (
+                                isinstance(tok, CommandWithArgsToken)
+                                and tok.value == "tag"
+                            ):
+                                is_auto_numbered = False
+                                numbering = tok.numbering
                             else:
                                 newblock.append(tok)
                         newblock = strip_whitespace_tokens(newblock)
                         if not newblock:
                             continue
 
-                        numbering = None
-                        if is_local_numbered:
+                        if is_auto_numbered:
                             state.step_counter("equation")
                             numbering = state.get_counter_display("equation")
                         # add an env start token of Equation
@@ -1348,21 +1358,28 @@ class ExpanderCore:
                     )
                     if numbering:
                         newblock = []
+                        is_auto_numbered = True
                         for tok in body_block:
                             if is_nonumber_token(tok):
                                 numbering = None
+                                is_auto_numbered = False
+                            elif (
+                                isinstance(tok, CommandWithArgsToken)
+                                and tok.value == "tag"
+                            ):
+                                numbering = tok.numbering
+                                is_auto_numbered = False
                             else:
                                 newblock.append(tok)
                         body_block = newblock
 
-                        if numbering is None:
-                            # means \nonumber \notag is present
+                        if not is_auto_numbered:
                             # undo step_counter with -1
                             if (
                                 counter_name
                             ):  # should always be true if numbering is not None to begin with
                                 state.add_to_counter(counter_name, -1)
-                            begin_token.numbering = None
+                        begin_token.numbering = numbering
 
                     out_tokens.extend(body_block)
 
