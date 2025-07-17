@@ -98,13 +98,15 @@ LATEX_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "textoverline": FontDecoration.OVERLINE,
     "textstrikeout": FontDecoration.LINE_THROUGH,
     "sout": FontDecoration.LINE_THROUGH,
-    # Transform
-    "uppercase": FontTransform.UPPERCASE,
-    "lowercase": FontTransform.LOWERCASE,
     # Position
     "textsuperscript": FontPosition.SUPERSCRIPT,
     "textsubscript": FontPosition.SUBSCRIPT,
 }
+
+TEXT_MODE_COMMANDS = ["emph", "textcolor"]
+for cmd in LATEX_TO_FONT_STYLE.keys():
+    if cmd.startswith("text"):
+        TEXT_MODE_COMMANDS.append(cmd)
 
 # Direct mapping of legacy commands to FontStyle objects
 LEGACY_TO_FONT_STYLE: Dict[str, FontStyle] = {

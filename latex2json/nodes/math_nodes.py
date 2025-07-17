@@ -143,6 +143,9 @@ class EquationNode(ASTNode):
             if isinstance(child, CommandNode):
                 cmd_str = child.detokenize()
                 nodes.append(TextNode(cmd_str))
+            elif isinstance(child, EquationNode):
+                # if an inner equation node, convert the equation str (without $$) to text node
+                nodes.append(TextNode(child.equation_to_str()))
             else:
                 nodes.append(child)
             if should_add_space_after(i):

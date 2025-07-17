@@ -11,6 +11,9 @@ from latex2json.expander.handlers.text_and_fonts.font_handlers import (
 from latex2json.expander.handlers.text_and_fonts.verb_lst_inline_handlers import (
     register_verb_lst_inline_handlers,
 )
+from latex2json.expander.handlers.text_and_fonts.text_handlers import (
+    register_text_handlers,
+)
 
 
 def register_text_and_font_handlers(expander: ExpanderCore):
@@ -18,3 +21,4 @@ def register_text_and_font_handlers(expander: ExpanderCore):
     register_font_handlers(expander)
     register_color_handlers(expander)
     register_verb_lst_inline_handlers(expander)
+    register_text_handlers(expander)

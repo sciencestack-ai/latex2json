@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from latex2json.expander.state import ProcessingMode
 from latex2json.nodes import ASTNode
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.parser.parser_core import Handler, ParserCore
@@ -23,12 +24,24 @@ def make_legacy_text_handler(style: FontStyle) -> Handler:
 def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
     def text_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         parser.skip_whitespace()
-        nodes = parser.parse_brace_as_nodes()
-        if style:
-            for node in nodes:
-                # Use the frontend style mapping for consistent CSS-like values
-                node.add_styles([style.value], insert_at_front=True)
-        return nodes
+        if parser.is_math_mode:
+            # we need to push textmode to handle e.g. $.. \textbf{...$1+1$...} .. $
+            parser.push_mode(ProcessingMode.TEXT)
+            nodes = parser.parse_brace_as_nodes()
+            parser.pop_mode()
+
+            cmd_name = token.to_str()  # e.g. '\textbf'
+            # if mathmode, we wrap it as one single TextNode containing the raw string
+            nodes_str = parser.convert_nodes_to_str(nodes)
+            out_str = cmd_name + "{%s}" % (nodes_str)
+            return [TextNode(out_str)]
+        else:
+            nodes = parser.parse_brace_as_nodes()
+            if style:
+                for node in nodes:
+                    # Use the frontend style mapping for consistent CSS-like values
+                    node.add_styles([style.value], insert_at_front=True)
+            return nodes
 
     return text_handler
 
@@ -40,14 +53,24 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         parser.logger.warning("Warning: \\textcolor expects a color name")
         return []
 
-    color_name = "".join(
-        [node.text for node in color_name_nodes if isinstance(node, TextNode)]
-    )
+    color_name = parser.convert_nodes_to_str(color_name_nodes)
 
-    nodes = parser.parse_brace_as_nodes()
-    for node in nodes:
-        node.add_styles(["color=" + color_name], insert_at_front=True)
-    return nodes
+    if parser.is_math_mode:
+        # we need to push textmode to handle e.g. $.. \textcolor{red}{...$1+1$...} .. $
+        parser.push_mode(ProcessingMode.TEXT)
+        nodes = parser.parse_brace_as_nodes() or []
+        parser.pop_mode()
+
+        cmd_name = token.to_str()  # '\textcolor'
+        # if mathmode, we wrap it as one single TextNode containing the raw string
+        nodes_str = parser.convert_nodes_to_str(nodes)
+        out_str = cmd_name + "{%s}{%s}" % (color_name, nodes_str)
+        return [TextNode(out_str)]
+    else:
+        nodes = parser.parse_brace_as_nodes()
+        for node in nodes:
+            node.add_styles(["color=" + color_name], insert_at_front=True)
+        return nodes
 
 
 def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
@@ -69,20 +92,6 @@ def reset_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     return []
 
 
-def frac_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
-    blocks = parser.parse_braced_blocks(2)
-    if len(blocks) != 2:
-        parser.logger.warning("Warning: \\frac expects 2 arguments")
-        return []
-    return [
-        TextNode("("),
-        *blocks[0],
-        TextNode(") / ("),
-        *blocks[1],
-        TextNode(")"),
-    ]
-
-
 def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
     parser.skip_whitespace()
     return parser.parse_brace_as_nodes()
@@ -96,19 +105,21 @@ def register_text_handlers(parser: ParserCore):
     """
 
     # Register legacy handlers
+    # set textmode only for legacy handlers since katex should be able to handle math mode
     for cmd, style_obj in LEGACY_TO_FONT_STYLE.items():
         parser.register_handler(
             cmd, make_legacy_text_handler(style_obj), text_mode_only=True
         )
+    parser.register_handler("color", legacy_color_handler, text_mode_only=True)
+    parser.register_handler("normalcolor", reset_color_handler, text_mode_only=True)
 
     # Register handlers for commands that have FontStyle objects
     for cmd, style_obj in LATEX_TO_FONT_STYLE.items():
-        parser.register_handler(cmd, make_text_handler(style_obj), text_mode_only=True)
+        parser.register_handler(cmd, make_text_handler(style_obj))
+    parser.register_handler("text", make_text_handler(None))
 
     # Color handlers
-    parser.register_handler("textcolor", textcolor_handler, text_mode_only=True)
-    parser.register_handler("color", legacy_color_handler, text_mode_only=True)
-    parser.register_handler("normalcolor", reset_color_handler, text_mode_only=True)
+    parser.register_handler("textcolor", textcolor_handler)
 
     # citetext
     parser.register_handler("citetext", citetext_handler)
@@ -120,9 +131,6 @@ def register_text_handlers(parser: ParserCore):
         )
 
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
-
-    for frac in ["frac", "nicefrac", "textfrac"]:
-        parser.register_handler(frac, frac_handler, text_mode_only=True)
 
 
 if __name__ == "__main__":
@@ -142,3 +150,12 @@ if __name__ == "__main__":
 
     out = parser.parse(text)
     # print(parser.state.get_styles_as_string())
+
+    text = r"""
+\begin{equation}
+$1+1$ \textbf{aa $1+1$ bb} 2+2
+\end{equation}
+"""
+
+    out = parser.parse(text)
+    print(out)

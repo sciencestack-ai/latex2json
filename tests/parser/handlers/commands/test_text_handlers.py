@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import pytest
 
-from latex2json.nodes.base_nodes import ASTNode, TextNode
+from latex2json.nodes import ASTNode, TextNode, EquationNode
 from latex2json.parser.parser import Parser
 
 
@@ -150,3 +150,14 @@ def test_backslash_indent():
     parser = Parser()
     out = parser.parse(text)
     assert out == [TextNode(r"\\")]
+
+
+def test_textmode_inside_math():
+    text = r"$$1+1 \textbf{aa $1+1$ bb} 2+2$$"
+    parser = Parser()
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+
+    # check that the text part is rolled out as raw str in equation node
+    eq_str = out[0].equation_to_str()
+    assert eq_str == r"1+1 \textbf{aa $1+1$ bb} 2+2"
