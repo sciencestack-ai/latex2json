@@ -4,7 +4,9 @@ from latex2json.parser.parser_core import ParserCore, Handler
 from latex2json.tokens.types import Token
 
 
-def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
+def make_generic_command_handler(
+    command_name: str, arg_spec: str, postprocess_args=False
+) -> Handler:
     """
     Generic handler for LaTeX commands based on their argument specification.
     Spec string can contain: * (star), [ (optional arg), ( (optional arg), { (required arg)
@@ -31,11 +33,14 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
                 parser.parse_asterisk()
             elif char == "(":
                 opt_arg = parser.parse_parenthesis_as_nodes()
-                if opt_arg:
-                    opt_args.append(opt_arg)
+                # if opt_arg:
+                #     if postprocess_args: opt_arg = parser.postprocess_nodes(opt_arg)
+                #     opt_args.append(opt_arg)
             elif char == "[":
                 opt_arg = parser.parse_bracket_as_nodes()
                 if opt_arg:
+                    if postprocess_args:
+                        opt_arg = parser.postprocess_nodes(opt_arg)
                     opt_args.append(opt_arg)
             elif char == "{":
                 req_arg = parser.parse_brace_as_nodes()
@@ -44,6 +49,8 @@ def make_generic_command_handler(command_name: str, arg_spec: str) -> Handler:
                         f"Required argument not found for command {command_name}"
                     )
                     return []
+                if postprocess_args:
+                    req_arg = parser.postprocess_nodes(req_arg)
                 args.append(req_arg)
 
         return [

@@ -574,10 +574,11 @@ class ExpanderCore:
         tok_cur_str_predicate: Callable[[Token, str], bool],
         expand_registers=False,
     ) -> Tuple[str, bool]:
-        tok = self.peek()
         out = ""
 
-        while tok:
+        last_exp = None
+        while not self.eof():
+            tok = self.peek()
             if tok_cur_str_predicate(tok, out):
                 self.consume()
                 out += tok.value
@@ -600,6 +601,8 @@ class ExpanderCore:
 
                 # expand and continue loop
                 exp = self.expand_next()
+                if exp is None:
+                    continue
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
                     self.push_tokens(exp)
@@ -607,9 +610,12 @@ class ExpanderCore:
                     # push original token back onto stream
                     self.push_tokens([tok])
                     break
+                if last_exp == exp:
+                    # inf recursion?
+                    break
+                last_exp = exp
             else:
                 break
-            tok = self.peek()
         return out, False
 
     def parse_immediate_token(self, expand=False) -> List[Token] | None:

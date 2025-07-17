@@ -11,21 +11,13 @@ class CaptionNode(ASTNode):
     ):
         super().__init__()
         self.opt_arg = opt_arg
-        self.opt_arg = opt_arg
         self.numbering = numbering
 
-        all_args: List[ASTNode] = []
-        self._arg_boundaries = [0, 0]
-        all_args.extend(opt_arg)
-        self._arg_boundaries[0] = len(opt_arg)
-        all_args.extend(body)
-        self._arg_boundaries[1] = len(body)
-
-        self.set_children(all_args)
+        self.set_children(body)
 
     @property
     def body(self) -> List[ASTNode]:
-        return self.children[self._arg_boundaries[0] :]
+        return self.children
 
     def __str__(self):
         out = "Caption"
@@ -39,8 +31,6 @@ class CaptionNode(ASTNode):
 
     def detokenize(self):
         out = "\\caption"
-        if self.numbering:
-            out += f"({self.numbering})"
         if self.opt_arg:
             out += f"[{''.join(child.detokenize() for child in self.opt_arg)}]"
         if self.body:

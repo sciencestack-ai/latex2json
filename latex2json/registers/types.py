@@ -91,15 +91,15 @@ class Box:
     """Represents a TeX box with content and dimensions"""
 
     type: str = "hbox"
-    content: List[Token] = field(
-        default_factory=list
-    )  # Forward reference for Token type
+    content: List[Token] = field(default_factory=list)
     args: Optional[List[List[Token]]] = None
     width: int = 0  # Width in scaled points
     height: int = 0  # Height in scaled points
     depth: int = 0  # Depth in scaled points
 
     def to_tokens(self, content_only=True) -> List[Token]:
+        if not self.content:
+            return []
         if content_only:
             return self.content.copy()
 
@@ -110,6 +110,6 @@ class Box:
         ]  # e.g \hbox
         if self.args:
             for arg in self.args:
-                out_tokens += wrap_tokens_in_braces(arg)
+                out_tokens += wrap_tokens_in_braces(arg.copy())
         out_tokens += wrap_tokens_in_braces(self.content.copy())
         return out_tokens

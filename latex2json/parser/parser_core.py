@@ -225,7 +225,9 @@ class ParserCore:
         tokens = self.expander.expand_text(text)
         return self.process_tokens(tokens)
 
-    def process_tokens(self, tokens: List[Token], scoped=False) -> List[ASTNode]:
+    def process_tokens(
+        self, tokens: List[Token], scoped=False, postprocess=False
+    ) -> List[ASTNode]:
         """Parse a list of tokens into AST nodes, similar to expand_tokens in expander."""
         if len(tokens) == 0:
             return []
@@ -242,6 +244,9 @@ class ParserCore:
 
         if scoped:
             self.pop_scope()
+
+        if postprocess:
+            nodes = self.postprocess_nodes(nodes)
 
         return nodes
 
@@ -508,7 +513,7 @@ class ParserCore:
             opt_args = token.opt_args[0] if token.opt_args else []
 
             arg_nodes = self.process_tokens(args, scoped=True)
-            opt_arg_nodes = self.process_tokens(opt_args)
+            opt_arg_nodes = self.process_tokens(opt_args, postprocess=True)
             caption_node = CaptionNode(
                 body=arg_nodes, opt_arg=opt_arg_nodes, numbering=token.numbering
             )

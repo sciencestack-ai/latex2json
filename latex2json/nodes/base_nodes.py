@@ -224,25 +224,8 @@ class CommandNode(ASTNode):
         self.has_star = has_star
         # Store structure metadata
 
-        all_args: List[ASTNode] = []
-        self._arg_boundaries = [0, 0]
-        for arg in opt_args:
-            all_args.extend(arg)
-            self._arg_boundaries[0] += len(arg)
-        for arg in args:
-            all_args.extend(arg)
-            self._arg_boundaries[1] += len(arg)
-        self.set_children(all_args)
-
-    @property
-    def opt_args(self) -> List[ASTNode]:
-        return self.children[: self._arg_boundaries[0]]
-
-    @property
-    def args(self) -> List[ASTNode]:
-        start = self._arg_boundaries[0]
-        end = start + self._arg_boundaries[1]
-        return self.children[start:end]
+        self.args = args
+        self.opt_args = opt_args
 
     @property
     def num_opt_args(self):
@@ -274,10 +257,10 @@ class CommandNode(ASTNode):
 
     def detokenize(self):
         out = "\\" + self.name
-        for child in self.opt_args:
-            out += "[" + child.detokenize() + "]"
-        for child in self.args:
-            out += "{" + child.detokenize() + "}"
+        for arg in self.opt_args:
+            out += "[" + "".join(child.detokenize() for child in arg) + "]"
+        for arg in self.args:
+            out += "{" + "".join(child.detokenize() for child in arg) + "}"
         return out
 
     def to_json(self):
@@ -285,7 +268,9 @@ class CommandNode(ASTNode):
         result["type"] = "command"
         result["command"] = self.name
         if self.args:
-            result["args"] = [child.to_json() for child in self.args]
+            result["args"] = [[child.to_json() for child in arg] for arg in self.args]
         if self.opt_args:
-            result["opt_args"] = [child.to_json() for child in self.opt_args]
+            result["opt_args"] = [
+                [child.to_json() for child in arg] for arg in self.opt_args
+            ]
         return result
