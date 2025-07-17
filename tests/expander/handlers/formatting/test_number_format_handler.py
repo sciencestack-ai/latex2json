@@ -43,3 +43,18 @@ def test_romannumeral_handler():
     text = r"\romannumeral-123"
     out = expander.expand(text)
     assert out == []
+
+
+def test_qopname_handler():
+    expander = Expander()
+
+    template = r"\makeatletter \qopname\newmcodes@{%s}{div}"
+    pairs = [
+        ("o", r"\nolimits"),
+        ("m", r"\limits"),
+    ]
+    for op, limit_str in pairs:
+        text = template % (op)
+        out = expander.expand(text)
+        out_str = expander.convert_tokens_to_str(out).strip()
+        assert out_str == r"\mathop{\mathrm{div}}" + limit_str

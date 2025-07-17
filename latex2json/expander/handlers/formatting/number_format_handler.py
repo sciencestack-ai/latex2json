@@ -4,7 +4,8 @@ from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
-from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, TokenType
+from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
 def num_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -69,10 +70,66 @@ def number_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
     return expander.convert_str_to_tokens(str(val))
 
 
+def mathchoice_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    # parse 4 arguments
+    blocks = expander.parse_braced_blocks(N_blocks=4, expand=False)
+    if len(blocks) != 4:
+        expander.logger.warning("\\mathchoice: requires 4 blocks, got %d", len(blocks))
+        return None
+    # pick first block arbitarily
+    expander.push_tokens(blocks[0])
+    return []
+
+
+def qopname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""
+    \qopname\newmcodes@o{div}
+    """
+    toks1 = expander.parse_immediate_token(
+        expand=True, skip_whitespace=True
+    )  # usually \newmcodes@ or \relax
+    limit_tok = expander.parse_immediate_token(expand=True, skip_whitespace=True)
+    if not limit_tok:
+        return None
+    # o or m
+    is_limit = False
+    if limit_tok[0].value == "m":
+        is_limit = True
+
+    out_toks = expander.parse_immediate_token(expand=True, skip_whitespace=True)
+    if not out_toks:
+        return None
+
+    # convert to \mathop{\mathrm{...}}
+    math_rm_toks = [
+        Token(TokenType.CONTROL_SEQUENCE, "mathrm"),
+        *wrap_tokens_in_braces(out_toks),
+    ]
+
+    limit_token = Token(
+        TokenType.CONTROL_SEQUENCE, "limits" if is_limit else "nolimits"
+    )
+
+    return [
+        Token(TokenType.CONTROL_SEQUENCE, "mathop"),
+        *wrap_tokens_in_braces(math_rm_toks),
+        limit_token,
+    ]
+
+
+def newmcodes_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    # supposed to reset math catcodes..
+    return []
+
+
 def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("number", number_handler, is_global=True)
     expander.register_handler("num", num_handler, is_global=True)
     expander.register_handler("romannumeral", romannumeral_handler, is_global=True)
+    expander.register_handler("mathchoice", mathchoice_handler, is_global=True)
+    expander.register_handler("qopname", qopname_handler, is_global=True)
+    expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
 
 
 if __name__ == "__main__":

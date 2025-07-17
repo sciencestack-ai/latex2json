@@ -52,6 +52,13 @@ formatting_patterns = {
     "bibliographystyle": 1,
     "documentstyle": 1,
     "setcitestyle": 1,
+    # test style commands
+    "textstyle": 0,
+    "displaystyle": 0,
+    "mathstyle": 0,
+    "scriptstyle": 0,
+    "scriptscriptstyle": 0,
+    # other
     "enlargethispage": 1,
     "pagecolor": "*{",
     "centering": 0,

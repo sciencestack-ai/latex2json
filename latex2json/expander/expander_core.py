@@ -620,7 +620,12 @@ class ExpanderCore:
                 break
         return out, False
 
-    def parse_immediate_token(self, expand=False) -> List[Token] | None:
+    def parse_immediate_token(
+        self, expand=False, skip_whitespace=False
+    ) -> List[Token] | None:
+        if skip_whitespace:
+            self.skip_whitespace()
+
         tok = self.peek()
         if not tok:
             return None
