@@ -16,7 +16,6 @@ class MacroType(Enum):
     CHAR = "char"
     IF = "if"
     REGISTER = "register"
-    BOX = "box"  # e.g. for box commands \hbox, raisebox etc
 
     def __str__(self) -> str:
         return self.value
@@ -51,22 +50,6 @@ class Macro:
         self.definition = definition
         self.type = type
         self.is_user_defined = is_user_defined
-
-
-class BoxMacro(Macro):
-    def __init__(
-        self,
-        name: str,
-        handler: Handler,
-        parse_box_handler: Callable[["ExpanderCore"], Optional[Box]],
-    ):
-        super().__init__(name, handler, type=MacroType.BOX)
-        # make sure the parse_box_handler consumes the starting box command token!
-        # parses e.g. \raisebox token and returns an Optional[Box] object
-        self._parse_box_handler = parse_box_handler
-
-    def parse_box(self, expander: "ExpanderCore") -> Optional[Box]:
-        return self._parse_box_handler(expander)
 
 
 class MacroRegistry:

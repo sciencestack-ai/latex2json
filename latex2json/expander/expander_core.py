@@ -3,6 +3,7 @@ import os
 from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
 
 
+from latex2json.latex_maps.boxes import BASE_BOXES
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
@@ -17,7 +18,6 @@ from latex2json.tokens.utils import (
     substitute_token_args,
 )
 from latex2json.expander.macro_registry import (
-    BoxMacro,
     Handler,
     Macro,
     MacroRegistry,
@@ -769,19 +769,40 @@ class ExpanderCore:
         tok = self.peek()
         if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
             return None
-        box_macro = self.get_macro(tok.value)
-        if not isinstance(box_macro, BoxMacro):
-            self.logger.warning(f"Unknown box command: \\{tok.value}")
+        box_type = tok.value
+        if box_type not in BASE_BOXES:
+            self.logger.warning(f"Unknown box command: \\{box_type}")
             return None
+        self.consume()
+        self.skip_whitespace()
+
+        tok = self.peek()
+        if tok is None:
+            return None
+
+        operator = None
+        if self.parse_keyword("to "):
+            operator = "to"
+        elif self.parse_keyword("spread "):
+            operator = "spread"
+
+        if operator:
+            self.skip_whitespace()
+            dims = self.parse_dimensions()
+            self.skip_whitespace()
 
         is_math = self.is_math_mode
         # box is always in text mode
         if is_math:
             self.state.push_mode(ProcessingMode.TEXT)
-        out = box_macro.parse_box(self)
+        content = self.parse_brace_as_tokens(expand=True)
         if is_math:
             self.state.pop_mode()
-        return out
+        if content is None:
+            self.logger.warning(f"Could not find {...} after \\{box_type}")
+            return None
+
+        return Box(type=box_type, content=content)
 
     def parse_skip(self) -> Optional[int]:
         parsed = self._parse_skip()

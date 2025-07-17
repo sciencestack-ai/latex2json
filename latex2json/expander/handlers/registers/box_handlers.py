@@ -1,6 +1,6 @@
 from typing import Callable, List, Optional, Tuple, Union
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
-from latex2json.expander.macro_registry import BoxMacro, Macro
+from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.boxes import ADVANCED_BOX_SPECS, BASE_BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
@@ -88,6 +88,10 @@ class BoxDimRegisterMacro(RegisterMacro):
         return []
 
 
+def _get_box_tokens(box: Box) -> List[Token]:
+    return box.to_tokens(content_only=False)
+
+
 def box_n_copy_handler(copy=False):
     r"""Handle \box and \copy commands"""
     prefix = "\\copy" if copy else "\\box"
@@ -105,7 +109,7 @@ def box_n_copy_handler(copy=False):
             expander.logger.warning(f"Warning: {prefix} expects a box, but found {box}")
             return None
 
-        out_tokens = box.to_tokens()
+        out_tokens = _get_box_tokens(box)
         if not copy:
             # \box0 flushes the box
             box.content = []
@@ -196,7 +200,7 @@ def usebox_handler(expander: ExpanderCore, token: Token):
 
     box = expander.get_register_value(REGISTER_TYPE, box_name)
     if isinstance(box, Box):
-        return box.to_tokens()
+        return _get_box_tokens(box)
 
     return []
 
@@ -249,51 +253,17 @@ def base_box_handler(expander: ExpanderCore, token: Token):
     if box is None:
         return None
 
-    return box.to_tokens()
-
-
-def make_base_parse_box_handler(
-    box_type: str,
-) -> Callable[[ExpanderCore], Optional[Box]]:
-    def base_parse_box_handler(expander: ExpanderCore) -> Optional[Box]:
-        expander.consume()  # consume the command token itself
-        expander.skip_whitespace()
-
-        tok = expander.peek()
-        if tok is None:
-            return None
-
-        operator = None
-        if expander.parse_keyword("to "):
-            operator = "to"
-        elif expander.parse_keyword("spread "):
-            operator = "spread"
-
-        if operator:
-            expander.skip_whitespace()
-            dims = expander.parse_dimensions()
-            expander.skip_whitespace()
-
-        # all content tokens are expanded at time of definition
-        content = expander.parse_brace_as_tokens(expand=True)
-        if content is None:
-            expander.logger.warning(f"Could not find {...} after \\{box_type}")
-            return None
-
-        return Box(type=box_type, content=content)
-
-    return base_parse_box_handler
+    return _get_box_tokens(box)
 
 
 def make_advanced_parse_box_handler(
     command: str, argspec: str
-) -> Callable[[ExpanderCore], Optional[Box]]:
+) -> Callable[[ExpanderCore, Token], Optional[Box]]:
     # all content tokens are expanded at time of definition
     handler = make_generic_command_handler(command, argspec, expand=True)
 
-    def content_box_handler(expander: ExpanderCore) -> Optional[Box]:
-        tok = expander.consume()  # consume the command token itself
-        tokens = handler(expander, tok)
+    def content_box_handler(expander: ExpanderCore, token: Token) -> Optional[Box]:
+        tokens = handler(expander, token)
         if tokens and isinstance(tokens[0], CommandWithArgsToken):
             args = tokens[0].args
             if args:
@@ -301,12 +271,13 @@ def make_advanced_parse_box_handler(
                 last_arg = args[-1]
                 if isinstance(last_arg, list):
                     content_tokens = strip_whitespace_tokens(last_arg)
+                    box = Box(type=command, content=content_tokens, args=args[:-1])
                     # if command == "mbox":
                     #     # TODO?
                     #     content_tokens = [
                     #         t for t in content_tokens if t.type != TokenType.END_OF_LINE
                     #     ]
-                    return Box(type=command, content=content_tokens, args=args[:-1])
+                    return _get_box_tokens(box)
         return None
 
     return content_box_handler
@@ -348,21 +319,13 @@ def register_box_handlers(expander: ExpanderCore):
     # box content
     # BASE: hbox, vbox, vtop
     for cmd in BASE_BOXES:
-        macro = BoxMacro(
-            cmd,
-            handler=base_box_handler,
-            parse_box_handler=make_base_parse_box_handler(cmd),
-        )
-        expander.register_macro(cmd, macro, is_global=True)
+        expander.register_handler(cmd, base_box_handler, is_global=True)
 
     # ADVANCED: e.g. fbox, raisebox, etc
     for cmd, spec in ADVANCED_BOX_SPECS.items():
-        macro = BoxMacro(
-            cmd,
-            handler=base_box_handler,
-            parse_box_handler=make_advanced_parse_box_handler(cmd, spec),
+        expander.register_handler(
+            cmd, make_advanced_parse_box_handler(cmd, spec), is_global=True
         )
-        expander.register_macro(cmd, macro, is_global=True)
 
     # box manipulation handlers (parse dimensions and ignored)
     for cmd in ["moveleft", "moveright", "raise", "lower"]:
@@ -383,20 +346,23 @@ if __name__ == "__main__":
     expander = Expander()
     register_box_handlers(expander)
 
-    expander.expand(r"\newbox\mybox")
-    expander.expand(r"\setbox0=\vbox{123}")
-    out0 = expander.get_register_value(RegisterType.BOX, 0)
+    # expander.expand(r"\newbox\mybox")
+    # expander.expand(r"\setbox0=\vbox{123}")
+    # out0 = expander.get_register_value(RegisterType.BOX, 0)
 
-    expander.expand(r"\setbox\mybox=\raisebox{1in}{RAISE}")
-    outmybox: Box = expander.get_register_value(RegisterType.BOX, "mybox")
-    # print(out0)
-    # print(outmybox)
+    # expander.expand(r"\setbox\mybox=\raisebox{1in}{RAISE}")
+    # outmybox: Box = expander.get_register_value(RegisterType.BOX, "mybox")
+    # # print(out0)
+    # # print(outmybox)
 
-    boxcopy0 = expander.expand(r"\copy0")
-    boxcopymybox = expander.expand(r"\copy\mybox")
-    # print(boxcopy0)
-    # print(boxcopymybox)
+    # boxcopy0 = expander.expand(r"\copy0")
+    # boxcopymybox = expander.expand(r"\copy\mybox")
+    # # print(boxcopy0)
+    # # print(boxcopymybox)
 
-    out = expander.expand(r"\wd \mybox=15pt")
+    # out = expander.expand(r"\wd \mybox=15pt")
 
-    tokss = outmybox.to_tokens(content_only=False)
+    # tokss = outmybox.to_tokens(content_only=False)
+
+    expander.expand(r"\setbox11=\vbox{BOX 10}")
+    out = expander.expand(r"\unvbox11\unvbox11")

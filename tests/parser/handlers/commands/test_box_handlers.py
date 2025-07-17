@@ -1,0 +1,67 @@
+from typing import List, Tuple
+import pytest
+
+from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.math_nodes import EquationNode
+from latex2json.parser.parser import Parser
+from latex2json.latex_maps.boxes import KATEX_SUPPORTED_BOXES
+
+
+def test_box_commands():
+    parser = Parser()
+
+    # Test that box commands only return their text content
+    test_cases = [
+        (r"\hbox to 3in{Some text}", "Some text"),
+        (r"\makebox{Simple text}", "Simple text"),
+        (r"\framebox{Simple text}", "Simple text"),
+        (r"\raisebox{2pt}{Raised text}", "Raised text"),
+        (r"\raisebox{2pt}[1pt][2pt]{Raised text}", "Raised text"),
+        (r"\makebox[3cm]{Fixed width}", "Fixed width"),
+        (r"\framebox[3cm][l]{Left in frame}", "Left in frame"),
+        (r"\parbox{5cm}{Simple parbox text}", "Simple parbox text"),
+        (r"\parbox[t][3cm][s]{5cm}{Stretched vertically}", "Stretched vertically"),
+        (r"\fbox{Framed text}", "Framed text"),
+        (r"\colorbox{yellow}{Colored box}", "Colored box"),
+        (
+            r"\parbox[c][3cm]{5cm}{Center aligned with fixed height}",
+            "Center aligned with fixed height",
+        ),
+        (
+            r"""\mbox{
+            All One line ajajaja
+            
+            }""",
+            "All One line ajajaja",
+        ),
+        (r"\pbox{3cm}{Some text}", "Some text"),
+        (r"\adjustbox{max width=\textwidth}{Some text}", "Some text"),
+        (r"\rotatebox{90}{Some text}", "Some text"),
+    ]
+
+    # text mode only
+    for command, expected_text in test_cases:
+        out = parser.parse(command)
+        out_str = parser.convert_nodes_to_str(out)
+        assert out_str == expected_text
+
+
+def test_box_commands_in_mathmode():
+    parser = Parser()
+
+    # now try math mode
+
+    # raisebox is katex supported
+    assert "raisebox" in KATEX_SUPPORTED_BOXES
+
+    text = r"""$\raisebox{1in}[]{sometext$1+1$}$"""
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    assert out[0].body == [TextNode("\\raisebox{1in}{sometext$1+1$}")]
+
+    # mbox is not katex supported, so convert to hbox
+    assert "mbox" not in KATEX_SUPPORTED_BOXES
+    text = r"""$\mbox{sometext$1+1$}$"""
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    assert out[0].body == [TextNode("\\hbox{sometext$1+1$}")]
