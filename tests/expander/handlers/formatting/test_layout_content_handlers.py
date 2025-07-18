@@ -19,18 +19,3 @@ def test_texorpdfstring_handler():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert out == expander.expand("text version")
-
-
-def test_head_handler():
-    expander = Expander()
-
-    test_cases = [
-        (r"\fancyhead[R]{Simple text}", "Simple text"),
-        (r"\fancyheadoffset{Simple text}", "Simple text"),
-        (r"\rhead{Simple text}", "Simple text"),
-        (r"\lhead{Raised text}", "Raised text"),
-    ]
-
-    for command, expected_text in test_cases:
-        out = expander.expand(command)
-        assert out == expander.convert_str_to_tokens(expected_text)

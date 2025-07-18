@@ -126,6 +126,12 @@ formatting_patterns = {
     "hyphenchar": "\\=i",
     # @onlypreamble is a special command that is used to ignore commands that are only allowed in the preamble
     "@onlypreamble": "{",
+    # fancyhead/headers
+    "fancyhead": "[{",
+    "fancyheadoffset": "[{",
+    "rhead": "[{",
+    "chead": "[{",
+    "lhead": "[{",
 }
 
 content_formatting_patterns = {

@@ -21,8 +21,8 @@ def test_setlength():
     expander = Expander()
 
     # Test setting length with basic dimension
-    expander.expand(r"\newlength{\testlen}")
-    expander.expand(r"\setlength{\testlen}{10pt}")
+    expander.expand(r"\newlength\testlen")
+    expander.expand(r"\setlength\testlen{10pt}")
     length = expander.get_register_value(RegisterType.DIMEN, "testlen")
     assert length > 0
 
@@ -47,7 +47,7 @@ def test_addtolength():
     expander.expand(r"\setlength{\testlen}{10pt}")
     initial_length = expander.get_register_value(RegisterType.DIMEN, "testlen")
 
-    expander.expand(r"\addtolength{\testlen}{5pt}")
+    expander.expand(r"\addtolength\testlen{2\testlen}")
     new_length = expander.get_register_value(RegisterType.DIMEN, "testlen")
     assert new_length > initial_length
 

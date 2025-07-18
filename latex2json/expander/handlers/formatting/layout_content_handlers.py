@@ -19,24 +19,12 @@ def texorpdfstring_handler(expander: ExpanderCore, token: Token):
     return blocks[1]
 
 
-def head_handler(expander: ExpanderCore, token: Token):
-    expander.skip_whitespace()
-    expander.parse_bracket_as_tokens(expand=True)
-    expander.skip_whitespace()
-    out_tokens = expander.parse_brace_as_tokens(expand=True)
-    return out_tokens
-
-
 def register_layout_content_handlers(expander: ExpanderCore):
     # columns
     expander.register_handler("onecolumn", lambda expander, token: [], is_global=True)
     expander.register_handler("twocolumn", two_column_handler, is_global=True)
     # texorpdfstring
     expander.register_handler("texorpdfstring", texorpdfstring_handler, is_global=True)
-
-    # fancyhead/headers
-    for head in ["fancyhead", "fancyheadoffset", "rhead", "chead", "lhead"]:
-        expander.register_handler(head, head_handler, is_global=True)
 
 
 if __name__ == "__main__":

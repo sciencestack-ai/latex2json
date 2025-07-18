@@ -63,6 +63,8 @@ def test_ignore_formatting_handlers():
     \hyphenchar\font45
 
     \fontsize{.4\dimexpr(\f@size pt)}{0}
+
+    \fancyhead[R]{Simple text}
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
