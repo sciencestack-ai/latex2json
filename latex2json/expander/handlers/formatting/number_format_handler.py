@@ -2,10 +2,15 @@ import decimal
 import re
 from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.macro_registry import Handler
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
+from latex2json.tokens.catcodes import DEFAULT_CATCODES
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, TokenType
-from latex2json.tokens.utils import wrap_tokens_in_braces
+from latex2json.tokens.utils import (
+    convert_str_to_default_token_catcodes,
+    wrap_tokens_in_braces,
+)
 
 
 def num_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -123,6 +128,17 @@ def newmcodes_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     return []
 
 
+def make_convert_to_str_handler(text: str) -> Handler:
+    tokens = convert_str_to_default_token_catcodes(text)
+
+    def convert_to_str_handler(
+        expander: ExpanderCore, token: Token
+    ) -> Optional[List[Token]]:
+        return tokens.copy()
+
+    return convert_to_str_handler
+
+
 def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("number", number_handler, is_global=True)
     expander.register_handler("num", num_handler, is_global=True)
@@ -130,6 +146,14 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("mathchoice", mathchoice_handler, is_global=True)
     expander.register_handler("qopname", qopname_handler, is_global=True)
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
+
+    primitive_num_cmds = {"@ne": 1, "m@ne": -1, "z@": 0, "tw@": 2, "thr@@": 3}
+    for cmd, v in primitive_num_cmds.items():
+        expander.register_handler(
+            cmd,
+            make_convert_to_str_handler(str(v)),
+            is_global=True,
+        )
 
 
 if __name__ == "__main__":

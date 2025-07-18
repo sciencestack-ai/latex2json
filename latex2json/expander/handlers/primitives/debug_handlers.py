@@ -125,10 +125,9 @@ def string_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
 
 def escapechar_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     # ignore it..
-    expander.skip_whitespace()
     if expander.parse_equals():
         expander.skip_whitespace()
-        expander.parse_integer()
+    expander.parse_integer()
     return []
 
 

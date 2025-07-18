@@ -132,6 +132,8 @@ formatting_patterns = {
     "rhead": "[{",
     "chead": "[{",
     "lhead": "[{",
+    # error
+    "@latex@error": "{{",
 }
 
 content_formatting_patterns = {
