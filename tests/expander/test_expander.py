@@ -438,3 +438,31 @@ Test 5: \cs % → "abcd"
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == ""
+
+
+def test_newcommand_RedeclareMathOperator():
+    expander = Expander()
+
+    text = r"""
+\makeatletter
+\newcommand\RedeclareMathOperator{%
+  \@ifstar{\def\rmo@s{m}\rmo@redeclare}{\def\rmo@s{o}\rmo@redeclare}%
+}
+% this is taken from \renew@command
+\newcommand\rmo@redeclare[2]{%
+  \begingroup \escapechar\m@ne\xdef\@gtempa{{\string#1}}\endgroup
+  \expandafter\@ifundefined\@gtempa
+     {\@latex@error{\noexpand#1undefined}\@ehc}%
+     \relax
+  \expandafter\rmo@declmathop\rmo@s{#1}{#2}}
+% This is just \@declmathop without \@ifdefinable
+\newcommand\rmo@declmathop[3]{%
+  \DeclareRobustCommand{#2}{\qopname\newmcodes@#1{#3}}%
+}
+
+\RedeclareMathOperator{\div}{div}
+$\div$ % becomes \mathop{\mathrm{div}}\nolimits
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert r"\mathop{\mathrm{div}}\nolimits" in out_str
