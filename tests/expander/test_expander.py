@@ -466,3 +466,11 @@ $\div$ % becomes \mathop{\mathrm{div}}\nolimits
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert r"\mathop{\mathrm{div}}\nolimits" in out_str
+
+    text = r"""
+\RedeclareMathOperator*{\div}{div}
+$\div$ % becomes \mathop{\mathrm{div}}\limits
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert r"\mathop{\mathrm{div}}\limits" in out_str
