@@ -98,7 +98,7 @@ def test_nested_text_styles():
     # notice \bf + shape(\it vs \sc) switches on/off
     text = r"""
     {\bf BOLD \it BOLD-ITALIC \sc BOLD-SC \it BOLD-ITALIC \it BOLD \bf NORMAL}
-    {\color{blue} BLUE \color{blue} NONBLUE \color{red} RED \normalcolor NONRED}
+    {\color{blue} BLUE \color{blue} NONBLUE \color[rgb]{1,0,0} RED \normalcolor NONRED}
 """.strip()
     out = parser.parse(text)
 
@@ -111,7 +111,7 @@ def test_nested_text_styles():
         ("NORMAL", []),
         ("BLUE", ["color=blue"]),
         ("NONBLUE", []),
-        ("RED", ["color=red"]),
+        ("RED", ["color=rgb(255, 0, 0)"]),  # converted to css
         ("NONRED", []),
     ]
 

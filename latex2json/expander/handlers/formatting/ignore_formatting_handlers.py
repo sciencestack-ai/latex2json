@@ -13,7 +13,7 @@ formatting_patterns = {
     "floatstyle": 1,
     "restylefloat": 1,
     # Section-related formatting
-    "titleformat": "{[" + "{" * 4,
+    "titleformat": "*{[" + "{" * 4,
     "titlespacing": "*" + "{" * 4,
     "titlelabel": "{",
     "titleclass": "{{[",
@@ -41,6 +41,7 @@ formatting_patterns = {
     "pdfinfo": "{",
     "pdfoutput": "=i",
     "pdfsuppresswarningpagegroup": "=i",
+    "pdfmapline": "{",
     # Page-related formatting
     # Style commands
     "pagestyle": 1,
@@ -132,8 +133,8 @@ formatting_patterns = {
     "rhead": "[{",
     "chead": "[{",
     "lhead": "[{",
-    # error
-    "@latex@error": "{{",
+    # ligatures
+    "DisableLigatures": "[{",
 }
 
 content_formatting_patterns = {

@@ -51,13 +51,10 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
 
 
 def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
-    parser.skip_whitespace()
-    color_name_nodes = parser.parse_brace_as_nodes()
-    if not color_name_nodes:
+    color_name = parser.parse_color_name()
+    if not color_name:
         parser.logger.warning("Warning: \\textcolor expects a color name")
         return []
-
-    color_name = parser.convert_nodes_to_str(color_name_nodes)
 
     if parser.is_math_mode:
         # we need to push textmode to handle e.g. $.. \textcolor{red}{...$1+1$...} .. $
@@ -82,15 +79,11 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
 
 
 def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
-    parser.skip_whitespace()
-    color_name_nodes = parser.parse_brace_as_nodes()
-    if not color_name_nodes:
+    color_name = parser.parse_color_name()
+    if not color_name:
         parser.logger.warning("Warning: \\color expects a color name")
         return []
 
-    color_name = "".join(
-        [node.text for node in color_name_nodes if isinstance(node, TextNode)]
-    )
     parser.set_font(FontStyle(FontStyleType.COLOR, color_name))
     return []
 

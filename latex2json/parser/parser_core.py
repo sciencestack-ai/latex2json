@@ -31,6 +31,7 @@ from latex2json.tokens import (
 )
 from latex2json.tokens.types import APOSTROPHE_TOKEN, BACK_TICK_TOKEN
 from latex2json.utils.tex_utils import (
+    convert_color_to_css,
     normalize_whitespace_and_lines,
     strip_trailing_whitespace_from_lines,
 )
@@ -747,6 +748,22 @@ class ParserCore:
             include_begin_end_tokens=False,
             scoped=False,
         )
+
+    def parse_color_name(self) -> Optional[str]:
+        r"""\s*[model]\s*{color_name}"""
+        self.skip_whitespace()
+        model_color_nodes = self.parse_bracket_as_nodes()
+        self.skip_whitespace()
+        color_name_nodes = self.parse_brace_as_nodes()
+        if not color_name_nodes:
+            return None
+
+        color_name = self.convert_nodes_to_str(color_name_nodes)
+        if model_color_nodes:
+            model_str = self.convert_nodes_to_str(model_color_nodes)
+            color_name = convert_color_to_css(model_str, color_name)
+
+        return color_name
 
 
 if __name__ == "__main__":

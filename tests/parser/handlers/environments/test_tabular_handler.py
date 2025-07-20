@@ -141,3 +141,28 @@ def test_with_makecell():
     last_cell = row2.cells[-1]
     last_cell_str = "".join(node.detokenize() for node in last_cell.body)
     assert last_cell_str.strip() == "555\n666"
+
+
+def test_cellcolor_and_styling():
+    parser = Parser()
+
+    # test cellcolor nested inside makecell inside multirow
+    text = r"""
+    \begin{tabular}{c}
+        \multirow{2}{*}{\makecell{\cellcolor[rgb]{1,0,0} 111 \\ 222}}
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+    assert len(tabular.row_nodes) == 1
+    row1 = tabular.row_nodes[0]
+    assert len(row1.cells) == 1
+    cell1 = row1.cells[0]
+    assert cell1.rowspan == 2 and cell1.colspan == 1
+    cell_str = parser.convert_nodes_to_str(cell1.body, postprocess=False).strip()
+    assert cell_str.replace(" ", "") == "111\n222"
+
+    # inner cellcolor style is preserved!
+    assert cell1.styles == ["color=rgb(255, 0, 0)"]

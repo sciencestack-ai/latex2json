@@ -65,11 +65,11 @@ def typeout_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     if not tok:
         return None
 
-    tok = expander.parse_immediate_token(expand=True)
-    if not tok:
+    tokens = expander.parse_immediate_token(expand=True)
+    if not tokens:
         return None
 
-    exp_str = expander.convert_tokens_to_str(tok)
+    exp_str = expander.convert_tokens_to_str(tokens)
     expander.logger.debug(f"\\typeout: {exp_str}")
     return []
 
@@ -131,6 +131,16 @@ def escapechar_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     return []
 
 
+def latexerror_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    tokens = expander.parse_immediate_token(expand=True, skip_whitespace=True)
+    code = expander.parse_immediate_token(expand=True, skip_whitespace=True)
+    if not tokens:
+        return []
+    token_str = expander.convert_tokens_to_str(tokens)
+    expander.logger.info(f"\\@latex@error: {token_str}")
+    return []
+
+
 def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\the", the_handler, is_global=True)
     expander.register_handler("\\show", show_handler, is_global=True)
@@ -138,6 +148,7 @@ def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\meaning", meaning_handler, is_global=True)
     expander.register_handler("\\string", string_handler, is_global=True)
     expander.register_handler("\\escapechar", escapechar_handler, is_global=True)
+    expander.register_handler("\\@latex@error", latexerror_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -151,39 +162,9 @@ if __name__ == "__main__":
     expander = Expander(logger=logger)
 
     text = r"""
-
 \makeatletter
-
-% 1. Generic lookahead function
-\def\lookahead{\futurelet\next\@check}
-
-% 2. Dispatch logic
-\def\@check{%
-  \ifx\next\bgroup
-    \typeout{[lookahead] Next token is a group!}%
-  \else
-    \ifx\next\somecmd
-      \typeout{[lookahead] Next token is \string\somecmd!}%
-    \else
-      \typeout{[lookahead] Next token is something else.}%
-    \fi
-  \fi
-}
-
-% 3. Dummy macro for testing
-\def\somecmd{This is a macro.}
-
-% ----- Test runs -----
-% A: Peek a brace
-\lookahead{123}
-
-% B: Peek a macro
-\lookahead\somecmd
-
-% C: Peek a character
-\lookahead!
-
-\makeatother
+\def\test{test}
+\@latex@error{\noexpand\test}{@ehc}
 """.strip()
     out = expander.expand(text)
-    # print(out)
+    print(out)

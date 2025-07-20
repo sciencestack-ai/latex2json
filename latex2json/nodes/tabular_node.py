@@ -12,11 +12,14 @@ class CellNode(ASTNode):
         super().__init__()
         self.rowspan = rowspan
         self.colspan = colspan
-        self.set_children(body)
+        self.set_body(body)
 
     @property
     def body(self) -> List[ASTNode]:
         return self.children
+
+    def set_body(self, body: List[ASTNode]):
+        self.set_children(body)
 
     def is_single_null_cell(self) -> bool:
         """Check if this is an empty cell."""

@@ -161,6 +161,11 @@ TABLE_ENVIRONMENTS = {
     "table": EnvironmentDefinition(
         "table", num_args=1, default_arg=[], has_direct_command=True
     ),
+    "wraptable": EnvironmentDefinition(
+        "table",
+        num_args=3,
+        default_arg=[],
+    ),
     "subtable": EnvironmentDefinition("subtable", num_args=2, default_arg=[]),
 }
 

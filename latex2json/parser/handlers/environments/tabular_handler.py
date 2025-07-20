@@ -2,9 +2,11 @@ from typing import Dict, List, Callable
 from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import (
-    strip_whitespace_nodes,
     split_nodes_by_predicate,
     split_nodes_into_rows,
+)
+from latex2json.parser.handlers.commands.tabular_cell_handlers import (
+    merge_nodes_into_cellnode,
 )
 from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
 from latex2json.nodes import ASTNode, AlignmentNode
@@ -16,26 +18,6 @@ def split_nodes_into_columns(nodes: List[ASTNode]) -> List[CellNode]:
     """Split nodes into columns based on AlignmentNode and convert to CellNodes"""
     columns = split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
     return [merge_nodes_into_cellnode(col) for col in columns]
-
-
-def merge_nodes_into_cellnode(
-    nodes: List[ASTNode], strip_whitespace: bool = True
-) -> CellNode:
-    all_nodes: List[ASTNode] = []
-
-    if strip_whitespace:
-        nodes = strip_whitespace_nodes(nodes)
-
-    max_rowspan = 1
-    max_colspan = 1
-    for node in nodes:
-        if isinstance(node, CellNode):
-            all_nodes.extend(node.children)
-            max_rowspan = max(max_rowspan, node.rowspan)
-            max_colspan = max(max_colspan, node.colspan)
-        else:
-            all_nodes.append(node)
-    return CellNode(all_nodes, rowspan=max_rowspan, colspan=max_colspan)
 
 
 def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
