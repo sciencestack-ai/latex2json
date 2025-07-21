@@ -145,6 +145,7 @@ FIGURE_ENVIRONMENTS = {
     "figure": EnvironmentDefinition(
         "figure", num_args=1, default_arg=[], has_direct_command=True
     ),
+    "figure*": EnvironmentDefinition("figure", num_args=1, default_arg=[]),
     "wrapfigure": EnvironmentDefinition(
         "figure",
         num_args=3,
@@ -161,6 +162,7 @@ TABLE_ENVIRONMENTS = {
     "table": EnvironmentDefinition(
         "table", num_args=1, default_arg=[], has_direct_command=True
     ),
+    "table*": EnvironmentDefinition("table", num_args=1, default_arg=[]),
     "wraptable": EnvironmentDefinition(
         "table",
         num_args=3,
@@ -273,6 +275,7 @@ MATH_ENVIRONMENTS = {
 THEOREM_ENVIRONMENTS = {
     # "theorem": EnvironmentDefinition("theorem", step_counter=True),
     "proof": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
+    "proof*": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
 }
 
 # Combine all environment dictionaries
@@ -299,12 +302,9 @@ STAR_VARIANTS = [
     "flalign",
     "alignat",
     "dmath",
-    "figure",
-    "table",
     "tabular",
     "tabularx",
     "longtable",
-    "proof",  # when using amsthm package
     # "theorem",  # when using amsthm package
     # "lemma",  # when using amsthm package
 ]

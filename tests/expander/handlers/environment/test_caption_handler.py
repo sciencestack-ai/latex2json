@@ -85,7 +85,7 @@ def test_caption_handler():
         \caption* [XXX] {FIGURE 3}
     \end{figure}
 
-    \begin{figure*}
+    \begin{figure*} % still numbered!
         \subcaption {FIGURE 4}
     \end{figure*}
     """
@@ -104,7 +104,7 @@ def test_caption_handler():
         ),
         DummyCaption(cur_env="figure", numbering="2.1", caption_text="FIGURE 2"),
         DummyCaption(cur_env="figure", caption_text="FIGURE 3", opt_arg="XXX"),
-        DummyCaption(cur_env="figure*", caption_text="FIGURE 4"),
+        DummyCaption(cur_env="figure", caption_text="FIGURE 4", numbering="2.2"),
     ]
 
     assert_caption_instances(expander, expected_captions)
