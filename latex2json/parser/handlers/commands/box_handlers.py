@@ -3,6 +3,7 @@ from typing import List, Optional
 from latex2json.expander.state import ProcessingMode
 from latex2json.nodes import ASTNode
 from latex2json.nodes.base_nodes import CommandNode, TextNode
+from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.handlers.commands.command_handler_utils import (
     make_generic_command_handler,
 )
@@ -44,20 +45,24 @@ def make_box_handler(cmd: str, argspec: str) -> Handler:
         last_arg = cmd_node.args[-1]
         if not last_arg:
             return []
-        last_arg_str = "".join(child.detokenize() for child in last_arg)
-        if cmd == "mbox":
-            # strip out all "\n"
-            last_arg_str = last_arg_str.replace("\n", "")
+
+        last_arg = strip_whitespace_nodes(last_arg)
 
         if parser.is_math_mode:
+
             if is_katex_supported:
                 # if mathmode, we wrap it as one single TextNode containing the raw string
                 return [TextNode(cmd_node.detokenize())]
-            # if not katex supported, just use hbox (which is katex supported)
+
+            # if not katex supported, just use hbox (which is katex supported) and convert to string i.e. \hbox{...}
+            last_arg_str = "".join(child.detokenize() for child in last_arg)
+            if cmd == "mbox":
+                # strip out all "\n"
+                last_arg_str = last_arg_str.replace("\n", "")
             return [TextNode("\\hbox{%s}" % (last_arg_str))]
 
-        # return just the last arg as a text node
-        return [TextNode(last_arg_str)]
+        # return the last arg as is
+        return last_arg
 
     return box_handler
 

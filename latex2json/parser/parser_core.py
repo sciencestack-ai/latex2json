@@ -718,7 +718,7 @@ class ParserCore:
         )
 
     def parse_brace_name(self) -> Optional[str]:
-        nodes = self.parse_brace_as_nodes()
+        nodes = self.parse_brace_as_nodes(scoped=False)
         if nodes:
             return self.convert_nodes_to_str(nodes)
         return None
@@ -754,7 +754,7 @@ class ParserCore:
         self.skip_whitespace()
         model_color_nodes = self.parse_bracket_as_nodes()
         self.skip_whitespace()
-        color_name_nodes = self.parse_brace_as_nodes()
+        color_name_nodes = self.parse_brace_as_nodes(scoped=False)
         if not color_name_nodes:
             return None
 

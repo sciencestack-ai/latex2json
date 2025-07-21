@@ -6,18 +6,18 @@ from latex2json.nodes.base_nodes import (
 )
 
 
-def merge_text_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
+def merge_text_nodes(nodes: List[ASTNode], ignore_styles=False) -> List[ASTNode]:
     """Merges consecutive TextNodes in a list."""
     merged = []
     i = 0
     while i < len(nodes):
         node = nodes[i]
-        if (
-            isinstance(node, TextNode)
-            and merged
-            and isinstance(merged[-1], TextNode)
-            and node.styles == merged[-1].styles
-        ):
+        should_merge = False
+        if isinstance(node, TextNode) and merged and isinstance(merged[-1], TextNode):
+            should_merge = True
+            if not ignore_styles and node.styles != merged[-1].styles:
+                should_merge = False
+        if should_merge:
             merged[-1].text += node.text
         else:
             merged.append(node)

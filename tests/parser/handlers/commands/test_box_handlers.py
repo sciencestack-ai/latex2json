@@ -1,8 +1,8 @@
-from typing import List, Tuple
 import pytest
+from typing import List, Tuple
 
-from latex2json.nodes.base_nodes import TextNode
-from latex2json.nodes.math_nodes import EquationNode
+from latex2json.nodes import TextNode, EquationNode, TabularNode
+from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.latex_maps.boxes import KATEX_SUPPORTED_BOXES
 
@@ -21,6 +21,7 @@ def test_box_commands():
         (r"\framebox[3cm][l]{Left in frame}", "Left in frame"),
         (r"\parbox{5cm}{Simple parbox text}", "Simple parbox text"),
         (r"\parbox[t][3cm][s]{5cm}{Stretched vertically}", "Stretched vertically"),
+        (r"\resizebox{\textwidth}{!}{RESIZE}", "RESIZE"),
         (r"\fbox{Framed text}", "Framed text"),
         (r"\colorbox{yellow}{Colored box}", "Colored box"),
         (
@@ -44,6 +45,18 @@ def test_box_commands():
         out = parser.parse(command)
         out_str = parser.convert_nodes_to_str(out)
         assert out_str == expected_text
+
+    # but also check that nodes are not unnecessarily converted to text nodes
+    text = r"""
+\resizebox{\textwidth}{!}{
+\begin{tabular}{c}
+111 & 222
+\end{tabular}
+}
+""".strip()
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
 
 
 def test_box_commands_in_mathmode():

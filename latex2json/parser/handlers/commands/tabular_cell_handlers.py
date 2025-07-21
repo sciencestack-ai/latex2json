@@ -36,7 +36,7 @@ def merge_nodes_into_cellnode(
 
 def _parse_number_and_nodes(parser: ParserCore) -> Optional[Tuple[List[ASTNode], int]]:
     parser.skip_whitespace()
-    brace1 = parser.parse_brace_as_nodes()
+    brace1 = parser.parse_brace_as_nodes(scoped=False)
 
     if not brace1 or not isinstance(brace1[0], TextNode):
         parser.logger.warning("multirow: expected {number} as first argument")
@@ -50,11 +50,11 @@ def _parse_number_and_nodes(parser: ParserCore) -> Optional[Tuple[List[ASTNode],
 
     # skip second arg
     parser.skip_whitespace()
-    parser.parse_brace_as_nodes()
+    parser.parse_brace_as_nodes(scoped=False)
 
     # 3rd arg is the content
     parser.skip_whitespace()
-    nodes = parser.parse_brace_as_nodes()
+    nodes = parser.parse_brace_as_nodes(scoped=True)
     return nodes or [], number
 
 
@@ -134,9 +134,27 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-    \begin{tabular}{c}
-        \makecell{\cellcolor[rgb]{1,0,0} 111}
+    \newcommand{\baseline}[1]{\cellcolor{lightgray}{#1}}
+    \newcommand{\mjf}{$\mathcal{J}\&\mathcal{F}$\xspace}
+    \def\x{$\times$}
+
+    \begin{tabular}{cccccccc}
+    \multicolumn{2}{c}{} & \multicolumn{4}{c}{{\footnotesize \mjf}} &  &\multicolumn{1}{c}{{\footnotesize mIoU}} \\
+    \cmidrule(lr){3-6}\cmidrule(lr){8-8}
+    Object Pointers & GRU & MOSE dev & SA-V val & LVOSv2 val & 9 zero-shot & speed & SA-23 \\
+    \midrule
+     & &  \textbf{73.1} & 64.5 & 67.0 & \textbf{70.9} & \textbf{1.00\x} &59.9 \\
+     & \checkmark & 72.3 & 65.3 & 68.9 & 70.5 & 0.97\x & \textbf{60.0} \\
+     \baseline{\checkmark} &  \baseline{} & 73.0 & \textbf{68.3} & \textbf{71.6} & 70.7  & \textbf{1.00\x} & 59.7 \\
     \end{tabular}
     """.strip()
-    # tokens = parser.expander.expand(text)
-    out = parser.parse(text)
+
+    #     text = r"""
+    # \newcommand{\mjf}{$\mathcal{J}\&\mathcal{F}$\xspace}
+    # \mjf
+    # """
+
+    out = parser.parse(text, postprocess=True)
+    out = strip_whitespace_nodes(out)
+    print(out)
+    j = out[0].to_json()

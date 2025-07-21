@@ -140,17 +140,20 @@ class EquationNode(ASTNode):
             return False
 
         for i, child in enumerate(childs):
+            node = child
+            styles = child.styles
             if isinstance(child, CommandNode):
                 cmd_str = child.detokenize()
-                nodes.append(TextNode(cmd_str))
+                node = TextNode(cmd_str)
             elif isinstance(child, EquationNode):
+                eq_str = child.equation_to_str()
+                node = TextNode(eq_str)
                 # if an inner equation node, convert the equation str (without $$) to text node
-                nodes.append(TextNode(child.equation_to_str()))
-            else:
-                nodes.append(child)
+            node.add_styles(styles)
+            nodes.append(node)
             if should_add_space_after(i):
                 nodes.append(TextNode(" "))
-        nodes = merge_text_nodes(nodes)
+        nodes = merge_text_nodes(nodes, ignore_styles=True)
         content_json = [node.to_json() for node in nodes]
 
         # strip outer {...} braces from text
