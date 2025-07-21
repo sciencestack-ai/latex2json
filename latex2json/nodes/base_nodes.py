@@ -150,6 +150,9 @@ class GroupNode(ASTNode):
         self.body = body
         self.set_children(body)
 
+    def set_body(self, body: List[ASTNode]):
+        self.set_children(body)
+
     def __str__(self):
         return f"GroupNode({self.body})"
 

@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
+from latex2json.nodes.caption_node import CaptionNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 
 
@@ -120,64 +121,47 @@ class TheoremNode(EnvironmentNode):
         return result
 
 
-class TableNode(EnvironmentNode):
+class BaseTableFigureNode(EnvironmentNode):
+    def __init__(
+        self, env_name: str, body: List[ASTNode] = [], numbering: Optional[str] = None
+    ):
+        super().__init__(env_name, body, numbering)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, self.__class__):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = self.env_name
+        return result
+
+    def get_caption_node(self) -> Optional[CaptionNode]:
+        for child in self.body:
+            if isinstance(child, CaptionNode):
+                return child
+        return None
+
+
+class TableNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
         super().__init__("table", body, numbering)
 
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, TableNode):
-            return False
-        return super().__eq__(other)
 
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = "table"
-        return result
-
-
-class SubTableNode(EnvironmentNode):
+class SubTableNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
         super().__init__("subtable", body, numbering)
 
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, SubTableNode):
-            return False
-        return super().__eq__(other)
 
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = "subtable"
-        return result
-
-
-class FigureNode(EnvironmentNode):
+class FigureNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
         super().__init__("figure", body, numbering)
 
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, FigureNode):
-            return False
-        return super().__eq__(other)
 
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = "figure"
-        return result
-
-
-class SubFigureNode(EnvironmentNode):
+class SubFigureNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
         super().__init__("subfigure", body, numbering)
-
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, SubFigureNode):
-            return False
-        return super().__eq__(other)
-
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = "subfigure"
-        return result
 
 
 class AlgorithmNode(EnvironmentNode):
