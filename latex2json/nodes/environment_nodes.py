@@ -135,6 +135,17 @@ class BaseTableFigureNode(EnvironmentNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = self.env_name
+        if "numbering" not in result:
+            # transfer the numbering of caption node to the table/figure itself
+            caption_token = None
+            for token in result["content"]:
+                if token["type"] == "caption":
+                    caption_token = token
+                    break
+            if caption_token and "numbering" in caption_token:
+                result["numbering"] = caption_token["numbering"]
+                del caption_token["numbering"]
+
         return result
 
     def get_caption_node(self) -> Optional[CaptionNode]:
