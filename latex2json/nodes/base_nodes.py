@@ -21,6 +21,8 @@ class ASTNode:
         self.labels = labels if labels is not None else []
         self._styles = styles if styles is not None else []
 
+        self.should_postprocess = True
+
     def __repr__(self):
         return self.__str__()
 
@@ -120,16 +122,16 @@ class TextNode(ASTNode):
         return result
 
 
-class AlignmentNode(ASTNode):
+class SpecialCharNode(ASTNode):
     def __init__(self, value: str):
         super().__init__()
-        self.value = value  # Usually "&"
+        self.value = value
 
     def __str__(self):
-        return f"AlignmentNode({self.value})"
+        return f"SpecialCharNode({self.value})"
 
     def __eq__(self, other: ASTNode):
-        if not isinstance(other, AlignmentNode):
+        if not isinstance(other, SpecialCharNode):
             return False
         return self.value == other.value
 
@@ -142,6 +144,11 @@ class AlignmentNode(ASTNode):
         result["type"] = "text"
         result["content"] = self.value
         return result
+
+
+class AlignmentNode(SpecialCharNode):
+    def __init__(self, value: str):
+        super().__init__(value)
 
 
 class GroupNode(ASTNode):

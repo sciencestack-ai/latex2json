@@ -160,18 +160,23 @@ class JSONRenderer:
 
         return organized
 
-    def _recursive_postprocess(self, tokens: List[Dict]) -> List[Dict]:
+    def _recursive_postprocess(
+        self, tokens: List[Dict], strip_whitespace_tokens=True
+    ) -> List[Dict]:
         """Recursively strip whitespace from tokens and their nested content."""
         if not isinstance(tokens, list):
             return tokens
 
         # strip whitespace from tokens
-        tokens = strip_whitespace_json_tokens(tokens)
+        if strip_whitespace_tokens:
+            tokens = strip_whitespace_json_tokens(tokens)
 
         for i, token in enumerate(tokens):
             if not isinstance(token, dict):
                 if isinstance(token, list):
-                    tokens[i] = self._recursive_postprocess(token)
+                    tokens[i] = self._recursive_postprocess(
+                        token, strip_whitespace_tokens=strip_whitespace_tokens
+                    )
                 continue
 
             if token.get("type") == "equation":
@@ -191,7 +196,11 @@ class JSONRenderer:
                         )
                         continue
             elif "content" in token and isinstance(token["content"], list):
-                token["content"] = self._recursive_postprocess(token["content"])
+                is_tabular = token.get("type") == "tabular"
+                token["content"] = self._recursive_postprocess(
+                    token["content"],
+                    strip_whitespace_tokens=strip_whitespace_tokens and not is_tabular,
+                )
 
             if token.get("type") == "command":
                 self.logger.info(f"Found unknown command: {token.get('command')}")

@@ -1,5 +1,6 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode, TextNode, check_asts_equal
+from latex2json.nodes.environment_nodes import EnvironmentNode
 
 
 class CellNode(ASTNode):
@@ -114,15 +115,15 @@ class RowNode(ASTNode):
         return result
 
 
-class TabularNode(ASTNode):
+class TabularNode(EnvironmentNode):
     def __init__(
         self,
         row_nodes: List[RowNode] = [],
         # alignment: str = "",
     ):
-        super().__init__()
+        super().__init__("tabular", body=row_nodes)
         # self.alignment = alignment
-        self.set_children(row_nodes)
+        # self.set_children(row_nodes)
 
     @property
     def row_nodes(self) -> List[RowNode]:

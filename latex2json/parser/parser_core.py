@@ -21,6 +21,7 @@ from latex2json.nodes import (
     strip_whitespace_nodes,
     merge_text_nodes,
 )
+from latex2json.nodes.base_nodes import SpecialCharNode
 from latex2json.parser.state import FontStyle, ParserState
 from latex2json.tokens import (
     Token,
@@ -326,14 +327,6 @@ class ParserCore:
             env_node = self.parse_environment(token)
             return [env_node]
 
-        if not self.is_math_mode:
-            if is_begin_group_token(token):
-                self.push_scope()
-                return []
-            elif is_end_group_token(token):
-                self.pop_scope()
-                return []
-
         if is_whitespace_token(token):
             return [TextNode(token.value)]
         elif is_alignment_token(token):
@@ -350,14 +343,26 @@ class ParserCore:
                 self.consume()
                 char = '"'
             return [TextNode(char)]
-        elif token.type == TokenType.CHARACTER:
-            return [TextNode(token.value)]
         elif token.type == TokenType.MATH_SHIFT_INLINE:
             return self._handle_math_shift(token, is_inline=True)
         elif token.type == TokenType.MATH_SHIFT_DISPLAY:
             return self._handle_math_shift(token, is_inline=False)
         elif token.type == TokenType.ENVIRONMENT_END:
             return []
+
+        if not self.is_math_mode:
+            if is_begin_group_token(token):
+                self.push_scope()
+                if self.is_in_tabular():
+                    # we need to mark this as a special char to delineate {...\\...} inside cells
+                    return [SpecialCharNode("{")]
+                return []
+            elif is_end_group_token(token):
+                self.pop_scope()
+                if self.is_in_tabular():
+                    return [SpecialCharNode("}")]
+                return []
+
         return [TextNode(token.value)]
 
     def _handle_math_shift(
@@ -370,6 +375,15 @@ class ParserCore:
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
         self.pop_mode()
         return [EquationNode(math_nodes, equation_type=eq_type)]
+
+    def is_in_env(self, env_name: str) -> bool:
+        return any(
+            isinstance(node, EnvironmentNode) and node.name == env_name
+            for node in self._env_node_stack
+        )
+
+    def is_in_tabular(self) -> bool:
+        return self.is_in_env("tabular")
 
     def push_env_stack(self, node: ASTNode):
         """Push a node onto the environment stack."""
@@ -567,6 +581,10 @@ class ParserCore:
         """
         final_nodes: List[ASTNode] = []
         for node in nodes:
+            if not node.should_postprocess:
+                final_nodes.append(node)
+                continue
+
             replacement_node: Optional[ASTNode] = None
             if isinstance(node, CommandNode):
                 name = node.name
@@ -581,7 +599,7 @@ class ParserCore:
                 ):
                     # e.g. \& -> &, \# -> #, \@ -> ""
                     replacement_node = TextNode(name if name != "@" else "")
-            elif isinstance(node, AlignmentNode):
+            elif isinstance(node, (AlignmentNode, SpecialCharNode)):
                 replacement_node = TextNode("")  # empty
 
             if replacement_node:
@@ -594,14 +612,16 @@ class ParserCore:
                 # collapse multiple spaces into single space (latex)
                 text = normalize_whitespace_and_lines(text)
                 node.text = text.replace("~", " ")
-            elif node.children and not isinstance(
-                node, (EquationNode, EquationArrayNode)
-            ):
+            elif node.should_postprocess and node.children:
                 # don't process equation nodes
                 new_children = self.postprocess_nodes(node.children)
                 node.set_children(new_children)
 
             final_nodes.append(node)
+
+        # mark all as postprocess=False
+        for node in final_nodes:
+            node.should_postprocess = False
 
         # then do a final merge of text nodes
         merged_nodes = merge_text_nodes(final_nodes)

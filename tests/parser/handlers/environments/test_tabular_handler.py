@@ -166,3 +166,28 @@ def test_cellcolor_and_styling():
 
     # inner cellcolor style is preserved!
     assert cell1.styles == ["color=rgb(255, 0, 0)"]
+
+
+def test_proper_cells_with_braces():
+    parser = Parser()
+
+    text = r"""
+    \begin{tabular}{c}
+        { \bf one single \\ cell } & second cell \\ 
+        second row, cell 1 & second row, cell 2 
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+    assert len(tabular.row_nodes) == 2
+    assert len(tabular.row_nodes[0].cells) == 2
+    assert len(tabular.row_nodes[1].cells) == 2
+
+    row1_cell1 = tabular.row_nodes[0].cells[0]
+    assert len(row1_cell1.body) == 1 and isinstance(row1_cell1.body[0], TextNode)
+    cell1_text = row1_cell1.body[0]
+    assert cell1_text.styles == ["bold"]
+    # { \bf one single \\ cell } -> one single\ncell
+    assert cell1_text.text.replace(" ", "") == "onesingle\ncell"

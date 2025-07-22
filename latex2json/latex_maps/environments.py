@@ -126,6 +126,7 @@ PICTURE_ENVIRONMENTS = {
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
+    "tcolorbox": EnvironmentDefinition("tcolorbox"),
     "flushleft": EnvironmentDefinition("flushleft"),
     "flushright": EnvironmentDefinition("flushright"),
     "small": EnvironmentDefinition("small"),

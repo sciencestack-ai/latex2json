@@ -1,18 +1,16 @@
 from typing import List, Optional
 from latex2json.latex_maps.environments import MATH_ENVIRONMENTS
 from latex2json.nodes import (
-    AlignmentNode,
     EquationNode,
-    ASTNode,
     EquationArrayNode,
     RowNode,
     CellNode,
 )
 from latex2json.nodes.base_nodes import DisplayType
 from latex2json.nodes.utils import (
-    split_nodes_by_predicate,
     split_nodes_into_rows,
     strip_whitespace_nodes,
+    split_nodes_into_columns,
 )
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import EnvironmentStartToken, EnvironmentType, Token
@@ -21,11 +19,6 @@ from latex2json.tokens.types import EnvironmentStartToken, EnvironmentType, Toke
 def ensuremath_handler(parser: ParserCore, token: Token):
     nodes = parser.parse_brace_as_nodes()
     return [EquationNode(nodes)]
-
-
-def split_nodes_into_columns(nodes: List[ASTNode]) -> List[List[ASTNode]]:
-    """Split nodes into columns based on AlignmentNode and convert to CellNodes"""
-    return split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
 
 
 def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
