@@ -792,9 +792,9 @@ class ExpanderCore:
             return None
 
         operator = None
-        if self.parse_keyword("to "):
+        if self.parse_keyword("to"):
             operator = "to"
-        elif self.parse_keyword("spread "):
+        elif self.parse_keyword("spread"):
             operator = "spread"
 
         if operator:

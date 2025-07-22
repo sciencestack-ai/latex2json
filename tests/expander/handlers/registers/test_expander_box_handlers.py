@@ -34,7 +34,7 @@ def test_setbox():
 
     # Test setting box with named register
     expander.expand(r"\newbox\mybox")
-    expander.expand(r"\setbox\mybox=\hbox to 10pt{abc}")
+    expander.expand(r"\setbox\mybox=\hbox to10pt{abc}")
     box = expander.get_register_value(RegisterType.BOX, "mybox")
     assert isinstance(box, Box)
     assert box.type == "hbox"
