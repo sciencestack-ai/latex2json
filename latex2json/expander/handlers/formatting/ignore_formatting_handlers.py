@@ -121,7 +121,6 @@ formatting_patterns = {
     "newmdenv": "[{",
     # leavemode
     "leavevmode": 0,  # % vertical mode → horizontal mode
-    "par": 0,  # % horizontal mode → vertical mode (end paragraph)
     "strut": 0,
     # hyphenchar
     "hyphenchar": "\\=i",

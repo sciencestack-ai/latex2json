@@ -108,6 +108,10 @@ def is_comma_token(tok: Token) -> bool:
     return tok.value == "," and tok.catcode == Catcode.OTHER
 
 
+def is_equals_token(tok: Token) -> bool:
+    return tok.value == "=" and tok.catcode == Catcode.OTHER
+
+
 def strip_whitespace_tokens(
     tokens: List[Token], lstrip=True, rstrip=True
 ) -> List[Token]:
