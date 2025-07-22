@@ -612,14 +612,13 @@ class ParserCore:
                 # collapse multiple spaces into single space (latex)
                 text = normalize_whitespace_and_lines(text)
                 node.text = text.replace("~", " ")
-            elif node.should_postprocess and node.children:
-                # don't process equation nodes
+            elif node.children:
                 new_children = self.postprocess_nodes(node.children)
                 node.set_children(new_children)
 
             final_nodes.append(node)
 
-        # mark all as postprocess=False
+        # mark all as should_postprocess=False
         for node in final_nodes:
             node.should_postprocess = False
 
