@@ -31,10 +31,9 @@ def get_newcommand_args_and_definition(
 
     # Parse command definition
     expander.skip_whitespace()
-    definition = expander.parse_brace_as_tokens()
+    definition = expander.parse_immediate_token()
 
     if definition is None:
-        expander.logger.warning(f"Warning: expects a definition in braces")
         return None
 
     return (num_args, default_arg, definition)

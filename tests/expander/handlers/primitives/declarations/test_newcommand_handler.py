@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.expander.expander import Expander
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -33,6 +34,13 @@ def test_basic_newcommand():
 
     assert expander.check_macro_is_user_defined("greet")
     assert expander.check_macro_is_user_defined("\\hello")
+
+    # without braces
+    expander.expand(r"\newcommand\someempty\empty")
+    assert expander.check_macro_is_user_defined("someempty")
+    assert expander.get_macro("someempty").definition == [
+        Token(TokenType.CONTROL_SEQUENCE, "empty")
+    ]
 
 
 def test_newcommand_with_default():

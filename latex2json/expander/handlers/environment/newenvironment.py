@@ -32,6 +32,9 @@ class NewEnvironmentMacro(Macro):
 
         parsed = get_newcommand_args_and_definition(expander)
         if parsed is None:
+            expander.logger.warning(
+                f"Warning: \\newenvironment {self.name} expects an environment definition in braces"
+            )
             return None
 
         num_args, default_arg, begin_definition = parsed

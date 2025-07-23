@@ -23,9 +23,11 @@ def make_length_setter_handler(command_name: str):
             return None
 
         expander.skip_whitespace()
-        block = expander.parse_brace_as_tokens()
+        block = expander.parse_immediate_token()
         if not block:
-            expander.logger.info(f"\\{command_name} expects a length value")
+            expander.logger.info(
+                f"\\{command_name} {length_name} expects a length value"
+            )
             return None
 
         expander.push_tokens(block + [RELAX_TOKEN.copy()])

@@ -17,3 +17,14 @@ def test_keyval():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == r"Foo is XXX Bar is 99 Zac is"
+
+    # test with commas inside braces
+    text = r"""
+    \setkeys{my}{
+        foo={FOO,MAN},
+        bar={BAR,MAN}
+    }
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"Foo is FOO,MAN Bar is BAR,MAN"

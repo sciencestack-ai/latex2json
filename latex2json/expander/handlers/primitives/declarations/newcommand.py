@@ -60,6 +60,9 @@ def newcommand_handler(
 
     out = get_newcommand_args_and_definition(expander)
     if out is None:
+        expander.logger.warning(
+            f"Warning: \\newcommand {name} expects a definition in braces"
+        )
         return None
 
     # Check if command already exists

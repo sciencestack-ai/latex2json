@@ -14,7 +14,6 @@ from latex2json.tokens.types import (
 from latex2json.tokens.utils import (
     is_mathshift_token,
     segment_tokens_by_begin_end,
-    split_tokens_by_predicate,
     strip_whitespace_tokens,
     substitute_token_args,
 )
@@ -439,7 +438,7 @@ class ExpanderCore:
         if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
             return None
-
+        self.logger.info("EXPANDING FILE " + file_path)
         input_text = open(file_path).read()
         tokens = self.expand_text(input_text)
         return tokens

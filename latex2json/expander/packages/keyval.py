@@ -47,10 +47,12 @@ class KeyvalManager:
             expander.logger.warning("No family name provided for define@key")
             return None
         if not key_name:
-            expander.logger.warning("No key name provided for define@key")
+            expander.logger.warning(f"No key name provided for define@key: {fam_name}")
             return None
-        if not tokens:
-            expander.logger.warning("No tokens provided for define@key")
+        if tokens is None:
+            expander.logger.warning(
+                f"No tokens provided for define@key: {fam_name}:{key_name}"
+            )
             return None
 
         key_def = KeyDefinition(
@@ -77,7 +79,7 @@ class KeyvalManager:
             expander.logger.warning("No family name provided for setkeys")
             return None
         if not tokens:
-            expander.logger.warning("No keys provided for setkeys")
+            expander.logger.warning(f"No keys provided for setkeys: {fam_name}")
             return None
 
         if fam_name not in self.key_definitions:
@@ -92,7 +94,7 @@ class KeyvalManager:
             kv = split_tokens_by_predicate(item, is_equals_token)
             if not kv:
                 continue
-            key_name = expander.convert_tokens_to_str(kv[0])
+            key_name = expander.convert_tokens_to_str(kv[0]).strip()
             key_def = self.get_key_def(fam_name, key_name)
             if not key_def:
                 expander.logger.info(f"Key {key_name}, Fam: {fam_name} not defined")
