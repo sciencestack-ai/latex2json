@@ -1,5 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.types import Token
 
 
@@ -29,7 +30,7 @@ def make_at_document_hook(expander: ExpanderCore, cmd_name: str, is_begin=True):
     return at_begin_end_document_handler
 
 
-def register_at_begin_document_handler(expander: ExpanderCore):
+def register_at_begin_end_handler(expander: ExpanderCore):
     expander.register_handler(
         "AtBeginDocument",
         make_at_document_hook(expander, "AtBeginDocument", is_begin=True),
@@ -41,12 +42,22 @@ def register_at_begin_document_handler(expander: ExpanderCore):
         is_global=True,
     )
 
+    ignore_patterns = {
+        "AtEndOfClass": "{",
+    }
+
+    register_ignore_handlers_util(
+        expander,
+        ignore_patterns,
+        expand=True,
+    )
+
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    register_at_begin_document_handler(expander)
+    register_at_begin_end_handler(expander)
 
     text = r"""
     \def\aaa{AAA}

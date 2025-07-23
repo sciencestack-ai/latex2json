@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.catcodes import CATCODE_MEANINGS, Catcode
 from latex2json.tokens.types import Token, TokenType
 
@@ -149,6 +150,21 @@ def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\string", string_handler, is_global=True)
     expander.register_handler("\\escapechar", escapechar_handler, is_global=True)
     expander.register_handler("\\@latex@error", latexerror_handler, is_global=True)
+
+    debug_ignore_patterns = {
+        "ClassWarningNoLine": "{{",
+        "ClassWarning": "{{",
+        "ClassInfo": "{{",
+        "ClassError": "{{",
+        "ClassNotice": "{{",
+        "ClassDebug": "{{",
+    }
+
+    register_ignore_handlers_util(
+        expander,
+        debug_ignore_patterns,
+        expand=False,
+    )
 
 
 if __name__ == "__main__":

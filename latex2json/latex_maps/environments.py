@@ -126,6 +126,7 @@ PICTURE_ENVIRONMENTS = {
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
+    "verse": EnvironmentDefinition("verse"),
     "tcolorbox": EnvironmentDefinition("tcolorbox"),
     "flushleft": EnvironmentDefinition("flushleft"),
     "flushright": EnvironmentDefinition("flushright"),
@@ -173,7 +174,9 @@ TABLE_ENVIRONMENTS = {
 }
 
 TABULAR_ENVIRONMENTS = {
-    "tabular": EnvironmentDefinition("tabular", num_args=1, has_direct_command=True),
+    "tabular": EnvironmentDefinition(
+        "tabular", num_args=2, default_arg=[], has_direct_command=True
+    ),
     "tabularx": EnvironmentDefinition("tabular", num_args=2),
     "tabulary": EnvironmentDefinition("tabular", num_args=1),
     "longtable": EnvironmentDefinition("tabular", num_args=1),
