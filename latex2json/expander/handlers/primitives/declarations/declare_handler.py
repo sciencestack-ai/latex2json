@@ -18,8 +18,7 @@ ignored_declare_patterns = {
     "DeclareSymbolFontAlphabet": 2,
     "DeclareFontSubstitution": 4,
     # Package/class options
-    "DeclareOption": "*{{",
-    "DeclareOptionX": "*{{",
+    # "DeclareOption": "*{", # need custom handler for *{ vs {{
     "DeclareGraphicsExtensions": 1,
     # MATH
     "DeclareMathAlphabet": 5,
@@ -118,6 +117,23 @@ def declare_paired_delimiter_handler(
     return []
 
 
+def declare_option_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[list[Token]]:
+    r"""Handler for \DeclareOption: Ignore"""
+    expander.skip_whitespace()
+    has_star = expander.parse_asterisk()
+    expander.skip_whitespace()
+    braced_blocks = 1 if has_star else 2
+    blocks = expander.parse_braced_blocks(braced_blocks, check_immediate_tokens=True)
+    # if len(blocks) != braced_blocks:
+    #     expander.logger.warning(
+    #         f"Warning: \\DeclareOption requires {braced_blocks} braced blocks"
+    #     )
+    #     return None
+    return []
+
+
 def register_declare_commands(expander: ExpanderCore):
     expander.register_macro(
         "\\DeclareRobustCommand",
@@ -133,6 +149,12 @@ def register_declare_commands(expander: ExpanderCore):
     expander.register_handler(
         "\\DeclarePairedDelimiter",
         declare_paired_delimiter_handler,
+        is_global=True,
+    )
+
+    expander.register_handler(
+        "\\DeclareOption",
+        declare_option_handler,
         is_global=True,
     )
 

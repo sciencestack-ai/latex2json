@@ -51,7 +51,8 @@ def test_declare_ignored_commands():
     # Test that ignored commands don't raise errors
     assert expander.expand(r"\DeclareFontFamily{T1}{cmr}{}") == []
     assert expander.expand(r"\DeclareMathSymbol{\alpha}{0}{letters}{alpha}") == []
-    assert expander.expand(r"\DeclareOption*{draft}{}") == []
+    assert expander.expand(r"\DeclareOption*{draft}") == []
+    assert expander.expand(r"\DeclareOption{draft}{}") == []
     assert expander.expand(r"\DeclareGraphicsExtensions{pdf,png,jpg}") == []
 
 
