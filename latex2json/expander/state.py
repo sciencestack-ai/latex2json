@@ -328,6 +328,9 @@ class ExpanderState:
         """Get current counter value"""
         return self.counter_manager.get_counter_value(name)
 
+    def get_counters(self, with_prefix=True):
+        return self.counter_manager.get_counters(with_prefix)
+
     def counter_within(self, name: str, parent: Optional[str] = None) -> None:
         """Set the counter to be within the parent counter"""
         self.counter_manager.counter_within(name, parent)

@@ -53,7 +53,6 @@ class TexRegisters:
         for dimen in BUILTIN_DIMENSIONS:
             self.create_register(RegisterType.DIMEN, dimen, 0)
 
-        self.create_register(RegisterType.COUNT, "@topnum")
         self.create_register(RegisterType.BOX, "@tempboxa")
         self.create_register(RegisterType.SKIP, "@tempskipa")
         self.create_register(RegisterType.SKIP, "@tempskipb")

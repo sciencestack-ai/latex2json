@@ -132,7 +132,24 @@ def counterwithout_handler(
     return []
 
 
+def base_counter_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    # simple setter
+    counter_name = token.value
+    expander.skip_whitespace()
+    value = expander.parse_integer()
+    if value is None:
+        expander.logger.warning(rf"Counter {counter_name}: Missing value argument")
+        return None
+
+    expander.state.set_counter(counter_name, value)
+    return []
+
+
 def register_counter_handlers(expander: ExpanderCore):
+    for counter in expander.state.get_counters():
+        # e.g. \c@section
+        expander.register_handler(counter, base_counter_handler, is_global=True)
+
     expander.register_handler("setcounter", setcounter_handler, is_global=True)
     expander.register_handler("addtocounter", addtocounter_handler, is_global=True)
     expander.register_handler("stepcounter", stepcounter_handler, is_global=True)

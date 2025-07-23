@@ -93,13 +93,35 @@ class CounterManager:
         self.new_counter("enumiii")  # enumerate level 3
         self.new_counter("enumiv")  # enumerate level 4
 
+        # other
+        self.new_counter("@topnum")
+
     def reset_section_counters(self):
         for section in SECTIONS:
             self.set_counter(section, 0)
 
+    def get_counters(self, internal_name=True):
+        out = []
+        for counter in self.counters.keys():
+            if internal_name:
+                out.append(self._get_internal_name(counter))
+            else:
+                out.append(counter)
+        return out
+
     def _get_internal_name(self, counter_name: str) -> str:
         """Convert a user-facing counter name to internal register name"""
+        if counter_name.startswith(self._counter_prefix) or counter_name.startswith(
+            "@"
+        ):
+            return counter_name
         return f"{self._counter_prefix}{counter_name}"
+
+    def _get_base_name(self, counter_name: str) -> str:
+        """Get the base name of a counter (without the prefix)"""
+        if counter_name.startswith(self._counter_prefix):
+            return counter_name[len(self._counter_prefix) :]
+        return counter_name
 
     def has_counter(self, name: str) -> bool:
         return name in self.counters

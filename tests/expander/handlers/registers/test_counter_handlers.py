@@ -1,12 +1,8 @@
 from latex2json.expander.expander import Expander
-from latex2json.expander.handlers.registers.counter_handlers import (
-    register_counter_handlers,
-)
 
 
 def test_basic_counter_operations():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Test setcounter
     expander.expand(r"\setcounter{section}{10}")
@@ -47,7 +43,6 @@ def test_basic_counter_operations():
 
 def test_new_counter():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Test counter with parent
     expander.expand(r"\newcounter{ mycounter }[section]")
@@ -68,7 +63,6 @@ def test_new_counter():
 
 def test_counter_the_command():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Create counter and test \the<counter> command
     expander.expand(r"\newcounter{mycounter}")
@@ -84,7 +78,6 @@ def test_counter_the_command():
 
 def test_counter_error_cases():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Test missing counter name
     out = expander.expand(r"\setcounter{}")
@@ -101,7 +94,6 @@ def test_counter_error_cases():
 
 def test_counter_scope():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Test that counter operations are global (not affected by scope)
     expander.push_scope()
@@ -113,7 +105,6 @@ def test_counter_scope():
 
 def test_counter_within_without():
     expander = Expander()
-    register_counter_handlers(expander)
 
     # Create test counters
     expander.expand(r"\newcounter{chapter}")
@@ -145,3 +136,16 @@ def test_counter_within_without():
 
     out = expander.expand(r"\thefigure")
     assert expander.convert_tokens_to_str(out) == "2.3"  # Should show as chapter.figure
+
+
+def test_direct_counter_setting():
+    text = r"""
+    \makeatletter
+\c@section 3 % set section counter as 3
+\the\value{section} % 3
+"""
+
+    expander = Expander()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "3"
