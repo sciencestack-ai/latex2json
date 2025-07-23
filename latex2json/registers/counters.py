@@ -7,7 +7,6 @@ from enum import Enum
 from latex2json.latex_maps.sections import SECTIONS
 from latex2json.registers.types import RegisterType, CounterFormat
 from latex2json.registers.registers import TexRegisters
-from latex2json.registers.utils import int_to_roman, int_to_alpha
 
 
 @dataclass

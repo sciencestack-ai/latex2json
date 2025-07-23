@@ -152,6 +152,7 @@ content_formatting_patterns = {
     "hyphenation": 1,
     # page numbers
     "pagenumbering": 1,
+    "getpagerefnumber": 1,
     # line numbers
     "linenumbers": 0,
     "linesnumbered": 0,

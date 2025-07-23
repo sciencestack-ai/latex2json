@@ -147,7 +147,14 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("qopname", qopname_handler, is_global=True)
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
 
-    primitive_num_cmds = {"@ne": 1, "m@ne": -1, "z@": 0, "tw@": 2, "thr@@": 3}
+    primitive_num_cmds = {
+        "@ne": 1,
+        "m@ne": -1,
+        "z@": 0,
+        "tw@": 2,
+        "thr@@": 3,
+        "col@number": 1,  # default to 1
+    }
     for cmd, v in primitive_num_cmds.items():
         expander.register_handler(
             cmd,

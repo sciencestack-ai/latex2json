@@ -6,6 +6,8 @@ def register_if_format_handlers(expander: ExpanderCore):
 
     LATEX_FORMATTING_IFS = {
         "if@twoside": False,
+        "if@onecolumn": True,
+        "if@twocolumn": False,
         "if@titlepage": False,
         "if@openright": False,
         "if@mainmatter": False,
