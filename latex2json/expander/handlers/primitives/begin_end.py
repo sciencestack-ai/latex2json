@@ -69,7 +69,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     else:
         # env is defined but has no end handler
         expander.logger.info(
-            f"Warning: {prefix}{{{name}}} has no end handler, returning default environment end token"
+            f"{prefix}{{{name}}} has no end handler, returning default environment end token"
         )
 
     return [Token(TokenType.ENVIRONMENT_END, name)]

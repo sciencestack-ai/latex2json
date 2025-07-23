@@ -207,41 +207,23 @@ def test_makeatletter_futurelet_ifx_lookahead():
         assert out_as_str.endswith(exp_end)
 
 
-def test_mathmode_expansions_with_braces():
-    text = r"""
-    \newcommand{\abs}[1]{\left\vert#1\right\vert}
-    \newcommand{\ti}{\tilde}
-    \newcommand{\calR}{\mathcal R}
-    \newcommand{\gab}{g^{\alpha\beta}}
-    \newcommand{\paa}{\partial_\alpha}
-    \newcommand{\f}{\frac}
-    \newcommand{\la}{\left\vert}
-
-    $\abs{x}$ % \left\vert{x}\right\vert
-    $\ti{3}$ % $\tilde{3}$
-    $\frac\calR 2$ % $\frac{\mathcal R} 2$
-    $\paa\gab$ % \partial_\alpha{g^{\alpha\beta}}
-    $\Delta^\paa$ % \Delta^\partial_\alpha
-    $x^\f{1}{2}$ % x^\frac{1}{2}
-    $\la \nabla_{x,y}$ % \left\vert \nabla_{x,y}
-    $\chi(x-x_0) \la$ % \chi(x-x_0) \left\vert
-    """.strip()
+def test_def_begin_expansion():
     expander = Expander()
-    expander.expand(text)
 
-    expected_pairs = [
-        (r"$\abs{x}$", r"$\left\vert{x}\right\vert$"),
-        (r"$\ti{3}$", r"$\tilde{3}$"),
-        (r"$\frac\calR 2$", r"$\frac{\mathcal R} 2$"),
-        (r"$\paa\gab$", r"$\partial_\alpha{g^{\alpha\beta}}$"),
-        (r"$\Delta^\paa$", r"$\Delta^\partial_\alpha$"),
-        (r"$x^\f{1}{2}$", r"$x^\frac{1}{2}$"),
-        (r"$\la \nabla_{x,y}$", r"$\left\vert \nabla_{x,y}$"),
-        (r"$\chi(x-x_0) \la$", r"$\chi(x-x_0) \left\vert$"),
-    ]
+    text = r"""
+\def\bea{\begin{equation}}
+\def\eea{\end{equation}}
 
-    for input, expected in expected_pairs:
-        assert_token_sequence(expander.expand(input), expander.expand(expected))
+\bea 
+1+1
+\eea
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    assert (
+        out_str.replace("\n", "").replace(" ", "")
+        == r"\begin{equation}1+1\end{equation}"
+    )
 
 
 def test_tail_recursion_countdown():

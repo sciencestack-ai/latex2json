@@ -3,6 +3,19 @@ from latex2json.renderer.json.json_renderer import JSONRenderer
 
 
 def test_json_output_of_math_n_text_equations():
+
+    # first, check that equation adjacent commands and text are separated by a space at least
+    text = r"""
+    \def\one{one}
+    $\frac\one$ % -> \frac one
+    """.strip()
+    renderer = JSONRenderer()
+    json = renderer.parse(text)
+    assert len(json) == 1
+    # notice that the command and text are separated by a space
+    assert json[0] == {"type": "equation", "content": r"\\frac one"}
+
+    # test bigger case
     text = r"""
 \begin{equation}
 \begin{cases}
@@ -11,9 +24,7 @@ def test_json_output_of_math_n_text_equations():
 \end{equation}
 """.strip()
 
-    renderer = JSONRenderer()
     json = renderer.parse(text)
-
     assert len(json) == 1
     assert json[0] == {
         "type": "equation",

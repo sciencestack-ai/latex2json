@@ -159,10 +159,6 @@ class EquationNode(ASTNode):
         nodes = merge_text_nodes(nodes, ignore_styles=True)
         content_json = [node.to_json() for node in nodes]
 
-        # strip outer {...} braces from text
-        for token in content_json:
-            if token.get("type") == "text":
-                token["content"] = strip_balanced_braces(token["content"])
         result["content"] = content_json
 
         return result

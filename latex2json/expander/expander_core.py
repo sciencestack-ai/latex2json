@@ -275,7 +275,7 @@ class ExpanderCore:
                 if ord_char in MATHMODE_CATCODES:
                     tokens[i].catcode = MATHMODE_CATCODES[ord_char]
 
-        out = substitute_token_args(tokens, args, math_mode=is_math)
+        out = substitute_token_args(tokens, args)
         return out
 
     # Colors
@@ -383,7 +383,16 @@ class ExpanderCore:
 
             processed = self.expand_next()
             if processed:
-                final_expanded_tokens.extend(processed)
+                if stop_token_logic:
+                    for i, token in enumerate(processed):
+                        if stop_token_logic(token):
+                            if consume_stop_token:
+                                i += 1
+                            self.push_tokens(processed[i:])
+                            return final_expanded_tokens
+                        final_expanded_tokens.append(token)
+                else:
+                    final_expanded_tokens.extend(processed)
 
         return final_expanded_tokens
 
@@ -1255,21 +1264,22 @@ class ExpanderCore:
                     if is_end_env_ctrl:
                         # parse {...} after \end to get the env name
 
-                        # tokens_to_return is any whitespace between \end and {...}
+                        # tokens_to_return is \end (and whitespace) up to {...}
                         tokens_to_return = expander.parse_tokens_until(
                             is_begin_group_token, verbatim=True
                         )
                         # check {...} is the env name
-                        parsed_env_name = expander.parse_brace_name() or ""
+                        parsed_env_name = expander.parse_brace_name()
+                        if not parsed_env_name:
+                            expander.push_tokens(tokens_to_return)
+                            return False
                         is_end_env_name = parsed_env_name == env_name
 
                         # push {...} of \end{...} back to stream (since we're not supposed to parse it in this predicate function)
-                        expander.push_tokens(
-                            tokens_to_return
-                            + expander.convert_str_to_tokens(
-                                "{" + parsed_env_name + "}"
-                            )
+                        tokens_to_return += expander.convert_str_to_tokens(
+                            "{" + parsed_env_name + "}"
                         )
+                        expander.push_tokens(tokens_to_return)
                         return is_end_env_name
                     return False
 
