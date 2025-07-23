@@ -13,7 +13,7 @@ def test_json_output_of_math_n_text_equations():
     json = renderer.parse(text)
     assert len(json) == 1
     # notice that the command and text are separated by a space
-    assert json[0] == {"type": "equation", "content": r"\\frac one"}
+    assert json[0] == {"type": "equation", "content": r"\frac one"}
 
     # test bigger case
     text = r"""
