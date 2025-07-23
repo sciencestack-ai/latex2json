@@ -19,33 +19,42 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 
     expander.skip_whitespace()
     expander.parse_equals()
-    definition = expander.consume()
+    def_tok = expander.consume()
 
-    if not definition:
+    if not def_tok:
         expander.logger.warning(
-            f"Warning: \\let expects a definition, but found {definition}"
+            f"Warning: \\let expects a definition, but found {def_tok}"
         )
         return None
 
-    if definition.type == TokenType.CONTROL_SEQUENCE and not expander.get_macro(
-        definition.value
-    ):
-        # if the definition is a control sequence that is not found, we preserve it
-        needs_expansion = False
-        final_definition = [definition]
-    else:
-        # copies the definition as is
-        needs_expansion = True
-        final_definition = expander.convert_to_macro_definitions([definition])
+    is_control_sequence = def_tok.type == TokenType.CONTROL_SEQUENCE
+    if is_control_sequence:
+        # check if existing macro
+        macro = expander.get_macro(def_tok.value)
+        if macro:
+            macro_copy = macro.copy()
+
+            def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+                out = macro.handler(expander, token)
+                if out:
+                    expander.push_tokens(out)
+                return []
+
+            macro_copy.handler = handler
+            expander.register_macro(
+                name, macro_copy, is_global=False, is_user_defined=True
+            )
+            return []
 
     def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        if needs_expansion:
-            expander.push_tokens(final_definition)
-            return []
-        else:
-            return [t.copy() for t in final_definition]
+        if is_control_sequence:
+            # if the definition is a control sequence that is not found, we return it as is
+            return [def_tok.copy()]
 
-    macro = Macro(name, handler, final_definition, type=MacroType.CHAR)
+        expander.push_tokens([def_tok.copy()])
+        return []
+
+    macro = Macro(name, handler, [def_tok], type=MacroType.CHAR)
     expander.register_macro(name, macro, is_global=False, is_user_defined=True)
 
     return []

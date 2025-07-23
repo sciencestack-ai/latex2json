@@ -149,3 +149,17 @@ def test_let_preserve_unknown_control_sequence():
         expander.expand(r"\postpm"),
         expander.expand(r"\pm"),
     )
+
+
+def test_let_can_be_anything():
+    expander = Expander()
+
+    # test that let that be any macro, including \def itself
+    text = r"""
+    \let\mydef\def
+    \mydef\xxx#1{XXX: #1}
+    \xxx{123}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "XXX: 123"

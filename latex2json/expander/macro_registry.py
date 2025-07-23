@@ -51,6 +51,15 @@ class Macro:
         self.type = type
         self.is_user_defined = is_user_defined
 
+    def copy(self) -> "Macro":
+        return Macro(
+            name=self.name,
+            handler=self.handler,
+            definition=self.definition.copy(),
+            type=self.type,
+            is_user_defined=self.is_user_defined,
+        )
+
 
 class MacroRegistry:
     """
