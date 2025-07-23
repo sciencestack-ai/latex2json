@@ -207,6 +207,9 @@ class ExpanderState:
             return self._env_stack.pop()
         return None
 
+    def get_env_stack(self):
+        return self._env_stack.copy()
+
     def push_scope(self):
         """Pushes a new state layer onto the stack, starting a new scope."""
         # Create a new layer, inheriting from the current layer

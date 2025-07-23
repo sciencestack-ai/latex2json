@@ -30,6 +30,7 @@ class EnvironmentDefinition:
         counter_name: Optional[str] = None,  # e.g. "equation"
         env_type: EnvironmentType = EnvironmentType.DEFAULT,
         has_direct_command: bool = False,  # e.g. \begin{document} -> \document + \enddocument
+        is_float_env=False,
     ):
         self.name = name
         if not display_name:
@@ -42,6 +43,7 @@ class EnvironmentDefinition:
         self.counter_name = counter_name
         self.env_type = env_type
         self.has_direct_command = has_direct_command
+        self.is_float_env = is_float_env
 
         # other state e.g. hooks
         self.hooks = Hooks()
@@ -58,6 +60,7 @@ class EnvironmentDefinition:
             counter_name=self.counter_name,
             env_type=self.env_type,
             has_direct_command=self.has_direct_command,
+            is_float_env=self.is_float_env,
         )
         new_env.hooks = Hooks(begin=self.hooks.begin.copy(), end=self.hooks.end.copy())
         return new_env
@@ -78,6 +81,8 @@ class EnvironmentDefinition:
             out += f", counter_name={self.counter_name}"
         if self.has_direct_command:
             out += ", has_direct_command=True"
+        if self.is_float_env:
+            out += ", is_float_env=True"
         return out + ")"
 
     def __repr__(self) -> str:
@@ -106,9 +111,11 @@ VERBATIM_ENVIRONMENTS = {
 }
 
 ALGORITHM_ENVIRONMENTS = {
-    "algorithm": EnvironmentDefinition("algorithm"),
+    "algorithm": EnvironmentDefinition(
+        "algorithm", num_args=1, default_arg=[], is_float_env=True
+    ),
     "algorithmic": EnvironmentDefinition(
-        "algorithmic", env_type=EnvironmentType.VERBATIM
+        "algorithmic", env_type=EnvironmentType.VERBATIM, num_args=1, default_arg=[]
     ),
 }
 
@@ -145,32 +152,32 @@ LAYOUT_ENVIRONMENTS = {
 FIGURE_ENVIRONMENTS = {
     # figures
     "figure": EnvironmentDefinition(
-        "figure", num_args=1, default_arg=[], has_direct_command=True
+        "figure", num_args=1, default_arg=[], has_direct_command=True, is_float_env=True
     ),
-    "figure*": EnvironmentDefinition("figure", num_args=1, default_arg=[]),
+    "figure*": EnvironmentDefinition(
+        "figure", num_args=1, default_arg=[], is_float_env=True
+    ),
     "wrapfigure": EnvironmentDefinition(
-        "figure",
-        num_args=3,
-        default_arg=[],
+        "figure", num_args=3, default_arg=[], is_float_env=True
     ),
     "subfigure": EnvironmentDefinition(
-        "subfigure",
-        num_args=2,
-        default_arg=[],
+        "subfigure", num_args=2, default_arg=[], is_float_env=True
     ),
 }
 
 TABLE_ENVIRONMENTS = {
     "table": EnvironmentDefinition(
-        "table", num_args=1, default_arg=[], has_direct_command=True
+        "table", num_args=1, default_arg=[], has_direct_command=True, is_float_env=True
     ),
-    "table*": EnvironmentDefinition("table", num_args=1, default_arg=[]),
+    "table*": EnvironmentDefinition(
+        "table", num_args=1, default_arg=[], is_float_env=True
+    ),
     "wraptable": EnvironmentDefinition(
-        "table",
-        num_args=3,
-        default_arg=[],
+        "table", num_args=3, default_arg=[], is_float_env=True
     ),
-    "subtable": EnvironmentDefinition("subtable", num_args=2, default_arg=[]),
+    "subtable": EnvironmentDefinition(
+        "subtable", num_args=2, default_arg=[], is_float_env=True
+    ),
 }
 
 TABULAR_ENVIRONMENTS = {

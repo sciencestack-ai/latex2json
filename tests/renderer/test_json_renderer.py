@@ -51,3 +51,19 @@ def test_json_output_of_math_n_text_equations():
             }
         ],
     }
+
+
+def test_json_output_of_captions():
+    # check that caption numbering in nested environments is transferred to the parent float env
+    text = r"""
+    \begin{figure}  % json output is numbering = 1
+    \begin{center}
+    \caption{FIGURE} % numbering has been transferred to the figure output
+    \end{center}
+    \end{figure}
+    """.strip()
+    renderer = JSONRenderer()
+    json = renderer.parse(text)
+    assert len(json) == 1
+    assert json[0]["type"] == "figure"
+    assert json[0]["numbering"] == "1"

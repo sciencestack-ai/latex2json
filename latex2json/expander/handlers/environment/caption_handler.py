@@ -9,7 +9,8 @@ from latex2json.tokens.types import Token, TokenType
 
 def caption_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     """Handle caption tokens."""
-    cur_env = expander.state.current_env
+    float_env = expander.get_parent_float_env()
+    cur_env = float_env.name if float_env else None
 
     return make_section_handler("caption", counter_name=cur_env)(expander, token)
 

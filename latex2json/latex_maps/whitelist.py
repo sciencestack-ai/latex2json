@@ -1,3 +1,10 @@
+from latex2json.latex_maps.environments import (
+    DOCUMENT_ENVIRONMENTS,
+    MATH_ENVIRONMENTS,
+    TABLE_ENVIRONMENTS,
+    FIGURE_ENVIRONMENTS,
+)
+
 # These commands should not be overrwritten by newcommand/newenvironment
 WHITELISTED_COMMANDS = [
     # expand
@@ -107,7 +114,16 @@ WHITELISTED_COMMANDS = [
 ]
 
 
-WHITELISTED_ENVIRONMENTS = ["abstract", "table", "figure", "equation", "document"]
+WHITELISTED_ENVIRONMENTS = []
+for env in (
+    list(DOCUMENT_ENVIRONMENTS.keys())
+    + list(MATH_ENVIRONMENTS.keys())
+    + list(TABLE_ENVIRONMENTS.keys())
+    + list(FIGURE_ENVIRONMENTS.keys())
+):
+    WHITELISTED_ENVIRONMENTS.append(env)
+    WHITELISTED_ENVIRONMENTS.append(env + "*")
+
 
 WHITELISTED_PACKAGES = ["subfiles", "fancyhdr"]
 WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()

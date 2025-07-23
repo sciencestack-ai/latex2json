@@ -1188,6 +1188,14 @@ class ExpanderCore:
     ) -> Optional[EnvironmentDefinition]:
         return self.state.get_environment_definition(env_name)
 
+    def get_parent_float_env(self) -> Optional[EnvironmentDefinition]:
+        env_stack = self.state.get_env_stack()
+        for env in reversed(env_stack):
+            env_def = self.get_environment_definition(env)
+            if env_def and env_def.is_float_env:
+                return env_def
+        return None
+
     def register_environment(
         self,
         env_name: str,

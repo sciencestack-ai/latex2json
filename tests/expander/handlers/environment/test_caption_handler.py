@@ -1,8 +1,5 @@
 from typing import List, Optional
 from latex2json.expander.expander import Expander
-from latex2json.expander.handlers.environment.caption_handler import (
-    register_caption_handler,
-)
 from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.expander.handlers.sectioning.test_section_handlers import mock_section_token
 
@@ -23,12 +20,12 @@ class DummyCaption:
     def __init__(
         self,
         caption_text: str,
-        cur_env: str,
+        float_env: str,
         opt_arg: Optional[str] = None,
         numbering: Optional[str] = None,
     ):
         self.caption_text = caption_text
-        self.cur_env = cur_env
+        self.float_env = float_env
         self.opt_arg = opt_arg
         self.numbering = numbering
 
@@ -43,7 +40,8 @@ def assert_caption_instances(expander: Expander, expected_captions: List[DummyCa
                 break
 
             exp = expected_captions[caption_index]
-            assert expander.state.current_env == exp.cur_env
+            float_env = expander.get_parent_float_env()
+            assert float_env and float_env.name == exp.float_env
             mock_caption = mock_caption_token(
                 expander,
                 exp.caption_text,
@@ -58,7 +56,6 @@ def assert_caption_instances(expander: Expander, expected_captions: List[DummyCa
 
 def test_caption_handler():
     expander = Expander()
-    register_caption_handler(expander)
 
     text = r"""
     \counterwithin{figure}{section}
@@ -92,19 +89,19 @@ def test_caption_handler():
     expander.set_text(text)
 
     expected_captions = [
-        DummyCaption(cur_env="figure", numbering="1.1", caption_text="FIGURE"),
+        DummyCaption(float_env="figure", numbering="1.1", caption_text="FIGURE"),
         DummyCaption(
-            cur_env="subfigure", numbering="1.1.a", caption_text="SUBFIGURE 2"
+            float_env="subfigure", numbering="1.1.a", caption_text="SUBFIGURE 2"
         ),
         DummyCaption(
-            cur_env="table",
+            float_env="table",
             numbering="1",
             caption_text="TABLE",
             opt_arg="SHORT",
         ),
-        DummyCaption(cur_env="figure", numbering="2.1", caption_text="FIGURE 2"),
-        DummyCaption(cur_env="figure", caption_text="FIGURE 3", opt_arg="XXX"),
-        DummyCaption(cur_env="figure", caption_text="FIGURE 4", numbering="2.2"),
+        DummyCaption(float_env="figure", numbering="2.1", caption_text="FIGURE 2"),
+        DummyCaption(float_env="figure", caption_text="FIGURE 3", opt_arg="XXX"),
+        DummyCaption(float_env="figure", caption_text="FIGURE 4", numbering="2.2"),
     ]
 
     assert_caption_instances(expander, expected_captions)
@@ -112,7 +109,6 @@ def test_caption_handler():
 
 def test_figure_wrapfigure_captions():
     expander = Expander()
-    register_caption_handler(expander)
 
     text = r"""
     \begin{wrapfigure}{r}{0.5\textwidth}
@@ -126,8 +122,8 @@ def test_figure_wrapfigure_captions():
     expander.set_text(text)
 
     expected_captions = [
-        DummyCaption(cur_env="figure", numbering="1", caption_text="CAPTION"),
-        DummyCaption(cur_env="figure", numbering="2", caption_text="FIGURE"),
+        DummyCaption(float_env="figure", numbering="1", caption_text="CAPTION"),
+        DummyCaption(float_env="figure", numbering="2", caption_text="FIGURE"),
     ]
 
     assert_caption_instances(expander, expected_captions)
@@ -135,7 +131,6 @@ def test_figure_wrapfigure_captions():
 
 def test_captionof_handler():
     expander = Expander()
-    register_caption_handler(expander)
 
     text = r"""
     \begin{minipage}{0.5\textwidth}
@@ -162,3 +157,40 @@ def test_captionof_handler():
     assert caption_index == 1
 
     assert expander.state.get_counter_value("figure") == 1
+
+
+def test_nested_caption_numbering():
+    expander = Expander()
+
+    text = r"""
+    \begin{table}
+    \begin{spacing}
+    \begin{center}
+        \caption{TABLE} % ensure numbered even if nested deep inside table
+    \end{center}
+    \end{spacing}
+    \end{table}
+    """
+    expander.set_text(text)
+
+    expected_captions = [
+        DummyCaption(float_env="table", numbering="1", caption_text="TABLE"),
+    ]
+    assert_caption_instances(expander, expected_captions)
+
+    # test figure and table nested
+    text = r"""
+    \begin{figure}
+    \begin{table}
+        \caption{INNER TABLE}  % numbered as 2 (continuing 1 from above)
+    \end{table}
+    \caption{OUTER FIGURE} % numbered as 1 (figure)
+    \end{figure}
+    """
+    expander.set_text(text)
+
+    expected_captions = [
+        DummyCaption(float_env="table", numbering="2", caption_text="INNER TABLE"),
+        DummyCaption(float_env="figure", numbering="1", caption_text="OUTER FIGURE"),
+    ]
+    assert_caption_instances(expander, expected_captions)

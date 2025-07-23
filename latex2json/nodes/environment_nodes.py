@@ -138,10 +138,17 @@ class BaseTableFigureNode(EnvironmentNode):
         if "numbering" not in result:
             # transfer the numbering of caption node to the table/figure itself
             caption_token = None
-            for token in result["content"]:
-                if token["type"] == "caption":
-                    caption_token = token
-                    break
+
+            # BFS search for type='caption' to extract numbering
+            queue = [result["content"]]
+            while queue and not caption_token:
+                current_level = queue.pop(0)
+                for token in current_level:
+                    if token["type"] == "caption":
+                        caption_token = token
+                        break
+                    if "content" in token and isinstance(token["content"], list):
+                        queue.append(token["content"])
             if caption_token and "numbering" in caption_token:
                 result["numbering"] = caption_token["numbering"]
                 del caption_token["numbering"]
@@ -175,19 +182,9 @@ class SubFigureNode(BaseTableFigureNode):
         super().__init__("subfigure", body, numbering)
 
 
-class AlgorithmNode(EnvironmentNode):
+class AlgorithmNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
         super().__init__("algorithm", body, numbering)
-
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, AlgorithmNode):
-            return False
-        return super().__eq__(other)
-
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = "algorithm"
-        return result
 
 
 class AlgorithmicNode(ASTNode):
