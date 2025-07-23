@@ -1398,16 +1398,16 @@ class ExpanderCore:
             state = expander.state
             end_token = Token(TokenType.ENVIRONMENT_END, out_env_name)
 
-            state.pop_env_stack()
-
-            if is_math:
-                state.pop_mode()
-
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             out_tokens = expander.expand_tokens(subbed)
 
             for hook in env_def.hooks.end:
                 out_tokens.extend(hook())
+
+            if is_math:
+                state.pop_mode()
+
+            state.pop_env_stack()
 
             return out_tokens + [end_token]
 

@@ -172,3 +172,31 @@ ABSTRACT
     assert out[2:-2] == expander.expand("ABSTRACT")
     assert out[-2] == Token(TokenType.ENVIRONMENT_END, "quote")
     assert out[-1] == Token(TokenType.ENVIRONMENT_END, "abstract")
+
+
+def test_newenvironment_scoping():
+    expander = Expander()
+
+    text = r"""
+\def\xx{MY XXX}
+\renewenvironment{test}{
+\let\xxx=\xx % in scope!
+}
+{
+  \xxx % in scope! evals to "MY XXX"
+}
+
+\begin{test}
+inner
+\end{test}
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out[0] == EnvironmentStartToken("test")
+    assert out[-1] == Token(TokenType.ENVIRONMENT_END, "test")
+    body = strip_whitespace_tokens(out[1:-1])
+    body_str = expander.convert_tokens_to_str(body)
+    assert body_str.startswith("inner")
+    assert body_str.endswith("MY XXX")
+
+    assert not expander.get_macro("xxx")  # no longer in scope!

@@ -50,7 +50,6 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
 
 def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     prefix = "\\end"
-    expander.pop_scope()
 
     name = expander.parse_brace_name()
     if name is None:
@@ -60,19 +59,25 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         return None
 
     env_def = expander.state.get_environment_definition(name)
+
+    out_tokens = [Token(TokenType.ENVIRONMENT_END, name)]
+
     if not env_def:
         expander.logger.info(
             f"{prefix}{{{name}}} not found, returning default environment end token"
         )
     elif env_def.end_handler:
-        return env_def.end_handler(expander, token)
+        out_tokens = env_def.end_handler(expander, token)
     else:
         # env is defined but has no end handler
         expander.logger.info(
             f"{prefix}{{{name}}} has no end handler, returning default environment end token"
         )
 
-    return [Token(TokenType.ENVIRONMENT_END, name)]
+    # pop scope at the end!
+    expander.pop_scope()
+
+    return out_tokens
 
 
 def register_begin_end(expander: ExpanderCore):
