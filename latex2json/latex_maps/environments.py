@@ -96,6 +96,7 @@ DOCUMENT_ENVIRONMENTS = {
     "thebibliography": EnvironmentDefinition(
         "thebibliography", num_args=1, has_direct_command=True
     ),
+    "appendix": EnvironmentDefinition("appendix"),
     "appendices": EnvironmentDefinition("appendices"),
     "quote": EnvironmentDefinition("quote", has_direct_command=True),
 }
@@ -128,6 +129,9 @@ PICTURE_ENVIRONMENTS = {
     "pgfpicture": EnvironmentDefinition(
         "pgfpicture", env_type=EnvironmentType.VERBATIM
     ),
+    "overpic": EnvironmentDefinition(
+        "overpic"
+    ),  # , env_type=EnvironmentType.VERBATIM),
 }
 
 # Text formatting and layout environments

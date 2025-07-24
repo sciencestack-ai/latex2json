@@ -10,6 +10,9 @@ def make_verbatim_handler(env_name: str):
             lambda tok: tok == Token(TokenType.ENVIRONMENT_END, env_name),
             consume_predicate=True,
         )
+        if env_name == "comment":
+            # ignore \begin{comment}...
+            return []
         return [VerbatimNode(parser.convert_tokens_to_str(tokens).strip())]
 
     return verbatim_handler

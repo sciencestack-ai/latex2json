@@ -106,6 +106,9 @@ def register_doc_content_handlers(parser: ParserCore):
         parser.register_handler(
             appendix, lambda parser, token: [MetadataNode("appendix", [])]
         )
+
+    # \begin{appendix/appendices}
+    parser.register_env_handler("appendix", appendices_env_handler)
     parser.register_env_handler("appendices", appendices_env_handler)
 
 

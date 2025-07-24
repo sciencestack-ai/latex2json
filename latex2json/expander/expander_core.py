@@ -1134,7 +1134,7 @@ class ExpanderCore:
             else self.parse_bracket_as_tokens(expand=True)
         )
         # don't strip, env names are literal
-        if tokens:
+        if tokens is not None:
             return self.convert_tokens_to_str(tokens)
 
         return None
