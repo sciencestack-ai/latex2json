@@ -185,7 +185,7 @@ def split_tokens_by_predicate(
     brace_depth = 0
 
     for tok in tokens:
-        if brace_check:
+        if brace_check and tok.type == TokenType.CHARACTER:
             if tok.value == "{":
                 brace_depth += 1
                 continue

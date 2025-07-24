@@ -61,18 +61,21 @@ def show_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     return None
 
 
-def typeout_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    tok = expander.peek()
-    if not tok:
-        return None
+def make_print_handler(name: str):
+    def print_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        tok = expander.peek()
+        if not tok:
+            return None
 
-    tokens = expander.parse_immediate_token(expand=True)
-    if not tokens:
-        return None
+        tokens = expander.parse_immediate_token(expand=True)
+        if not tokens:
+            return None
 
-    exp_str = expander.convert_tokens_to_str(tokens)
-    expander.logger.debug(f"\\typeout: {exp_str}")
-    return []
+        exp_str = expander.convert_tokens_to_str(tokens)
+        expander.logger.debug(f"\\{name}: {exp_str}")
+        return []
+
+    return print_handler
 
 
 def meaning_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -145,7 +148,12 @@ def latexerror_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
 def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\the", the_handler, is_global=True)
     expander.register_handler("\\show", show_handler, is_global=True)
-    expander.register_handler("\\typeout", typeout_handler, is_global=True)
+    expander.register_handler(
+        "\\typeout", make_print_handler("typeout"), is_global=True
+    )
+    expander.register_handler(
+        "\\message", make_print_handler("message"), is_global=True
+    )
     expander.register_handler("\\meaning", meaning_handler, is_global=True)
     expander.register_handler("\\string", string_handler, is_global=True)
     expander.register_handler("\\escapechar", escapechar_handler, is_global=True)

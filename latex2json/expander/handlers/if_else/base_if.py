@@ -64,7 +64,7 @@ def parse_if_else_block_tokens(
     def is_if_command(token: Token) -> bool:
         if token.type == TokenType.CONTROL_SEQUENCE:
             macro = expander.get_macro(token.value)
-            return macro and macro.type == MacroType.IF
+            return isinstance(macro, IfMacro)
         return False
 
     # parse out the entire \if ... \fi block as RAW TOKENS (DONT PROCESS)

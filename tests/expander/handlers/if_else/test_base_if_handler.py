@@ -189,3 +189,20 @@ def test_ifodd_handler():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert expander.convert_tokens_to_str(out) == "TRUE"
+
+
+def test_other_ifs_nested():
+    expander = Expander()
+    text = r"""
+    \iftrue
+        \ifdefempty{\a}{EMPTY}{NOT EMPTY}
+    \else
+        ELSE
+    \fi
+    """
+    out = expander.expand(text)
+    assert expander.convert_tokens_to_str(out).strip() == "EMPTY"
+
+    expander.expand(r"\def\a{aaa}")
+    out = expander.expand(text)
+    assert expander.convert_tokens_to_str(out).strip() == "NOT EMPTY"
