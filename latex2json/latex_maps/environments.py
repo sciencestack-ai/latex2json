@@ -217,9 +217,6 @@ MATH_ENVIRONMENTS = {
         "math",
         env_type=EnvironmentType.EQUATION,
     ),
-    "gather": EnvironmentDefinition(
-        "gather", counter_name="equation", env_type=EnvironmentType.EQUATION
-    ),
     "multline": EnvironmentDefinition(
         "multline", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
@@ -271,6 +268,7 @@ MATH_ENVIRONMENTS = {
     ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "gather": EnvironmentDefinition("gather", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray": EnvironmentDefinition(
         "eqnarray", env_type=EnvironmentType.EQUATION_ALIGN
     ),

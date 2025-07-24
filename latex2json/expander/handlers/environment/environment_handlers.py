@@ -45,7 +45,7 @@ def register_base_environment_handlers(expander: ExpanderCore):
             env_def_instance.hooks.end.append(
                 outsubequation,
             )
-        elif env_name == "appendices":
+        elif env_name in ["appendices", "appendix"]:
 
             def inappendices():
                 expander.state.set_is_appendix(True)

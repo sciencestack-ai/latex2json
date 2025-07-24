@@ -160,25 +160,30 @@ class JSONRenderer:
 
         return organized
 
-    def _reorder_dict_with_content_last(self, d: Dict) -> Dict:
-        """Helper function to reorder dictionary to ensure 'content' is the last key"""
+    def _reorder_dict_keys(self, d: Dict) -> Dict:
+        """Helper function to reorder dictionary to ensure 'type' is first key and 'content' is the last key"""
         if not isinstance(d, dict):
             return d
 
-        # If there's no content key, return as is
-        if "content" not in d:
+        # If there's no type key, return as is
+        if "type" not in d:
             return d
 
-        # Get content value and remove from dict
-        content = d.pop("content")
+        # Get type and content values and remove from dict
+        type_val = d.pop("type")
+        content = d.pop("content", None)
 
-        # Create new dict with all other items
-        result = {}
+        # Create new dict starting with type
+        result = {"type": type_val}
+
+        # Add remaining items in sorted order
         for k in sorted(d.keys()):
             result[k] = d[k]
 
-        # Add content back as last item
-        result["content"] = content
+        # Add content back as last item if it existed
+        if content is not None:
+            result["content"] = content
+
         return result
 
     def _recursive_postprocess(
@@ -232,7 +237,7 @@ class JSONRenderer:
 
             # Reorder the dictionary to ensure 'content' field is last.
             # This makes it easier to read the json metadata format before 'content'
-            tokens[i] = self._reorder_dict_with_content_last(token)
+            tokens[i] = self._reorder_dict_keys(token)
 
         return tokens
 
