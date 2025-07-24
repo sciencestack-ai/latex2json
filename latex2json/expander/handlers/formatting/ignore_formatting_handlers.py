@@ -1,6 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, TokenType
 
 formatting_patterns = {
     "NeedsTeXFormat": 1,
@@ -89,7 +89,6 @@ formatting_patterns = {
     "setlist": "[{",
     # toolset/palette
     "mathtoolsset": "[",
-    "mathpalette": 0,
     # penalty
     "penalty": "=f",
     "clubpenalty": "=f",
@@ -200,12 +199,27 @@ def newline_handler(expander: ExpanderCore, token: Token):
     return [token]
 
 
+def mathpalette_handler(expander: ExpanderCore, token: Token):
+    toks1 = expander.parse_immediate_token(skip_whitespace=False, expand=False)
+    if not toks1:
+        expander.logger.warning(
+            f"Warning: \\mathpalette expected argument but found nothing"
+        )
+        return None
+
+    # arbitrarily push a displaystyle token to stream
+    style_token = Token(TokenType.CONTROL_SEQUENCE, value="displaystyle")
+    expander.push_tokens(toks1 + [style_token])
+    return []
+
+
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns, expand=False)
     register_ignore_handlers_util(expander, content_formatting_patterns, expand=False)
     expander.register_handler(r"\vrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
+    expander.register_handler(r"\mathpalette", mathpalette_handler, is_global=True)
     expander.register_handler("\\", newline_handler, is_global=True)
 
 

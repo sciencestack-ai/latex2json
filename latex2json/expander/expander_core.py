@@ -1191,6 +1191,14 @@ class ExpanderCore:
                     f"Warning: {command_name} expected argument {i+1} but found nothing"
                 )
                 return None
+            elif tokens and is_end_group_token(tokens[0]):
+                self.logger.warning(
+                    f"Warning: {command_name} expected argument {i+1}"
+                    + " but found early closing brace }"
+                )
+                # push tokens back to stream, since this is invalid
+                self.push_tokens(tokens)
+                return None
             args.append(tokens)
 
         return args
@@ -1268,6 +1276,7 @@ class ExpanderCore:
                 env_type=env_def.env_type,
                 # args=args,
             )
+            begin_token.position = token.position
 
             out_tokens: List[Token] = [begin_token]
             for hook in env_def.hooks.begin:
@@ -1416,7 +1425,9 @@ class ExpanderCore:
 
         def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
             state = expander.state
-            end_token = Token(TokenType.ENVIRONMENT_END, out_env_name)
+            end_token = Token(
+                TokenType.ENVIRONMENT_END, value=out_env_name, position=token.position
+            )
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             out_tokens = expander.expand_tokens(subbed)

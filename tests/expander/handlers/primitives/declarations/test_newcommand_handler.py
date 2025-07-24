@@ -223,3 +223,16 @@ def test_nested_newcommands():
     out = expander.expand(r"\last{456}")
     strip_whitespace_tokens(out)
     assert_token_sequence(out, expander.expand("OUTER: 123, INNER: INNER, LAST: 456"))
+
+
+def test_newcommand_with_multi_brace_args_def():
+    text = r"""
+\newcommand{\xxx}[2]{HI #1 THERE #2!}
+\def\yyy{{\xxx}} % invalid since } closes early and is not a valid argument for \xxx!
+\yyy 12 % \yyy becomes nothing since invalid!
+"""
+    expander = Expander()
+    out = expander.expand(text)
+    assert expander.get_macro("\\xxx")
+    assert expander.get_macro("\\yyy")
+    assert expander.convert_tokens_to_str(out).strip() == "{} 12"
