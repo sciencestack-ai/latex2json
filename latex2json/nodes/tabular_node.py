@@ -1,6 +1,7 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode, TextNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
+from latex2json.nodes.node_types import NodeTypes
 
 
 class CellNode(ASTNode):
@@ -110,7 +111,7 @@ class RowNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "row"
+        result["type"] = NodeTypes.ROW
         result["content"] = [cell.to_json() for cell in self.cells]
         return result
 
@@ -165,7 +166,7 @@ class TabularNode(EnvironmentNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "tabular"
+        result["type"] = NodeTypes.TABULAR
         content = []
         for row in self.row_nodes:
             row_json = []

@@ -2,6 +2,8 @@ from copy import deepcopy
 from enum import Enum
 from typing import List, Optional
 
+from latex2json.nodes.node_types import NodeTypes
+
 
 class DisplayType(Enum):
     INLINE = "inline"
@@ -117,7 +119,7 @@ class TextNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "text"
+        result["type"] = NodeTypes.TEXT
         result["content"] = self.text
         return result
 
@@ -173,7 +175,7 @@ class GroupNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "group"
+        result["type"] = NodeTypes.GROUP
         result["content"] = [child.to_json() for child in self.children]
         return result
 
@@ -211,7 +213,7 @@ class VerbatimNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "code"
+        result["type"] = NodeTypes.CODE
         result["content"] = self.text
         result["display"] = self.display.value if self.display else None
         if self.title:
@@ -275,7 +277,7 @@ class CommandNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "command"
+        result["type"] = NodeTypes.COMMAND
         result["command"] = self.name
         if self.args:
             result["args"] = [[child.to_json() for child in arg] for arg in self.args]

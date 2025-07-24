@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
+from latex2json.nodes.node_types import NodeTypes
 
 
 class CaptionNode(ASTNode):
@@ -49,7 +50,7 @@ class CaptionNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "caption"
+        result["type"] = NodeTypes.CAPTION
         result["content"] = [child.to_json() for child in self.body]
         # if self.opt_arg: # TODO?
         #     result["opt_arg"] = [child.to_json() for child in self.opt_arg]

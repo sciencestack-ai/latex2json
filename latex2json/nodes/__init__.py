@@ -1,3 +1,6 @@
+# types
+from latex2json.nodes.node_types import NodeTypes
+
 # NODES
 from latex2json.nodes.base_nodes import *
 from latex2json.nodes.section_nodes import *

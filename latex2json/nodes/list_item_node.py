@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, TextNode
+from latex2json.nodes.node_types import NodeTypes
 
 
 class ListItemNode(ASTNode):
@@ -41,7 +42,7 @@ class ListItemNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "item"
+        result["type"] = NodeTypes.ITEM
         result["content"] = [child.to_json() for child in self.children]
         if self.label:
             result["title"] = [TextNode(self.label).to_json()]
@@ -100,7 +101,7 @@ class ListNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "list"
+        result["type"] = NodeTypes.LIST
         result["name"] = self.list_type
         result["content"] = [item.to_json() for item in self.list_items]
         if self.is_inline:

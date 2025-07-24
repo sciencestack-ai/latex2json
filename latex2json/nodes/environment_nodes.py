@@ -2,6 +2,7 @@ from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from latex2json.nodes.caption_node import CaptionNode
 from latex2json.nodes.utils import strip_whitespace_nodes
+from latex2json.nodes.node_types import NodeTypes
 
 
 class EnvironmentNode(ASTNode):
@@ -65,7 +66,7 @@ class EnvironmentNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "environment"
+        result["type"] = NodeTypes.ENVIRONMENT
         result["name"] = self.display_name or self.env_name
         result["content"] = [child.to_json() for child in self.body]
         if self.numbering:
@@ -115,7 +116,7 @@ class TheoremNode(EnvironmentNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "math_env"  # "theorem"
+        result["type"] = NodeTypes.MATH_ENV  # "theorem"
         if self.title:
             result["title"] = [child.to_json() for child in self.title]
         return result
@@ -164,27 +165,27 @@ class BaseTableFigureNode(EnvironmentNode):
 
 class TableNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
-        super().__init__("table", body, numbering)
+        super().__init__(NodeTypes.TABLE, body, numbering)
 
 
 class SubTableNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
-        super().__init__("subtable", body, numbering)
+        super().__init__(NodeTypes.SUBTABLE, body, numbering)
 
 
 class FigureNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
-        super().__init__("figure", body, numbering)
+        super().__init__(NodeTypes.FIGURE, body, numbering)
 
 
 class SubFigureNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
-        super().__init__("subfigure", body, numbering)
+        super().__init__(NodeTypes.SUBFIGURE, body, numbering)
 
 
 class AlgorithmNode(BaseTableFigureNode):
     def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
-        super().__init__("algorithm", body, numbering)
+        super().__init__(NodeTypes.ALGORITHM, body, numbering)
 
 
 class AlgorithmicNode(ASTNode):
@@ -205,6 +206,6 @@ class AlgorithmicNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "algorithmic"
+        result["type"] = NodeTypes.ALGORITHMIC
         result["content"] = self.text
         return result

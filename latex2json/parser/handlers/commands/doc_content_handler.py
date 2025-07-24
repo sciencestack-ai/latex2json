@@ -1,8 +1,13 @@
 from contextvars import Token
 from typing import List
-from latex2json.nodes import ASTNode, TextNode, CommandNode
-from latex2json.nodes.metadata_nodes import AuthorNode, AuthorsNode, MetadataNode
-from latex2json.nodes.ref_cite_url_nodes import FootnoteNode
+from latex2json.nodes import (
+    ASTNode,
+    CommandNode,
+    AuthorNode,
+    AuthorsNode,
+    MetadataNode,
+    NodeTypes,
+)
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
 from latex2json.parser.parser_core import ParserCore
 
@@ -47,21 +52,21 @@ def make_metadata_handler(name: str, has_short_bracket=False):
 
 def document_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
-    document_node = MetadataNode("document", env.body)
+    document_node = MetadataNode(NodeTypes.DOCUMENT, env.body)
     document_node.labels = env.labels
     return [document_node]
 
 
 def abstract_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
-    abstract_node = MetadataNode("abstract", env.body)
+    abstract_node = MetadataNode(NodeTypes.ABSTRACT, env.body)
     abstract_node.labels = env.labels
     return [abstract_node]
 
 
 def appendices_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
-    appendix_node = MetadataNode("appendix", env.body)
+    appendix_node = MetadataNode(NodeTypes.APPENDIX, env.body)
     appendix_node.labels = env.labels
     return [appendix_node]
 
@@ -73,11 +78,11 @@ def register_doc_content_handlers(parser: ParserCore):
     # abstract
     parser.register_env_handler("abstract", abstract_env_handler)
     # \abstract{...} is not native latex, but some packages/classes define \abstract{...} via renewcommand
-    parser.register_handler("abstract", make_metadata_handler("abstract"))
+    parser.register_handler("abstract", make_metadata_handler(NodeTypes.ABSTRACT))
 
     # title
     parser.register_handler(
-        "title", make_metadata_handler("title", has_short_bracket=True)
+        "title", make_metadata_handler(NodeTypes.TITLE, has_short_bracket=True)
     )
 
     # authors
@@ -86,25 +91,25 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_handler("thanks", make_metadata_handler("thanks"))
 
     # address
-    parser.register_handler("address", make_metadata_handler("address"))
+    parser.register_handler("address", make_metadata_handler(NodeTypes.ADDRESS))
     parser.register_handler("curraddr", lambda parser, token: [])
 
     # affil
     for affil in ["affiliation", "affil"]:
         parser.register_handler(
-            affil, make_metadata_handler("affiliation", has_short_bracket=True)
+            affil, make_metadata_handler(NodeTypes.AFFILIATION, has_short_bracket=True)
         )
 
     # email
-    parser.register_handler("email", make_metadata_handler("email"))
+    parser.register_handler("email", make_metadata_handler(NodeTypes.EMAIL))
 
     # keywords
-    parser.register_handler("keywords", make_metadata_handler("keywords"))
+    parser.register_handler("keywords", make_metadata_handler(NodeTypes.KEYWORDS))
 
     # appendix
     for appendix in ["appendix", "appendices"]:
         parser.register_handler(
-            appendix, lambda parser, token: [MetadataNode("appendix", [])]
+            appendix, lambda parser, token: [MetadataNode(NodeTypes.APPENDIX, [])]
         )
 
     # \begin{appendix/appendices}

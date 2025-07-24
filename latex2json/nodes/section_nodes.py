@@ -1,6 +1,7 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
+from latex2json.nodes.node_types import NodeTypes
 
 
 SECTION_LEVELS = {
@@ -64,7 +65,7 @@ class SectionNode(EnvironmentNode):
         else:
             level = SECTION_LEVELS.get(self.name, 1)
 
-        result["type"] = "paragraph" if is_paragraph else "section"
+        result["type"] = NodeTypes.PARAGRAPH if is_paragraph else NodeTypes.SECTION
         result["title"] = [child.to_json() for child in self.body]
         result["level"] = level
         # if self.label:

@@ -9,6 +9,7 @@ from latex2json.nodes.base_nodes import (
 
 from latex2json.nodes.tabular_node import RowNode
 from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
+from latex2json.nodes.node_types import NodeTypes
 
 
 def strip_balanced_braces(text: str) -> str:
@@ -114,7 +115,7 @@ class EquationNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "equation"
+        result["type"] = NodeTypes.EQUATION
         result["display"] = self.equation_type.value
         if self.equation_type != DisplayType.INLINE:
             result["name"] = self.env_name
@@ -219,7 +220,7 @@ class EquationArrayNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "equation_array"
+        result["type"] = NodeTypes.EQUATION_ARRAY
         result["name"] = self.env_name
 
         content = []

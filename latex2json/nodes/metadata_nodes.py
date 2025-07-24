@@ -1,5 +1,6 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
+from latex2json.nodes.node_types import NodeTypes
 
 
 class MetadataNode(ASTNode):
@@ -53,7 +54,7 @@ class AuthorsNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "author"
+        result["type"] = NodeTypes.AUTHOR
         content = []
         for author in self.children:
             author_childs = [child.to_json() for child in author.children]

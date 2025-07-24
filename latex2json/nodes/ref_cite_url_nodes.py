@@ -1,6 +1,8 @@
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from typing import List, Optional
 
+from latex2json.nodes.node_types import NodeTypes
+
 
 class BaseRefCiteNode(ASTNode):
     def __init__(
@@ -41,7 +43,7 @@ class BaseRefCiteNode(ASTNode):
 
 class RefNode(BaseRefCiteNode):
     def __init__(self, references: str | List[str], title: Optional[str] = None):
-        super().__init__("ref", references, title)
+        super().__init__(NodeTypes.REF, references, title)
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, RefNode):
@@ -51,7 +53,7 @@ class RefNode(BaseRefCiteNode):
 
 class CiteNode(BaseRefCiteNode):
     def __init__(self, references: str | List[str], title: Optional[str] = None):
-        super().__init__("citation", references, title)
+        super().__init__(NodeTypes.CITATION, references, title)
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CiteNode):
@@ -82,7 +84,7 @@ class URLNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "url"
+        result["type"] = NodeTypes.URL
         result["content"] = self.url
         if self.title:
             result["title"] = self.title
@@ -116,7 +118,7 @@ class FootnoteNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "footnote"
+        result["type"] = NodeTypes.FOOTNOTE
         result["content"] = [child.to_json() for child in self.children]
         if self.title:
             result["title"] = self.title

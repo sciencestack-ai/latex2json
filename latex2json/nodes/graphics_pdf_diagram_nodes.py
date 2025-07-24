@@ -1,5 +1,6 @@
 from latex2json.nodes.base_nodes import ASTNode
 from typing import Optional
+from latex2json.nodes.node_types import NodeTypes
 
 
 class IncludeGraphicsNode(ASTNode):
@@ -25,7 +26,7 @@ class IncludeGraphicsNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "includegraphics"
+        result["type"] = NodeTypes.INCLUDEGRAPHICS
         result["content"] = self.path
         if self.page is not None:
             result["page"] = self.page
@@ -57,7 +58,7 @@ class IncludePdfNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "includepdf"
+        result["type"] = NodeTypes.INCLUDEPDF
         result["content"] = self.path
         if self.pages is not None:
             result["pages"] = self.pages
@@ -83,7 +84,7 @@ class DiagramNode(ASTNode):
 
     def to_json(self):
         result = {}
-        result["type"] = "diagram"
+        result["type"] = NodeTypes.DIAGRAM
         result["name"] = self.env_name
         result["content"] = self.diagram
         return result

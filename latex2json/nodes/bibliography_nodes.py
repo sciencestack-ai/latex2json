@@ -1,5 +1,6 @@
 from typing import Dict, List, Optional
 from latex2json.nodes.base_nodes import ASTNode, TextNode
+from latex2json.nodes.node_types import NodeTypes
 
 
 def convert_fields_to_bibtex_str(
@@ -96,7 +97,7 @@ class BibEntryNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "bibitem"
+        result["type"] = NodeTypes.BIBITEM
         result["key"] = self.citation_key
         if self.entry_type:
             result["entry_type"] = self.entry_type
@@ -149,6 +150,6 @@ class BibliographyNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "bibliography"
+        result["type"] = NodeTypes.BIBLIOGRAPHY
         result["content"] = [item.to_json() for item in self.bib_items]
         return result
