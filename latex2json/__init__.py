@@ -1,5 +1,5 @@
 from .tex_reader import TexReader
-from .renderer.json import JSONRenderer
+from .renderer import JSONRenderer
 from .tex_preamble import TexPreamble
 from .nodes import NodeTypes
 
