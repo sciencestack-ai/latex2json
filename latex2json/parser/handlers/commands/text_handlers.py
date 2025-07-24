@@ -8,6 +8,7 @@ from latex2json.latex_maps.fonts import (
     FontStyle,
     LEGACY_TO_FONT_STYLE,
     LATEX_TO_FONT_STYLE,
+    TEXT_MODE_COMMANDS,
     FontStyleType,
 )
 from latex2json.tokens.types import Token
@@ -116,7 +117,12 @@ def register_text_handlers(parser: ParserCore):
 
     # Register handlers for commands that have FontStyle objects
     for cmd, style_obj in LATEX_TO_FONT_STYLE.items():
-        parser.register_handler(cmd, make_text_handler(style_obj))
+        handler = make_text_handler(style_obj)
+        if cmd in TEXT_MODE_COMMANDS:
+            parser.register_handler(cmd, handler)
+        else:
+            # if no textmode switch, we only need to run it in textmode
+            parser.register_handler(cmd, handler, text_mode_only=True)
     parser.register_handler("text", make_text_handler(None))
 
     # Color handlers
