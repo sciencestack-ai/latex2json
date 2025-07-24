@@ -423,8 +423,18 @@ class ExpanderCore:
 
     def push_file(self, file_path: str, extension: str = ".tex"):
         file_path = self.get_cwd_path(file_path)
-        if not file_path.endswith(extension):
+        ext = os.path.splitext(file_path)[1]
+        if not ext:
             file_path += extension
+        else:
+            # check if package or class
+            ext = ext.lower()
+            if ext == ".sty":
+                self.load_package(file_path, extension=ext)
+                return
+            elif ext == ".cls":
+                self.load_class(file_path, extension=ext)
+                return
 
         if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
@@ -454,11 +464,13 @@ class ExpanderCore:
         if package_or_class_name in loaded_set:
             return None
 
-        loaded_set.add(package_or_class_name)
-
         package_path = package_or_class_name
         if not package_path.endswith(extension):
             package_path += extension
+
+        # Strip extension and path to just get base name
+        base_name = os.path.splitext(os.path.basename(package_or_class_name))[0]
+        loaded_set.add(base_name)
 
         self.logger.debug(f"Loading package/class: {package_path}")
 

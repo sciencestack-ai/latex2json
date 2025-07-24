@@ -238,10 +238,21 @@ class ParserCore:
             self.push_scope()
 
         STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=None)
-        self.push_tokens(tokens + [STOP_TOKEN])
 
+        # number the token positions for logging purposes
+        for i, tok in enumerate(tokens):
+            tok.position = i
+        total_tokens = len(tokens)
+
+        def stop_token_function(tok: Token):
+            # log progress...
+            if tok.position > 0 and tok.position % 10000 == 0:
+                self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
+            return tok is STOP_TOKEN
+
+        self.push_tokens(tokens + [STOP_TOKEN])
         nodes = self.process(
-            stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
+            stop_token_logic=stop_token_function, consume_stop_token=True
         )
 
         if scoped:
@@ -308,9 +319,10 @@ class ParserCore:
         tokens = self.expander.expand_file(os.path.basename(file_path))
         if not tokens:
             return None
-        self.logger.info(f"Parsed {len(tokens)} tokens from {file_path}")
+        self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
         out = self.process_tokens(tokens)
         if postprocess:
+            self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
         return out
 

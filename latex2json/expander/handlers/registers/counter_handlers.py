@@ -1,5 +1,7 @@
 from typing import List, Optional, Tuple
+from latex2json.expander.handlers.registers.base_register_handlers import RegisterMacro
 from latex2json.expander.macro_registry import Macro
+from latex2json.registers.types import RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore
 
@@ -148,7 +150,14 @@ def base_counter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
 def register_counter_handlers(expander: ExpanderCore):
     for counter in expander.state.get_counters():
         # e.g. \c@section
-        expander.register_handler(counter, base_counter_handler, is_global=True)
+        # make it a register macro so that it can be parsed as an integer
+        macro = RegisterMacro(
+            register_type=RegisterType.COUNT,
+            command_name=counter,
+            handler=base_counter_handler,
+            is_id_integer=False,
+        )
+        expander.register_macro(counter, macro, is_global=True)
 
     expander.register_handler("setcounter", setcounter_handler, is_global=True)
     expander.register_handler("addtocounter", addtocounter_handler, is_global=True)

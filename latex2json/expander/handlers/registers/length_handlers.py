@@ -1,7 +1,6 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.handlers.registers.base_register_handlers import (
-    RegisterMacro,
     make_register_macro,
 )
 from latex2json.expander.macro_registry import Macro

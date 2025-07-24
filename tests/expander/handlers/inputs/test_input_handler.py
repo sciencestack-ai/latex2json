@@ -39,3 +39,12 @@ def test_input_handler():
             break
 
     assert has_section
+
+    # test that also works on .sty or .cls files
+    assert not expander.get_macro("foo")
+    expander.expand(r"\input{%s/package1.sty}" % test_data_path)
+    assert expander.get_macro("foo")
+
+    assert not expander.get_macro("somecmd")
+    expander.expand(r"\input{%s/basecls.cls}" % test_data_path)
+    assert expander.get_macro("somecmd")

@@ -149,3 +149,14 @@ def test_direct_counter_setting():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "3"
+
+    # check that it is also a register macro type that can be used with e.g. \ifodd
+    out = expander.expand(r"\ifodd\c@section ODD \else EVEN \fi")
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "ODD"
+
+    # set it as even
+    expander.expand(r"\c@section 4")
+    out = expander.expand(r"\ifodd\c@section ODD \else EVEN \fi")
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "EVEN"
