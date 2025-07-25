@@ -85,7 +85,7 @@ class CounterManager:
             if i > 0:
                 self.new_counter(section, parent=SECTIONS[i - 1], check_exists=False)
             else:
-                self.new_counter(section, parent="part", check_exists=False)
+                self.new_counter(section, check_exists=False)
 
     def _init_builtin_counters(self):
         """Initialize common LaTeX counters"""

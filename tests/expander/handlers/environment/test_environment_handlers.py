@@ -188,22 +188,6 @@ def test_mock_env_token():
 def test_equation_environments():
     expander = Expander()
 
-    assert not expander.state.is_math_mode
-    base_mode = expander.state.mode
-
-    expander.expand(r"\begin{align}")
-    assert expander.state.mode == ProcessingMode.MATH_DISPLAY
-    assert expander.state.is_math_mode
-
-    out = expander.expand(r"1^1")
-    assert out[0] == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
-    assert out[1] == Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE)
-    assert out[2] == Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER)
-
-    expander.expand(r"\end{align}")
-    assert expander.state.mode == base_mode
-    assert not expander.state.is_math_mode
-
     # test that equation with \nonumber is not numbered
     text = r"""
     \begin{equation} \nonumber

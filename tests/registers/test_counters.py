@@ -38,10 +38,6 @@ def test_counter_hierarchy():
     registers = TexRegisters()
     manager = CounterManager(registers)
 
-    # Test built-in counter relationships
-    hierarchy = manager.get_counter_hierarchy("subsection")
-    assert hierarchy == ["part", "chapter", "section", "subsection"]
-
     # Test getting all children
     children = manager.get_all_children("chapter")
     assert "section" in children

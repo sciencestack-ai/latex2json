@@ -1375,8 +1375,6 @@ class ExpanderCore:
                             else:
                                 newblock.append(tok)
                         newblock = strip_whitespace_tokens(newblock)
-                        if not newblock:
-                            continue
 
                         if is_auto_numbered:
                             state.step_counter("equation")
