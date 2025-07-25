@@ -207,12 +207,13 @@ class ExpanderCore:
         self, counter_name: str, parent: Optional[str] = None, is_user_defined=True
     ):
         self.state.new_counter(counter_name, parent)
-        self.register_handler(
-            f"\\the{counter_name}",
-            make_the_counter_handler(counter_name),
-            is_global=True,
-            is_user_defined=is_user_defined,
-        )
+        if counter_name.isalpha():
+            self.register_handler(
+                f"\\the{counter_name}",
+                make_the_counter_handler(counter_name),
+                is_global=True,
+                is_user_defined=is_user_defined,
+            )
 
     # fonts
     def create_new_font(self, font_name: str, font_definition: List[Token]):

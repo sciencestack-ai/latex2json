@@ -17,7 +17,7 @@ def test_basic_counter_operations():
     assert expander.state.get_counter_value("section") == 16
 
     # Test refstepcounter (should behave same as stepcounter)
-    expander.expand(r"\refstepcounter{ section}")
+    expander.expand(r"\refstepcounter{section}")
     assert expander.state.get_counter_value("section") == 17
 
     # Test value command
@@ -25,7 +25,7 @@ def test_basic_counter_operations():
     assert expander.convert_tokens_to_str(out) == "17"
 
     # test parent-child relationship and reset with stepcounter/refstepcounter
-    expander.expand(r"\refstepcounter{subsection }")
+    expander.expand(r"\refstepcounter{subsection}")
     assert expander.state.get_counter_value("subsection") == 1
 
     expander.expand(r"\refstepcounter{section}")
@@ -45,7 +45,7 @@ def test_new_counter():
     expander = Expander()
 
     # Test counter with parent
-    expander.expand(r"\newcounter{ mycounter }[section]")
+    expander.expand(r"\newcounter{mycounter}[section]")
     assert expander.state.get_counter_value("mycounter") == 0
 
     # Set values and verify parent-child relationship
@@ -59,6 +59,11 @@ def test_new_counter():
     # Stepping parent should reset child
     expander.expand(r"\stepcounter{section}")
     assert expander.state.get_counter_value("mycounter") == 0
+
+    # check that it is whitespace sensitive!
+    expander.expand(r"\newcounter{ mycounter2 } \setcounter{ mycounter2 }{5}")
+    assert expander.state.get_counter_value(" mycounter2 ") == 5
+    assert expander.state.get_counter_value(" mycounter2") is None
 
 
 def test_counter_the_command():
@@ -136,6 +141,11 @@ def test_counter_within_without():
 
     out = expander.expand(r"\thefigure")
     assert expander.convert_tokens_to_str(out) == "2.3"  # Should show as chapter.figure
+
+    # counterwithin has unique property that even if the parent is zero, it will have the parent displayed!
+    expander.expand(r"\setcounter{chapter}{0}")
+    out = expander.expand(r"\thefigure")
+    assert expander.convert_tokens_to_str(out) == "0.3"
 
 
 def test_direct_counter_setting():

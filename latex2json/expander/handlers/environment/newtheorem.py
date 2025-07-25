@@ -60,9 +60,9 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         expander.skip_whitespace()
 
         if not has_shared_counter:
-            reset_counter = expander.parse_brace_name(bracket=True)
-            if counter_name and reset_counter:
-                expander.state.counter_within(counter_name, reset_counter)
+            parent_counter = expander.parse_brace_name(bracket=True)
+            if counter_name and parent_counter:
+                expander.state.counter_within(counter_name, parent_counter)
 
     env_def = EnvironmentDefinition(
         name=env_name,

@@ -19,7 +19,7 @@ def parse_counter_name(expander: ExpanderCore, brackets=False) -> Optional[str]:
         return None
 
     counter_name = expander.convert_tokens_to_str(counter_name)
-    return counter_name.strip()
+    return counter_name  # .strip() # don't strip! it's space sensitive
 
 
 def parse_counter_args(

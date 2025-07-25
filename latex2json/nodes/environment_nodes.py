@@ -145,7 +145,9 @@ class BaseTableFigureNode(EnvironmentNode):
             while queue and not caption_token:
                 current_level = queue.pop(0)
                 for token in current_level:
-                    if token["type"] == "caption":
+                    if not isinstance(token, dict):
+                        continue
+                    if token.get("type") == "caption":
                         caption_token = token
                         break
                     if "content" in token and isinstance(token["content"], list):

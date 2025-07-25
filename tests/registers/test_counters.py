@@ -48,6 +48,31 @@ def test_counter_hierarchy():
     assert "subsection" in children
     assert "subsubsection" in children
 
+    # check hierarchy output
+    manager.step_counter("part")
+    assert manager.get_counter_display("part") == "I"
+    manager.step_counter("chapter")
+    assert manager.get_counter_display("chapter") == "1"
+    manager.step_counter("section")
+    assert manager.get_counter_display("section") == "1.1"
+    manager.step_counter("subsection")
+    assert manager.get_counter_display("subsection") == "1.1.1"
+
+    manager.step_counter("chapter")
+    assert manager.get_counter_display("chapter") == "2"
+    manager.step_counter("section")
+    assert manager.get_counter_display("section") == "2.1"
+
+    # now reset
+    manager.reset_section_counters()
+    manager.step_counter("part")
+    assert manager.get_counter_display("part") == "I"
+
+    # now check that because chapter is 0, section becomes default "1"
+    assert manager.get_counter_value("chapter") == 0
+    manager.step_counter("section")
+    assert manager.get_counter_display("section") == "1"
+
 
 def test_counter_within():
     registers = TexRegisters()

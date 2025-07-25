@@ -2,9 +2,6 @@ from logging import Logger
 import logging
 from typing import Dict, List, Set, Optional, Any, Union
 from dataclasses import dataclass
-from enum import Enum
-
-from latex2json.latex_maps.sections import SECTIONS
 from latex2json.registers.types import RegisterType, CounterFormat
 from latex2json.registers.registers import TexRegisters
 
@@ -17,6 +14,7 @@ class CounterInfo:
     _parent: Optional["CounterInfo"] = None
     _children: List["CounterInfo"] = None
     style: CounterFormat = CounterFormat.ARABIC
+    skip_parent_zeros: bool = True
 
     def __post_init__(self):
         if self._children is None:
@@ -53,6 +51,10 @@ class CounterInfo:
         if child in self._children:
             child.parent = None  # This will handle both sides of the relationship
 
+    def get_styled_value(self, value: int) -> str:
+        format_type = CounterFormat.from_str(self.style)
+        return format_type.format_value(value)
+
 
 class CounterManager:
     """Manages LaTeX counters with parent-child relationships"""
@@ -66,14 +68,28 @@ class CounterManager:
         # Initialize built-in counters with relationships
         self._init_builtin_counters()
 
-    def _init_builtin_counters(self):
-        """Initialize common LaTeX counters"""
+    def _init_section_counters(self):
+        self.new_counter("part", style=CounterFormat.ROMAN_UPPER, check_exists=False)
+
         # Sectioning hierarchy
+        SECTIONS = [
+            "chapter",
+            "section",
+            "subsection",
+            "subsubsection",
+            "paragraph",
+            "subparagraph",
+        ]
+
         for i, section in enumerate(SECTIONS):
             if i > 0:
-                self.new_counter(section, parent=SECTIONS[i - 1])
+                self.new_counter(section, parent=SECTIONS[i - 1], check_exists=False)
             else:
-                self.new_counter(section)
+                self.new_counter(section, parent="part", check_exists=False)
+
+    def _init_builtin_counters(self):
+        """Initialize common LaTeX counters"""
+        self._init_section_counters()
 
         # Independent counters
         self.new_counter("page")
@@ -97,8 +113,7 @@ class CounterManager:
         self.new_counter("@topnum")
 
     def reset_section_counters(self):
-        for section in SECTIONS:
-            self.set_counter(section, 0)
+        self._init_section_counters()
 
     def get_counters(self, internal_name=True):
         out = []
@@ -131,11 +146,12 @@ class CounterManager:
         name: str,
         parent: Optional[str] = None,
         style: CounterFormat = CounterFormat.ARABIC,
-    ) -> None:
+        check_exists: bool = True,
+    ) -> CounterInfo:
         """Create a new counter with optional parent relationship"""
-        if name in self.counters:
+        if check_exists and name in self.counters:
             # self.logger.warning(f"Counter '{name}' already exists")
-            return
+            return self.counters[name]
 
         # Create counter info
         counter_info = CounterInfo(name=name, style=style)
@@ -145,13 +161,15 @@ class CounterManager:
         if parent:
             if parent not in self.counters:
                 self.logger.warning(f"Parent counter '{parent}' does not exist")
-                return
+                return counter_info
             self.counters[parent].add_child(counter_info)
 
         # Initialize the actual register storage
         self.registers.set_register(
             RegisterType.COUNT, self._get_internal_name(name), 0
         )
+
+        return counter_info
 
     def set_counter(self, name: str, value: int) -> None:
         """Set counter value"""
@@ -203,7 +221,13 @@ class CounterManager:
         value = self.registers.get_register_value(
             RegisterType.COUNT, self._get_internal_name(name)
         )
-        return value if value is not None else 0
+        return value
+
+    def get_counter_formatted_value(self, name: str) -> Optional[str]:
+        value = self.get_counter_value(name)
+        if value is None:
+            return None
+        return self.counters[name].get_styled_value(value)
 
     def get_counter_hierarchy(self, name: str) -> List[str]:
         """Get the full hierarchy path for a counter (parent -> child)"""
@@ -250,39 +274,38 @@ class CounterManager:
         if not name in self.counters:
             return ""
 
-        if hierarchy:
+        counter_info = self.counters[name]
+        has_parent = counter_info.parent is not None
+        if hierarchy and has_parent:
             # Get full hierarchy path from root to this counter
             hierarchy_path = self.get_counter_hierarchy(name)
             hierarchy_values: List[str] = []
 
             # Format each counter value in the hierarchy using its own style
-            for counter in hierarchy_path:
-                value = self.get_counter_value(counter)
+            for counter_str in hierarchy_path:
+                if counter_str == "part":
+                    continue
+                value = self.get_counter_value(counter_str)
                 if value is not None:
-                    if value == 0 and len(hierarchy_values) == 0:
+                    if (
+                        counter_str != name
+                        and value == 0
+                        and len(hierarchy_values) == 0
+                    ):
                         # skip 0 values if no existing values yet
                         continue
-                    counter_style = self.counters[counter].style
-                    format_type = CounterFormat.from_str(counter_style)
-                    formatted_value = format_type.format_value(value)
-                    hierarchy_values.append(formatted_value)
+                    hierarchy_values.append(
+                        self.get_counter_formatted_value(counter_str)
+                    )
 
-            if len(hierarchy_values) == 0:
-                # Fall back to single counter formatting
-                value = self.get_counter_value(name)
-                if value is None:
-                    return ""
-                format_type = CounterFormat.from_str(self.counters[name].style)
-                return format_type.format_value(value)
-
-            return ".".join(hierarchy_values)
+            out_str = ".".join(hierarchy_values)
+            if not counter_info.skip_parent_zeros and len(hierarchy_values) < 2:
+                out_str = "0." + out_str
+            return out_str
 
         # Single counter formatting
-        value = self.get_counter_value(name)
-        if value is None:
-            return ""
-        format_type = CounterFormat.from_str(self.counters[name].style)
-        return format_type.format_value(value)
+        value = self.get_counter_formatted_value(name)
+        return value or ""
 
     def debug_hierarchy(self) -> str:
         """Generate a debug representation of the counter hierarchy"""
@@ -306,7 +329,7 @@ class CounterManager:
         return "\n".join(lines)
 
     def counter_within(self, counter: str, parent: Optional[str] = None) -> None:
-        r"""Make counter subordinate to parent or remove parent relationship (like \counterwithin and \counterwithout)
+        r"""Make counter subordinate to parent or remove parent relationship (like \counterwithin, \numberwithin and \counterwithout)
 
         Args:
             counter: The counter to modify
@@ -320,11 +343,12 @@ class CounterManager:
             self.logger.warning(f"Parent counter '{parent}' does not exist")
             return
 
-        counter_node = self.counters[counter]
+        counter_info = self.counters[counter]
         parent_node = self.counters[parent] if parent is not None else None
 
         # The parent setter will handle all the relationship updates
-        counter_node.parent = parent_node
+        counter_info.parent = parent_node
+        counter_info.skip_parent_zeros = False
 
 
 # Demo of the hierarchy in action
