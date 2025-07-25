@@ -47,7 +47,6 @@ from latex2json.tokens.utils import (
     is_end_bracket_token,
     is_end_group_token,
     is_end_parenthesis_token,
-    is_newline_token,
     is_whitespace_token,
 )
 

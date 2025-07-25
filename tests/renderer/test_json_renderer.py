@@ -7,19 +7,19 @@ def test_json_output_of_math_n_text_equations():
     # first, check that equation adjacent commands and text are separated by a space at least
     text = r"""
     \def\one{one}
-    $\frac\one$ % -> \frac one
+    $\chi\one$ % -> \chi one
     """.strip()
     renderer = JSONRenderer()
     json = renderer.parse(text)
     assert len(json) == 1
     # notice that the command and text are separated by a space
-    assert json[0] == {"type": "equation", "content": r"\frac one"}
+    assert json[0] == {"type": "equation", "content": r"\chi one"}
 
     # test bigger case
     text = r"""
 \begin{equation}
 \begin{cases}
-\fbox{$\frac12$} \text{$...$} % for math, we preserve the original latex format and ensure $$ are properly enclosed within box/text commands in equations
+\fbox{$\alpha12$} \text{$...$} % for math, we preserve the original latex format and ensure $$ are properly enclosed within box/text commands in equations
 \end{cases}
 \end{equation}
 """.strip()
@@ -42,7 +42,7 @@ def test_json_output_of_math_n_text_equations():
                             [
                                 {
                                     "type": "text",
-                                    "content": r"\fbox{$\frac12$} \text{$...$}",
+                                    "content": r"\fbox{$\alpha12$} \text{$...$}",
                                 }
                             ]
                         ],

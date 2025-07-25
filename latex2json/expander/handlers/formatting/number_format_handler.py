@@ -139,6 +139,16 @@ def make_convert_to_str_handler(text: str) -> Handler:
     return convert_to_str_handler
 
 
+def frac_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    # put in braces to be certain
+    toks1 = expander.parse_immediate_token(skip_whitespace=True, expand=True)
+    toks2 = expander.parse_immediate_token(skip_whitespace=True, expand=True)
+    if toks1 is None or toks2 is None:
+        expander.logger.warning("frac: Missing argument")
+        return None
+    return [token, *wrap_tokens_in_braces(toks1), *wrap_tokens_in_braces(toks2)]
+
+
 def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("number", number_handler, is_global=True)
     expander.register_handler("num", num_handler, is_global=True)
@@ -146,6 +156,9 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("mathchoice", mathchoice_handler, is_global=True)
     expander.register_handler("qopname", qopname_handler, is_global=True)
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
+
+    # frac
+    expander.register_handler("frac", frac_handler, is_global=True)
 
     primitive_num_cmds = {
         "@ne": 1,
