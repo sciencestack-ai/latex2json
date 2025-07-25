@@ -2,6 +2,7 @@ import pytest
 from typing import List, Tuple
 
 from latex2json.nodes import TextNode, EquationNode, TabularNode
+from latex2json.nodes.ref_cite_url_nodes import CiteNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.latex_maps.boxes import KATEX_SUPPORTED_BOXES
@@ -78,3 +79,15 @@ def test_box_commands_in_mathmode():
     out = parser.parse(text)
     assert len(out) == 1 and isinstance(out[0], EquationNode)
     assert out[0].body == [TextNode("\\hbox{sometext$1+1$}")]
+
+    # but also check that \ref\cite etc tokens are not converted to raw str
+    # the box decorator is wrapped around all text + inner equations, but not around \ref\cite etc
+    text = r"$$\raisebox{1in}{abc \cite{ref1}$123$}$$"  # -> \textbf{abc }, citenode, \textbf{$123$},
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    eq = out[0]
+    assert len(eq.children) == 3
+
+    assert eq.children[0] == TextNode(r"\raisebox{1in}{abc }")
+    assert eq.children[1] == CiteNode("ref1")
+    assert eq.children[2] == TextNode(r"\raisebox{1in}{$123$}")

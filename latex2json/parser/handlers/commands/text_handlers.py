@@ -3,6 +3,7 @@ from typing import List, Optional
 from latex2json.expander.state import ProcessingMode
 from latex2json.nodes import ASTNode
 from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.math_nodes import EquationNode
 from latex2json.parser.parser_core import Handler, ParserCore
 from latex2json.latex_maps.fonts import (
     FontStyle,
@@ -22,6 +23,30 @@ def make_legacy_text_handler(style: FontStyle) -> Handler:
     return legacy_text_handler
 
 
+def merge_nodes_in_mathmode_text(
+    text_str_decorator: str, nodes: List[ASTNode]
+) -> List[ASTNode]:
+    r"""e.g. text_str_decorator = \textbf or \raisebox{1in} etc"""
+    out_nodes = []
+    str_buffer = ""
+    for node in nodes:
+        if isinstance(node, TextNode):
+            if node.text.strip():
+                str_buffer += node.text
+            continue
+        elif isinstance(node, EquationNode):
+            str_buffer += node.detokenize()
+            continue
+
+        if str_buffer:
+            out_nodes.append(TextNode(text_str_decorator + "{%s}" % (str_buffer)))
+            str_buffer = ""
+        out_nodes.append(node)
+    if str_buffer:
+        out_nodes.append(TextNode(text_str_decorator + "{%s}" % (str_buffer)))
+    return out_nodes
+
+
 def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
     def text_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         parser.skip_whitespace()
@@ -34,10 +59,7 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
                 return []
 
             cmd_name = token.to_str()  # e.g. '\textbf'
-            # if mathmode, we wrap it as one single TextNode containing the raw string
-            nodes_str = parser.convert_nodes_to_str(nodes)
-            out_str = cmd_name + "{%s}" % (nodes_str)
-            return [TextNode(out_str)]
+            return merge_nodes_in_mathmode_text(cmd_name, nodes)
         else:
             nodes = parser.parse_brace_as_nodes()
             if not nodes:
@@ -67,9 +89,7 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
 
         cmd_name = token.to_str()  # '\textcolor'
         # if mathmode, we wrap it as one single TextNode containing the raw string
-        nodes_str = parser.convert_nodes_to_str(nodes)
-        out_str = cmd_name + "{%s}{%s}" % (color_name, nodes_str)
-        return [TextNode(out_str)]
+        return merge_nodes_in_mathmode_text(cmd_name + "{%s}" % (color_name), nodes)
     else:
         nodes = parser.parse_brace_as_nodes()
         if not nodes:
@@ -160,7 +180,11 @@ if __name__ == "__main__":
 
     text = r"""
 \begin{equation}
-$1+1$ \textbf{aa $1+1$ bb} 2+2
+$1+1$ \textbf{aa bb $1+1$ \ref{eq:xx} bold} 2+2
+\end{equation}
+
+\begin{equation}
+1+1 \ref{eq:xx} bold
 \end{equation}
 """
 

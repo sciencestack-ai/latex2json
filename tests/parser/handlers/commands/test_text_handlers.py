@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import pytest
 
-from latex2json.nodes import ASTNode, TextNode, EquationNode
+from latex2json.nodes import ASTNode, TextNode, EquationNode, CiteNode
 from latex2json.parser.parser import Parser
 
 
@@ -161,3 +161,15 @@ def test_textmode_inside_math():
     # check that the text part is rolled out as raw str in equation node
     eq_str = out[0].equation_to_str()
     assert eq_str == r"1+1 \textbf{aa $1+1$ bb} 2+2"
+
+    # but also check that \ref\cite etc tokens are not converted to raw str
+    # the text decorator is wrapped around all text + inner equations, but not around \ref\cite etc
+    text = r"$$\textbf{abc \cite{ref1}$123$}$$"  # -> \textbf{abc }, citenode, \textbf{$123$},
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    eq = out[0]
+    assert len(eq.children) == 3
+
+    assert eq.children[0] == TextNode(r"\textbf{abc }")
+    assert eq.children[1] == CiteNode("ref1")
+    assert eq.children[2] == TextNode(r"\textbf{$123$}")
