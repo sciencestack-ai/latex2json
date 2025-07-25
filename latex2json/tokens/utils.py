@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Callable, List
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.types import (
@@ -242,9 +243,94 @@ def segment_tokens_by_begin_end(tokens: List[Token]) -> List[List[Token]]:
     return groups
 
 
+@dataclass
+class Segment:
+    tokens: List[Token]
+    is_group: bool
+
+
+def segment_tokens_by_begin_end_and_braces(tokens: List[Token]) -> List[Segment]:
+    """Segment tokens into groups based on begin and end tokens, and braces."""
+
+    # first, split into begin_end
+    groups: List[Segment] = []
+    current_group: List[Token] = []
+    brace_depth = 0
+
+    def push_to_stack():
+        nonlocal current_group
+        if current_group:
+            first_tok = current_group[0]
+            is_group = (
+                is_begin_group_token(first_tok)
+                or first_tok.type == TokenType.ENVIRONMENT_START
+            )
+            groups.append(Segment(current_group, is_group=is_group))
+        current_group = []
+
+    # first split begin end
+    begin_end_groups = segment_tokens_by_begin_end(tokens)
+    for segment in begin_end_groups:
+        if not segment:
+            continue
+        first_tok = segment[0]
+        # if begin segment
+        if first_tok.type == TokenType.ENVIRONMENT_START:
+            if brace_depth == 0:
+                push_to_stack()  # push existing buffer to stack
+                current_group.extend(segment)
+                push_to_stack()  # push begin/end segment to stack
+            else:
+                current_group.extend(segment)
+            continue
+
+        # non begin/end segments
+        for token in segment:
+            # check for braces
+            if is_begin_group_token(token):
+                if brace_depth == 0:
+                    push_to_stack()
+                brace_depth += 1
+            elif is_end_group_token(token):
+                brace_depth -= 1
+                if brace_depth == 0:
+                    current_group.append(token)
+                    push_to_stack()
+                    continue
+            current_group.append(token)
+
+    push_to_stack()
+
+    return groups
+
+
 def convert_str_to_default_token_catcodes(text: str) -> List[Token]:
     out = []
     for c in text:
         catcode = DEFAULT_CATCODES[ord(c)]
         out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
     return out
+
+
+if __name__ == "__main__":
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    text = r"""
+    \begin{xxx}
+    \end{xxx} 
+    sometext
+    {aaa \\ bbb} 
+    ccc
+    {
+    BRACE
+    \begin{yyy}
+    \end{yyy}
+    }
+    """.strip()
+    tokens = expander.expand(text)
+    groups = segment_tokens_by_begin_end_and_braces(tokens)
+    for i, group in enumerate(groups):
+        print(f"GROUP {i}: {group.is_group}")
+        tok_str = expander.convert_tokens_to_str(group.tokens).strip()
+        print(tok_str)

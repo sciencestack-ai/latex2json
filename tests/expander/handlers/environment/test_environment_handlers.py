@@ -427,3 +427,26 @@ def test_subequations_and_align():
     ]
     out = expander.expand(text)
     assert_env_sequence(out, expected_env_token_sequence)
+
+    # but also check that \\ inside {...} are not split prematurely
+    text = r"""
+\begin{align}
+\substack{ 11 \\ 22 } % \\ inside {...} is preserved, not split!
+\end{align}
+""".strip()
+    out = expander.expand(text)
+
+    expected_env_token_sequence = [
+        # \begin{align}
+        EnvironmentStartToken("align", env_type=EnvironmentType.EQUATION_ALIGN),
+        EnvironmentStartToken(
+            "equation", env_type=EnvironmentType.EQUATION, numbering="10"
+        ),
+        Token(TokenType.ENVIRONMENT_END, "equation"),
+        Token(TokenType.ENVIRONMENT_END, "align"),
+    ]
+    assert_env_sequence(out, expected_env_token_sequence)
+
+    # check that \\ inside {...} are not split prematurely
+    out_str = expander.convert_tokens_to_str(out)
+    assert r"\substack{ 11 \\ 22 }" in out_str

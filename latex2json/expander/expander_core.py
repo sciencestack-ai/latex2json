@@ -13,7 +13,8 @@ from latex2json.tokens.types import (
 )
 from latex2json.tokens.utils import (
     is_mathshift_token,
-    segment_tokens_by_begin_end,
+    is_newline_token,
+    segment_tokens_by_begin_end_and_braces,
     strip_whitespace_tokens,
     substitute_token_args,
 )
@@ -1333,22 +1334,17 @@ class ExpanderCore:
                     )
                     # first, segment into \begin...\end blocks.
                     # This is so that \\ nested inside inner \begin e.g. \begin{matrix} ... \\ ... \end{matrix} inside \begin{align} are not prematurely split
-                    segments = segment_tokens_by_begin_end(body_block)
+                    segments = segment_tokens_by_begin_end_and_braces(body_block)
                     split_body_block: List[List[Token]] = [[]]
-
-                    def is_newline_token(tok: Token) -> bool:
-                        return (
-                            tok.value == "\\" and tok.type == TokenType.CONTROL_SEQUENCE
-                        )
 
                     # split into \\ or \begin...\end
                     for segment in segments:
-                        if not segment:
+                        if not segment.tokens:
                             continue
-                        if segment[0].type == TokenType.ENVIRONMENT_START:
-                            split_body_block[-1].extend(segment)
+                        if segment.is_group:
+                            split_body_block[-1].extend(segment.tokens)
                         else:
-                            for token in segment:
+                            for token in segment.tokens:
                                 if is_newline_token(token):
                                     split_body_block.append([])
                                 else:

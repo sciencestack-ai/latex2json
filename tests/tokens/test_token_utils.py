@@ -1,6 +1,9 @@
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.utils import substitute_token_args
+from latex2json.tokens.utils import (
+    substitute_token_args,
+    segment_tokens_by_begin_end_and_braces,
+)
 from tests.test_utils import assert_token_sequence
 
 
@@ -95,3 +98,37 @@ def test_substitute_token_args():
         assert_token_sequence(substituted, expected)
 
     test2()
+
+
+def test_segment_tokens_by_begin_end_and_braces():
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    text = r"""
+    \begin{xxx}\end{xxx} 
+    sometext
+    {aaa \\ bbb} 
+    ccc
+    {
+    BRACE
+    \begin{yyy}\end{yyy}
+    }
+    """.strip()
+    tokens = expander.expand(text)
+    groups = segment_tokens_by_begin_end_and_braces(tokens)
+
+    expected_pairs = [
+        (r"""\begin{xxx}\end{xxx}""", True),
+        (r"""sometext""", False),
+        (r"""{aaa\\bbb}""", True),
+        (r"""ccc""", False),
+        (r"""{BRACE\begin{yyy}\end{yyy}}""", True),
+    ]
+
+    assert len(groups) == len(expected_pairs)
+
+    for i, (expected_str, expected_is_group) in enumerate(expected_pairs):
+        tok_str = expander.convert_tokens_to_str(groups[i].tokens).strip()
+        tok_str = tok_str.replace("\n", " ").replace(" ", "")
+        assert tok_str == expected_str
+        assert groups[i].is_group == expected_is_group
