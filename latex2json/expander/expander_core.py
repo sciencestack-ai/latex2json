@@ -340,10 +340,16 @@ class ExpanderCore:
         self.set_text(text)
         return self.process()
 
+    @staticmethod
+    def _generate_stop_token():
+        # this control sequence is invalid in latex, so we can use it as an arbitrary stop token
+        return Token(TokenType.CONTROL_SEQUENCE, r"\@#STOP", catcode=Catcode.OTHER)
+
     def expand_text(self, text: str) -> List[Token]:
-        STOP_TOKEN = Token(TokenType.CHARACTER, r"\xx", catcode=Catcode.OTHER)
+        STOP_TOKEN = self._generate_stop_token()
         self.push_tokens([STOP_TOKEN])
         self.push_text(text)
+        # use `tok is STOP_TOKEN` to check for identity
         out = self.process(
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
         )
@@ -352,8 +358,9 @@ class ExpanderCore:
     def expand_tokens(self, tokens: List[Token]) -> List[Token]:
         if not tokens:
             return []
-        STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=Catcode.OTHER)
+        STOP_TOKEN = self._generate_stop_token()
         self.push_tokens(tokens + [STOP_TOKEN])
+        # use `tok is STOP_TOKEN` to check for identity
         out = self.process(
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
         )

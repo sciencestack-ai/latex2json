@@ -227,6 +227,9 @@ class ParserCore:
         tokens = self.expander.expand_text(text)
         return self.process_tokens(tokens)
 
+    def _generate_stop_token(self):
+        return self.expander._generate_stop_token()
+
     def process_tokens(
         self, tokens: List[Token], scoped=False, postprocess=False
     ) -> List[ASTNode]:
@@ -237,7 +240,7 @@ class ParserCore:
         if scoped:
             self.push_scope()
 
-        STOP_TOKEN = Token(TokenType.CHARACTER, r"\0", catcode=None)
+        STOP_TOKEN = self._generate_stop_token()
 
         # number the token positions for logging purposes
         for i, tok in enumerate(tokens):
@@ -592,6 +595,10 @@ class ParserCore:
         2. handling special characters e.g. ~, \& to text
         """
         final_nodes: List[ASTNode] = []
+
+        STOP_TOKEN = self._generate_stop_token()
+        stop_token_value = STOP_TOKEN.value
+
         for node in nodes:
             if not node.should_postprocess:
                 final_nodes.append(node)
@@ -606,6 +613,8 @@ class ParserCore:
                     replacement_node = TextNode("\n")
                 elif name == "\\":
                     replacement_node = TextNode("\n")
+                elif name == stop_token_value:  # clean up existing stop command markers
+                    replacement_node = TextNode("")
                 elif (
                     len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
                 ):
