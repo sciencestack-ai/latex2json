@@ -28,13 +28,15 @@ class IfMacro(Macro):
         # Evaluate the condition
         is_true, error = self.evaluate_condition(expander, token)
 
-        if is_true is None:
+        invalid = is_true is None
+        if invalid:
             if error:
                 expander.logger.warning(f"Warning: {error}")
-            return None
+            # don't return, continue to parse if-else blocks
+            # return None
 
         blocks = parse_if_else_block_tokens(expander)
-        if blocks is None:
+        if blocks is None or invalid:
             return []
         expanded = expander.expand_tokens(blocks[0] if is_true else blocks[1])
         # expander.push_tokens(block)
