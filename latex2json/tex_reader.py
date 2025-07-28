@@ -61,12 +61,14 @@ def merge_inline_tokens_func(tokens: List[Dict]) -> List[Dict]:
             return str(token)
         if token["type"] == "text":
             return token["content"]
-        elif token["type"] == "equation":
+        elif token["type"] == "equation" and token.get("display") != "block":
             return f"${token['content']}$"
         elif token["type"] == "ref":
-            return f"\\ref{{{token['content']}}}"
+            content_str = ",".join(token["content"])
+            return f"\\ref{{{content_str}}}"
         elif token["type"] == "citation":
-            return f"\\cite{{{token['content']}}}"
+            content_str = ",".join(token["content"])
+            return f"\\cite{{{content_str}}}"
         return str(token.get("content", ""))
 
     def process_token(token: Dict) -> Dict:

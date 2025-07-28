@@ -48,6 +48,11 @@ def documentclass_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def endinput_handler(expander: ExpanderCore, token: Token):
+    expander.stream.pop_source()
+    return []
+
+
 def register_package_handlers(expander: ExpanderCore):
     # packages
     for cmd_name in ["usepackage", "RequirePackage"]:
@@ -56,7 +61,7 @@ def register_package_handlers(expander: ExpanderCore):
             usepackage_handler,
             is_global=True,
         )
-    expander.register_handler("endinput", lambda expander, token: [], is_global=True)
+    expander.register_handler("endinput", endinput_handler, is_global=True)
 
     # class
     expander.register_handler("documentclass", documentclass_handler, is_global=True)
