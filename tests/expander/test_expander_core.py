@@ -342,6 +342,27 @@ def test_parse_int_float_arguments():
     assert expander.parse_float() == 0.3
     assert expander.eof()
 
+    # test hex + octal + ascii + sign
+    expander.set_text(r"'101")
+    assert expander.parse_integer() == 65
+    assert expander.eof()
+
+    expander.set_text(r'"41')
+    assert expander.parse_integer() == 65
+    assert expander.eof()
+
+    expander.set_text(r'-"A')
+    assert expander.parse_integer() == -10
+    assert expander.eof()
+
+    expander.set_text('"3C')
+    assert expander.parse_integer() == 60
+    assert expander.eof()
+
+    expander.set_text('"C0FFEE')
+    assert expander.parse_integer() == 12648430
+    assert expander.eof()
+
 
 def test_parse_dimensions():
     expander = ExpanderCore()

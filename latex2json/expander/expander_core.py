@@ -88,10 +88,11 @@ def make_the_counter_handler(counter_name: str, formatted=True):
 
 
 def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
-    if tok.value.isdigit():
+    if tok.value.isdigit() or tok.value in "ABCDEF":
         return True
-    has_digit = any(c.isdigit() for c in cur_str)
-    if not has_digit and tok.value in ["+", "-", " "]:
+    has_digit = any(c.isdigit() or c in "ABCDEF" for c in cur_str)
+    # allows for hex + octal + ascii + sign
+    if not has_digit and tok.value in ["+", "-", " ", "'", '"', "`"]:
         return True
     return False
 

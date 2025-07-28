@@ -1,6 +1,9 @@
 from latex2json.expander.expander_core import ExpanderCore
 
 from latex2json.expander.handlers.primitives.begin_end import register_begin_end
+from latex2json.expander.handlers.primitives.chardef_handlers import (
+    register_chardef_handlers,
+)
 from latex2json.expander.handlers.primitives.csname import register_csname_handlers
 from latex2json.expander.handlers.primitives.declarations import register_declarations
 from latex2json.expander.handlers.primitives.expand_handlers import (
@@ -25,3 +28,4 @@ def register_primitives(expander: ExpanderCore):
     register_expand_handlers(expander)
     register_csname_handlers(expander)
     register_exec_handlers(expander)
+    register_chardef_handlers(expander)
