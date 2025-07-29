@@ -10,7 +10,6 @@ from latex2json.nodes import (
     EnvironmentNode,
     TextNode,
     EquationNode,
-    EquationArrayNode,
     DisplayType,
     SectionNode,
     CommandNode,

@@ -1,4 +1,5 @@
 import pytest
+from latex2json.nodes.node_types import NodeTypes
 from latex2json.renderer.json.json_renderer import JSONRenderer
 
 
@@ -13,13 +14,13 @@ def test_json_output_of_math_n_text_equations():
     json = renderer.parse(text)
     assert len(json) == 1
     # notice that the command and text are separated by a space
-    assert json[0] == {"type": "equation", "content": r"\chi one"}
+    assert json[0] == {"type": NodeTypes.EQUATION, "content": r"\chi one"}
 
     # test bigger case
     text = r"""
 \begin{equation}
 \begin{cases}
-\fbox{$\alpha12$} \text{$...$} % for math, we preserve the original latex format and ensure $$ are properly enclosed within box/text commands in equations
+\ref{eq:1}\fbox{$\alpha12$} \text{$...$} % for math, we preserve the original latex format and ensure $$ are properly enclosed within box/text commands in equations
 \end{cases}
 \end{equation}
 """.strip()
@@ -27,23 +28,27 @@ def test_json_output_of_math_n_text_equations():
     json = renderer.parse(text)
     assert len(json) == 1
     assert json[0] == {
-        "type": "equation",
+        "type": NodeTypes.EQUATION,
         "display": "block",
         "name": "equation",
         "numbering": "1",
         "content": [
             {
-                "type": "equation_array",
+                "type": NodeTypes.EQUATION_ARRAY,
                 "name": "cases",
                 "content": [
                     {
-                        "type": "row",
+                        "type": NodeTypes.ROW,
                         "content": [
                             [
                                 {
-                                    "type": "text",
+                                    "type": NodeTypes.REF,
+                                    "content": ["eq:1"],
+                                },
+                                {
+                                    "type": NodeTypes.TEXT,
                                     "content": r"\fbox{$\alpha12$} \text{$...$}",
-                                }
+                                },
                             ]
                         ],
                     }
@@ -65,5 +70,5 @@ def test_json_output_of_captions():
     renderer = JSONRenderer()
     json = renderer.parse(text)
     assert len(json) == 1
-    assert json[0]["type"] == "figure"
+    assert json[0]["type"] == NodeTypes.FIGURE
     assert json[0]["numbering"] == "1"

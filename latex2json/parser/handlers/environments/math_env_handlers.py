@@ -45,8 +45,17 @@ def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
             row_nodes.append(r_node)
             row_numberings.append(node.numbering)
 
+    args_str = None
+    if token.args:
+        args_str = []
+        for arg in token.args:
+            args_str.append(parser.convert_tokens_to_str(arg))
+
     eq_array_node = EquationArrayNode(
-        env.env_name, row_nodes=row_nodes, row_numberings=row_numberings
+        env.env_name,
+        row_nodes=row_nodes,
+        row_numberings=row_numberings,
+        args_str=args_str,
     )
     eq_array_node.labels = env.labels
     return [eq_array_node]
@@ -74,7 +83,15 @@ def matrix_or_array_handler(parser: ParserCore, token: EnvironmentStartToken):
             column_nodes.append(CellNode(column))
         row_nodes.append(RowNode(column_nodes))
 
-    eq_array_node = EquationArrayNode(env.env_name, row_nodes=row_nodes)
+    args_str = None
+    if token.args:
+        args_str = []
+        for arg in token.args:
+            args_str.append(parser.convert_tokens_to_str(arg))
+
+    eq_array_node = EquationArrayNode(
+        env.env_name, row_nodes=row_nodes, args_str=args_str
+    )
     eq_array_node.labels = env.labels
     return [eq_array_node]
 

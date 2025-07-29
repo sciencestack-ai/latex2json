@@ -100,14 +100,14 @@ class EnvironmentStartToken(Token):
         numbering: Optional[str] = None,
         env_type: EnvironmentType = EnvironmentType.DEFAULT,
         display_name: Optional[str] = None,
-        # args: Optional[List[List[Token]]] = None,
+        args: Optional[List[List[Token]]] = None,
     ):
         super().__init__(TokenType.ENVIRONMENT_START, value=name)
         self.name = name
         self.numbering = numbering
         self.env_type = env_type
         self.display_name = display_name if display_name else name
-        # self.args = args
+        self.args = args
 
     def copy(self) -> "EnvironmentStartToken":
         return EnvironmentStartToken(
@@ -115,7 +115,7 @@ class EnvironmentStartToken(Token):
             numbering=self.numbering,
             env_type=self.env_type,
             display_name=self.display_name,
-            # args=self.args.copy() if self.args else None,
+            args=self.args.copy() if self.args else None,
         )
 
     def to_str(self):
@@ -127,8 +127,8 @@ class EnvironmentStartToken(Token):
             out += f" [Numbering: {self.numbering}]"
         if self.env_type != EnvironmentType.DEFAULT:
             out += f" [{self.env_type.name}]"
-        # if self.args:
-        #     out += f" [Args: {self.args}]"
+        if self.args:
+            out += f" [Args: {self.args}]"
         return out
 
     def __eq__(self, other: Token) -> bool:

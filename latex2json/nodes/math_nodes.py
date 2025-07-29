@@ -151,8 +151,14 @@ class EquationNode(ASTNode):
                 node = TextNode(cmd_str)
             elif isinstance(child, EquationNode):
                 eq_str = child.equation_to_str()
-                node = TextNode(eq_str)
                 # if an inner equation node, convert the equation str (without $$) to text node
+                node = TextNode(eq_str)
+            elif isinstance(child, EquationArrayNode):
+                # if an inner equation array node that is not numbered
+                # and is all text and commands, i.e. no special nodes like \ref \cite \envs
+                # convert the equation array strå to text node
+                if child.is_all_text_and_commands() and not child.has_numbering():
+                    node = TextNode(child.detokenize())
             node.add_styles(styles)
             nodes.append(node)
             if should_add_space_after(i):
@@ -171,10 +177,12 @@ class EquationArrayNode(ASTNode):
         env_name: str,  # can be "align", "array", "matrix", etc
         row_nodes: List[RowNode] = [],
         row_numberings: Optional[List[Optional[str]]] = None,
+        args_str: Optional[List[str]] = None,  # e.g. ["l"] if \begin{array}{l}
     ):
         super().__init__()
         self.env_name = env_name
         self.row_numberings = row_numberings
+        self.args_str = args_str
         self.set_children(row_nodes)
 
         # don't postprocess equation array nodes
@@ -183,6 +191,19 @@ class EquationArrayNode(ASTNode):
     @property
     def row_nodes(self) -> List[RowNode]:
         return self.children
+
+    def has_numbering(self) -> bool:
+        return self.row_numberings is not None and any(
+            numbering is not None for numbering in self.row_numberings
+        )
+
+    def is_all_text_and_commands(self) -> bool:
+        for row in self.row_nodes:
+            for cell in row.cells:
+                for child in cell.children:
+                    if not isinstance(child, (TextNode, CommandNode)):
+                        return False
+        return True
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, EquationArrayNode):
@@ -195,10 +216,12 @@ class EquationArrayNode(ASTNode):
 
     def detokenize(self, add_numbering: bool = False) -> str:
         """Convert the equation array node back to LaTeX source code."""
-        if not self.row_nodes:
-            return f"\\begin{{{self.env_name}}}\n\\end{{{self.env_name}}}"
+        args_str = ""
+        if self.args_str:
+            for i, arg in enumerate(self.args_str):
+                args_str += "{" + arg + "}"
 
-        out = f"\\begin{{{self.env_name}}}\n"
+        out = f"\\begin{{{self.env_name}}}{args_str}\n"
 
         for i, row in enumerate(self.row_nodes):
             out += row.detokenize()
@@ -222,6 +245,8 @@ class EquationArrayNode(ASTNode):
         result = super().to_json()
         result["type"] = NodeTypes.EQUATION_ARRAY
         result["name"] = self.env_name
+        if self.args_str:
+            result["args"] = self.args_str.copy()
 
         content = []
         for i, row in enumerate(self.row_nodes):

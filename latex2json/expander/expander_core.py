@@ -1284,7 +1284,7 @@ class ExpanderCore:
                 display_name=env_def.display_name,
                 numbering=numbering,
                 env_type=env_def.env_type,
-                # args=args,
+                args=args,
             )
             begin_token.position = token.position
 
