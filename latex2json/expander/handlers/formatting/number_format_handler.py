@@ -166,6 +166,9 @@ def register_number_format_handlers(expander: ExpanderCore):
         "tw@": 2,
         "thr@@": 3,
         "col@number": 1,  # default to 1
+        "@m": 1000,
+        "@MM": 20000,
+        "@cclv": 255,
         "active": 13,
         "letter": 11,
         "other": 12,

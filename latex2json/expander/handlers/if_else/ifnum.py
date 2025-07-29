@@ -30,7 +30,7 @@ def evaluate_ifnum(
         return None, "\\ifnum expects a relation operator"
     relation = relation_tok.value
     if relation not in ["<", "=", ">"]:
-        return None, "\\ifnum expects <, =, or > operator"
+        return None, f"\\ifnum expects <, =, or > operator, found {relation}"
     if num2 is None:
         return None, "\\ifnum expects a second number"
 
