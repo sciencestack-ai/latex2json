@@ -21,13 +21,11 @@ BUILTIN_DIMENSIONS = [
     "headheight",  # Height of page headers
     "headwidth",
     "headsep",  # Space between header and text
-    "footskip",  # Distance from baseline to footer
     "hoffset",  # Horizontal page offset
     "voffset",  # Vertical page offset
     "unitlength",  # Unit length for picture environment
     # Paragraph formatting
     "parindent",  # Paragraph indentation
-    "parskip",  # Space between paragraphs
     "baselineskip",  # Space between lines
     "lineskip",  # Minimum space between lines
     "normalbaselineskip",  # Normal baseline skip
@@ -35,10 +33,6 @@ BUILTIN_DIMENSIONS = [
     # List formatting
     "leftmargin",  # Left margin in lists
     "rightmargin",  # Right margin in lists
-    "itemsep",  # Space between list items
-    "parsep",  # Space between paragraphs in items
-    "topsep",  # Space before/after list
-    "partopsep",  # Extra space if list starts paragraph
     "listparindent",  # Paragraph indent within list items
     "itemindent",  # Additional indent for item bodies
     "labelsep",  # Space between label and item text
@@ -53,13 +47,6 @@ BUILTIN_DIMENSIONS = [
     # Math formatting
     "jot",  # Extra space in eqnarray
     "mathsurround",  # Space around inline math
-    "abovedisplayskip",  # Space above display math
-    "belowdisplayskip",  # Space below display math
-    "abovedisplayshortskip",  # Space above short display math
-    "belowdisplayshortskip",  # Space below short display math
-    "medmuskip",  # Medium math space (around binary operators)
-    "thickmuskip",  # Thick math space (around relations)
-    "thinmuskip",  # Thin math space (around punctuation)
     # Float formatting
     "floatsep",  # Space between floats
     "textfloatsep",  # Space between floats and text
@@ -86,21 +73,12 @@ BUILTIN_DIMENSIONS = [
     "hfuzz",  # Tolerance for overfull hboxes
     "vfuzz",  # Tolerance for overfull vboxes
     "overfullrule",  # Width of overfull rule marker
-    # Penalties and spacing
-    "smallskipamount",  # Amount of \smallskip
-    "medskipamount",  # Amount of \medskip
-    "bigskipamount",  # Amount of \bigskip
-    "offinterlineskip",
     # hsize/vsize
     "hsize",
     "vsize",
     # @
     "p@",
     "z@",
-    # temp
-    "@tempdima",
-    "@tempdimb",
-    "@tempdimc",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:

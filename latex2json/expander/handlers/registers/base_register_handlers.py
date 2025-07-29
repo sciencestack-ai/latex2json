@@ -1,6 +1,7 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
 from latex2json.latex_maps.counts import BUILTIN_COUNTS
+from latex2json.latex_maps.skips import BUILTIN_SKIPS
 from latex2json.registers import RegisterType
 from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
 from latex2json.tokens import Token
@@ -185,6 +186,13 @@ def register_base_register_macros(expander: ExpanderCore):
         expander.register_macro(
             builtin_dimen,
             make_register_macro(RegisterType.DIMEN, builtin_dimen, is_id_integer=False),
+            is_global=True,
+        )
+
+    for builtin_skip in BUILTIN_SKIPS:
+        expander.register_macro(
+            builtin_skip,
+            make_register_macro(RegisterType.SKIP, builtin_skip, is_id_integer=False),
             is_global=True,
         )
 
