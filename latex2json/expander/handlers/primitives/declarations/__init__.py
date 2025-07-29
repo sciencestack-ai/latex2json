@@ -15,6 +15,9 @@ from latex2json.expander.handlers.primitives.declarations.newcommand import (
 from latex2json.expander.handlers.primitives.declarations.def_handler import (
     register_def,
 )
+from latex2json.expander.handlers.primitives.declarations.letltxmacro_handler import (
+    register_letltxmacro,
+)
 
 
 def register_declarations(expander: ExpanderCore):
@@ -24,3 +27,4 @@ def register_declarations(expander: ExpanderCore):
     register_newcommand(expander)
     register_declare_commands(expander)
     register_namedef(expander)
+    register_letltxmacro(expander)
