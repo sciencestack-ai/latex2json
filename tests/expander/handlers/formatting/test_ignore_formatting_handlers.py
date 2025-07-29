@@ -9,9 +9,6 @@ def test_ignore_formatting_handlers():
     \subjclass[xx]{Secondary 01A80}
     \FloatBarrier
     \stackMath
-    \penalty1000
-    \clubpenalty=0 
-    \widowpenalty=0
     \kern.4ex
 
     \newmdenv[
@@ -53,10 +50,6 @@ def test_ignore_formatting_handlers():
     \renewbibmacro{in:}{}
     \stackMath
 
-    \penalty1000
-    \clubpenalty=0 
-    \widowpenalty=0
-    \interfootnotelinepenalty=1000
     \subjclass{Primary 01A80}
     \subjclass[xx]{Secondary 01A80}
 

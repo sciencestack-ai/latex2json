@@ -89,12 +89,6 @@ formatting_patterns = {
     "setlist": "[{",
     # toolset/palette
     "mathtoolsset": "[",
-    # penalty
-    "penalty": "=f",
-    "clubpenalty": "=f",
-    "widowpenalty": "=f",
-    "discretionarypenalty": "=f",
-    "interfootnotelinepenalty": "=f",
     # \kern, which is technically spacing but more like a length between characters. so ignore
     "kern": "d",
     # setup

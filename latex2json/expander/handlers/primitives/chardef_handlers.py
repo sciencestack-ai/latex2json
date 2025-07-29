@@ -1,11 +1,7 @@
 from typing import Callable, List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.expander.macro_registry import Macro, MacroType
-from latex2json.tokens.catcodes import CATCODE_MEANINGS, Catcode
 from latex2json.tokens.types import Token, TokenType
-
-from latex2json.expander.handlers.primitives.catcode import CatcodeHandler
 
 
 def _parse_cmd_name_and_int_value(expander: ExpanderCore) -> Optional[Tuple[str, int]]:

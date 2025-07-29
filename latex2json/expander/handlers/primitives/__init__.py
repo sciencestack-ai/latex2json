@@ -11,7 +11,9 @@ from latex2json.expander.handlers.primitives.expand_handlers import (
 )
 from latex2json.expander.handlers.primitives.makeat import register_makeat
 from latex2json.expander.handlers.primitives.bgroup import register_bgroup
-from latex2json.expander.handlers.primitives.catcode import register_catcode
+from latex2json.expander.handlers.primitives.catcode_sfcode_handlers import (
+    register_catcode_sfcode_handlers,
+)
 from latex2json.expander.handlers.primitives.debug_handlers import (
     register_debug_handlers,
 )
@@ -22,7 +24,7 @@ def register_primitives(expander: ExpanderCore):
     register_declarations(expander)
     register_makeat(expander)
     register_bgroup(expander)
-    register_catcode(expander)
+    register_catcode_sfcode_handlers(expander)
     register_begin_end(expander)
     register_debug_handlers(expander)
     register_expand_handlers(expander)

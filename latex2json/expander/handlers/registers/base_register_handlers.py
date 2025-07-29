@@ -1,5 +1,6 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
+from latex2json.latex_maps.counts import BUILTIN_COUNTS
 from latex2json.registers import RegisterType
 from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
 from latex2json.tokens import Token
@@ -171,7 +172,15 @@ def register_base_register_macros(expander: ExpanderCore):
             is_global=True,
         )
 
-    # textwidth/textheight/parindent/parskip etc
+    # builtin counts e.g. penalty
+    for builtin_count in BUILTIN_COUNTS:
+        expander.register_macro(
+            builtin_count,
+            make_register_macro(RegisterType.COUNT, builtin_count, is_id_integer=False),
+            is_global=True,
+        )
+
+    # builtin dims e.g. textwidth/textheight/parindent/parskip etc
     for builtin_dimen in BUILTIN_DIMENSIONS:
         expander.register_macro(
             builtin_dimen,

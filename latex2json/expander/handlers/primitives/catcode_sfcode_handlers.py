@@ -4,25 +4,23 @@ from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import BACK_TICK_TOKEN, Token, TokenType
 
 
-def parse_char_for_catcode(expander: ExpanderCore) -> Optional[str]:
+def parse_char_value(expander: ExpanderCore) -> Optional[str]:
+    expander.skip_whitespace()
     if expander.peek() == BACK_TICK_TOKEN:
         expander.consume()
     else:
         return None
 
+    expander.skip_whitespace()
     # check for controlsequence
-    tok = expander.peek()
-    cmd_name: str | None = None
-    if tok.type == TokenType.CONTROL_SEQUENCE:
-        cmd_name = tok.value
-        expander.consume()
-    else:
+    tok = expander.consume()
+    if tok is None:
         expander.logger.warning(
-            f"WARNING: \\catcode expected control sequence, but found {tok.value}"
+            f"WARNING: \\catcode expected control sequence, but found None"
         )
         return None
+    char = tok.value
 
-    char = cmd_name
     if len(char) > 1:
         char = char[0]
         expander.logger.warning(
@@ -35,7 +33,7 @@ def parse_char_for_catcode(expander: ExpanderCore) -> Optional[str]:
 class CatcodeHandler:
     @staticmethod
     def setter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        char = parse_char_for_catcode(expander)
+        char = parse_char_value(expander)
         if char is None:
             return None
 
@@ -59,7 +57,7 @@ class CatcodeHandler:
 
     @staticmethod
     def getter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-        char = parse_char_for_catcode(expander)
+        char = parse_char_value(expander)
         if char is None:
             return None
 
@@ -68,8 +66,36 @@ class CatcodeHandler:
         return expander.convert_str_to_tokens(catcode_str)
 
 
-def register_catcode(expander: ExpanderCore):
+class SFCodeHandler:
+    @staticmethod
+    def setter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        char = parse_char_value(expander)
+        if char is None:
+            return None
+
+        if not expander.parse_equals():
+            return []
+
+        expander.skip_whitespace()
+        value = expander.parse_integer()
+        # ignore?
+
+        return []
+
+    @staticmethod
+    def getter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        char = parse_char_value(expander)
+        if char is None:
+            return None
+
+        catcode = expander.get_catcode(ord(char))
+        catcode_str = str(catcode.value)
+        return expander.convert_str_to_tokens(catcode_str)
+
+
+def register_catcode_sfcode_handlers(expander: ExpanderCore):
     expander.register_handler("\\catcode", CatcodeHandler.setter, is_global=True)
+    expander.register_handler("\\sfcode", SFCodeHandler.setter, is_global=True)
 
 
 if __name__ == "__main__":
@@ -78,3 +104,5 @@ if __name__ == "__main__":
     expander = Expander()
     expander.expand(r"\catcode`\]=3")
     print(expander.state.get_catcode(ord("]")))
+    expander.expand(r"\catcode`F=3")
+    print(expander.state.get_catcode(ord("F")))

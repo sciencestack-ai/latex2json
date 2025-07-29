@@ -5,7 +5,6 @@ from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.macro_registry import Handler
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
-from latex2json.tokens.catcodes import DEFAULT_CATCODES
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, TokenType
 from latex2json.tokens.utils import (
     convert_str_to_default_token_catcodes,
@@ -167,6 +166,10 @@ def register_number_format_handlers(expander: ExpanderCore):
         "tw@": 2,
         "thr@@": 3,
         "col@number": 1,  # default to 1
+        "active": 13,
+        "letter": 11,
+        "other": 12,
+        "endlinechar": 5,
     }
     for cmd, v in primitive_num_cmds.items():
         expander.register_handler(

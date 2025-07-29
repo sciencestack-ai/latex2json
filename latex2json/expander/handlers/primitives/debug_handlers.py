@@ -4,7 +4,10 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 from latex2json.tokens.catcodes import CATCODE_MEANINGS, Catcode
 from latex2json.tokens.types import Token, TokenType
 
-from latex2json.expander.handlers.primitives.catcode import CatcodeHandler
+from latex2json.expander.handlers.primitives.catcode_sfcode_handlers import (
+    CatcodeHandler,
+    SFCodeHandler,
+)
 
 
 def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -23,6 +26,9 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     if name == "catcode":
         expander.consume()
         return CatcodeHandler.getter(expander, token)
+    elif name == "sfcode":
+        expander.consume()
+        return SFCodeHandler.getter(expander, token)
     else:
         # try to parse as a register
         parsed = expander.parse_register()

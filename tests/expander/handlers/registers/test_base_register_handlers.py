@@ -1,4 +1,5 @@
 from latex2json.expander.expander import Expander
+from latex2json.latex_maps.counts import BUILTIN_COUNTS
 from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
 from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
@@ -46,6 +47,14 @@ def test_builtin_dimens():
         # also test regular without = assignment e.g. \parindent 10pt
         out = expander.expand(f"\\{builtin_dimen} 10pt")
         assert out == []
+
+
+def test_builtin_counts():
+    expander = Expander()
+    for builtin_count in BUILTIN_COUNTS:
+        out = expander.expand(f"\\{builtin_count}=10")
+        assert out == []
+        assert expander.get_register_value(RegisterType.COUNT, builtin_count) == 10
 
 
 def test_new_register_macros():
