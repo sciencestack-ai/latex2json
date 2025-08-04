@@ -417,6 +417,12 @@ class ParserCore:
                 return env_node_onwards
         return self._env_node_stack.pop()
 
+    def sanitize_string(self, text: str) -> str:
+        # convert latex syntax to regular plain text
+        # e.g. \textbf{P} -> P
+        nodes = self.process_text(text)
+        return self.convert_nodes_to_str(nodes)
+
     def _generate_env_node(
         self, token: EnvironmentStartToken
     ) -> EnvironmentNode | EquationNode:
@@ -424,8 +430,7 @@ class ParserCore:
         numbering = token.numbering
         if numbering:
             # handle cases where numbering is a control sequence e.g. \textbf{P} for e.g. equation \tag{\textbf{P}}
-            numbering_nodes = self.process_text(numbering)
-            numbering = self.convert_nodes_to_str(numbering_nodes)
+            numbering = self.sanitize_string(numbering)
         if token.env_type in [
             EnvironmentType.EQUATION,
             EnvironmentType.EQUATION_ALIGN,

@@ -43,7 +43,10 @@ def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
             r_node = RowNode(column_nodes)
             r_node.labels = node.labels
             row_nodes.append(r_node)
-            row_numberings.append(node.numbering)
+            numbering = node.numbering
+            if numbering:
+                numbering = parser.sanitize_string(numbering)
+            row_numberings.append(numbering)
 
     args_str = None
     if token.args:
