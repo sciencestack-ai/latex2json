@@ -1,5 +1,6 @@
 from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
 from latex2json.nodes.environment_nodes import TheoremNode
+from latex2json.nodes.math_nodes import EquationNode
 from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode
@@ -124,6 +125,19 @@ def test_theorem_handler():
         numbering="1",
         display_name="Theorem",
     )
+
+
+def test_equation_tag_numbering_n_sanitization():
+    parser = Parser()
+    text = r"""
+    \begin{equation}
+    \label{eq:psi} \tag{\textbf{P}}
+    \end{equation}
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], EquationNode)
+    assert out[0].numbering == "P"
 
 
 def test_parse_file():

@@ -421,6 +421,11 @@ class ParserCore:
         self, token: EnvironmentStartToken
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
+        numbering = token.numbering
+        if numbering:
+            # handle cases where numbering is a control sequence e.g. \textbf{P} for e.g. equation \tag{\textbf{P}}
+            numbering_nodes = self.process_text(numbering)
+            numbering = self.convert_nodes_to_str(numbering_nodes)
         if token.env_type in [
             EnvironmentType.EQUATION,
             EnvironmentType.EQUATION_ALIGN,
@@ -428,7 +433,7 @@ class ParserCore:
             eq_type = DisplayType.BLOCK
             env_node = EquationNode(
                 math_nodes=[],
-                numbering=token.numbering,
+                numbering=numbering,
                 equation_type=eq_type,
                 env_name=env_name,
             )
@@ -439,12 +444,12 @@ class ParserCore:
             env_node = TheoremNode(
                 env_name,
                 title=title_nodes,
-                numbering=token.numbering,
+                numbering=numbering,
                 display_name=token.display_name,
             )
         else:
             env_node = EnvironmentNode(
-                env_name, numbering=token.numbering, display_name=token.display_name
+                env_name, numbering=numbering, display_name=token.display_name
             )
         return env_node
 
