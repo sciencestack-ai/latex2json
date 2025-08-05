@@ -156,9 +156,11 @@ class EquationNode(ASTNode):
             elif isinstance(child, EquationArrayNode):
                 # if an inner equation array node that is not numbered
                 # and is all text and commands, i.e. no special nodes like \ref \cite \envs
-                # convert the equation array strå to text node
+                # convert the equation array str to text node
                 if child.is_all_text_and_commands() and not child.has_numbering():
                     node = TextNode(child.detokenize())
+            else:
+                node = child.copy()
             node.add_styles(styles)
             nodes.append(node)
             if should_add_space_after(i):
