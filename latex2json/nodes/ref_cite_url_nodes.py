@@ -40,6 +40,9 @@ class BaseRefCiteNode(ASTNode):
             result["title"] = self.title
         return result
 
+    def copy(self):
+        return BaseRefCiteNode(self.prefix, self.references, self.title)
+
 
 class RefNode(BaseRefCiteNode):
     def __init__(self, references: str | List[str], title: Optional[str] = None):
@@ -90,6 +93,9 @@ class URLNode(ASTNode):
             result["title"] = self.title
         return result
 
+    def copy(self):
+        return URLNode(self.url, self.title)
+
 
 class FootnoteNode(ASTNode):
     def __init__(self, body: List[ASTNode], title: Optional[str] = None):
@@ -123,3 +129,6 @@ class FootnoteNode(ASTNode):
         if self.title:
             result["title"] = self.title
         return result
+
+    def copy(self):
+        return FootnoteNode(self.copy_nodes(self.children), self.title)

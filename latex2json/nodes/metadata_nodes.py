@@ -29,6 +29,9 @@ class MetadataNode(ASTNode):
             result["content"] = [child.to_json() for child in self.children]
         return result
 
+    def copy(self):
+        return MetadataNode(self.name, self.copy_nodes(self.children))
+
 
 class AuthorNode(MetadataNode):
     def __init__(self, body: List[ASTNode]):
@@ -61,3 +64,6 @@ class AuthorsNode(ASTNode):
             content.append(author_childs)
         result["content"] = content
         return result
+
+    def copy(self):
+        return AuthorsNode(self.copy_nodes(self.children))

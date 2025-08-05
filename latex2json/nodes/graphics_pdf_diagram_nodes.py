@@ -32,6 +32,9 @@ class IncludeGraphicsNode(ASTNode):
             result["page"] = self.page
         return result
 
+    def copy(self):
+        return IncludeGraphicsNode(self.path, self.page)
+
 
 class IncludePdfNode(ASTNode):
     def __init__(self, path: str, pages: Optional[str] = None):
@@ -64,6 +67,9 @@ class IncludePdfNode(ASTNode):
             result["pages"] = self.pages
         return result
 
+    def copy(self):
+        return IncludePdfNode(self.path, self.pages)
+
 
 class DiagramNode(ASTNode):
     def __init__(self, env_name: str, diagram: str):
@@ -88,3 +94,6 @@ class DiagramNode(ASTNode):
         result["name"] = self.env_name
         result["content"] = self.diagram
         return result
+
+    def copy(self):
+        return DiagramNode(self.env_name, self.diagram)

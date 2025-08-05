@@ -77,6 +77,13 @@ class CellNode(ASTNode):
             result["colspan"] = self.colspan
         return result
 
+    def copy(self):
+        return CellNode(
+            body=self.copy_nodes(self.children),
+            rowspan=self.rowspan,
+            colspan=self.colspan,
+        )
+
 
 class RowNode(ASTNode):
     def __init__(self, cells: List[CellNode] = []):
@@ -114,6 +121,9 @@ class RowNode(ASTNode):
         result["type"] = NodeTypes.ROW
         result["content"] = [cell.to_json() for cell in self.cells]
         return result
+
+    def copy(self):
+        return RowNode(self.copy_nodes(self.cells))
 
 
 class TabularNode(EnvironmentNode):
@@ -185,3 +195,8 @@ class TabularNode(EnvironmentNode):
             content.append(row_json)
         result["content"] = content
         return result
+
+    def copy(self):
+        return TabularNode(
+            row_nodes=self.copy_nodes(self.row_nodes),
+        )

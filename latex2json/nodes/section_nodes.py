@@ -73,3 +73,11 @@ class SectionNode(EnvironmentNode):
         if self.numbering:
             result["numbering"] = self.numbering
         return result
+
+    def copy(self):
+        return SectionNode(
+            name=self.name,
+            body=self.copy_nodes(self.body),
+            label=self.label,
+            numbering=self.numbering,
+        )

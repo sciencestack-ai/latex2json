@@ -172,6 +172,14 @@ class EquationNode(ASTNode):
 
         return result
 
+    def copy(self):
+        return EquationNode(
+            math_nodes=self.copy_nodes(self.children),
+            env_name=self.env_name,
+            equation_type=self.equation_type,
+            numbering=self.numbering,
+        )
+
 
 class EquationArrayNode(ASTNode):
     def __init__(
@@ -271,3 +279,11 @@ class EquationArrayNode(ASTNode):
             content.append(row_json)
         result["content"] = content
         return result
+
+    def copy(self):
+        return EquationArrayNode(
+            env_name=self.env_name,
+            row_nodes=self.copy_nodes(self.row_nodes),
+            row_numberings=self.row_numberings.copy() if self.row_numberings else None,
+            args_str=self.args_str,
+        )

@@ -57,3 +57,10 @@ class CaptionNode(ASTNode):
         if self.numbering:
             result["numbering"] = self.numbering
         return result
+
+    def copy(self):
+        return CaptionNode(
+            body=self.copy_nodes(self.body),
+            opt_arg=self.copy_nodes(self.opt_arg),
+            numbering=self.numbering,
+        )

@@ -48,6 +48,12 @@ class ListItemNode(ASTNode):
             result["title"] = [TextNode(self.label).to_json()]
         return result
 
+    def copy(self):
+        return ListItemNode(
+            body=self.copy_nodes(self.body),
+            label=self.label,
+        )
+
 
 class ListNode(ASTNode):
     def __init__(
@@ -107,3 +113,10 @@ class ListNode(ASTNode):
         if self.is_inline:
             result["inline"] = True
         return result
+
+    def copy(self):
+        return ListNode(
+            list_items=self.copy_nodes(self.list_items),
+            list_type=self.list_type,
+            is_inline=self.is_inline,
+        )

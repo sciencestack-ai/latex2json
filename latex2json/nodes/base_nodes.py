@@ -1,4 +1,4 @@
-from copy import deepcopy
+from abc import ABC, abstractmethod
 from enum import Enum
 from typing import List, Optional
 
@@ -10,7 +10,7 @@ class DisplayType(Enum):
     BLOCK = "block"
 
 
-class ASTNode:
+class ASTNode(ABC):
     def __init__(
         self,
         children: List["ASTNode"] = None,
@@ -82,8 +82,13 @@ class ASTNode:
 
         return result
 
-    def copy(self):
-        return deepcopy(self)
+    @abstractmethod
+    def copy(self) -> "ASTNode":
+        pass
+
+    @staticmethod
+    def copy_nodes(nodes: List["ASTNode"]) -> List["ASTNode"]:
+        return [node.copy() for node in nodes]
 
 
 def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):
@@ -123,6 +128,9 @@ class TextNode(ASTNode):
         result["content"] = self.text
         return result
 
+    def copy(self):
+        return TextNode(self.text)
+
 
 class SpecialCharNode(ASTNode):
     def __init__(self, value: str):
@@ -147,6 +155,9 @@ class SpecialCharNode(ASTNode):
         result["content"] = self.value
         return result
 
+    def copy(self):
+        return SpecialCharNode(self.value)
+
 
 class AlignmentNode(SpecialCharNode):
     def __init__(self, value: str):
@@ -156,28 +167,34 @@ class AlignmentNode(SpecialCharNode):
 class GroupNode(ASTNode):
     def __init__(self, body: List[ASTNode]):
         super().__init__()
-        self.body = body
-        self.set_children(body)
+        self.set_body(body)
 
     def set_body(self, body: List[ASTNode]):
         self.set_children(body)
 
+    @property
+    def body(self) -> List[ASTNode]:
+        return self.children
+
     def __str__(self):
-        return f"GroupNode({self.body})"
+        return f"GroupNode({self.children})"
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, GroupNode):
             return False
-        return check_asts_equal(self.body, other.body)
+        return check_asts_equal(self.children, other.children)
 
     def detokenize(self):
-        return "{\n" + "".join(child.detokenize() for child in self.body) + "\n}"
+        return "{\n" + "".join(child.detokenize() for child in self.children) + "\n}"
 
     def to_json(self):
         result = super().to_json()
         result["type"] = NodeTypes.GROUP
         result["content"] = [child.to_json() for child in self.children]
         return result
+
+    def copy(self):
+        return GroupNode(self.copy_nodes(self.children))
 
 
 class VerbatimNode(ASTNode):
@@ -219,6 +236,9 @@ class VerbatimNode(ASTNode):
         if self.title:
             result["title"] = self.title
         return result
+
+    def copy(self):
+        return VerbatimNode(text=self.text, title=self.title, display=self.display)
 
 
 class CommandNode(ASTNode):
@@ -286,3 +306,12 @@ class CommandNode(ASTNode):
                 [child.to_json() for child in arg] for arg in self.opt_args
             ]
         return result
+
+    def copy(self):
+        return CommandNode(
+            self.name,
+            args=[self.copy_nodes(c) for c in self.args],
+            opt_args=[self.copy_nodes(c) for c in self.opt_args],
+            has_star=self.has_star,
+            numbering=self.numbering,
+        )

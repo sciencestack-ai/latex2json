@@ -109,6 +109,16 @@ class BibEntryNode(ASTNode):
             result["fields"] = self.fields
         return result
 
+    def copy(self):
+        return BibEntryNode(
+            citation_key=self.citation_key,
+            content=self.copy_nodes(self.children),
+            format=self.format,
+            label=self.label,
+            entry_type=self.entry_type,
+            fields=self.fields,
+        )
+
 
 class BibliographyNode(ASTNode):
     def __init__(
@@ -153,3 +163,6 @@ class BibliographyNode(ASTNode):
         result["type"] = NodeTypes.BIBLIOGRAPHY
         result["content"] = [item.to_json() for item in self.bib_items]
         return result
+
+    def copy(self):
+        return BibliographyNode(self.copy_nodes(self.bib_items))

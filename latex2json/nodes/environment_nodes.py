@@ -73,6 +73,14 @@ class EnvironmentNode(ASTNode):
             result["numbering"] = self.numbering
         return result
 
+    def copy(self):
+        return EnvironmentNode(
+            env_name=self.env_name,
+            body=self.copy_nodes(self.body),
+            numbering=self.numbering,
+            display_name=self.display_name,
+        )
+
 
 class TheoremNode(EnvironmentNode):
     def __init__(
@@ -121,6 +129,15 @@ class TheoremNode(EnvironmentNode):
             result["title"] = [child.to_json() for child in self.title]
         return result
 
+    def copy(self):
+        return TheoremNode(
+            name=self.env_name,
+            body=self.copy_nodes(self.body),
+            numbering=self.numbering,
+            display_name=self.display_name,
+            title=self.copy_nodes(self.title),
+        )
+
 
 class BaseTableFigureNode(EnvironmentNode):
     def __init__(
@@ -163,6 +180,9 @@ class BaseTableFigureNode(EnvironmentNode):
             if isinstance(child, CaptionNode):
                 return child
         return None
+
+    def copy(self):
+        return super().copy()
 
 
 class TableNode(BaseTableFigureNode):
@@ -211,3 +231,6 @@ class AlgorithmicNode(ASTNode):
         result["type"] = NodeTypes.ALGORITHMIC
         result["content"] = self.text
         return result
+
+    def copy(self):
+        return AlgorithmicNode(self.text)
