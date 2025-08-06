@@ -3,6 +3,19 @@ from typing import Dict, List, Optional
 from latex2json.nodes import ASTNode
 from latex2json.parser.parser import Parser
 
+INLINE_TYPES = ["text", "ref", "citation", "url", "footnote", "command"]
+
+
+def is_token_inline(token: Dict) -> bool:
+    if not isinstance(token, dict):
+        return False
+    typing = token.get("type")
+    if typing in INLINE_TYPES:
+        return True
+    elif typing == "equation" and token.get("display") != "block":
+        return True
+    return False
+
 
 def strip_whitespace_json_tokens(tokens: List[Dict]):
     if not tokens:
@@ -25,10 +38,14 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
 
     # Then remove all empty text tokens in between
     stripped_tokens = []
-    for token in tokens:
+    for i, token in enumerate(tokens):
         if isinstance(token, dict) and token.get("type") == "text":
+            # check if token is has content
             if token.get("content").strip():
                 stripped_tokens.append(token)
+                # also lstrip the content if prev token is not inline.
+                if i > 0 and not is_token_inline(tokens[i - 1]):
+                    token["content"] = token["content"].lstrip()
         else:
             stripped_tokens.append(token)
 
@@ -421,17 +438,13 @@ Appendix 2 content
 """
 
     text = r"""
-    \begin{tabular}{|c|c|}
-        \hline
-        Cell 1 & \textbf{Cell 2} & 3 \\
-        \hline
-        \multicolumn{2}{|c|}{Spanning Cell} & \somecmd \\
-        & H1 & \textbf{H2} & 
-        \hline
-    \end{tabular}
-"""
+\begin{tabular}{| c | l | l |}
+$l_{\lambda,0}$
+\end{tabular} ssss
+""".strip()
 
     json = renderer.parse(text)
+    print(json)
 
     # json = renderer.parse_file(
     #     "/Users/cj/Documents/python/latex2json/tests/samples/main.tex"

@@ -38,3 +38,5 @@ logs/
 papers
 
 *.prof
+
+.cursor
