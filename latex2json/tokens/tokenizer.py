@@ -183,17 +183,8 @@ class Tokenizer:
         # --- Handle other special catcodes that form single-character tokens ---
         # These characters become tokens representing themselves, with their catcode.
         elif current_catcode == Catcode.MATH_SHIFT:
-            # Look ahead to see if we have $$
-            if (
-                self.position + 1 < len(self.text)
-                and self.get_catcode(ord(self.text[self.position + 1]))
-                == Catcode.MATH_SHIFT
-            ):
-                self.position += 2
-                return Token(TokenType.MATH_SHIFT_DISPLAY, "$$", start_pos)
-            else:
-                self.position += 1
-                return Token(TokenType.MATH_SHIFT_INLINE, "$", start_pos)
+            self.position += 1
+            return Token(TokenType.MATH_SHIFT_INLINE, "$", start_pos)
 
         elif current_catcode in [
             Catcode.BEGIN_GROUP,

@@ -586,6 +586,19 @@ class ExpanderCore:
             param = self.parse_parameter_token()
             if param:
                 return param
+        elif tok.type == TokenType.MATH_SHIFT_INLINE:
+            self.consume()  # consume it and check next tok to see if it is also inline math
+            next_tok = self.peek()
+            # check consecutive $$, and ensure it is not in existing inline mode to deal with
+            # $$eq1$$ vs $eq1$$eq2$
+            if (
+                next_tok
+                and next_tok.type == TokenType.MATH_SHIFT_INLINE
+                and not self.state.mode == ProcessingMode.MATH_INLINE
+            ):
+                self.consume()
+                return Token(TokenType.MATH_SHIFT_DISPLAY, "$$")
+            return tok
         return self.consume()
 
     def parse_tokens_until(
@@ -1514,6 +1527,5 @@ if __name__ == "__main__":
     expander = ExpanderCore()
 
     # base component only
-    expander.set_text("10 true pt")
-    dims = expander.parse_dimensions()
-    print(dims)
+    out = expander.expand("$$11$$ $22$")
+    print(out)

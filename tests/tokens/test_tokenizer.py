@@ -130,11 +130,3 @@ def test_math():
         Token(TokenType.CHARACTER, "$", 2, Catcode.LETTER),
     ]
     assert_tokenizer_sequence(tokenizer, text, expected_tokens2)
-
-    # test display math
-    text = r"$$e$$"
-    expected_tokens3 = [
-        Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 0),
-        Token(TokenType.CHARACTER, "e", 2, Catcode.LETTER),
-        Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 3),
-    ]

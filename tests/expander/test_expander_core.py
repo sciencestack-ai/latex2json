@@ -599,6 +599,23 @@ def test_math_shift_and_mode():
     check_text_catcodes()
 
 
+def test_consecutive_math_shifts():
+    expander = ExpanderCore()
+
+    out = expander.expand(r"$1$$$2$$")
+    assert_token_sequence(
+        out,
+        [
+            Token(TokenType.MATH_SHIFT_INLINE, "$"),
+            Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_INLINE, "$"),
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+            Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
+            Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        ],
+    )
+
+
 # \( \), \[ \]
 def test_math_macros():
     expander = ExpanderCore()
