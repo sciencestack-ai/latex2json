@@ -793,6 +793,11 @@ class ExpanderCore:
                 register_value = self.parse_register_value(expand=True)
                 if isinstance(register_value, float | int):
                     return int(register_value * digits), False
+
+                # now parse for regular units. First check for true keyword
+                if self.parse_keyword("true"):
+                    self.skip_whitespace()
+
                 unit, relax = self._expand_and_combine_as_str(
                     lambda tok, cur_str: tok.catcode == Catcode.LETTER
                     or (tok.value == " " and cur_str.strip() == "")
@@ -1496,7 +1501,6 @@ if __name__ == "__main__":
     expander = ExpanderCore()
 
     # base component only
-    expander.set_text(r"123\unknown4")
-    expander.parse_integer() == 123
-    expander.consume() == Token(TokenType.CONTROL_SEQUENCE, "unknown")
-    print(expander.peek())
+    expander.set_text("10 true pt")
+    dims = expander.parse_dimensions()
+    print(dims)

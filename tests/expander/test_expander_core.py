@@ -374,6 +374,11 @@ def test_parse_dimensions():
     expander.set_text("2 in")
     assert expander.parse_dimensions() == dimension_to_scaled_points(2, "in")
 
+    # parse with true keyword
+    expander.set_text("10 true pt")
+    assert expander.parse_dimensions() == dimension_to_scaled_points(10, "pt")
+    assert expander.eof()
+
     # test with \relax
     expander.set_text(r"-2 \relax in")
     assert expander.parse_dimensions() == dimension_to_scaled_points(-2)
