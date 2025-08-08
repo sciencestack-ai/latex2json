@@ -127,6 +127,8 @@ formatting_patterns = {
     "lhead": "[{",
     # ligatures
     "DisableLigatures": "[{",
+    # makeperpage
+    "MakePerPage": "{",
 }
 
 content_formatting_patterns = {
