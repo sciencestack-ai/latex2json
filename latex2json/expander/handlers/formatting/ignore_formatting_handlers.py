@@ -191,7 +191,11 @@ def vrule_hrule_handler(expander: ExpanderCore, token: Token):
 
 def newline_handler(expander: ExpanderCore, token: Token):
     # parse out any e.g. \\[0.5em]
-    expander.parse_bracket_as_tokens()
+    space_cnt = expander.skip_whitespace_not_eol()
+    if not expander.parse_bracket_as_tokens():
+        # i.e. no \\ ... [0.5em]
+        # push back the space tokens
+        expander.push_text(" " * space_cnt)
     return [token]
 
 

@@ -73,3 +73,7 @@ def test_ignore_formatting_handlers():
     # test \\[0.5em] -> \\
     out = expander.expand(r"\\[0.5em] after")
     assert out == expander.expand(r"\\ after")
+
+    # test \\[0.5em] -> \\
+    out = expander.expand(r"\\   [0.5em] after")
+    assert out == expander.expand(r"\\ after")

@@ -520,6 +520,19 @@ class ExpanderCore:
     def skip_whitespace(self):
         self.stream.skip_whitespace()
 
+    def skip_whitespace_not_eol(self):
+        space_cnt = 0
+        while not self.eof():
+            tok = self.peek()
+            if tok is None:
+                break
+            if tok.type == TokenType.CHARACTER and tok.catcode == Catcode.SPACE:
+                self.consume()
+                space_cnt += 1
+            else:
+                break
+        return space_cnt
+
     # main parsing logic
     def expand_next(self) -> Optional[List[Token]]:
         tok = self.parse_token()
