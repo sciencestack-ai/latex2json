@@ -224,10 +224,27 @@ MATH_ENVIRONMENTS = {
         "dmath", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
     # inner environments inside equation/align
-    "gathered": EnvironmentDefinition("gathered", env_type=EnvironmentType.EQUATION),
+    "gathered": EnvironmentDefinition(
+        "gathered", env_type=EnvironmentType.EQUATION, has_direct_command=True
+    ),
     "multlined": EnvironmentDefinition("multlined", env_type=EnvironmentType.EQUATION),
+    # array types
     "aligned": EnvironmentDefinition(
-        "aligned", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+        "aligned",
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+        has_direct_command=True,
+    ),
+    "alignedat": EnvironmentDefinition(
+        "alignedat",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+        has_direct_command=True,
+    ),
+    "array": EnvironmentDefinition(
+        "array",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+        has_direct_command=True,
     ),
     "cases": EnvironmentDefinition(
         "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
@@ -235,14 +252,8 @@ MATH_ENVIRONMENTS = {
     "dcases": EnvironmentDefinition(
         "dcases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
-    "alignedat": EnvironmentDefinition(
-        "alignedat", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
-    ),
     "split": EnvironmentDefinition(
         "split", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
-    ),
-    "array": EnvironmentDefinition(
-        "array", num_args=1, env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # matrix envs (also inner envs)
     "matrix": EnvironmentDefinition(
