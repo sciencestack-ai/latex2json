@@ -23,7 +23,7 @@ def register_file_input_handlers(expander: ExpanderCore):
         )
 
     ignore_input_patterns = {
-        "externaldocument": "{",  # \externaldocument{otherdoc}  % references otherdoc.tex. We ignore since in our expander/parser we already assume references across docs
+        "externaldocument": "[{",  # \externaldocument{otherdoc}  % references otherdoc.tex. We ignore since in our expander/parser we already assume references across docs
     }
     register_ignore_handlers_util(expander, ignore_input_patterns, expand=False)
 

@@ -129,6 +129,11 @@ formatting_patterns = {
     "DisableLigatures": "[{",
     # makeperpage
     "MakePerPage": "{",
+    # rcs
+    "rcsInfo": "{",
+    # todo
+    "listoftodos": 0,
+    "listoftheorems": 0,
 }
 
 content_formatting_patterns = {
@@ -213,6 +218,24 @@ def mathpalette_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def is_dollar_token(tok: Token) -> bool:
+    return tok.type == TokenType.MATH_SHIFT_INLINE and tok.value == "$"
+
+
+def rcsinfo_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    tok = expander.peek()
+    if not tok or not is_dollar_token(tok):
+        expander.logger.info(
+            f"Warning: \\rcsInfo expected math shift inline but found {tok}"
+        )
+        return None
+    expander.consume()
+    tokens = expander.parse_tokens_until(is_dollar_token, consume_predicate=True)
+    # ignore?
+    return []
+
+
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns, expand=False)
@@ -220,6 +243,7 @@ def register_ignore_format_handlers(expander: ExpanderCore):
     expander.register_handler(r"\vrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\mathpalette", mathpalette_handler, is_global=True)
+    expander.register_handler(r"\rcsInfo", rcsinfo_handler, is_global=True)
     expander.register_handler("\\", newline_handler, is_global=True)
 
 
@@ -237,4 +261,4 @@ if __name__ == "__main__":
     # )
     # out4 = expander.expand(r"\vrule height 2pt depth -1.6pt width 23pt")
 
-    out = expander.expand(r"\\[0.5em]")
+    out = expander.expand(r"\rcsInfo $Id: xxx$")

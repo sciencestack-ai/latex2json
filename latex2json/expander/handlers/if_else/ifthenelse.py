@@ -10,7 +10,7 @@ def if_then_else_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     Returns (True, None) if next token is *, (False, None) if not,
     or (None, error_msg) if there's an error.
     """
-    blocks = expander.parse_braced_blocks(3)
+    blocks = expander.parse_braced_blocks(3, check_immediate_tokens=True)
 
     if len(blocks) != 3:
         expander.logger.warning("Warning: \\ifthenelse expects 3 blocks")

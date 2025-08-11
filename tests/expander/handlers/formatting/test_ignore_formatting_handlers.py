@@ -77,3 +77,9 @@ def test_ignore_formatting_handlers():
     # test \\[0.5em] -> \\
     out = expander.expand(r"\\   [0.5em] after")
     assert out == expander.expand(r"\\ after")
+
+    # test rcsInfo
+    out = expander.expand(
+        r"\rcsInfo $Id: manuscript.tex,v 1792 2025/06/07 13:02:08 karplavi Exp karplavi $"
+    )
+    assert out == []

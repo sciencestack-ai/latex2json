@@ -91,3 +91,14 @@ def test_undefined_handler():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "undefined"
+
+
+def test_iflatar_handler():
+    expander = Expander()
+    text = r"""
+    \makeatletter
+    \@ifl@t@r{1}{2}{A}{B}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "A"

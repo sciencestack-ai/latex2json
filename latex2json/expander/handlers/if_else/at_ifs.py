@@ -10,7 +10,7 @@ def if_star_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     Returns (True, None) if next token is *, (False, None) if not,
     or (None, error_msg) if there's an error.
     """
-    blocks = expander.parse_braced_blocks(2)
+    blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
 
     if len(blocks) != 2:
         expander.logger.warning("Warning: \\@ifstar expects 2 blocks")
@@ -35,7 +35,7 @@ def if_nextchar_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
         return None
 
     expander.skip_whitespace()
-    blocks = expander.parse_braced_blocks(2)
+    blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
         expander.logger.warning("Warning: \\@ifnextchar expects 2 blocks")
         return None
@@ -61,7 +61,7 @@ def if_nextchar_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 
 
 def if_mathmode_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    blocks = expander.parse_braced_blocks(2)
+    blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
         expander.logger.warning("Warning: \\@ifmmode expects 2 blocks")
         return None
@@ -102,11 +102,40 @@ def ifdefinable_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     return []
 
 
+def iflatar_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""
+    if num1 < num2, then true-code, else false-code
+    \@ifl@t@r{<num1>}{<num2>}{<true-code>}{<false-code>}
+    """
+    blocks = expander.parse_braced_blocks(4, check_immediate_tokens=True)
+    if len(blocks) != 4:
+        expander.logger.warning("Warning: \\@ifl@t@r expects 4 blocks")
+        return None
+
+    block1 = expander.expand_tokens(blocks[0])
+    block2 = expander.expand_tokens(blocks[1])
+    block1_str = expander.convert_tokens_to_str(block1)
+    block2_str = expander.convert_tokens_to_str(block2)
+
+    default_block = blocks[2]
+    try:
+        num1 = float(block1_str)
+        num2 = float(block2_str)
+        if num1 >= num2:
+            default_block = blocks[3]
+    except ValueError:
+        # ignore?
+        pass
+
+    expander.push_tokens(default_block)
+    return []
+
+
 def make_ifloaded_handler(load_type: str = "package"):
     def ifloaded_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.skip_whitespace()
         package_name = expander.parse_brace_name()
-        blocks = expander.parse_braced_blocks(2)
+        blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
         if len(blocks) != 2:
             expander.logger.warning(f"Warning: \\@if{load_type}loaded expects 3 blocks")
             return None
@@ -137,6 +166,7 @@ def register_atifs(expander: ExpanderCore):
         "\\@ifdefinable": ifdefinable_handler,
         "\\@ifpackageloaded": make_ifloaded_handler("package"),
         "\\@ifclassloaded": make_ifloaded_handler("class"),
+        "\\@ifl@t@r": iflatar_handler,
     }
     for name, handler in if_handlers.items():
         macro = Macro(name, handler, MacroType.IF)
@@ -151,17 +181,8 @@ if __name__ == "__main__":
 
     text = r"""
     \makeatletter
-    \def\cmd{\@ifnextchar[{OPT}{NO OPT}} 
-    """.strip()
+    \@ifl@t@r{1}{2}{A}{B}
+    """
 
-    expander.expand(text)
-    out = expander.expand(r"\cmd [")  # OPT
-
-    text = r"""
-    \begin{equation}
-    \@ifmmode{MATH}{NO MATH}
-    """.strip()
-
-    out2 = expander.expand(text)  # MATH
-
-    out3 = expander.expand(r"\@ifundefined{cmddd}{UNDEFINED}{DEFINED}")  # UNDEFINED
+    out = expander.expand(text)
+    print(out)
