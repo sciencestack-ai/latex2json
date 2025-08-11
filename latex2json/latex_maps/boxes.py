@@ -18,6 +18,7 @@ ADVANCED_BOX_SPECS = {
     "resizebox": "{{{",  # \resizebox{width}{height}{text}
     "rotatebox": "{{",  # \rotatebox{angle}{text}
     "adjustbox": "{{",  # \adjustbox{max width=\textwidth}{text}
+    "tcbox": "[{",  # \tcbox[options]{text}
 }
 
 KATEX_SUPPORTED_BOXES = [

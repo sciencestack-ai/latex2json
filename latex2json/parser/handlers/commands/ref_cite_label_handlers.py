@@ -86,6 +86,8 @@ CITE_COMMANDS = [
     "citeyear",
     "citeyearpar",
     "citefullauthor",
+    "autocite",
+    "parencite",
 ]
 
 
@@ -138,6 +140,12 @@ def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
     return url_handler
 
 
+def noeqref_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    parser.parse_brace_as_nodes()
+    return []
+
+
 def register_ref_label_handlers(parser: ParserCore):
     # labels
     parser.register_handler("label", label_handler)
@@ -168,6 +176,8 @@ def register_ref_label_handlers(parser: ParserCore):
     parser.register_handler(
         "doi", make_url_handler(parse_title=False, path_prefix="https://doi.org/")
     )
+
+    parser.register_handler("noeqref", noeqref_handler)
 
 
 if __name__ == "__main__":

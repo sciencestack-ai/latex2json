@@ -6,9 +6,6 @@ formatting_patterns = {
     "NeedsTeXFormat": 1,
     "ProvidesClass": "{[",
     "ProvidesPackage": "{[",
-    # tcb
-    "tcbset": "{",
-    "tcbuselibrary": "{",
     # Float-related formatting
     "floatstyle": 1,
     "restylefloat": 1,
@@ -132,6 +129,7 @@ formatting_patterns = {
     # rcs
     "rcsInfo": "{",
     # todo
+    "todo": "[{",
     "listoftodos": 0,
     "listoftheorems": 0,
 }
