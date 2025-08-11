@@ -1,5 +1,4 @@
 from copy import deepcopy
-from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Any, List, Optional
 
@@ -173,6 +172,18 @@ class CommandWithArgsToken(Token):
         if self.args:
             for arg in self.args:
                 out += "{" + "".join([a.to_str() for a in arg]) + "}"
+        return out
+
+    def to_tokens(self) -> List[Token]:
+        out = [Token(TokenType.CONTROL_SEQUENCE, self.name)]
+        for arg in self.opt_args:
+            out.append(BEGIN_BRACKET_TOKEN.copy())
+            out.extend(arg)
+            out.append(END_BRACKET_TOKEN.copy())
+        for arg in self.args:
+            out.append(BEGIN_BRACE_TOKEN.copy())
+            out.extend(arg)
+            out.append(END_BRACE_TOKEN.copy())
         return out
 
     def copy(self) -> "CommandWithArgsToken":

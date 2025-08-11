@@ -60,7 +60,7 @@ def test_qopname_handler():
         assert out_str == r"\mathop{\mathrm{div}}" + limit_str
 
 
-def test_frac_handler():
+def test_math_command_handlers():
     expander = Expander()
 
     text = r"""
@@ -71,3 +71,12 @@ $\xxx\aaa3$
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == r"$\frac{A+B}{3}$"
+
+    text = r"""
+    \newcommand{\ti}{\tilde}
+    \newcommand{\calR}{\mathcal R}
+    $\ti\calR$
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"$\tilde{\mathcal{R}}$"

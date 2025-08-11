@@ -346,7 +346,10 @@ class ExpanderCore:
     @staticmethod
     def _generate_stop_token():
         # this control sequence is invalid in latex, so we can use it as an arbitrary stop token
-        return Token(TokenType.CONTROL_SEQUENCE, r"\@#STOP", catcode=Catcode.OTHER)
+        # add a random number to make it unique each time
+        return Token(
+            TokenType.CONTROL_SEQUENCE, f"\\@#STOP{id(object())}", catcode=Catcode.OTHER
+        )
 
     def expand_text(self, text: str) -> List[Token]:
         STOP_TOKEN = self._generate_stop_token()
