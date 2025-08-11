@@ -85,7 +85,7 @@ formatting_patterns = {
     "lstset": "{",
     "setlist": "[{",
     # toolset/palette
-    "mathtoolsset": "[",
+    "mathtoolsset": "[{",
     # \kern, which is technically spacing but more like a length between characters. so ignore
     "kern": "d",
     # setup
