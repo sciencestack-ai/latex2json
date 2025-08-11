@@ -94,7 +94,7 @@ pip install -r requirements.txt
 
 ### Requirements
 
-Python 3.7 or higher
+Python 3.10 or higher
 
 ### Testing
 
@@ -105,9 +105,9 @@ pytest tests/
 ## Quick Start
 
 ```python
-from latex2json import LatexParser
+from latex2json import Latex2JSONRenderer
 
-parser = LatexParser()
+parser = Latex2JSONRenderer()
 
 latex_text = r"""
   % refer to tests/parser/test_parser.py for examples
@@ -126,16 +126,7 @@ latex_text = r"""
 """
 
 tokens = parser.parse(latex_text)
-
-
-# [Optional]: organize the tokens into hierarchies e.g. \subsection under \section content, add counter numbers and validation
-from latex2json import TokenBuilder
-
-token_builder = TokenBuilder()
-structured_tokens = token_builder.build(tokens)
 ```
-
-Refer to [tests/parser/test_parser.py](tests/parser/test_parser.py) for examples
 
 ## Output Structure
 
@@ -194,8 +185,9 @@ The parser organizes latex tokens into the following token types:
 - `text` - Plain text content with optional styling
 - `quote` - Quoted text content
 - `equation` - Mathematical equations (inline or block)
-- `figure` - Figure environments
-- `table` - Table environments
+- `equation_array` - Mathematical Align/matrix/array etc 
+- `figure`, `subfigure` - Figure environments
+- `table`, `subtable` - Table environments
 - `tabular` - Table content structure
 - `caption` - Captions for figures and tables
 - `list` - Enumerated or itemized lists
@@ -237,7 +229,6 @@ The parser organizes latex tokens into the following token types:
 - `command` - Generic LaTeX commands (unsuccessfully parsed)
 - `group` - Grouped content
 
-For detailed type definitions, see [latex2json/structure/tokens/types.py](latex2json/structure/tokens/types.py)
 
 ## Read directly from .tex files/folders/gz
 
@@ -279,23 +270,19 @@ You may view some of the JSON outputs in [arxiv latex2json samples](https://driv
 
 ## Limitations
 
-- Limited support for complex or legacy macro definitions, particularly those using advanced TeX primitives
-- Simplified if-else handling: processes only the first conditional branch for most \if commands
+- Does not support expl3
 - Does not currently support specialized LaTeX drawing commands and environments (e.g., Chess commands etc). Treats them as unknown command tokens i.e. type: "command"
-- May not handle certain custom or non-standard LaTeX packages fully
-- Does not preserve latex visual formatting and counters
+- Does not preserve latex->PDF visual formatting
 
 ## Contributions
 
 Contributions to improve LaTeX2JSON are welcome! Here are some areas where help is needed:
 
-1. **cls/sty Processing**
+1. **Expl3 and other modern latex patterns**
 
-   - Improving handling of `.cls` and `.sty` files
-   - Better support for complex `@if` conditionals and LaTeX internals
-   - Expanding macro resolution capabilities (e.g. currently \noexpand or \expandafter are ignored)
+2. **Better support for complex `@if` conditionals and LaTeX internals**
 
-2. **Additional commands from various packages**
+3. **Additional commands from various packages**
 
    - If you find a command that is not supported, please feel free to add them!
 
