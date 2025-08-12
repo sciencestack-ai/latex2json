@@ -451,7 +451,8 @@ class ExpanderCore:
             return
 
         input_text = open(file_path).read()
-        self.push_text(input_text)
+        # ensure to put \n at the end of the file to delimit/split, in case file ends with %
+        self.push_text(input_text + "\n")
 
     def expand_file(self, file_path: str):
         file_path = self.get_cwd_path(file_path)

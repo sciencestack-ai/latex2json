@@ -84,6 +84,9 @@ formatting_patterns = {
     # lists and items
     "lstset": "{",
     "setlist": "[{",
+    "setitemize": "[{",
+    "setenumerate": "[{",
+    "setdescription": "[{",
     # toolset/palette
     "mathtoolsset": "[{",
     # \kern, which is technically spacing but more like a length between characters. so ignore

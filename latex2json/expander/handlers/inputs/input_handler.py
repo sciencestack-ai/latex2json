@@ -14,6 +14,11 @@ def input_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def endinput_handler(expander: ExpanderCore, token: Token):
+    expander.stream.pop_source()
+    return []
+
+
 def register_file_input_handlers(expander: ExpanderCore):
     for command in ["input", "include", "subfile", "subfileinclude"]:
         expander.register_handler(
@@ -21,6 +26,8 @@ def register_file_input_handlers(expander: ExpanderCore):
             input_handler,
             is_global=True,
         )
+
+    expander.register_handler("endinput", endinput_handler, is_global=True)
 
     ignore_input_patterns = {
         "externaldocument": "[{",  # \externaldocument{otherdoc}  % references otherdoc.tex. We ignore since in our expander/parser we already assume references across docs
