@@ -19,8 +19,10 @@ def test_ifstar_handler():
     """.strip()
 
     expander.expand(test_with_star)
-    assert_token_sequence(expander.expand(r"\cmd*"), expander.expand("star"))
-    assert_token_sequence(expander.expand(r"\cmdpost*"), expander.expand("nostarpost*"))
+    assert expander.convert_tokens_to_str(expander.expand(r"\cmd*")) == "star"
+    assert (
+        expander.convert_tokens_to_str(expander.expand(r"\cmdpost*")) == "nostarpost*"
+    )
 
 
 def test_nested_ifstar():
@@ -56,9 +58,9 @@ def test_ifstar_inside_iftrue():
     expander.expand(test_code)
 
     # Test with star
-    result = strip_whitespace_tokens(expander.expand(r"\cmd*"))
-    expected = strip_whitespace_tokens(expander.expand("nostar*"))
-    assert_token_sequence(result, expected)
+    result = expander.expand(r"\cmd*")
+    assert expander.convert_tokens_to_str(result).strip() == "nostar*"
+    # assert_token_sequence(result, expected)
 
 
 def test_ifnextchar_handler():

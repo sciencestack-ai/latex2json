@@ -117,9 +117,8 @@ def test_if_true_false_handler():
     \fi
     """
     out = expander.expand(text)
-    out = strip_whitespace_tokens(out)
-    assert_tokens_startwith(out, expander.expand("TRUE"))
-    assert_tokens_endwith(out, expander.expand("INNER FALSE"))
+    out_str = expander.convert_tokens_to_str(out)
+    assert out_str.replace("\n", "").replace(" ", "") == "TRUEINNERFALSE"
 
 
 def test_nopremature_expansion_inside_blocks():

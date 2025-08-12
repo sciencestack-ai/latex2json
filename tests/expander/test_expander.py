@@ -273,6 +273,20 @@ def test_loop_csname():
     assert sequence == "Item1Item2Item3Item4Item5"
 
 
+def test_recursive_expandafter_loop():
+    text = r"""
+\def\ddefloop#1{\ifx\ddefloop#1\else\ddef{#1}\expandafter\ddefloop\fi}
+% mathbb e.g. \R
+\def\ddef#1{\expandafter\def\csname #1\endcsname{\mathbb{#1}}}
+\ddefloop ABCDFGHIJKLMNOQRTUVWXYZ\ddefloop
+\A \B \Z
+"""
+    expander = Expander()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"\mathbb{A} \mathbb{B} \mathbb{Z}"
+
+
 def test_character_iteration():
     # examples taken from fancyhdr package
 

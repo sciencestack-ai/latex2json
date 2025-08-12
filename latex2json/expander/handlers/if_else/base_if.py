@@ -38,9 +38,12 @@ class IfMacro(Macro):
         blocks = parse_if_else_block_tokens(expander)
         if blocks is None or invalid:
             return []
-        expanded = expander.expand_tokens(blocks[0] if is_true else blocks[1])
-        # expander.push_tokens(block)
-        return expanded
+        block = blocks[0] if is_true else blocks[1]
+
+        # DONT expand immediately, since certain loops like \expandafter\xx\fi might expand prematurely
+        # instead, push the block and let expander handle as continous sequence as usual
+        expander.push_tokens(block)
+        return []
 
 
 def is_fi_command(token: Token) -> bool:
@@ -75,6 +78,9 @@ def parse_if_else_block_tokens(
     )
     if block is None:
         return None
+
+    # add back the \fi since it is still a token and affects things like \expandafter e.g. \expandafter\somecmd\fi
+    block += [Token(TokenType.CONTROL_SEQUENCE, "fi")]
 
     # Find the position of \else in the block
     else_pos = None
