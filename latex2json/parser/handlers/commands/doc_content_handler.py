@@ -52,9 +52,7 @@ def make_metadata_handler(name: str, has_short_bracket=False):
 
 def document_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
-    document_node = MetadataNode(NodeTypes.DOCUMENT, env.body)
-    document_node.labels = env.labels
-    return [document_node]
+    return [env]
 
 
 def abstract_env_handler(parser: ParserCore, token: Token):

@@ -110,9 +110,20 @@ class TexReader:
         logger: Logger instance for tracking operations
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    json_renderer: JSONRenderer
+
+    def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
         self.logger = logger or logging.getLogger(__name__)
-        self.json_renderer = JSONRenderer(logger=self.logger)
+        self.n_processors = n_processors
+        self._init_renderer()
+
+    def clear(self):
+        self._init_renderer()
+
+    def _init_renderer(self):
+        self.json_renderer = JSONRenderer(
+            logger=self.logger, n_processors=self.n_processors
+        )
 
     def _handle_file_operation(
         self, operation: Callable[..., T], error_msg: str, *args, **kwargs
@@ -246,10 +257,6 @@ class TexReader:
             _save, f"Failed to save JSON output to {json_path}"
         )
 
-    def clear(self):
-        """Clear both parser and token builder states."""
-        self.json_renderer = JSONRenderer(logger=self.logger)
-
     def process_compressed(self, compressed_path: str, cleanup: bool = True):
         """Process a compressed TeX file and save results to JSON."""
         if not os.path.exists(compressed_path):
@@ -345,7 +352,7 @@ if __name__ == "__main__":
 
     logger = setup_logger(level=logging.DEBUG, log_file="logs/tex_reader.log")
 
-    tex_reader = TexReader(logger)
+    tex_reader = TexReader(logger, n_processors=4)
 
     # # Example usage with compressed file
     # gz_file = "papers/arXiv-2301.10945v1.tar.gz"
@@ -370,13 +377,22 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-math9404236v1.tex",
         # # "papers/tested/arXiv-2301.10303v4.tex",
         # "papers/tested/arXiv-2105.02865v3.tex",
-        "papers/arXiv-2301.10945v1.tar.gz",
+        # "papers/arXiv-2301.10945v1.tar.gz",
+        # "papers/tested/arXiv-1509.05363v6"
+        # "papers/tested/arXiv-2301.10945v1"
+        # "papers/tested/arXiv-2408.07934v1"
+        # "papers/tested/arXiv-1712.01815v1"
+        "papers/tested/arXiv-2404.02220v1"
     ]
+    merge_inline = False
+    stem_postfix = "_merged" if merge_inline else ""
+
     for folder in folders:
-        save_path = target_folder + "/" + folder.split("/")[-1] + ".json"
+        folder_stem = folder.split("/")[-1]
+        save_path = target_folder + "/" + folder_stem + stem_postfix + ".json"
         output = tex_reader.process(folder)
         try:
-            json_output = tex_reader.to_json(output, merge_inline_tokens=False)
+            json_output = tex_reader.to_json(output, merge_inline_tokens=merge_inline)
             # tex_reader.save_to_json(output, save_path)
             with open(save_path, "w") as f:
                 f.write(json_output)

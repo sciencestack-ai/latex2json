@@ -170,7 +170,11 @@ def substitute_token_args(
 
 
 def split_tokens_by_predicate(
-    tokens: List[Token], is_separator: Callable[[Token], bool], brace_check=True
+    tokens: List[Token],
+    is_separator: Callable[[Token], bool],
+    brace_check=True,
+    incl_braces=False,
+    incl_separator=False,
 ) -> List[List[Token]]:
     """Generic function to split tokens into groups based on a separator predicate.
 
@@ -189,16 +193,20 @@ def split_tokens_by_predicate(
         if brace_check and tok.type == TokenType.CHARACTER:
             if tok.value == "{":
                 brace_depth += 1
-                # current_group.append(tok)
+                if incl_braces:
+                    current_group.append(tok)
                 continue
             elif tok.value == "}":
                 brace_depth = max(0, brace_depth - 1)  # Prevent negative depth
-                # current_group.append(tok)
+                if incl_braces:
+                    current_group.append(tok)
                 continue
 
         if brace_depth == 0 and is_separator(tok):
             groups.append(current_group)
             current_group = []
+            if incl_separator:
+                current_group.append(tok)
         else:
             current_group.append(tok)
 

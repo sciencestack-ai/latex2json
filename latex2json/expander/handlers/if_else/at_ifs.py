@@ -162,6 +162,7 @@ def register_atifs(expander: ExpanderCore):
         "\\@ifstar": if_star_handler,
         "\\@ifnextchar": if_nextchar_handler,
         "\\@ifmmode": if_mathmode_handler,
+        "\\ifmmode": if_mathmode_handler,
         "\\@ifundefined": if_undefined_handler,
         "\\@ifdefinable": ifdefinable_handler,
         "\\@ifpackageloaded": make_ifloaded_handler("package"),

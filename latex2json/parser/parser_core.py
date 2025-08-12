@@ -147,6 +147,10 @@ class ParserCore:
     def cwd(self):
         return self.expander.cwd
 
+    @cwd.setter
+    def cwd(self, value):
+        self.expander.cwd = value
+
     def get_colors(self):
         return self.expander.get_colors()
 
@@ -271,7 +275,7 @@ class ParserCore:
 
         def stop_token_function(tok: Token):
             # log progress...
-            if tok.position > 0 and tok.position % 10000 == 0:
+            if tok.position > 0 and tok.position % 5000 == 0:
                 self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
             return tok is STOP_TOKEN
 
@@ -335,19 +339,6 @@ class ParserCore:
 
         out = self.process()
         if postprocess:
-            out = self.postprocess_nodes(out)
-        return out
-
-    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
-        # set expander cwd
-        self.expander.cwd = os.path.abspath(os.path.dirname(file_path))
-        tokens = self.expander.expand_file(os.path.basename(file_path))
-        if not tokens:
-            return None
-        self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
-        out = self.process_tokens_standalone(tokens)
-        if postprocess:
-            self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
         return out
 
