@@ -241,48 +241,47 @@ class ParserCore:
 
     def process_text(self, text: str) -> List[ASTNode]:
         tokens = self.expander.expand_text(text)
-        return self.process_tokens(tokens, standalone=True)
+        return self.process_tokens_standalone(tokens)
+
+    def process_tokens_standalone(self, tokens: List[Token]) -> List[ASTNode]:
+        parser = self.create_standalone(
+            tokens, logger=self.logger, expander=self.expander
+        )
+        return parser.process()
 
     def _generate_stop_token(self):
         return self.expander._generate_stop_token()
 
     def process_tokens(
-        self, tokens: List[Token], scoped=False, postprocess=False, standalone=False
+        self, tokens: List[Token], scoped=False, postprocess=False
     ) -> List[ASTNode]:
         """Parse a list of tokens into AST nodes, similar to expand_tokens in expander."""
         if len(tokens) == 0:
             return []
 
-        nodes = []
-        if standalone:
-            parser = self.create_standalone(
-                tokens, logger=self.logger, expander=self.expander
-            )
-            nodes = parser.process()
-        else:
-            if scoped:
-                self.push_scope()
+        if scoped:
+            self.push_scope()
 
-            STOP_TOKEN = self._generate_stop_token()
+        STOP_TOKEN = self._generate_stop_token()
 
-            # number the token positions for logging purposes
-            for i, tok in enumerate(tokens):
-                tok.position = i
-            total_tokens = len(tokens)
+        # number the token positions for logging purposes
+        for i, tok in enumerate(tokens):
+            tok.position = i
+        total_tokens = len(tokens)
 
-            def stop_token_function(tok: Token):
-                # log progress...
-                if tok.position > 0 and tok.position % 10000 == 0:
-                    self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
-                return tok is STOP_TOKEN
+        def stop_token_function(tok: Token):
+            # log progress...
+            if tok.position > 0 and tok.position % 10000 == 0:
+                self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
+            return tok is STOP_TOKEN
 
-            self.push_tokens(tokens + [STOP_TOKEN])
-            nodes = self.process(
-                stop_token_logic=stop_token_function, consume_stop_token=True
-            )
+        self.push_tokens(tokens + [STOP_TOKEN])
+        nodes = self.process(
+            stop_token_logic=stop_token_function, consume_stop_token=True
+        )
 
-            if scoped:
-                self.pop_scope()
+        if scoped:
+            self.pop_scope()
 
         if postprocess:
             nodes = self.postprocess_nodes(nodes)
@@ -346,7 +345,7 @@ class ParserCore:
         if not tokens:
             return None
         self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
-        out = self.process_tokens(tokens, standalone=True)
+        out = self.process_tokens_standalone(tokens)
         if postprocess:
             self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
