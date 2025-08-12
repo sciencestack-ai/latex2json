@@ -41,8 +41,8 @@ def register_ignore_separators(parser: ParserCore):
 
 
 def ignore_brace_handler(parser: ParserCore, token: Token):
-    # check that command is not user defined
-    if parser.check_macro_is_user_defined(token.value):
+    # check that command is not user defined. Dont skip if user-defined
+    if parser.expander.check_macro_is_user_defined(token.value):
         return [CommandNode(token.value)]
 
     parser.skip_whitespace()

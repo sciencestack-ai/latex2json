@@ -24,7 +24,7 @@ def ensuremath_handler(parser: ParserCore, token: Token):
 def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
     env = parser.parse_environment(token)
 
-    env_def = parser.expander.get_environment_definition(env.env_name)
+    env_def = parser.get_environment_definition(env.env_name)
     if not env_def or env_def.env_type != EnvironmentType.EQUATION_ALIGN:
         # if env is not equation_align, it means the env might have been redefined
         return [env]
@@ -67,7 +67,7 @@ def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
 def matrix_or_array_handler(parser: ParserCore, token: EnvironmentStartToken):
     env = parser.parse_environment(token)
 
-    env_def = parser.expander.get_environment_definition(env.env_name)
+    env_def = parser.get_environment_definition(env.env_name)
     if not env_def or env_def.env_type != EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
         # if env is not matrix_or_array, it means the env might have been redefined
         return [env]

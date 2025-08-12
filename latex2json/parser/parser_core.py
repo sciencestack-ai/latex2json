@@ -4,6 +4,7 @@ import re
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
 from latex2json.expander.state import ProcessingMode
+from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.sections import SECTIONS
 from latex2json.nodes import (
     ASTNode,
@@ -199,10 +200,12 @@ class ParserCore:
         )
         self.macro_patterns.append(macro_pattern)
 
-    def check_macro_is_user_defined(self, name: str) -> bool:
-        return self.expander.check_macro_is_user_defined(name)
-
     # ENVIRONMENTS
+    def get_environment_definition(
+        self, env_name: str
+    ) -> Optional[EnvironmentDefinition]:
+        return self.expander.get_environment_definition(env_name)
+
     def register_env_handler(self, name: str, handler: EnvHandler):
         self.env_handlers[name] = handler
 
