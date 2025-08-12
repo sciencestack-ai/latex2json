@@ -79,6 +79,9 @@ BUILTIN_DIMENSIONS = [
     # @
     "p@",
     "z@",
+    "@tempdima",
+    "@tempdimb",
+    "@tempdimc",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:
