@@ -4,17 +4,16 @@ from latex2json.nodes.bibliography_nodes import BibEntryNode, BibliographyNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.parser.bib.bib_parser import BibParser
 from latex2json.tokens.types import Token
+from latex2json.expander.expander import Expander
 
 
 class Parser(ParserCore):
     def __init__(
         self,
         logger: Optional[logging.Logger] = None,
-        prevent_whitelisted_redefinitions: bool = True,
+        expander: Optional[Expander] = None,
     ):
-        super().__init__(
-            logger, prevent_whitelisted_redefinitions=prevent_whitelisted_redefinitions
-        )
+        super().__init__(logger, expander)
 
         self.bib_parser = BibParser(logger=self.logger)
 

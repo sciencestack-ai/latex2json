@@ -191,6 +191,14 @@ class TokenStream:
                 break
             self.consume()
 
+    def get_current_source(self) -> Optional[TokenSource]:
+        if self.source_stack:
+            return self.source_stack[-1]
+        return None
+
+    def has_source(self, source: TokenSource) -> bool:
+        return source in self.source_stack
+
     def match(
         self,
         token_type: Optional[TokenType] = None,

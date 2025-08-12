@@ -29,8 +29,9 @@ from latex2json.tokens import (
     EnvironmentStartToken,
     TokenType,
     EnvironmentType,
+    APOSTROPHE_TOKEN,
+    BACK_TICK_TOKEN,
 )
-from latex2json.tokens.types import APOSTROPHE_TOKEN, BACK_TICK_TOKEN
 from latex2json.utils.tex_utils import (
     convert_color_to_css,
     normalize_whitespace_and_lines,
@@ -90,15 +91,16 @@ class ParserCore:
     def __init__(
         self,
         logger: Optional[logging.Logger] = None,
-        prevent_whitelisted_redefinitions: bool = True,
+        expander: Optional[Expander] = None,
     ):
         self.logger = logger or logging.getLogger(__name__)
-        self.expander = Expander(
+        self.expander = expander or Expander(
             logger=logger,
-            prevent_whitelisted_redefinitions=prevent_whitelisted_redefinitions,
+            prevent_whitelisted_redefinitions=True,
         )
 
         self.token_buffer: List[Token] = []
+        self.standalone_mode: bool = False
 
         self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
         self._env_node_stack: List[ASTNode] = []
@@ -108,6 +110,19 @@ class ParserCore:
         self.macro_patterns: List[MacroPattern] = []
         self.env_handlers: Dict[str, EnvHandler] = {}
         self.cite_aliases: Dict[str, str] = {}
+
+    @classmethod
+    def create_standalone(
+        cls,
+        tokens: List[Token],
+        logger: Optional[logging.Logger] = None,
+        expander: Optional[Expander] = None,
+    ) -> "ParserCore":
+        """Create a ParserCore instance for isolated token processing without expander dependency."""
+        parser = cls(logger=logger, expander=expander)
+        parser.standalone_mode = True
+        parser.push_tokens(tokens)
+        return parser
 
     def push_mode(self, mode: ProcessingMode):
         self._mode_stack.append(mode)
@@ -145,13 +160,13 @@ class ParserCore:
 
     def eof(self) -> bool:
         if not self.token_buffer:
-            return self.expander.eof()
+            return self.standalone_mode or self.expander.eof()
         return False
 
     def peek(self) -> Optional[Token]:
         if self.eof():
             return None
-        if not self.token_buffer:
+        if not self.token_buffer and not self.standalone_mode:
             self.token_buffer = self.expander.next_non_expandable_tokens()
         return self.token_buffer[0] if self.token_buffer else None
 
@@ -226,41 +241,48 @@ class ParserCore:
 
     def process_text(self, text: str) -> List[ASTNode]:
         tokens = self.expander.expand_text(text)
-        return self.process_tokens(tokens)
+        return self.process_tokens(tokens, standalone=True)
 
     def _generate_stop_token(self):
         return self.expander._generate_stop_token()
 
     def process_tokens(
-        self, tokens: List[Token], scoped=False, postprocess=False
+        self, tokens: List[Token], scoped=False, postprocess=False, standalone=False
     ) -> List[ASTNode]:
         """Parse a list of tokens into AST nodes, similar to expand_tokens in expander."""
         if len(tokens) == 0:
             return []
 
-        if scoped:
-            self.push_scope()
+        nodes = []
+        if standalone:
+            parser = self.create_standalone(
+                tokens, logger=self.logger, expander=self.expander
+            )
+            nodes = parser.process()
+        else:
+            if scoped:
+                self.push_scope()
 
-        STOP_TOKEN = self._generate_stop_token()
+            STOP_TOKEN = self._generate_stop_token()
 
-        # number the token positions for logging purposes
-        for i, tok in enumerate(tokens):
-            tok.position = i
-        total_tokens = len(tokens)
+            # number the token positions for logging purposes
+            for i, tok in enumerate(tokens):
+                tok.position = i
+            total_tokens = len(tokens)
 
-        def stop_token_function(tok: Token):
-            # log progress...
-            if tok.position > 0 and tok.position % 10000 == 0:
-                self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
-            return tok is STOP_TOKEN
+            def stop_token_function(tok: Token):
+                # log progress...
+                if tok.position > 0 and tok.position % 10000 == 0:
+                    self.logger.info(f"Parsed {tok.position}/{total_tokens} tokens...")
+                return tok is STOP_TOKEN
 
-        self.push_tokens(tokens + [STOP_TOKEN])
-        nodes = self.process(
-            stop_token_logic=stop_token_function, consume_stop_token=True
-        )
+            self.push_tokens(tokens + [STOP_TOKEN])
+            nodes = self.process(
+                stop_token_logic=stop_token_function, consume_stop_token=True
+            )
 
-        if scoped:
-            self.pop_scope()
+            if scoped:
+                self.pop_scope()
 
         if postprocess:
             nodes = self.postprocess_nodes(nodes)
@@ -324,7 +346,7 @@ class ParserCore:
         if not tokens:
             return None
         self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
-        out = self.process_tokens(tokens)
+        out = self.process_tokens(tokens, standalone=True)
         if postprocess:
             self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
@@ -387,7 +409,14 @@ class ParserCore:
         self.push_mode(
             ProcessingMode.MATH_INLINE if is_inline else ProcessingMode.MATH_DISPLAY
         )
-        math_nodes = self.process(lambda tok: tok == token)
+        # process even if $$ ... $?
+        math_nodes = self.process(
+            lambda tok: tok.type
+            in [
+                TokenType.MATH_SHIFT_INLINE,
+                TokenType.MATH_SHIFT_DISPLAY,
+            ]
+        )
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
         self.pop_mode()
         return [EquationNode(math_nodes, equation_type=eq_type)]
