@@ -1,5 +1,5 @@
 import logging, os
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from concurrent.futures import ProcessPoolExecutor
 from latex2json.nodes.base_nodes import ASTNode
 from latex2json.nodes.bibliography_nodes import BibEntryNode, BibliographyNode
@@ -20,6 +20,46 @@ def is_end_document_token(tok: Token) -> bool:
 
 def is_section_token(tok: Token) -> bool:
     return isinstance(tok, CommandWithArgsToken) and tok.value == "section"
+
+
+def split_document_tokens(
+    tokens: List[Token],
+) -> Tuple[List[Token], List[Token], List[Token]]:
+    """
+    Split tokens into pre-document, document, and post-document sections.
+
+    Args:
+        tokens: List of tokens to split
+
+    Returns:
+        Tuple of (pre_doc_tokens, doc_tokens, post_doc_tokens)
+    """
+    pre_doc_tokens = []
+    doc_tokens = []
+    post_doc_tokens = []
+
+    # first collect pre_doc_tokens
+    for i, tok in enumerate(tokens):
+        if is_begin_document_token(tok):
+            tokens = tokens[i:]
+            break
+        pre_doc_tokens.append(tok)
+
+    # then parse doc_tokens (check depth)
+    depth = 0
+    for i, tok in enumerate(tokens):
+        if is_begin_document_token(tok):
+            depth += 1
+        elif is_end_document_token(tok):
+            depth -= 1
+            if depth == 0:
+                doc_tokens = tokens[: i + 1]
+                post_doc_tokens = tokens[i + 1 :]
+                break
+        if depth > 0:
+            doc_tokens.append(tok)
+
+    return pre_doc_tokens, doc_tokens, post_doc_tokens
 
 
 class ParserParallel(Parser):
@@ -52,25 +92,17 @@ class ParserParallel(Parser):
             return None
         self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
 
-        self.push_tokens(tokens)
-        pre_doc_tokens = self.parse_tokens_until(
-            is_begin_document_token, consume_predicate=False
+        pre_doc_tokens, doc_tokens, post_doc_tokens = split_document_tokens(tokens)
+
+        self.logger.info(
+            "Token counts - Pre doc: %s, Doc: %s, Post doc: %s",
+            len(pre_doc_tokens),
+            len(doc_tokens),
+            len(post_doc_tokens),
         )
-        self.logger.info("Pre doc tokens: %s", len(pre_doc_tokens))
-        doc_tokens = self.parse_begin_end_as_tokens(
-            begin_predicate=is_begin_document_token,
-            end_predicate=is_end_document_token,
-            check_first_token=True,
-            include_begin_end_tokens=False,
-        )
-        self.logger.info("Doc tokens: %s", len(doc_tokens))
-        # parse remaining tokens
-        post_doc_tokens = self.parse_tokens_until(
-            lambda tok: False, consume_predicate=False
-        )
-        self.logger.info("Post doc tokens: %s", len(post_doc_tokens))
 
         # chunk doc tokens by section split
+        doc_tokens = doc_tokens[1:-1]  # strip out begin/end document tokens
         chunks = split_tokens_by_predicate(
             doc_tokens, is_section_token, incl_separator=True, incl_braces=True
         )
