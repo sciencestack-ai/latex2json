@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+from collections import deque
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
 from latex2json.expander.state import ProcessingMode
@@ -99,7 +100,7 @@ class ParserCore:
             prevent_whitelisted_redefinitions=True,
         )
 
-        self.token_buffer: List[Token] = []
+        self.token_buffer: deque[Token] = deque()
         self.standalone_mode: bool = False
 
         self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
@@ -156,11 +157,11 @@ class ParserCore:
 
     def set_text(self, text: str):
         self.expander.set_text(text)
-        self.token_buffer = []
+        self.token_buffer.clear()
 
     def push_tokens(self, tokens: List[Token]):
         """Push tokens to the front of the token buffer."""
-        self.token_buffer = tokens + self.token_buffer
+        self.token_buffer.extendleft(reversed(tokens))
 
     def eof(self) -> bool:
         if not self.token_buffer:
@@ -171,13 +172,15 @@ class ParserCore:
         if self.eof():
             return None
         if not self.token_buffer and not self.standalone_mode:
-            self.token_buffer = self.expander.next_non_expandable_tokens()
+            tokens = self.expander.next_non_expandable_tokens()
+            if tokens:
+                self.token_buffer.extend(tokens)
         return self.token_buffer[0] if self.token_buffer else None
 
     def consume(self) -> Optional[Token]:
         if not self.token_buffer:
             self.peek()
-        return self.token_buffer.pop(0) if self.token_buffer else None
+        return self.token_buffer.popleft() if self.token_buffer else None
 
     # MACROS (for control sequences/commands)
     def get_macro(self, name: str) -> Optional[Macro]:
