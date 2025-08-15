@@ -49,7 +49,7 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
         return []
 
     # expand tok2
-    expanded2 = expander.expand_next()
+    expanded2 = expander.expand_next() or []
     # then put back tok1 and expanded2
     expander.push_tokens([tok1] + expanded2)
     return []
