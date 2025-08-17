@@ -117,7 +117,8 @@ class ParserCore:
         # e.g. \defcitealias{sdsds}{Ch 5}
         self.cite_aliases: Dict[str, str] = {}
 
-        # external documents, file_path -> prefix
+        # files + external documents, file_path -> prefix
+        self.filename: str = ""
         self.external_documents_prefixes: Dict[str, str] = {}
 
     @classmethod
@@ -363,14 +364,20 @@ class ParserCore:
         self.filename = filename
         # set expander cwd
         self.cwd = dir_path
-        tokens = self.expander.expand_file(filename)
-        if not tokens:
+
+        # Read and parse the file content
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except (IOError, UnicodeDecodeError) as e:
+            self.logger.error(f"Failed to read file {file_path}: {e}")
             return None
-        self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
-        out = self.process_tokens_standalone(tokens)
-        if postprocess:
-            self.logger.info(f"Postprocessing {len(out)} nodes...")
-            out = self.postprocess_nodes(out)
+
+        self.logger.info(f"Parsing file {file_path}...")
+
+        # Use the main parse method for consistent behavior
+        out = self.parse(text=content, postprocess=postprocess)
+
         return out
 
     def _handler(self, token: Token) -> List[ASTNode]:
