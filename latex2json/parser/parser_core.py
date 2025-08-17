@@ -99,30 +99,38 @@ class ParserCore:
             logger=logger,
             prevent_whitelisted_redefinitions=True,
         )
-
-        self.token_buffer: deque[Token] = deque()
         self.standalone_mode: bool = False
 
+        # token buffer
+        self.token_buffer: deque[Token] = deque()
+
+        # macros + env handlers
+        self.macros: Dict[str, Macro] = {}
+        self.macro_patterns: List[MacroPattern] = []
+        self.env_handlers: Dict[str, EnvHandler] = {}
+
+        # modes + state
         self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
         self._env_node_stack: List[ASTNode] = []
         self.state = ParserState()
 
-        self.macros: Dict[str, Macro] = {}
-        self.macro_patterns: List[MacroPattern] = []
-        self.env_handlers: Dict[str, EnvHandler] = {}
+        # e.g. \defcitealias{sdsds}{Ch 5}
         self.cite_aliases: Dict[str, str] = {}
+
+        # external documents, file_path -> prefix
+        self.external_documents_prefixes: Dict[str, str] = {}
 
     @classmethod
     def create_standalone(
         cls,
-        tokens: List[Token],
         logger: Optional[logging.Logger] = None,
         expander: Optional[Expander] = None,
     ) -> "ParserCore":
         """Create a ParserCore instance for isolated token processing without expander dependency."""
         parser = cls(logger=logger, expander=expander)
         parser.standalone_mode = True
-        parser.push_tokens(tokens)
+        if expander.cwd:
+            parser.cwd = expander.cwd
         return parser
 
     def push_mode(self, mode: ProcessingMode):
@@ -145,12 +153,17 @@ class ParserCore:
         return self._env_node_stack[-1] if self._env_node_stack else None
 
     @property
-    def cwd(self):
+    def cwd(self) -> str:
         return self.expander.cwd
 
     @cwd.setter
-    def cwd(self, value):
+    def cwd(self, value: str):
         self.expander.cwd = value
+
+    def get_cwd_path(self, file_path: str) -> str:
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(self.cwd, file_path)
+        return file_path
 
     def get_colors(self):
         return self.expander.get_colors()
@@ -251,10 +264,8 @@ class ParserCore:
         return self.process_tokens_standalone(tokens)
 
     def process_tokens_standalone(self, tokens: List[Token]) -> List[ASTNode]:
-        parser = self.create_standalone(
-            tokens, logger=self.logger, expander=self.expander
-        )
-        return parser.process()
+        parser = self.create_standalone(logger=self.logger, expander=self.expander)
+        return parser.process_tokens(tokens)
 
     def _generate_stop_token(self):
         return self.expander._generate_stop_token()
@@ -342,6 +353,23 @@ class ParserCore:
 
         out = self.process()
         if postprocess:
+            out = self.postprocess_nodes(out)
+        return out
+
+    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
+        dir_path = os.path.abspath(os.path.dirname(file_path))
+        filename = os.path.basename(file_path)
+
+        self.filename = filename
+        # set expander cwd
+        self.cwd = dir_path
+        tokens = self.expander.expand_file(filename)
+        if not tokens:
+            return None
+        self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
+        out = self.process_tokens_standalone(tokens)
+        if postprocess:
+            self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
         return out
 

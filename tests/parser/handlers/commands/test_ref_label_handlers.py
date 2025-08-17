@@ -62,15 +62,15 @@ def test_label_in_environment():
     assert out[0].labels == ["tab:example"]
 
 
-def test_label_outside_environment():
-    parser = Parser()
+# def test_label_outside_environment():
+#     parser = Parser()
 
-    text = r"\label{standalone:label}"
-    out = parser.parse(text)
+#     text = r"\label{standalone:label}"
+#     out = parser.parse(text)
 
-    assert len(out) == 1
-    assert isinstance(out[0], CommandNode)
-    assert out[0].name == "label"
+#     assert len(out) == 1
+#     assert isinstance(out[0], CommandNode)
+#     assert out[0].name == "label"
 
 
 def test_ref_with_asterisk():

@@ -17,8 +17,9 @@ def label_handler(parser: ParserCore, token: Token):
         env_node.labels.append(label_str)
         return []
 
-    # if not found, return generic CommandNode
-    return [CommandNode("label", args=[label_nodes])]
+    return []
+    # # if not found, return generic CommandNode
+    # return [CommandNode("label", args=[label_nodes])]
 
 
 def make_ref_handler(split_comma: bool = False):
