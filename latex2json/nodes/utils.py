@@ -5,6 +5,7 @@ from latex2json.nodes.base_nodes import (
     TextNode,
     ASTNode,
 )
+from latex2json.nodes.ref_cite_url_nodes import RefNode
 
 
 def merge_text_nodes(nodes: List[ASTNode], ignore_styles=False) -> List[ASTNode]:
@@ -93,3 +94,13 @@ def split_nodes_into_rows(nodes: List[ASTNode]) -> List[List[ASTNode]]:
 def split_nodes_into_columns(nodes: List[ASTNode]) -> List[List[ASTNode]]:
     """Split nodes into columns based on AlignmentNode and convert to CellNodes"""
     return split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
+
+
+def find_ref_nodes(nodes: List[ASTNode]) -> List[RefNode]:
+    ref_nodes: List[RefNode] = []
+    for node in nodes:
+        if isinstance(node, RefNode):
+            ref_nodes.append(node)
+        elif node.children:
+            ref_nodes.extend(find_ref_nodes(node.children))
+    return ref_nodes

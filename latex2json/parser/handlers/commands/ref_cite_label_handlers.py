@@ -25,14 +25,6 @@ def label_handler(parser: ParserCore, token: Token):
     # return [CommandNode("label", args=[label_nodes])]
 
 
-def create_ref_node(
-    parser: ParserCore, references: List[str], title: Optional[str] = None
-):
-    ref_node = RefNode(references, title=title)
-    ref_node.filename = parser.filename
-    return ref_node
-
-
 def make_ref_handler(split_comma: bool = False):
     def ref_handler(parser: ParserCore, token: Token):
         parser.parse_asterisk()
@@ -43,7 +35,7 @@ def make_ref_handler(split_comma: bool = False):
             references = [ref_str]
             if split_comma:
                 references = ref_str.split(",")
-            return [create_ref_node(parser, references)]
+            return [RefNode(references)]
         return []
 
     return ref_handler
@@ -57,7 +49,7 @@ def hyperref_handler(parser: ParserCore, token: Token):
     if ref_nodes:
         ref_str = parser.convert_nodes_to_str(ref_nodes, postprocess=False)
         title_str = parser.convert_nodes_to_str(title_nodes)
-        return [create_ref_node(parser, [ref_str], title=title_str)]
+        return [RefNode([ref_str], title=title_str)]
     return []
 
 

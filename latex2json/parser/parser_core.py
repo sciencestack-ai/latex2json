@@ -362,9 +362,11 @@ class ParserCore:
         if nodes:
             # assign font attributes to nodes
             styles = self.state.get_styles_as_string()
-            if styles:
-                for node in nodes:
+            for node in nodes:
+                if styles:
                     node.add_styles(styles, insert_at_front=True)
+                if self.filename and not node.source_file:
+                    node.source_file = self.filename
         return nodes
 
     def parse(self, text: Optional[str] = None, postprocess=False) -> List[ASTNode]:
@@ -738,6 +740,23 @@ class ParserCore:
                 node.text = strip_trailing_whitespace_from_lines(node.text)
 
         return merged_nodes
+
+    def resolve_node_references_and_labels(self, nodes: List[ASTNode]):
+        from latex2json.parser.references.reference_resolver import (
+            generate_reference_registries,
+            resolve_node_references_and_labels,
+        )
+
+        # if external documents are defined, resolve references and labels for cross document nodes
+        if len(self.external_documents_prefixes) > 0:
+            self.logger.info(
+                "Resolving references and labels for cross document nodes..."
+            )
+            reference_registries = generate_reference_registries(self)
+            resolve_node_references_and_labels(
+                nodes, reference_registries, recurse=True
+            )
+        return nodes
 
     def parse_tokens_until(
         self, predicate: TokenPredicate, consume_predicate=False

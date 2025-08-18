@@ -48,8 +48,6 @@ class RefNode(BaseRefCiteNode):
     def __init__(self, references: str | List[str], title: Optional[str] = None):
         super().__init__(NodeTypes.REF, references, title)
 
-        self.filename = None
-
     def __eq__(self, other: ASTNode):
         if not isinstance(other, RefNode):
             return False

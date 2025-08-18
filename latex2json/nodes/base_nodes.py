@@ -25,6 +25,8 @@ class ASTNode(ABC):
 
         self.should_postprocess = True
 
+        self.source_file: Optional[str] = None
+
     def __repr__(self):
         return self.__str__()
 

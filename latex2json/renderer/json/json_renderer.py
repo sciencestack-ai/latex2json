@@ -71,6 +71,7 @@ class JSONRenderer:
 
     def parse(self, text: str, organize_hierachy=True) -> Dict[str, List[Dict]]:
         nodes = self.parser.parse(text, postprocess=True)
+        nodes = self.parser.resolve_node_references_and_labels(nodes)
         self.logger.info(f"Parsed {len(nodes)} nodes, converting to json...")
         json_tokens = self.convert_nodes_to_json(
             nodes, organize_hierachy=organize_hierachy
