@@ -48,57 +48,65 @@ def resolve_node_references_and_labels(
             if registry:
                 if isinstance(node, RefNode):
                     references = node.references
-                    prefixes = registry.external_documents_prefixes
+                    ext_prefixes = registry.external_documents_prefixes
 
                     for i, ref in enumerate(references):
                         if registry.is_label_in_registry(ref):
                             # local reference. Assign local new prefix
                             references[i] = registry.assign_new_prefix(ref)
                         else:
-                            # external reference. Check if it has a prefix
-                            for external_filename, prefix in prefixes.items():
-                                if ref.startswith(prefix):
-                                    xref = ref.replace(prefix, "", 1)
-                                    # check if ref_stripped is in external registry
-                                    external_registry = reference_registries.get(
-                                        external_filename
-                                    )
-                                    if not external_registry:
-                                        # find across all other registries
-                                        for k, reg in reference_registries.items():
-                                            if reg != registry:
-                                                if reg.is_label_in_registry(xref):
-                                                    external_registry = reg
-                                                    break
+                            # external reference. First, check across all registries to see if base label exists (without prefix stripped)
+                            found_ext = False
 
-                                    if external_registry:
-                                        references[i] = (
-                                            external_registry.assign_new_prefix(xref)
-                                        )
-
+                            for k, reg in reference_registries.items():
+                                if reg != registry and reg.is_label_in_registry(ref):
+                                    references[i] = reg.assign_new_prefix(ref)
+                                    found_ext = True
                                     break
 
-            if node.labels:
-                if registry:
+                            if not found_ext:
+                                # no external reference found. Check for prefixed version
+                                for ext_filename, prefix in ext_prefixes.items():
+                                    ext_registry = reference_registries.get(
+                                        ext_filename
+                                    )
+                                    if ref.startswith(prefix):
+                                        xref = ref.replace(prefix, "", 1)
+                                        # check if ref_stripped is in external registry
+                                        if not ext_registry:
+                                            # find across all other registries
+                                            for k, reg in reference_registries.items():
+                                                if (
+                                                    reg != registry
+                                                    and reg.is_label_in_registry(xref)
+                                                ):
+                                                    ext_registry = reg
+                                                    break
+
+                                        if ext_registry:
+                                            references[i] = (
+                                                ext_registry.assign_new_prefix(xref)
+                                            )
+
+                                        break
+
+                elif node.labels:
                     # assign new prefix to labels
                     node.labels = [
                         registry.assign_new_prefix(label) for label in node.labels
                     ]
-                else:
-                    # find across all other registries
-                    for i, label in enumerate(node.labels):
-                        for k, reg in reference_registries.items():
-                            if reg.is_label_in_registry(label):
-                                node.labels[i] = [
-                                    reg.assign_new_prefix(label)
-                                    for label in node.labels
-                                ]
-                                break
+
+                if hasattr(node, "title") and isinstance(node.title, list):
+                    for i, t in enumerate(node.title):
+                        if isinstance(t, ASTNode):
+                            resolve_node_references_and_labels(
+                                [node.title[i]], reference_registries, recurse=recurse
+                            )
 
         if recurse:
             if node.children:
                 resolve_node_references_and_labels(
-                    node.children, reference_registries, recurse
+                    node.children, reference_registries, recurse=True
                 )
 
 
