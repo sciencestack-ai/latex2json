@@ -17,6 +17,23 @@ def find_ref_nodes(nodes: List[ASTNode]) -> List[RefNode]:
     return ref_nodes
 
 
+def create_subfile_parser(parser: ParserCore) -> ParserCore:
+    # create standalone parser + fresh expander (to mimic subfiles as standalone documents)
+    # however, we share the counter manager state in order to share/progress the same counters (hack?)
+    expander = Expander()
+
+    parser2 = parser.create_standalone(logger=parser.logger, expander=expander)
+    # share counter manager state
+    parser2.expander.state.counter_manager = parser.expander.state.counter_manager
+    # share same label registry to assign labels to respective filenames
+    parser2.label_registry = parser.label_registry
+    parser2.external_documents_prefixes = parser.external_documents_prefixes
+    # disable standalone mode since subfiles must be fully parsed and has expansions etc
+    parser2.standalone_mode = False
+
+    return parser2
+
+
 def subfile_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     file_name = parser.parse_brace_name()
@@ -25,13 +42,7 @@ def subfile_handler(parser: ParserCore, token: Token):
         return None
 
     # create standalone parser + fresh expander (to mimic subfiles as standalone documents)
-    # however, we share the counter manager state in order to share/progress the same counters (hack?)
-    expander = Expander()
-    expander.state.counter_manager = parser.expander.state.counter_manager
-
-    parser2 = parser.create_standalone(logger=parser.logger, expander=expander)
-    # disable standalone mode since we treat it as if this subfile is a standalone document that can be fully parsed and has expansions etc
-    parser2.standalone_mode = False
+    parser2 = create_subfile_parser(parser)
 
     # get full filepath
     file_path = os.path.abspath(parser.get_cwd_path(file_name))
@@ -44,26 +55,43 @@ def subfile_handler(parser: ParserCore, token: Token):
     # print(parser2.external_documents_prefixes)
     # print(parser2.filename, parser.filename)
 
-    prefix_to_external_documents = {
-        v: k for k, v in parser2.external_documents_prefixes.items()
-    }
+    # # then do reference resolution:
+    # # match the reference nodes to parser2.external_documents based on parser.filename.
+    # local_labels = parser2.label_registry.get(parser2.filename, [])
+    # prefix_to_labels_registry = {}
+    # for filename, labels in parser.label_registry.items():
+    #     if filename == parser2.filename:
+    #         continue
+    #     if filename.endswith(".tex"):
+    #         filename = filename[:-4]
+    #     # check filename in parser2.external_documents_prefixes
+    #     for k, prefix in parser2.external_documents_prefixes.items():
+    #         if k.endswith(".tex"):
+    #             k = k[:-4]
+    #         if filename == k:
+    #             prefix_to_labels_registry[prefix] = labels
+    #             break
 
-    # then do reference resolution:
-    # match the reference nodes to parser2.external_documents based on parser.filename.
-    for ref_node in ref_nodes:
-        for i, ref in enumerate(ref_node.references):
-            is_external_ref = False
-            for k, v in prefix_to_external_documents.items():
-                if ref.startswith(k):
-                    # found prefix. Strip it out?
-                    print("FOUND", ref, "PREFIX", k)
-                    ref_node.references[i] = ref.lstrip(k)
-                    is_external_ref = True
-                    break
-            if not is_external_ref:
-                # convert the local references + labels?
-                print("LOCAL", ref)
-                pass
+    # print("Label registry", local_labels, prefix_to_labels_registry)
+    # for ref_node in ref_nodes:
+    #     references = ref_node.references
+    #     for i, ref in enumerate(references):
+    #         is_external_ref = False
+    #         if ref not in local_labels:
+    #             for prefix, labels in prefix_to_labels_registry.items():
+    #                 if ref.startswith(prefix):
+    #                     # found prefix. Double check the label registry to see if it's a valid label
+    #                     ref = ref[len(prefix) :]
+    #                     if ref in labels:
+    #                         print("FOUND", ref, "PREFIX", prefix)
+    #                         # TODO
+    #                         # ref_node.references[i] = ref
+    #                         is_external_ref = True
+    #                         break
+    #         if not is_external_ref:
+    #             # convert the local references + labels?
+    #             print("LOCAL", ref)
+    #             pass
 
     return nodes
 
@@ -78,7 +106,7 @@ def externaldocument_handler(parser: ParserCore, token: Token):
         return None
 
     prefix_str = parser.convert_nodes_to_str(prefix_nodes)
-    parser.external_documents_prefixes[ext_file.strip()] = prefix_str
+    parser.register_external_document_prefix(ext_file, prefix_str)
 
     return []
 
@@ -117,3 +145,7 @@ if __name__ == "__main__":
         "/Users/cj/Documents/python/latex2json/tests/samples/subfiles/manuscript.tex"
     )
     nodes = parser.parse_file(filepath)
+
+    ref_nodes = find_ref_nodes(nodes)
+    for ref_node in ref_nodes:
+        print(ref_node.references, ref_node.filename)

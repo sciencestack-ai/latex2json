@@ -1,3 +1,4 @@
+from typing import List, Optional
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
 from latex2json.parser.parser_core import ParserCore
@@ -11,15 +12,25 @@ def label_handler(parser: ParserCore, token: Token):
         # parser.logger.warning("Warning: \\label expects a label")
         return None
 
+    label_str = parser.convert_nodes_to_str(label_nodes)
+    parser.register_label(label_str)
+
     env_node = parser.current_env
     if env_node:
-        label_str = parser.convert_nodes_to_str(label_nodes)
         env_node.labels.append(label_str)
         return []
 
     return []
     # # if not found, return generic CommandNode
     # return [CommandNode("label", args=[label_nodes])]
+
+
+def create_ref_node(
+    parser: ParserCore, references: List[str], title: Optional[str] = None
+):
+    ref_node = RefNode(references, title=title)
+    ref_node.filename = parser.filename
+    return ref_node
 
 
 def make_ref_handler(split_comma: bool = False):
@@ -32,7 +43,7 @@ def make_ref_handler(split_comma: bool = False):
             references = [ref_str]
             if split_comma:
                 references = ref_str.split(",")
-            return [RefNode(references)]
+            return [create_ref_node(parser, references)]
         return []
 
     return ref_handler
@@ -46,7 +57,7 @@ def hyperref_handler(parser: ParserCore, token: Token):
     if ref_nodes:
         ref_str = parser.convert_nodes_to_str(ref_nodes, postprocess=False)
         title_str = parser.convert_nodes_to_str(title_nodes)
-        return [RefNode([ref_str], title=title_str)]
+        return [create_ref_node(parser, [ref_str], title=title_str)]
     return []
 
 

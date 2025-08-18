@@ -117,9 +117,28 @@ class ParserCore:
         # e.g. \defcitealias{sdsds}{Ch 5}
         self.cite_aliases: Dict[str, str] = {}
 
-        # files + external documents, file_path -> prefix
+        # files + external documents + refs resolution
         self.filename: str = ""
-        self.external_documents_prefixes: Dict[str, str] = {}
+        self.external_documents_prefixes: Dict[str, Dict[str, str]] = (
+            {}
+        )  # file_path -> {filename: prefix}
+        self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
+
+    def register_label(self, label: str):
+        key = self.filename
+        if not key:
+            return
+        if key not in self.label_registry:
+            self.label_registry[key] = []
+        self.label_registry[key].append(label)
+
+    def register_external_document_prefix(self, filename: str, prefix: str):
+        key = self.filename
+        if not key:
+            return
+        if key not in self.external_documents_prefixes:
+            self.external_documents_prefixes[key] = {}
+        self.external_documents_prefixes[key][filename.strip()] = prefix.strip()
 
     @classmethod
     def create_standalone(
