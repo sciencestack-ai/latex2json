@@ -6,7 +6,7 @@ from latex2json.nodes.node_types import NodeTypes
 
 class BaseRefCiteNode(ASTNode):
     def __init__(
-        self, prefix: str, references: str | List[str], title: Optional[str] = None
+        self, prefix: str, references: str | List[str], title: List[ASTNode] = []
     ):
         super().__init__()
         self.prefix = prefix
@@ -37,15 +37,17 @@ class BaseRefCiteNode(ASTNode):
         result["type"] = self.prefix
         result["content"] = self.references
         if self.title:
-            result["title"] = self.title
+            result["title"] = [child.to_json() for child in self.title]
         return result
 
     def copy(self):
-        return BaseRefCiteNode(self.prefix, self.references, self.title)
+        return BaseRefCiteNode(
+            self.prefix, self.references, title=self.copy_nodes(self.title)
+        )
 
 
 class RefNode(BaseRefCiteNode):
-    def __init__(self, references: str | List[str], title: Optional[str] = None):
+    def __init__(self, references: str | List[str], title: List[ASTNode] = []):
         super().__init__(NodeTypes.REF, references, title)
 
     def __eq__(self, other: ASTNode):
@@ -55,7 +57,7 @@ class RefNode(BaseRefCiteNode):
 
 
 class CiteNode(BaseRefCiteNode):
-    def __init__(self, references: str | List[str], title: Optional[str] = None):
+    def __init__(self, references: str | List[str], title: List[ASTNode] = []):
         super().__init__(NodeTypes.CITATION, references, title)
 
     def __eq__(self, other: ASTNode):
@@ -65,7 +67,7 @@ class CiteNode(BaseRefCiteNode):
 
 
 class URLNode(ASTNode):
-    def __init__(self, url: str, title: Optional[str] = None):
+    def __init__(self, url: str, title: List[ASTNode] = []):
         super().__init__()
         self.url = url
         self.title = title
@@ -90,11 +92,11 @@ class URLNode(ASTNode):
         result["type"] = NodeTypes.URL
         result["content"] = self.url
         if self.title:
-            result["title"] = self.title
+            result["title"] = [child.to_json() for child in self.title]
         return result
 
     def copy(self):
-        return URLNode(self.url, self.title)
+        return URLNode(self.url, title=self.copy_nodes(self.title))
 
 
 class FootnoteNode(ASTNode):

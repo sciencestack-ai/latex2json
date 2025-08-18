@@ -19,6 +19,8 @@ class ReferenceRegistry:
         return label in self.labels
 
     def assign_new_prefix(self, label: str) -> str:
+        if label.startswith(self.new_prefix):
+            return label
         return self.new_prefix + label
 
 
@@ -38,8 +40,10 @@ def resolve_node_references_and_labels(
 
     for node in nodes:
         # get source file str to know what it came from, and match with external_documents_prefixes
-        if node.source_file:
-            filename = strip_tex_extension(node.source_file)
+        source_file = node.get_source_file()
+
+        if source_file:
+            filename = strip_tex_extension(source_file)
             registry = reference_registries.get(filename)
             if registry:
                 if isinstance(node, RefNode):
@@ -59,28 +63,43 @@ def resolve_node_references_and_labels(
                                     external_registry = reference_registries.get(
                                         external_filename
                                     )
-                                    if (
-                                        external_registry
-                                        and external_registry.is_label_in_registry(xref)
-                                    ):
+                                    if not external_registry:
+                                        # find across all other registries
+                                        for k, reg in reference_registries.items():
+                                            if reg != registry:
+                                                if reg.is_label_in_registry(xref):
+                                                    external_registry = reg
+                                                    break
+
+                                    if external_registry:
                                         references[i] = (
                                             external_registry.assign_new_prefix(xref)
                                         )
-                                        break
-                                    else:
-                                        # unresolved reference
-                                        pass
 
-                elif registry.new_prefix and node.labels:
+                                    break
+
+            if node.labels:
+                if registry:
                     # assign new prefix to labels
                     node.labels = [
                         registry.assign_new_prefix(label) for label in node.labels
                     ]
+                else:
+                    # find across all other registries
+                    for i, label in enumerate(node.labels):
+                        for k, reg in reference_registries.items():
+                            if reg.is_label_in_registry(label):
+                                node.labels[i] = [
+                                    reg.assign_new_prefix(label)
+                                    for label in node.labels
+                                ]
+                                break
 
-        if recurse and node.children:
-            resolve_node_references_and_labels(
-                node.children, reference_registries, recurse
-            )
+        if recurse:
+            if node.children:
+                resolve_node_references_and_labels(
+                    node.children, reference_registries, recurse
+                )
 
 
 def generate_reference_registries(parser: ParserCore) -> Dict[str, ReferenceRegistry]:

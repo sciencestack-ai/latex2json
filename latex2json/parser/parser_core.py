@@ -369,16 +369,28 @@ class ParserCore:
                     node.source_file = self.filename
         return nodes
 
-    def parse(self, text: Optional[str] = None, postprocess=False) -> List[ASTNode]:
+    def parse(
+        self,
+        text: Optional[str] = None,
+        postprocess=False,
+        resolve_cross_document_references=False,
+    ) -> List[ASTNode]:
         if text:
             self.set_text(text)
 
         out = self.process()
         if postprocess:
             out = self.postprocess_nodes(out)
+        if resolve_cross_document_references:
+            out = self.resolve_crossdoc_node_refs_labels(out)
         return out
 
-    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
+    def parse_file(
+        self,
+        file_path: str,
+        postprocess=False,
+        resolve_cross_document_references=False,
+    ) -> Optional[List[ASTNode]]:
         dir_path = os.path.abspath(os.path.dirname(file_path))
         filename = os.path.basename(file_path)
 
@@ -397,7 +409,11 @@ class ParserCore:
         self.logger.info(f"Parsing file {file_path}...")
 
         # Use the main parse method for consistent behavior
-        out = self.parse(text=content, postprocess=postprocess)
+        out = self.parse(
+            text=content,
+            postprocess=postprocess,
+            resolve_cross_document_references=resolve_cross_document_references,
+        )
 
         return out
 
@@ -741,7 +757,7 @@ class ParserCore:
 
         return merged_nodes
 
-    def resolve_node_references_and_labels(self, nodes: List[ASTNode]):
+    def resolve_crossdoc_node_refs_labels(self, nodes: List[ASTNode]):
         from latex2json.parser.references.reference_resolver import (
             generate_reference_registries,
             resolve_node_references_and_labels,

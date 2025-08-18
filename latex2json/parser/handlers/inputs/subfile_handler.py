@@ -12,7 +12,9 @@ def create_subfile_parser(parser: ParserCore) -> ParserCore:
 
     parser2 = parser.create_standalone(logger=parser.logger, expander=expander)
     # share counter manager state
-    parser2.expander.state.counter_manager = parser.expander.state.counter_manager
+    # share expander state??
+    parser2.expander.state = parser.expander.state
+
     # share same label registry to assign labels to respective filenames
     parser2.label_registry = parser.label_registry
     parser2.external_documents_prefixes = parser.external_documents_prefixes
@@ -82,9 +84,9 @@ if __name__ == "__main__":
     filepath = (
         "/Users/cj/Documents/python/latex2json/tests/samples/subfiles/manuscript.tex"
     )
-    nodes = parser.parse_file(filepath)
-
-    nodes = parser.resolve_node_references_and_labels(nodes)
+    nodes = parser.parse_file(
+        filepath, postprocess=True, resolve_cross_document_references=True
+    )
 
     ref_nodes = find_ref_nodes(nodes)
     for ref_node in ref_nodes:

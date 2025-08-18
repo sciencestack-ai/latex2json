@@ -1,5 +1,6 @@
 from typing import List, Optional
 from latex2json.nodes import CommandNode, RefNode
+from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
@@ -45,11 +46,11 @@ def hyperref_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     ref_nodes = parser.parse_bracket_as_nodes()
     parser.skip_whitespace()
-    title_nodes = parser.parse_brace_as_nodes()
+    title_nodes = parser.parse_brace_as_nodes() or []
     if ref_nodes:
         ref_str = parser.convert_nodes_to_str(ref_nodes, postprocess=False)
-        title_str = parser.convert_nodes_to_str(title_nodes)
-        return [RefNode([ref_str], title=title_str)]
+        title_nodes = parser.postprocess_nodes(title_nodes)
+        return [RefNode([ref_str], title=title_nodes)]
     return []
 
 
@@ -66,14 +67,15 @@ def cite_handler(parser: ParserCore, token: Token):
         parser.logger.warning("Warning: \\cite expects a citation")
         return None
 
-    note_str = None
+    title = []
     if prenote:
-        note_str = parser.convert_nodes_to_str(prenote)
+        title = prenote
         if postnote:
-            note_str += ", " + parser.convert_nodes_to_str(postnote)
+            title.extend([TextNode(", ")] + postnote)
+        title = parser.postprocess_nodes(title)
     cite_str = parser.convert_nodes_to_str(citation_nodes).split(",")
     cite_str = [s.strip() for s in cite_str]
-    return [CiteNode(cite_str, title=note_str)]
+    return [CiteNode(cite_str, title=title)]
 
 
 REF_COMMANDS = ["ref", "autoref", "eqref", "pageref", "cref", "Cref"]
@@ -119,7 +121,8 @@ def citealias_handler(parser: ParserCore, token: Token):
         return None
     cite_key_str = parser.convert_nodes_to_str(cite_key)
     alias_str = parser.cite_aliases.get(cite_key_str, None)
-    return [CiteNode([cite_key_str], title=alias_str)]
+    title = [TextNode(alias_str)] if alias_str else []
+    return [CiteNode([cite_key_str], title=title)]
 
 
 def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
@@ -130,14 +133,12 @@ def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
             parser.logger.warning("Warning: \\url expects a URL")
             return None
         url_str = parser.convert_nodes_to_str(url_nodes)
-        title = None
+        title = []
 
         if parse_title:
             parser.skip_whitespace()
-            title_nodes = parser.parse_brace_as_nodes()
-            if title_nodes:
-                title_str = parser.convert_nodes_to_str(title_nodes)
-                title = title_str
+            title = parser.parse_brace_as_nodes() or []
+            title = parser.postprocess_nodes(title)
 
         return [URLNode(path_prefix + url_str, title=title)]
 
