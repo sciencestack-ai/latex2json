@@ -99,30 +99,58 @@ class ParserCore:
             logger=logger,
             prevent_whitelisted_redefinitions=True,
         )
-
-        self.token_buffer: deque[Token] = deque()
         self.standalone_mode: bool = False
 
+        # token buffer
+        self.token_buffer: deque[Token] = deque()
+
+        # macros + env handlers
+        self.macros: Dict[str, Macro] = {}
+        self.macro_patterns: List[MacroPattern] = []
+        self.env_handlers: Dict[str, EnvHandler] = {}
+
+        # modes + state
         self._mode_stack: List[ProcessingMode] = [ProcessingMode.TEXT]
         self._env_node_stack: List[ASTNode] = []
         self.state = ParserState()
 
-        self.macros: Dict[str, Macro] = {}
-        self.macro_patterns: List[MacroPattern] = []
-        self.env_handlers: Dict[str, EnvHandler] = {}
+        # e.g. \defcitealias{sdsds}{Ch 5}
         self.cite_aliases: Dict[str, str] = {}
+
+        # files + external documents + refs resolution
+        self.filename: str = ""
+        self.external_documents_prefixes: Dict[str, Dict[str, str]] = (
+            {}
+        )  # file_path -> {filename: prefix}
+        self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
+
+    def register_label(self, label: str):
+        key = self.filename
+        if not key:
+            return
+        if key not in self.label_registry:
+            self.label_registry[key] = []
+        self.label_registry[key].append(label)
+
+    def register_external_document_prefix(self, filename: str, prefix: str):
+        key = self.filename
+        if not key:
+            return
+        if key not in self.external_documents_prefixes:
+            self.external_documents_prefixes[key] = {}
+        self.external_documents_prefixes[key][filename.strip()] = prefix.strip()
 
     @classmethod
     def create_standalone(
         cls,
-        tokens: List[Token],
         logger: Optional[logging.Logger] = None,
         expander: Optional[Expander] = None,
     ) -> "ParserCore":
         """Create a ParserCore instance for isolated token processing without expander dependency."""
         parser = cls(logger=logger, expander=expander)
         parser.standalone_mode = True
-        parser.push_tokens(tokens)
+        if expander.cwd:
+            parser.cwd = expander.cwd
         return parser
 
     def push_mode(self, mode: ProcessingMode):
@@ -145,12 +173,17 @@ class ParserCore:
         return self._env_node_stack[-1] if self._env_node_stack else None
 
     @property
-    def cwd(self):
+    def cwd(self) -> str:
         return self.expander.cwd
 
     @cwd.setter
-    def cwd(self, value):
+    def cwd(self, value: str):
         self.expander.cwd = value
+
+    def get_cwd_path(self, file_path: str) -> str:
+        if not os.path.isabs(file_path):
+            file_path = os.path.join(self.cwd, file_path)
+        return file_path
 
     def get_colors(self):
         return self.expander.get_colors()
@@ -251,10 +284,8 @@ class ParserCore:
         return self.process_tokens_standalone(tokens)
 
     def process_tokens_standalone(self, tokens: List[Token]) -> List[ASTNode]:
-        parser = self.create_standalone(
-            tokens, logger=self.logger, expander=self.expander
-        )
-        return parser.process()
+        parser = self.create_standalone(logger=self.logger, expander=self.expander)
+        return parser.process_tokens(tokens)
 
     def _generate_stop_token(self):
         return self.expander._generate_stop_token()
@@ -331,18 +362,59 @@ class ParserCore:
         if nodes:
             # assign font attributes to nodes
             styles = self.state.get_styles_as_string()
-            if styles:
-                for node in nodes:
+            for node in nodes:
+                if styles:
                     node.add_styles(styles, insert_at_front=True)
+                if self.filename and not node.source_file:
+                    node.source_file = self.filename
         return nodes
 
-    def parse(self, text: Optional[str] = None, postprocess=False) -> List[ASTNode]:
+    def parse(
+        self,
+        text: Optional[str] = None,
+        postprocess=False,
+        resolve_cross_document_references=False,
+    ) -> List[ASTNode]:
         if text:
             self.set_text(text)
 
         out = self.process()
         if postprocess:
             out = self.postprocess_nodes(out)
+        if resolve_cross_document_references:
+            out = self.resolve_crossdoc_node_refs_labels(out)
+        return out
+
+    def parse_file(
+        self,
+        file_path: str,
+        postprocess=False,
+        resolve_cross_document_references=False,
+    ) -> Optional[List[ASTNode]]:
+        dir_path = os.path.abspath(os.path.dirname(file_path))
+        filename = os.path.basename(file_path)
+
+        self.filename = filename
+        # set expander cwd
+        self.cwd = dir_path
+
+        # Read and parse the file content
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+        except (IOError, UnicodeDecodeError) as e:
+            self.logger.error(f"Failed to read file {file_path}: {e}")
+            return None
+
+        self.logger.info(f"Parsing file {file_path}...")
+
+        # Use the main parse method for consistent behavior
+        out = self.parse(
+            text=content,
+            postprocess=postprocess,
+            resolve_cross_document_references=resolve_cross_document_references,
+        )
+
         return out
 
     def _handler(self, token: Token) -> List[ASTNode]:
@@ -684,6 +756,23 @@ class ParserCore:
                 node.text = strip_trailing_whitespace_from_lines(node.text)
 
         return merged_nodes
+
+    def resolve_crossdoc_node_refs_labels(self, nodes: List[ASTNode]):
+        from latex2json.parser.references.reference_resolver import (
+            generate_reference_registries,
+            resolve_node_references_and_labels,
+        )
+
+        # if external documents are defined, resolve references and labels for cross document nodes
+        if len(self.external_documents_prefixes) > 0:
+            self.logger.info(
+                "Resolving references and labels for cross document nodes..."
+            )
+            reference_registries = generate_reference_registries(self)
+            resolve_node_references_and_labels(
+                nodes, reference_registries, recurse=True
+            )
+        return nodes
 
     def parse_tokens_until(
         self, predicate: TokenPredicate, consume_predicate=False

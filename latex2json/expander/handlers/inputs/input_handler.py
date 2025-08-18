@@ -1,5 +1,4 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.types import Token
 
 
@@ -20,7 +19,7 @@ def endinput_handler(expander: ExpanderCore, token: Token):
 
 
 def register_file_input_handlers(expander: ExpanderCore):
-    for command in ["input", "include", "subfile", "subfileinclude"]:
+    for command in ["input", "include"]:
         expander.register_handler(
             command,
             input_handler,
@@ -28,11 +27,6 @@ def register_file_input_handlers(expander: ExpanderCore):
         )
 
     expander.register_handler("endinput", endinput_handler, is_global=True)
-
-    ignore_input_patterns = {
-        "externaldocument": "[{",  # \externaldocument{otherdoc}  % references otherdoc.tex. We ignore since in our expander/parser we already assume references across docs
-    }
-    register_ignore_handlers_util(expander, ignore_input_patterns, expand=False)
 
 
 if __name__ == "__main__":

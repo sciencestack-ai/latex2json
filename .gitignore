@@ -40,3 +40,4 @@ papers
 *.prof
 
 .cursor
+.claude

@@ -63,14 +63,18 @@ class JSONRenderer:
     def parse_file(
         self, file_path: str, organize_hierachy=True
     ) -> Optional[Dict[str, List[Dict]]]:
-        nodes = self.parser.parse_file(file_path, postprocess=True)
+        nodes = self.parser.parse_file(
+            file_path, postprocess=True, resolve_cross_document_references=True
+        )
         if not nodes:
             return None
         self.logger.info(f"Parsed {len(nodes)} nodes, converting to json...")
         return self.convert_nodes_to_json(nodes, organize_hierachy=organize_hierachy)
 
     def parse(self, text: str, organize_hierachy=True) -> Dict[str, List[Dict]]:
-        nodes = self.parser.parse(text, postprocess=True)
+        nodes = self.parser.parse(
+            text, postprocess=True, resolve_cross_document_references=True
+        )
         self.logger.info(f"Parsed {len(nodes)} nodes, converting to json...")
         json_tokens = self.convert_nodes_to_json(
             nodes, organize_hierachy=organize_hierachy

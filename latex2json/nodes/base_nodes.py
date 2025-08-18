@@ -25,8 +25,17 @@ class ASTNode(ABC):
 
         self.should_postprocess = True
 
+        self.source_file: Optional[str] = None
+
     def __repr__(self):
         return self.__str__()
+
+    def get_source_file(self) -> Optional[str]:
+        if self.source_file:
+            return self.source_file
+        if self.parent:
+            return self.parent.get_source_file()
+        return None
 
     def set_children(self, children: List["ASTNode"]):
         if self.children:

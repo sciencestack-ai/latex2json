@@ -1,0 +1,23 @@
+\documentclass[manuscript.tex]{subfiles}
+
+\numberwithin{equation}{section}
+
+\externaldocument[I-]{intro}
+\externaldocument[M-]{manuscript}
+
+\begin{document}
+APPENDIX
+
+\section{Appendix}
+\label{sec:appendix}
+
+Referencing intro \ref{I-sec:intro}
+
+Referencing main \ref{M-sec:main}
+
+\begin{equation}
+  \label{eq:appendix:1}
+  \int_0^1 x^2 dx = \frac{1}{3}
+\end{equation}
+
+\end{document}

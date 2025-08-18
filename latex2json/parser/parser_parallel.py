@@ -80,10 +80,17 @@ class ParserParallel(Parser):
         self.n_processors = n_processors
 
     # override
-    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
+    def parse_file(
+        self,
+        file_path: str,
+        postprocess=False,
+        resolve_cross_document_references=False,
+    ) -> Optional[List[ASTNode]]:
         workers = min(self.n_processors, os.cpu_count())
         if workers <= 1:
-            return super().parse_file(file_path, postprocess)
+            return super().parse_file(
+                file_path, postprocess, resolve_cross_document_references
+            )
 
         # set expander cwd
         self.cwd = os.path.abspath(os.path.dirname(file_path))
@@ -138,6 +145,9 @@ class ParserParallel(Parser):
         if postprocess:
             self.logger.info(f"Postprocessing {len(out)} nodes...")
             out = self.postprocess_nodes(out)
+
+        if resolve_cross_document_references:
+            out = self.resolve_crossdoc_node_refs_labels(out)
         return out
 
     @staticmethod

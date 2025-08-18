@@ -41,19 +41,6 @@ class Parser(ParserCore):
         for cmd in ["bibliography", "addbibresource"]:
             self.register_handler(cmd, bib_file_handler)
 
-    def parse_file(self, file_path: str, postprocess=False) -> Optional[List[ASTNode]]:
-        # set expander cwd
-        self.cwd = os.path.abspath(os.path.dirname(file_path))
-        tokens = self.expander.expand_file(os.path.basename(file_path))
-        if not tokens:
-            return None
-        self.logger.info(f"Expanded {len(tokens)} tokens from {file_path}, parsing...")
-        out = self.process_tokens_standalone(tokens)
-        if postprocess:
-            self.logger.info(f"Postprocessing {len(out)} nodes...")
-            out = self.postprocess_nodes(out)
-        return out
-
     def parse_bib_file(self, file_path: str) -> List[BibEntryNode]:
         all_entries: List[BibEntryNode] = []
 

@@ -1,5 +1,23 @@
 \documentclass[manuscript.tex]{subfiles}
 
+\externaldocument[M-]{manuscript}
+
 \begin{document}
 INTRO DOC
+
+\section{Intro}
+\label{sec:intro}
+Referencing from main \ref{M-sec:main}
+
+Inside my intro \ref{sec:intro}
+
+\section{Fake}
+\label{M-sec:fake} % local label! not prefix!
+My fake section \ref{M-sec:fake}
+
+\begin{equation}
+  \label{eq:intro:1}
+  1+1
+\end{equation}
+
 \end{document}

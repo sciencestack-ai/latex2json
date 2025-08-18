@@ -190,7 +190,7 @@ class TexReader:
             # tokens = self.parser.parse_file(file_path)
             # output = self.token_builder.build(tokens)
             color_map = self.json_renderer.get_colors()
-            self.clear()
+            # self.clear()
             return ProcessingResult(
                 tokens=output,
                 color_map=color_map,
@@ -352,7 +352,7 @@ if __name__ == "__main__":
 
     logger = setup_logger(level=logging.DEBUG, log_file="logs/tex_reader.log")
 
-    tex_reader = TexReader(logger, n_processors=4)
+    tex_reader = TexReader(logger, n_processors=1)
 
     # # Example usage with compressed file
     # gz_file = "papers/arXiv-2301.10945v1.tar.gz"
@@ -382,7 +382,7 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-2301.10945v1"
         # "papers/tested/arXiv-2408.07934v1"
         # "papers/tested/arXiv-1712.01815v1"
-        "papers/tested/arXiv-2404.02220v1"
+        "papers/new/euler-nordstroem"
     ]
     merge_inline = False
     stem_postfix = "_merged" if merge_inline else ""

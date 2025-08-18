@@ -7,6 +7,12 @@ from latex2json.utils.encoding import detect_encoding, read_file
 import colorsys
 
 
+def strip_tex_extension(filename: str) -> str:
+    while filename.endswith(".tex"):
+        filename = filename[:-4]
+    return filename
+
+
 def convert_color_to_css(model: str, spec: str) -> str:
     """Convert LaTeX color specifications to CSS values"""
 
