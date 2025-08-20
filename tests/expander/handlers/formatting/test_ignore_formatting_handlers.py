@@ -58,6 +58,8 @@ def test_ignore_formatting_handlers():
     \fontsize{.4\dimexpr(\f@size pt)}{0}
 
     \fancyhead[R]{Simple text}
+
+    \errorcontextlines=10
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

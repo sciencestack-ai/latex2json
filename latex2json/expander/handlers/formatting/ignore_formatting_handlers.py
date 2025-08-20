@@ -135,6 +135,8 @@ formatting_patterns = {
     "todo": "[{",
     "listoftodos": 0,
     "listoftheorems": 0,
+    # error lines
+    "errorcontextlines": "=i",
 }
 
 content_formatting_patterns = {
