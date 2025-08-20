@@ -144,16 +144,6 @@ def make_convert_to_str_handler(text: str) -> Handler:
     return convert_to_str_handler
 
 
-def frac_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    # put in braces to be certain
-    toks1 = expander.parse_immediate_token(skip_whitespace=True, expand=True)
-    toks2 = expander.parse_immediate_token(skip_whitespace=True, expand=True)
-    if toks1 is None or toks2 is None:
-        expander.logger.warning("frac: Missing argument")
-        return None
-    return [token, *wrap_tokens_in_braces(toks1), *wrap_tokens_in_braces(toks2)]
-
-
 def make_math_command_handler(command: str, argspec: str) -> Handler:
     handler = make_generic_command_handler(command, argspec, expand=True)
 
@@ -177,7 +167,7 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
 
     # frac
-    math_commands = {"frac": "{{", "tilde": "{", "mathcal": "{"}
+    math_commands = {"frac": "{{", "tilde": "{", "mathcal": "{", "vec": "{", "hat": "{"}
     for command, argspec in math_commands.items():
         expander.register_handler(
             command, make_math_command_handler(command, argspec), is_global=True
