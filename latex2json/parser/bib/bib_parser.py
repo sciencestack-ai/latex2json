@@ -4,6 +4,7 @@ import os
 from typing import List
 
 from latex2json.nodes.bibliography_nodes import BibEntryNode
+from latex2json.utils.encoding import read_file
 from latex2json.parser.bib.bibtex_parser import (
     BibTexParser,
 )
@@ -81,8 +82,7 @@ class BibParser:
         #     self.logger.warning(f"BibParser: Already parsed {file_path}")
         #     return None
         # self._parsed_files.add(file_path)
-        with open(file_path, "r") as f:
-            return f.read()
+        return read_file(file_path)
 
     def search_and_extract_bib_content(self, file_path: str) -> str | None:
         exts = [".bbl", ".bib"]

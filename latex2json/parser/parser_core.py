@@ -4,6 +4,7 @@ import re
 from collections import deque
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
+from latex2json.utils.encoding import read_file
 from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.sections import SECTIONS
@@ -400,9 +401,8 @@ class ParserCore:
 
         # Read and parse the file content
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
-        except (IOError, UnicodeDecodeError) as e:
+            content = read_file(file_path)
+        except Exception as e:
             self.logger.error(f"Failed to read file {file_path}: {e}")
             return None
 

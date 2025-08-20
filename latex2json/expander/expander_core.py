@@ -4,6 +4,7 @@ from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
 
 
 from latex2json.latex_maps.boxes import BASE_BOXES
+from latex2json.utils.encoding import read_file
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
@@ -450,7 +451,7 @@ class ExpanderCore:
             self.logger.warning(f"Input file {file_path} does not exist")
             return
 
-        input_text = open(file_path).read()
+        input_text = read_file(file_path)
         # ensure to put \n at the end of the file to delimit/split, in case file ends with %
         self.push_text(input_text + "\n")
 
@@ -460,7 +461,7 @@ class ExpanderCore:
             self.logger.warning(f"Input file {file_path} does not exist")
             return None
         self.logger.info("EXPANDING FILE " + file_path)
-        input_text = open(file_path).read()
+        input_text = read_file(file_path)
         tokens = self.expand_text(input_text)
         return tokens
 
