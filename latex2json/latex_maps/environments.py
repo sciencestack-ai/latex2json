@@ -150,6 +150,8 @@ LAYOUT_ENVIRONMENTS = {
     "adjustbox": EnvironmentDefinition("adjustbox", num_args=1),
     "adjustwidth": EnvironmentDefinition("adjustwidth", num_args=2),
     "CJK": EnvironmentDefinition("CJK", num_args=2),
+    # changepage
+    "changemargin": EnvironmentDefinition("changemargin", num_args=2),
 }
 
 

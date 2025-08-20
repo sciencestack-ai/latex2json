@@ -82,6 +82,9 @@ BUILTIN_DIMENSIONS = [
     "@tempdima",
     "@tempdimb",
     "@tempdimc",
+    # pdfpage dimensions
+    "pdfpagewidth",
+    "pdfpageheight",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:

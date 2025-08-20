@@ -125,6 +125,9 @@ formatting_patterns = {
     "rhead": "[{",
     "chead": "[{",
     "lhead": "[{",
+    "rfoot": "[{",
+    "cfoot": "[{",
+    "lfoot": "[{",
     # ligatures
     "DisableLigatures": "[{",
     # makeperpage
@@ -239,6 +242,16 @@ def rcsinfo_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def big_handler(expander: ExpanderCore, token: Token):
+    r"""
+    It makes the following delimiter (like (, [, {, |, etc.) slightly larger than normal text size, but not as large as \Big, \bigg, or \Bigg
+
+    We just ignore this command
+    """
+    # tokens = expander.parse_immediate_token(skip_whitespace=True, expand=True)
+    return []
+
+
 def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns, expand=False)
@@ -248,6 +261,9 @@ def register_ignore_format_handlers(expander: ExpanderCore):
     expander.register_handler(r"\mathpalette", mathpalette_handler, is_global=True)
     expander.register_handler(r"\rcsInfo", rcsinfo_handler, is_global=True)
     expander.register_handler("\\", newline_handler, is_global=True)
+
+    for big in ["big", "Big", "bigg", "Bigg"]:
+        expander.register_handler(big, big_handler, is_global=True)
 
 
 if __name__ == "__main__":
