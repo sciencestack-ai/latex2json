@@ -45,7 +45,7 @@ def test_nested_lists():
     parser = Parser()
 
     text = r"""
-    \begin{itemize}
+    \begin{itemize}[left=0pt]
         \label{list:item1}
         \item First level item
         \begin{enumerate}

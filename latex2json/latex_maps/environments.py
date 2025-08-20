@@ -197,11 +197,15 @@ TABULAR_ENVIRONMENTS = {
 LIST_ENVIRONMENTS = {
     "list": EnvironmentDefinition("list", num_args=2, has_direct_command=True),
     "trivlist": EnvironmentDefinition("trivlist", has_direct_command=True),
-    "itemize": EnvironmentDefinition("itemize", has_direct_command=True),
+    "itemize": EnvironmentDefinition(
+        "itemize", num_args=1, default_arg=[], has_direct_command=True
+    ),
     "enumerate": EnvironmentDefinition(
         "enumerate", num_args=1, default_arg=[], has_direct_command=True
     ),  # enumitem package has [] arg
-    "description": EnvironmentDefinition("description", has_direct_command=True),
+    "description": EnvironmentDefinition(
+        "description", num_args=1, default_arg=[], has_direct_command=True
+    ),
 }
 
 # Mathematical environments
