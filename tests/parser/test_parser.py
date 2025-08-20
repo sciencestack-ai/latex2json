@@ -1,7 +1,14 @@
+from typing import List
 from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
 from latex2json.nodes.environment_nodes import TheoremNode
 from latex2json.nodes.math_nodes import EquationNode
-from latex2json.nodes.utils import is_whitespace_node, strip_whitespace_nodes
+from latex2json.nodes.ref_cite_url_nodes import RefNode
+from latex2json.nodes.section_nodes import SectionNode
+from latex2json.nodes.utils import (
+    find_nodes_by_type,
+    is_whitespace_node,
+    strip_whitespace_nodes,
+)
 from latex2json.parser.parser import Parser
 from latex2json.nodes import EnvironmentNode, CaptionNode
 
@@ -140,12 +147,15 @@ def test_equation_tag_numbering_n_sanitization():
     assert out[0].numbering == "P"
 
 
+SAMPLES_DIR_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "../samples"
+)
+
+
 def test_parse_file():
     parser = Parser()
 
-    dir_path = os.path.dirname(os.path.abspath(__file__))
-    sample_dir_path = os.path.join(dir_path, "../samples")
-    out = parser.parse_file(os.path.join(sample_dir_path, "main.tex"))
+    out = parser.parse_file(os.path.join(SAMPLES_DIR_PATH, "main.tex"))
     out = strip_whitespace_nodes(out)
     assert len(out) >= 1
     # assert isinstance(out[0], EnvironmentNode)
@@ -153,3 +163,46 @@ def test_parse_file():
     # assert len(out[0].body) == 2
     # assert out[0].body[0].name == "subfile"
     # assert out[0].body[1].name == "subfile"
+
+
+def test_subfiles_and_external_documents_reference_resolution():
+    parser = Parser()
+
+    filepath = os.path.join(SAMPLES_DIR_PATH, "subfiles/manuscript.tex")
+    nodes = parser.parse_file(
+        filepath, postprocess=True, resolve_cross_document_references=True
+    )
+    nodes = strip_whitespace_nodes(nodes)
+    assert len(nodes) >= 1
+
+    # first, check the refs are apprioriately resolved with relevant file prefixes
+    ref_nodes: List[RefNode] = find_nodes_by_type(nodes, RefNode)
+
+    expected_refs_n_sourcefile = [
+        (["manuscript:sec:main"], "manuscript.tex"),
+        (["manuscript:sec:main"], "intro.tex"),
+        (["intro:sec:intro"], "intro.tex"),
+        (["intro:M-sec:fake"], "intro.tex"),
+        (["intro:sec:intro", "manuscript:sec:main"], "appendix.tex"),
+    ]
+
+    assert len(ref_nodes) == len(expected_refs_n_sourcefile)
+    for i, ref_node in enumerate(ref_nodes):
+        exp = expected_refs_n_sourcefile[i]
+        assert ref_node.references == exp[0]
+        assert ref_node.get_source_file() == exp[1]
+
+    # then check that node labels are also apprioriately resolved
+    sec_nodes: List[SectionNode] = find_nodes_by_type(nodes, SectionNode)
+    expected_sec_labels_n_sourcefile = [
+        (["manuscript:sec:main"], "manuscript.tex"),
+        (["intro:sec:intro"], "intro.tex"),
+        (["intro:M-sec:fake"], "intro.tex"),
+        (["appendix:sec:appendix"], "appendix.tex"),
+    ]
+
+    assert len(sec_nodes) == len(expected_sec_labels_n_sourcefile)
+    for i, sec_node in enumerate(sec_nodes):
+        exp = expected_sec_labels_n_sourcefile[i]
+        assert sec_node.labels == exp[0]
+        assert sec_node.get_source_file() == exp[1]

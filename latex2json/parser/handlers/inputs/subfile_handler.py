@@ -1,5 +1,4 @@
 import os
-from typing import Dict
 from latex2json.expander.expander import Expander
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
@@ -67,7 +66,9 @@ def register_subfile_handlers(parser: ParserCore):
 if __name__ == "__main__":
     from latex2json.parser.parser import Parser
 
-    from latex2json.nodes.utils import find_ref_nodes
+    from typing import List
+    from latex2json.nodes.utils import find_nodes_by_type
+    from latex2json.nodes.ref_cite_url_nodes import RefNode
 
     from logging import Logger, DEBUG, StreamHandler, INFO
 
@@ -88,6 +89,6 @@ if __name__ == "__main__":
         filepath, postprocess=True, resolve_cross_document_references=True
     )
 
-    ref_nodes = find_ref_nodes(nodes)
+    ref_nodes: List[RefNode] = find_nodes_by_type(nodes, RefNode)
     for ref_node in ref_nodes:
         print(ref_node.references, ref_node.source_file)

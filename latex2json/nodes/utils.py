@@ -1,4 +1,4 @@
-from typing import List, TypeVar, Callable
+from typing import List, Type, TypeVar, Callable
 from latex2json.nodes.base_nodes import (
     AlignmentNode,
     CommandNode,
@@ -96,11 +96,21 @@ def split_nodes_into_columns(nodes: List[ASTNode]) -> List[List[ASTNode]]:
     return split_nodes_by_predicate(nodes, lambda n: isinstance(n, AlignmentNode))
 
 
-def find_ref_nodes(nodes: List[ASTNode]) -> List[RefNode]:
-    ref_nodes: List[RefNode] = []
+# e.g. find_nodes_by_type(nodes, RefNode)
+def find_nodes_by_type(nodes: List[ASTNode], node_type: Type[ASTNode]) -> List[ASTNode]:
+    """Find all nodes of a specific type in a node tree.
+
+    Args:
+        nodes: List of nodes to search
+        node_type: Type of node to find
+
+    Returns:
+        List of nodes matching the specified type
+    """
+    matching_nodes: List[ASTNode] = []
     for node in nodes:
-        if isinstance(node, RefNode):
-            ref_nodes.append(node)
+        if isinstance(node, node_type):
+            matching_nodes.append(node)
         elif node.children:
-            ref_nodes.extend(find_ref_nodes(node.children))
-    return ref_nodes
+            matching_nodes.extend(find_nodes_by_type(node.children, node_type))
+    return matching_nodes
