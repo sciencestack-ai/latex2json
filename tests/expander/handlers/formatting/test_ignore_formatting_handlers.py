@@ -60,6 +60,9 @@ def test_ignore_formatting_handlers():
     \fancyhead[R]{Simple text}
 
     \errorcontextlines=10
+
+    \mag=1000
+    \magstep2
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

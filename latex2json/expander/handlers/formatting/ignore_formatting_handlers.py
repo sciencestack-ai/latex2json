@@ -141,6 +141,9 @@ formatting_patterns = {
     "listoftheorems": 0,
     # error lines
     "errorcontextlines": "=i",
+    # mag
+    "mag": "=i",
+    "magstep": "i",
 }
 
 content_formatting_patterns = {

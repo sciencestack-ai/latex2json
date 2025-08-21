@@ -46,8 +46,26 @@ def font_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def newfont_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \newfont{\grecomath}{cmmi12 at 15pt}
+    """
+    expander.skip_whitespace()
+    cmd_name = expander.parse_command_name()
+    expander.skip_whitespace()
+    font_definition = expander.parse_brace_as_tokens() or []
+    if not cmd_name:
+        expander.logger.warning("Warning: \\newfont expects a command name")
+        return None
+
+    expander.create_new_font(cmd_name, font_definition)
+
+    return []
+
+
 def register_font_handlers(expander: ExpanderCore):
     expander.register_handler(r"\font", font_handler, is_global=True)
+    expander.register_handler(r"\newfont", newfont_handler, is_global=True)
 
     ignore_patterns = {
         "newfam": "\\",  # e.g. \newfam\fontfam

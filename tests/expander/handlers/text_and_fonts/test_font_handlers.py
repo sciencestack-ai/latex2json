@@ -5,7 +5,7 @@ from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
 
-def test_font_handler():
+def test_font_n_newfont_handler():
     expander = Expander()
 
     # overrides \def\bigfont
@@ -16,11 +16,20 @@ def test_font_handler():
 """
     out = expander.expand(text)
 
-    out = strip_whitespace_tokens(out)
-    # returns as \bigfont
-    assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "bigfont")])
+    # leave \bigfont as is
+    assert expander.convert_tokens_to_str(out).strip() == r"\bigfont"
 
     assert expander.state.font_registry["bigfont"]
+
+    text = r"""
+    \newfont{\grecomath}{cmmi12 at 15pt}
+    \grecomath
+    """
+    out = expander.expand(text)
+    # leave \grecomath as is
+    assert expander.convert_tokens_to_str(out).strip() == r"\grecomath"
+
+    assert expander.state.font_registry["grecomath"]
 
 
 def test_ignored_font_handlers():
