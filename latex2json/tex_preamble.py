@@ -2,14 +2,10 @@ import re
 import sys, os
 import logging
 
-from latex2json.tex_file_extractor import DOCUMENTCLASS_PATTERN
+from latex2json.tex_file_extractor import BEGIN_DOCUMENT_PATTERN, DOCUMENTCLASS_PATTERN
 from latex2json.utils.tex_utils import read_tex_file_content, strip_latex_comments
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-
-BEGIN_DOCUMENT_PATTERN = re.compile(r"\\begin\s*\{document\}", re.DOTALL)
-SLASH_DOCUMENT_PATTERN = re.compile(r"\\document\b")
 
 
 class TexPreamble:
@@ -22,9 +18,7 @@ class TexPreamble:
         content = strip_latex_comments(content)
 
         # get all content before begin document
-        begin_doc_search = BEGIN_DOCUMENT_PATTERN.search(
-            content
-        ) or SLASH_DOCUMENT_PATTERN.search(content)
+        begin_doc_search = BEGIN_DOCUMENT_PATTERN.search(content)
         if begin_doc_search:
             content = content[: begin_doc_search.start()]
 

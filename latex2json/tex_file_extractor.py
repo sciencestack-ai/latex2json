@@ -3,7 +3,7 @@ import gzip
 import tarfile
 import tempfile
 import shutil
-from typing import Optional
+from typing import List, Optional, Tuple
 import zipfile
 import re
 from contextlib import contextmanager
@@ -15,6 +15,7 @@ DOCUMENTCLASS_PATTERN = re.compile(
     r"\\documentclass\s*(?:\[[^\]]*\])?\s*\{([^}]+)\}",
     re.DOTALL,
 )
+BEGIN_DOCUMENT_PATTERN = re.compile(r"\\begin\s*\{document\}|\\document\b", re.DOTALL)
 
 
 class TexFileExtractor:
@@ -37,7 +38,7 @@ class TexFileExtractor:
             if "subfiles" in doc_cls.split(","):
                 return False
             return True
-        if r"\begin{document}" in clean_content:
+        if BEGIN_DOCUMENT_PATTERN.search(clean_content):
             return True
         return False
 
@@ -56,18 +57,24 @@ class TexFileExtractor:
         Raises:
             FileNotFoundError: If no main TeX file is found
         """
+        all_tex_files: List[Tuple[str, str]] = []
         for root, _, files in os.walk(folder_path):
             for file in files:
                 if file.endswith(".tex"):
                     full_path = os.path.join(root, file)
+                    base_path = os.path.relpath(full_path, folder_path)
+                    all_tex_files.append((base_path, root))
                     try:
                         content = read_file(full_path)
                         if TexFileExtractor.is_main_tex_file(content):
                             # Return both the relative path and the containing folder
-                            return os.path.relpath(full_path, folder_path), root
+                            return base_path, root
                     except Exception as e:
                         print(f"Error reading {full_path}: {str(e)}")
                         continue
+        if len(all_tex_files) == 1:
+            # just return the one
+            return all_tex_files[0]
 
         raise FileNotFoundError(
             "No main TeX file found (no documentclass or begin{document} found)"
