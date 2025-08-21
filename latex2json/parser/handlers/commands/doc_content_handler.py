@@ -45,6 +45,8 @@ def make_metadata_handler(name: str, has_short_bracket=False):
             short = parser.parse_bracket_as_nodes()
             parser.skip_whitespace()
         body = parser.parse_brace_as_nodes()
+        if not body:
+            return []
         return [MetadataNode(name, body)]
 
     return handler
