@@ -257,7 +257,9 @@ class TexReader:
             _save, f"Failed to save JSON output to {json_path}"
         )
 
-    def process_compressed(self, compressed_path: str, cleanup: bool = True):
+    def process_compressed(
+        self, compressed_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
+    ):
         """Process a compressed TeX file and save results to JSON."""
         if not os.path.exists(compressed_path):
             error_msg = f"Compressed file not found: {compressed_path}"
@@ -265,7 +267,9 @@ class TexReader:
             raise FileNotFoundError(error_msg)
 
         try:
-            with TexFileExtractor.from_compressed(compressed_path, cleanup) as (
+            with TexFileExtractor.from_compressed(
+                compressed_path, temp_dir=temp_dir, cleanup=cleanup
+            ) as (
                 main_tex,
                 temp_dir,
             ):
@@ -382,14 +386,21 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-2301.10945v1"
         # "papers/tested/arXiv-2408.07934v1"
         # "papers/tested/arXiv-1712.01815v1"
-        "papers/new/euler-nordstroem"
+        "papers/new/arXiv-2103.07867v1.gz",
+        # "/Users/cj/Downloads/arXiv-math0610903v1.gz"
+        # "papers/new/arXiv-0911.5501v2"
     ]
     merge_inline = False
     stem_postfix = "_merged" if merge_inline else ""
 
+    cleanup = True
+
     for folder in folders:
         folder_stem = folder.split("/")[-1]
         save_path = target_folder + "/" + folder_stem + stem_postfix + ".json"
+        # output = tex_reader.process_compressed(
+        #     folder, temp_dir="papers/new/arXiv-2103.07867v1", cleanup=cleanup
+        # )
         output = tex_reader.process(folder)
         try:
             json_output = tex_reader.to_json(output, merge_inline_tokens=merge_inline)
@@ -398,4 +409,5 @@ if __name__ == "__main__":
                 f.write(json_output)
             print("SAVED TO", save_path)
         finally:
-            output.cleanup()  # Ensure cleanup happens even if save_to_json fails
+            if cleanup:
+                output.cleanup()  # Ensure cleanup happens even if save_to_json fails

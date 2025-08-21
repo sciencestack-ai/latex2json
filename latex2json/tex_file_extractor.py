@@ -3,6 +3,7 @@ import gzip
 import tarfile
 import tempfile
 import shutil
+from typing import Optional
 import zipfile
 import re
 from contextlib import contextmanager
@@ -74,7 +75,9 @@ class TexFileExtractor:
 
     @staticmethod
     @contextmanager
-    def process_compressed_file(compressed_path: str, cleanup: bool = True):
+    def process_compressed_file(
+        compressed_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
+    ):
         """Process a compressed file (gzip, tar.gz, or zip).
 
         Args:
@@ -86,9 +89,16 @@ class TexFileExtractor:
                   main_tex_file: Relative path of the main TeX file within the temp dir
                   main_folder: Path to temporary directory containing extracted files
         """
-        temp_dir = tempfile.mkdtemp()
+        if not temp_dir:
+            temp_dir = tempfile.mkdtemp()
+        elif not os.path.isdir(temp_dir):
+            # create dir
+            try:
+                os.makedirs(temp_dir)
+            except Exception as e:
+                temp_dir = tempfile.mkdtemp()
+
         main_tex = None
-        main_folder_abs = None  # Store the absolute path found by find_main_tex_file
         processed = False
 
         try:
@@ -233,7 +243,9 @@ class TexFileExtractor:
 
     @classmethod
     @contextmanager
-    def from_compressed(cls, gz_path: str, cleanup: bool = True):
+    def from_compressed(
+        cls, gz_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
+    ):
         """Create a TexReader instance from a compressed file.
 
         Args:
@@ -244,7 +256,12 @@ class TexFileExtractor:
                   main_tex_file: Name of the main TeX file
                   temp_dir: Path to temporary directory containing extracted files
         """
-        with cls.process_compressed_file(gz_path, cleanup) as (main_tex, temp_dir):
+        with cls.process_compressed_file(
+            gz_path, temp_dir=temp_dir, cleanup=cleanup
+        ) as (
+            main_tex,
+            temp_dir,
+        ):
             yield main_tex, temp_dir
 
 
