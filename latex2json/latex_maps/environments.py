@@ -136,6 +136,7 @@ PICTURE_ENVIRONMENTS = {
 
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
+    "titlepage": EnvironmentDefinition("titlepage"),
     "center": EnvironmentDefinition("center"),
     "verse": EnvironmentDefinition("verse"),
     "tcolorbox": EnvironmentDefinition("tcolorbox"),
@@ -251,6 +252,12 @@ MATH_ENVIRONMENTS = {
         num_args=1,
         env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
         has_direct_command=True,
+    ),
+    "subarray": EnvironmentDefinition(
+        "subarray",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+        # has_direct_command=True,
     ),
     "cases": EnvironmentDefinition(
         "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY

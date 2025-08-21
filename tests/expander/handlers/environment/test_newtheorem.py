@@ -19,6 +19,9 @@ def test_newtheorem():
         env_type=EnvironmentType.THEOREM,
     )
 
+    # check that \the... counter is created
+    assert expander.convert_tokens_to_str(expander.expand(r"\thedefinition")) == "1"
+
     # test unnumbered with asterisk
     expander.expand(r"\newtheorem*{remark}{Remark}")
     assert expander.expand(r"\begin{remark}REM\end{remark}") == mock_env_token(

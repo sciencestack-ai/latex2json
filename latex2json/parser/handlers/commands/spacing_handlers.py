@@ -74,6 +74,7 @@ def register_spacing_handlers(parser: ParserCore):
         "par",
         "pagebreak",
         "filbreak",
+        "eject",
         "newpage",
         "allowbreak",
         "goodbreak",

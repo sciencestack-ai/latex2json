@@ -19,6 +19,7 @@ formatting_patterns = {
     "sectionformat": 1,
     # Font-related formatting
     "setmathfont": "[{",
+    "theorembodyfont": "{",
     "setmainfont": 1,
     "setsansfont": 1,
     "setmonofont": 1,

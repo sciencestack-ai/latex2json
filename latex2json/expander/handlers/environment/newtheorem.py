@@ -47,7 +47,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     if has_asterisk:
         counter_name = None
     if counter_name:
-        expander.state.new_counter(counter_name)
+        expander.create_new_counter(counter_name)
 
     display_name = env_name
     if tok.value == "{":
