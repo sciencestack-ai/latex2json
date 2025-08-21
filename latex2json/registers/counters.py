@@ -150,7 +150,6 @@ class CounterManager:
     ) -> CounterInfo:
         """Create a new counter with optional parent relationship"""
         if check_exists and name in self.counters:
-            # self.logger.warning(f"Counter '{name}' already exists")
             return self.counters[name]
 
         # Create counter info

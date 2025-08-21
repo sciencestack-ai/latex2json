@@ -67,8 +67,8 @@ def newcommand_handler(
 
     # Check if command already exists
     if not allow_redefine and expander.state.get_macro(name):
-        expander.logger.warning(
-            f"Warning: command {name} already exists. Use \\renewcommand to redefine"
+        expander.logger.info(
+            f"command {name} already exists. Use \\renewcommand to redefine"
         )
         return None
 
