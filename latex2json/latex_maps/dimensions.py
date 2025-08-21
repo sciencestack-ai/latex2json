@@ -4,6 +4,7 @@
 from typing import Optional
 
 BUILTIN_DIMENSIONS = [
+    "maxdimen",
     # Page layout dimensions
     "textwidth",  # Width of text area
     "textheight",  # Height of text area
@@ -26,10 +27,6 @@ BUILTIN_DIMENSIONS = [
     "unitlength",  # Unit length for picture environment
     # Paragraph formatting
     "parindent",  # Paragraph indentation
-    "baselineskip",  # Space between lines
-    "lineskip",  # Minimum space between lines
-    "normalbaselineskip",  # Normal baseline skip
-    "lineskiplimit",  # Threshold for using lineskip
     # List formatting
     "leftmargin",  # Left margin in lists
     "rightmargin",  # Right margin in lists
@@ -53,9 +50,6 @@ BUILTIN_DIMENSIONS = [
     "intextsep",  # Space around here floats
     "dblfloatsep",  # Space between double-column floats
     "dbltextfloatsep",  # Space between double floats and text
-    # Caption formatting
-    "abovecaptionskip",  # Space above captions
-    "belowcaptionskip",  # Space below captions
     # Footnote formatting
     "footnotesep",  # Space between footnote rule and text
     # Box dimensions (for measuring)
@@ -64,8 +58,6 @@ BUILTIN_DIMENSIONS = [
     # Sectioning
     "bibindent",  # Indentation in bibliography
     # Page breaking
-    "topskip",  # Space at top of page
-    "splittopskip",  # Space at top of split page
     "maxdepth",  # Maximum depth of page
     # Emergency stretching
     "emergencystretch",  # Extra stretch in emergency

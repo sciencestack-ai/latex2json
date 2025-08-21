@@ -54,6 +54,12 @@ def test_declare_ignored_commands():
     assert expander.expand(r"\DeclareOption*{draft}") == []
     assert expander.expand(r"\DeclareOption{draft}{}") == []
     assert expander.expand(r"\DeclareGraphicsExtensions{pdf,png,jpg}") == []
+    assert (
+        expander.expand(
+            r"\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `basename #1 .tif`.png}"
+        )
+        == []
+    )
 
 
 def test_declare_math_operator_invalid():

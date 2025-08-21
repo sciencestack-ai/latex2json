@@ -1,4 +1,7 @@
 BUILTIN_SKIPS = [
+    "leftskip",
+    "rightskip",
+    "topskip",
     "z@skip",
     "hideskip",
     "@flushglue",
@@ -14,6 +17,15 @@ BUILTIN_SKIPS = [
     "parsep",
     "topsep",
     "partopsep",
+    # Caption formatting
+    "abovecaptionskip",  # Space above captions
+    "belowcaptionskip",  # Space below captions
+    "topskip",  # Space at top of page
+    "splittopskip",  # Space at top of split page
+    "baselineskip",  # Space between lines
+    "lineskip",  # Minimum space between lines
+    "normalbaselineskip",  # Normal baseline skip
+    "lineskiplimit",  # Threshold for using lineskip
     # Display math skips
     "abovedisplayskip",
     "belowdisplayskip",

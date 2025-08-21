@@ -28,6 +28,7 @@ ignored_declare_patterns = {
     "DeclareMathDelimiter": 6,
     "DeclareMathAccent": 4,
     "DeclareMathRadical": 5,
+    "DeclareGraphicsRule": 4,
 }
 
 
