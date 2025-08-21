@@ -56,6 +56,11 @@ def test_addtolength():
     final_length = expander.get_register_value(RegisterType.DIMEN, "testlen")
     assert final_length < new_length
 
+    # test it works on skips too! E.G. parskip
+    expander.expand(r"\addtolength{\parskip}{15pt}")
+    final_skip = expander.get_register_value(RegisterType.SKIP, "parskip")
+    assert final_skip > 0
+
 
 def test_length_with_relax():
     expander = Expander()

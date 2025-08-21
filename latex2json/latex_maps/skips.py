@@ -25,4 +25,7 @@ BUILTIN_SKIPS = [
     "thinmuskip",  # Thin math space (around punctuation)
     # Special skips
     "offinterlineskip",
+    # temps
+    "@tempskipa",
+    "@tempskipb",
 ]

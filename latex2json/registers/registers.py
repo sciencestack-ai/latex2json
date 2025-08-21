@@ -1,5 +1,6 @@
 from typing import Any, Optional, Union
 from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
+from latex2json.latex_maps.skips import BUILTIN_SKIPS
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 
@@ -52,10 +53,10 @@ class TexRegisters:
     def _init_builtin_registers(self):
         for dimen in BUILTIN_DIMENSIONS:
             self.create_register(RegisterType.DIMEN, dimen, 0)
+        for skip in BUILTIN_SKIPS:
+            self.create_register(RegisterType.SKIP, skip, 0)
 
         self.create_register(RegisterType.BOX, "@tempboxa")
-        self.create_register(RegisterType.SKIP, "@tempskipa")
-        self.create_register(RegisterType.SKIP, "@tempskipb")
         self.create_register(RegisterType.TOKS, "@temptokena")
 
     def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):

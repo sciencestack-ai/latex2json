@@ -60,11 +60,19 @@ def addtolength_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     if result is None:
         return None
     length_name, parsed = result
-    current_value = expander.get_register_value(REGISTER_TYPE, length_name)
-    if current_value is None:
+
+    reg_type: RegisterType | None = None
+    for rt in [RegisterType.DIMEN, RegisterType.SKIP]:
+        current_value = expander.get_register_value(rt, length_name)
+        if current_value is not None:
+            reg_type = rt
+            break
+
+    if reg_type is None:
         expander.logger.warning(f"Warning: Length {length_name} not defined")
         return None
-    expander.set_register(REGISTER_TYPE, length_name, current_value + parsed)
+
+    expander.set_register(reg_type, length_name, current_value + parsed)
     return []
 
 
@@ -120,15 +128,15 @@ if __name__ == "__main__":
     expander = Expander()
     register_length_handlers(expander)
 
-    expander.expand(r"\newlength{\mylength}")
-    out = expander.expand(r"\setlength{\mylength}{1em}")
-    out = expander.expand(r"\addtolength{\mylength}{-1em}")
+    # expander.expand(r"\newlength{\mylength}")
+    # out = expander.expand(r"\setlength{\mylength}{1em}")
+    out = expander.expand(r"\addtolength{\parskip}{-1em}")
 
-    print(expander.get_register_value(REGISTER_TYPE, "mylength"))
+    # print(expander.get_register_value(REGISTER_TYPE, "mylength"))
 
-    out = expander.expand(r"\addtolength{\textheight}{1em}")
-    print(out)
-    print(expander.get_register_value(REGISTER_TYPE, "textheight"))
+    # out = expander.expand(r"\addtolength{\textheight}{1em}")
+    # print(out)
+    # print(expander.get_register_value(REGISTER_TYPE, "textheight"))
 
-    expander.expand(r"\textwidth=10pt")
-    print(expander.get_register_value(REGISTER_TYPE, "textwidth"))
+    # expander.expand(r"\textwidth=10pt")
+    # print(expander.get_register_value(REGISTER_TYPE, "textwidth"))
