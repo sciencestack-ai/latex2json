@@ -72,8 +72,13 @@ class BibEntryNode(ASTNode):
     def get_author_str(self):
         if self.format == "bibitem":
             content = "".join(child.detokenize() for child in self.children).strip()
-            if "," in content:
-                return content.split(",")[0]
+            comma_idx = content.find(",")
+            dash_idx = content.find("--")
+
+            if comma_idx >= 0 and (dash_idx < 0 or comma_idx < dash_idx):
+                return content[:comma_idx].strip()
+            elif dash_idx >= 0:
+                return content[:dash_idx].strip()
 
         author_field = self.fields.get("author") or self.fields.get("authors")
         if not author_field:

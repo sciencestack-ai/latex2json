@@ -220,7 +220,7 @@ class ExpanderState:
         """Pops the current state layer from the stack, ending the current scope."""
         if len(self._stack) <= 1:
             # Cannot pop the base global scope
-            self.logger.warning("Cannot pop the base ExpanderState scope!")
+            self.logger.info("Cannot pop the base ExpanderState scope!")
             return
         last_state = self._stack.pop()
         last_state.apply_old_values_to_state(self)

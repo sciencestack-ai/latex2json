@@ -111,6 +111,8 @@ WHITELISTED_COMMANDS = [
     # Additional size declarations
     "smaller",
     "larger",
+    # bib stuff
+    "bysame",
 ]
 
 

@@ -41,30 +41,23 @@ class Parser(ParserCore):
         for cmd in ["bibliography", "addbibresource"]:
             self.register_handler(cmd, bib_file_handler)
 
-    def parse_bib_file(self, file_path: str) -> List[BibEntryNode]:
-        all_entries: List[BibEntryNode] = []
+    def parse_bibitem_text_standalone(self, text: str) -> List[BibEntryNode]:
+        # entries = self.bib_parser.parse_file(full_path)
+        # return entries
+        parser = self.create_standalone(logger=self.logger, expander=self.expander)
+        nodes = parser.parse(text)
+        bib_items: List[BibEntryNode] = []
+        for node in nodes:
+            if isinstance(node, BibEntryNode):
+                bib_items.append(node)
+            elif isinstance(node, BibliographyNode):
+                bib_items.extend(node.bib_items)
+        return bib_items
 
-        # Handle comma-separated list of files or single file
-        file_paths = [p.strip() for p in file_path.split(",") if p.strip()]
-
-        for path in file_paths:
-            # Apply current_file_dir to each path
-            full_path = path
-            if not os.path.isabs(full_path):
-                full_path = os.path.join(self.cwd, full_path)
-
-            try:
-                entries = self.bib_parser.parse_file(full_path)
-                all_entries.extend(entries)
-            except Exception as e:
-                self.logger.warning(
-                    f"Failed to parse bibliography file: {full_path}, error: {str(e)}"
-                )
-
-        # check and remove duplicate cite_keys
+    def dedup_bibitem_entries(self, entries: List[BibEntryNode]) -> List[BibEntryNode]:
         cite_keys = set()
         non_duplicate_entries: List[BibEntryNode] = []
-        for entry in all_entries:
+        for entry in entries:
             if entry.citation_key in cite_keys:
                 continue
             cite_keys.add(entry.citation_key)
@@ -91,6 +84,38 @@ class Parser(ParserCore):
                 )
                 bib_items.append(entry)
         return bib_items
+
+    def parse_bib_file(self, file_path: str) -> List[BibEntryNode]:
+        all_entries: List[BibEntryNode] = []
+
+        # Handle comma-separated list of files or single file
+        file_paths = [p.strip() for p in file_path.split(",") if p.strip()]
+
+        for path in file_paths:
+            # Apply current_file_dir to each path
+            full_path = path
+            if not os.path.isabs(full_path):
+                full_path = os.path.join(self.cwd, full_path)
+
+            try:
+                bib_content = self.bib_parser.search_and_extract_bib_content(full_path)
+                if not bib_content:
+                    continue
+                bib_type = self.bib_parser.check_bib_file_type(bib_content)
+                self.logger.info(f"Bib type: {bib_type}, path: {full_path}")
+                if bib_type == "bibitem":
+                    # use native parser if possible:
+                    entries = self.parse_bibitem_text_standalone(bib_content)
+                else:
+                    entries = self.bib_parser.parse(bib_content)
+                all_entries.extend(entries)
+            except Exception as e:
+                self.logger.warning(
+                    f"Failed to parse bibliography file: {full_path}, error: {str(e)}"
+                )
+
+        # check and remove duplicate cite_keys
+        return self.dedup_bibitem_entries(all_entries)
 
 
 if __name__ == "__main__":

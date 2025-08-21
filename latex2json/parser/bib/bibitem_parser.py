@@ -5,10 +5,14 @@ import logging
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.bibliography_nodes import BibEntryNode
 
+BEGIN_BIB_PATTERN = re.compile(
+    r"\\begin\s*\{(\w*bibliography)\}(.*?)\\end\s*\{\1\}", re.DOTALL
+)
+
 
 class BibItemParser:
     BibItemPattern = re.compile(
-        r"\\bibitem\s*(?:\[(.*?)\])?\s*\{(.*?)\}\s*([\s\S]*?)(?=\\bibitem|$)",
+        r"\\bibitem\s*(?:\[(.*?)\])?\s*\{(.*?)\}\s*((?:(?!\\bibitem\b)[\s\S])*)",
         re.DOTALL,
     )
     NewblockPattern = re.compile(r"\\newblock\b")
@@ -18,16 +22,14 @@ class BibItemParser:
 
     def can_handle(self, content: str) -> bool:
         # Check for bibliography environment
-        if re.search(r"\\begin{(\w*bibliography)}.*?\\end{\1}", content, re.DOTALL):
+        if BEGIN_BIB_PATTERN.search(content):
             return True
         # Check for standalone bibitems (existing logic)
-        return bool(re.search(r"\\bibitem", content))
+        return bool(re.search(r"\\bibitem\b", content))
 
     def parse(self, content: str) -> List[BibEntryNode]:
         # If content is in bibliography environment, extract the content
-        bib_match = re.search(
-            r"\\begin{(\w*bibliography)}(.*?)\\end{\1}", content, re.DOTALL
-        )
+        bib_match = BEGIN_BIB_PATTERN.search(content)
         if bib_match:
             content = bib_match.group(2)
 
@@ -43,10 +45,13 @@ class BibItemParser:
 
                 # Handle \bysame by replacing it with content from previous entry
                 if previous_content and bysame_pattern.search(item):
-                    # Extract author part from previous entry (up to first comma)
-                    author_part = previous_content.split(",")[0]
+                    # Extract author part from previous entry (up to first comma or --)
+                    author_part = re.split(r"[,\-]{1,2}", previous_content)[0]
                     if author_part:
-                        item = bysame_pattern.sub(author_part, item)
+                        # make sure to escape backslashes e.g. \commands, otherwise bad escape \
+                        item = bysame_pattern.sub(
+                            author_part.replace("\\", "\\\\"), item
+                        )
 
                 entry = BibEntryNode(
                     citation_key=match.group(2).strip(),

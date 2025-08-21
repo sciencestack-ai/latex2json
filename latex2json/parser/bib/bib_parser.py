@@ -61,11 +61,15 @@ class BibParser:
             self.logger.warning("No suitable parser found for the content")
             return []
 
+        if len(entries) == 0:
+            self.logger.warning(f"BibParser: No entries found")
+        else:
+            self.logger.info(f"Finished BibParser: Found {len(entries)} entries")
+
         return entries
 
-    def check_bib_file_type(self, file_path_or_text: str) -> str | None:
-        content = self.search_and_extract_bib_content(file_path_or_text)
-
+    def check_bib_file_type(self, bib_text_blob: str) -> str | None:
+        content = preprocess(bib_text_blob)
         if content:
             if self.bibdiv_parser.can_handle(content):
                 return "bibdiv"
@@ -132,14 +136,8 @@ class BibParser:
         bib_content = self.search_and_extract_bib_content(file_path)
 
         if bib_content:
-            self.logger.info(f"BibParser: Parsing {file_path}")
+            self.logger.info(f"BibParser: Parsing ...")
             entries = self.parse(bib_content)
-            if len(entries) == 0:
-                self.logger.warning(f"BibParser: No entries found in {file_path}")
-            else:
-                self.logger.info(
-                    f"Finished BibParser: {file_path} -> Found {len(entries)} entries"
-                )
             return entries
         else:
             self.logger.warning(f"Bibliography file not found: {file_path}")

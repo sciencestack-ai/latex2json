@@ -71,6 +71,7 @@ formatting_patterns = {
     "clearpage": 0,
     "cleardoublepage": 0,
     "nopagebreak": 0,
+    "nobreak": 0,
     "hss": 0,
     "hfill": 0,
     "hfil": 0,
