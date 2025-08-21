@@ -30,7 +30,7 @@ WHITELISTED_COMMANDS = [
     "date",
     "part",
     "chapter",
-    "abstract",
+    # "abstract",
     "table",
     "figure",
     "cite",

@@ -6,7 +6,7 @@ from latex2json.nodes import (
     RowNode,
     CellNode,
 )
-from latex2json.nodes.base_nodes import DisplayType
+from latex2json.nodes.base_nodes import DisplayType, TextNode
 from latex2json.nodes.utils import (
     split_nodes_into_rows,
     strip_whitespace_nodes,
@@ -104,8 +104,17 @@ def inline_math_handler(parser: ParserCore, token: EnvironmentStartToken):
     return [EquationNode(env.children, equation_type=DisplayType.INLINE)]
 
 
+def proof_cmd_handler(parser: ParserCore, token: Token):
+    node = TextNode("Proof.")
+    node.add_styles(["italic"])
+    return [node]
+
+
 def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("ensuremath", ensuremath_handler)
+
+    # lone \proof
+    parser.register_handler("proof", proof_cmd_handler)
 
     for env_name, env_def in MATH_ENVIRONMENTS.items():
         # fetch env_def from parser/expander directly, in case it has been redefined

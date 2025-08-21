@@ -68,7 +68,7 @@ class Expander(ExpanderCore):
     ) -> None:
         if is_user_defined and self.prevent_whitelisted_redefinitions:
             if env_name in self.white_listed_environments:
-                self.logger.warning(
+                self.logger.info(
                     f"Preventing redefinition of white-listed environment {env_name}"
                 )
                 return
@@ -87,7 +87,7 @@ class Expander(ExpanderCore):
         # prevent redefinition of white-listed commands in package/class files
         if is_user_defined and self.prevent_whitelisted_redefinitions:
             if name in self.white_listed_commands:
-                self.logger.warning(
+                self.logger.info(
                     f"Preventing redefinition of white-listed command \\{name}"  # inside package/class: \\{name}"
                 )
                 return
