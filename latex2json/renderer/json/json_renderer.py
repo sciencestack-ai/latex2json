@@ -218,6 +218,7 @@ class JSONRenderer:
         if strip_whitespace_tokens:
             tokens = strip_whitespace_json_tokens(tokens)
 
+        last_document_idx = -1
         for i, token in enumerate(tokens):
             if not isinstance(token, dict):
                 if isinstance(token, list):
@@ -249,16 +250,28 @@ class JSONRenderer:
                     strip_whitespace_tokens=strip_whitespace_tokens and not is_tabular,
                 )
 
-            if token.get("type") == "command":
-                self.logger.warning(f"Found unknown command: {token.get('command')}")
-            elif token.get("type") == "environment":
-                if token.get("name") == "quote":
+            token_type = token.get("type", "")
+            if token_type == "environment":
+                token_name = token.get("name", "")
+                if token_name == "quote":
                     # make quote type
                     token["type"] = "quote"
+                elif token_name == "document":
+                    last_document_idx = i
+            elif token_type == "document":
+                last_document_idx = i
 
             # Reorder the dictionary to ensure 'content' field is last.
             # This makes it easier to read the json metadata format before 'content'
             tokens[i] = self._reorder_dict_keys(token)
+
+        if last_document_idx != -1:
+            # remove all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
+            tokens = tokens[: last_document_idx + 1]
+
+        for token in tokens:
+            if isinstance(token, dict) and token.get("type") == "command":
+                self.logger.warning(f"Found unknown command: {token.get('command')}")
 
         return tokens
 
