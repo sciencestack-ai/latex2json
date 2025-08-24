@@ -8,7 +8,7 @@ from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 def newwrite_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     tok = expander.peek()
-    if not tok or tok.type != TokenType.CONTROL_SEQUENCE:
+    if not tok or not expander.is_control_sequence(tok):
         return None
     expander.consume()
     # ignore?
@@ -21,7 +21,7 @@ def write_handler(expander: ExpanderCore, token: Token):
     if not tok:
         return None
     stream: str | int | None = None
-    if tok.type == TokenType.CONTROL_SEQUENCE:
+    if expander.is_control_sequence(tok):
         # e.g. \write\@auxout
         stream = tok.value
         expander.consume()
@@ -40,7 +40,7 @@ def write_handler(expander: ExpanderCore, token: Token):
 def openout_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     tok = expander.peek()
-    if not tok or tok.type != TokenType.CONTROL_SEQUENCE:
+    if not tok or not expander.is_control_sequence(tok):
         return None
     expander.consume()
     expander.skip_whitespace()

@@ -61,14 +61,13 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
     temp_cmd = expander.peek()
-    if not temp_cmd or temp_cmd.type != TokenType.CONTROL_SEQUENCE:
+    if not temp_cmd or not expander.is_control_sequence(temp_cmd):
         expander.logger.warning(
             f"Warning: \\futurelet expects <control1><control2>, but <control1> is {temp_cmd}"
         )
         return None
 
     expander.consume()
-    temp_name = temp_cmd.value  # e.g., '\next'
 
     expander.skip_whitespace()
     handler_cmd = expander.consume()
@@ -98,8 +97,8 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
         return [next_token]
 
     expander.register_macro(
-        temp_name,
-        Macro(temp_name, temp_macro_handler, [next_token], type=MacroType.CHAR),
+        temp_cmd,
+        Macro(temp_cmd.value, temp_macro_handler, [next_token], type=MacroType.CHAR),
         is_global=False,
         is_user_defined=True,
     )

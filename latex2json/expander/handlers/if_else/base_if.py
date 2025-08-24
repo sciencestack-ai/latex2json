@@ -104,7 +104,7 @@ def check_if_equals(a: Token, b: Token, expander: ExpanderCore) -> bool:
     definition_of_b = expander.convert_to_macro_definitions([b])
 
     # if both are control sequences, only checks the first token of the output
-    if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
+    if expander.is_control_sequence(a) and expander.is_control_sequence(b):
         return ExpanderCore.check_tokens_equal(definition_of_a[:1], definition_of_b[:1])
 
     return ExpanderCore.check_tokens_equal(definition_of_a, definition_of_b)

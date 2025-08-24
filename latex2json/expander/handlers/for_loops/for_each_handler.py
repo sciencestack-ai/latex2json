@@ -32,7 +32,7 @@ def for_each_handler(expander: ExpanderCore, token: Token):
 
     tok = expander.peek()
     while tok:
-        if tok.type == TokenType.CONTROL_SEQUENCE:
+        if expander.is_control_sequence(tok):
             variables.append(tok)
         elif tok.value == "/" or tok.value == " ":
             pass
@@ -88,13 +88,11 @@ def for_each_handler(expander: ExpanderCore, token: Token):
         if total_split_args > 0:
             # \define \var1, \var2, etc. as local macros that hold the item tokens
             for i, var in enumerate(variables):
-
-                var_name = var.to_str()
                 item_tokens = split_args[i % total_split_args]
 
                 # define the variable name as a local macro that holds the item tokens
                 expander.register_handler(
-                    var_name, make_handler(item_tokens), is_global=False
+                    var, make_handler(item_tokens), is_global=False
                 )
         # then exec/expand the body tokens
         result_tokens.extend(expander.expand_tokens(body_tokens))
