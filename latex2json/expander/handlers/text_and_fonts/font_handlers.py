@@ -6,12 +6,10 @@ from latex2json.tokens.types import Token, TokenType
 
 def font_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
-    font_cmd_token = expander.consume()
-    if not font_cmd_token or font_cmd_token.type != TokenType.CONTROL_SEQUENCE:
+    cmd_name = expander.parse_command_name()
+    if not cmd_name:
         expander.logger.warning("Warning: \\font expects a font command name")
         return None
-
-    cmd_name = font_cmd_token.value
 
     if not expander.parse_equals():
         expander.logger.warning("Warning: \\font expects a = after the command name")

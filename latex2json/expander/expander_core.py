@@ -276,7 +276,7 @@ class ExpanderCore:
                     continue
                 ord_char = ord(token.value)
                 if ord_char in MATHMODE_CATCODES:
-                    tokens[i].catcode = MATHMODE_CATCODES[ord_char]
+                    token.catcode = MATHMODE_CATCODES[ord_char]
 
         out = substitute_token_args(tokens, args)
         return out
@@ -545,6 +545,9 @@ class ExpanderCore:
         #     return [tok]
 
         if tok.type == TokenType.CONTROL_SEQUENCE:
+            return self._exec_macro(tok)
+        elif tok.catcode == Catcode.ACTIVE:
+            # TODO
             return self._exec_macro(tok)
         else:
             self.state.pending_global = False
@@ -1152,17 +1155,14 @@ class ExpanderCore:
         # Parse command name
         cmd = self.parse_immediate_token()
         cmd = strip_whitespace_tokens(cmd)
-        if (
-            not cmd
-            or len(cmd) < 0
-            or len(cmd) > 1
-            or cmd[0].type != TokenType.CONTROL_SEQUENCE
-        ):
+        if not cmd:
             return None
-
-        name = cmd[0].value
-
-        return name
+        cmd = cmd[0]
+        if cmd.type == TokenType.CONTROL_SEQUENCE:
+            return cmd.value
+        elif cmd.catcode == Catcode.ACTIVE:
+            return cmd.value
+        return None
 
     def parse_brace_name(self, bracket=False) -> Optional[str]:
         self.skip_whitespace()

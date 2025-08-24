@@ -88,13 +88,6 @@ if __name__ == "__main__":
     parser = Parser()
     register_box_handlers(parser)
 
-    # tokens = [Token(type=TokenType.CONTROL_SEQUENCE, value="raisebox")]
-    # tokens += parser.expander.convert_str_to_tokens("{1in}{sometext$1+1$}")
-
-    # parser.push_mode(ProcessingMode.MATH_DISPLAY)
-    # out = parser.process_tokens(tokens)
-    # print(out)
-
     text = r"""
     $\raisebox{1in}[]{sometext$1+1$ \ref{eq:22} abc}$
 """

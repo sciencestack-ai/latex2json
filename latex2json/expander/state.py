@@ -168,7 +168,7 @@ class ExpanderState:
             self._unset_math_catcode_values()
 
     def _set_math_catcode_values(self):
-        # Store original catcodes and set to ACTIVE
+        # Store original catcodes, then set
         for char_ord, catcode in MATHMODE_CATCODES.items():
             old_catcode = self.get_catcode(char_ord)
             if old_catcode != catcode:

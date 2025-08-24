@@ -7,18 +7,16 @@ from latex2json.tokens.types import Token, TokenType
 
 def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
-    cmd = expander.peek()
-    if not cmd or cmd.type != TokenType.CONTROL_SEQUENCE:
+    cmd_name = expander.parse_command_name()
+    if not cmd_name:
         expander.logger.warning(
-            f"Warning: \\let expects a command node, but found {cmd}"
+            f"Warning: \\let expects a command node, but found {cmd_name}"
         )
         return None
 
-    expander.consume()
-    name = cmd.value
-
     expander.skip_whitespace()
     expander.parse_equals()
+
     def_tok = expander.consume()
 
     if not def_tok:
@@ -42,7 +40,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 
             macro_copy.handler = handler
             expander.register_macro(
-                name, macro_copy, is_global=False, is_user_defined=True
+                cmd_name, macro_copy, is_global=False, is_user_defined=True
             )
             return []
 
@@ -54,8 +52,8 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.push_tokens([def_tok.copy()])
         return []
 
-    macro = Macro(name, handler, [def_tok], type=MacroType.CHAR)
-    expander.register_macro(name, macro, is_global=False, is_user_defined=True)
+    macro = Macro(cmd_name, handler, [def_tok], type=MacroType.CHAR)
+    expander.register_macro(cmd_name, macro, is_global=False, is_user_defined=True)
 
     return []
 
