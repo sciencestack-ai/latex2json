@@ -15,7 +15,7 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     if not tok:
         return None
 
-    if tok.type != TokenType.CONTROL_SEQUENCE:
+    if not expander.is_control_sequence(tok):
         expander.logger.warning(
             f"Warning: \\the expects a control sequence, but found {tok}"
         )
@@ -48,23 +48,13 @@ def show_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     if not tok:
         return None
 
-    if tok.type != TokenType.CONTROL_SEQUENCE:
-        expander.logger.warning(
-            f"Warning: \\show expects a control sequence, but found {tok}"
-        )
-        return None
-
-    name = tok.value
-    macro = expander.get_macro(name)
-    if macro:
-        definition = expander.convert_tokens_to_str(macro.definition)
-        expander.logger.debug(f"\\show: {name} -> {definition}")
+    macro = expander.get_macro(tok)
+    if not macro:
+        expander.logger.debug(f"\\show: {tok.value} is undefined")
         return []
-    else:
-        expander.logger.debug(f"\\show: {name} is undefined")
-        return []
-
-    return None
+    definition = expander.convert_tokens_to_str(macro.definition)
+    expander.logger.debug(f"\\show: {tok.value} -> {definition}")
+    return []
 
 
 def make_print_handler(name: str):
@@ -95,8 +85,8 @@ def meaning_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
         return None
 
     out_tokens: List[Token] = [tok]
-    if tok.type == TokenType.CONTROL_SEQUENCE:
-        macro = expander.get_macro(tok.value)
+    if expander.is_control_sequence(tok):
+        macro = expander.get_macro(tok)
         if not macro:
             out_tokens = expander.convert_str_to_tokens("undefined")
         else:

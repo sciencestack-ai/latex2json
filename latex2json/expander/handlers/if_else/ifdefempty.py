@@ -15,13 +15,13 @@ def ifdefempty_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         return None
 
     macro_block = blocks[0]
-    if not macro_block or macro_block[0].type != TokenType.CONTROL_SEQUENCE:
+    if not macro_block:
         expander.logger.warning("Warning: \\ifdefempty expects a macro")
         return None
 
     block = blocks[2]
 
-    macro = expander.get_macro(macro_block[0].value)
+    macro = expander.get_macro(macro_block[0])
     if not macro:
         block = blocks[1]
     elif macro.is_user_defined and not macro.definition:

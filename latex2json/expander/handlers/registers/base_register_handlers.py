@@ -59,7 +59,7 @@ def make_primitive_register_handler(is_id_integer: bool = True) -> Handler:
     def primitive_register_handler(
         expander: ExpanderCore, token: Token
     ) -> Optional[List[Token]]:
-        macro = expander.get_macro(token.value)
+        macro = expander.get_macro(token)
         if not macro or not isinstance(macro, RegisterMacro):
             return [token]
 
@@ -126,7 +126,7 @@ def new_register_macro_handler(
     register_type: RegisterType,
 ) -> Optional[List[Token]]:
     tok = expander.peek()
-    if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+    if tok is None or not expander.is_control_sequence(tok):
         expander.logger.warning(
             f"Warning: \\new{register_type.value} expects a \\name, but found {tok}"
         )

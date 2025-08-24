@@ -24,7 +24,7 @@ def newtcbox_handler(expander: ExpanderCore, token: Token):
     if out is None:
         return None
 
-    cmd_name = out.name
+    cmd_name = out.cmd_token
 
     # print(out)
 

@@ -16,10 +16,12 @@ def make_length_setter_handler(command_name: str):
         expander: ExpanderCore, token: Token
     ) -> Optional[List[Token]]:
         expander.skip_whitespace()
-        length_name = expander.parse_command_name()
-        if not length_name:
+        cmd = expander.parse_command_name_token()
+        if not cmd:
             # expander.logger.warning(f"Warning: \\{command_name} expects a length name")
             return None
+
+        length_name = cmd.value
 
         expander.skip_whitespace()
         block = expander.parse_immediate_token()
@@ -78,16 +80,16 @@ def addtolength_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 
 def newlength_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
-    length_name = expander.parse_command_name()
-    if not length_name:
+    cmd = expander.parse_command_name_token()
+    if not cmd:
         expander.logger.warning("Warning: \\newlength expects a length name")
         return None
 
-    expander.state.create_register(REGISTER_TYPE, length_name)
+    expander.state.create_register(REGISTER_TYPE, cmd.value)
     # create a macro for the register
     expander.register_macro(
-        length_name,
-        make_register_macro(REGISTER_TYPE, length_name, is_id_integer=False),
+        cmd,
+        make_register_macro(REGISTER_TYPE, cmd.value, is_id_integer=False),
         is_global=True,
         is_user_defined=True,
     )

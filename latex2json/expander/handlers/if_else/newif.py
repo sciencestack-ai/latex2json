@@ -16,13 +16,12 @@ def evaluate_newif_condition(
     expander: ExpanderCore, token: Token
 ) -> tuple[bool | None, str | None]:
     # Get the macro that stores the condition state
-    condition_name = token.value
-    condition_macro = expander.get_macro(condition_name)
+    condition_macro = expander.get_macro(token)
 
     if not isinstance(condition_macro, IfMacro):
-        return None, f"Condition {condition_name} is not a valid IfMacro"
+        return None, f"Condition {token.value} is not a valid IfMacro"
 
-    return get_newif_register_value(expander, condition_name), None
+    return get_newif_register_value(expander, token.value), None
 
 
 def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:

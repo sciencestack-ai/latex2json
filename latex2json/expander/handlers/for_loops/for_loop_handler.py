@@ -70,7 +70,7 @@ def at_for_loop_handler(expander: ExpanderCore, token: Token):
 
     expander.skip_whitespace()
     tok = expander.peek()
-    if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+    if tok is None or not expander.is_control_sequence(tok):
         expander.logger.warning(
             r"Warning: \@forloop expected variable after \@nil,\@nil\@@"
         )

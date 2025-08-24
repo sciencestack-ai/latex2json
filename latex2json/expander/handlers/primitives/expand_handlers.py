@@ -42,7 +42,7 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
         return None
     expander.skip_whitespace()
     tok2 = expander.peek()
-    if tok2 is None or tok2.type != TokenType.CONTROL_SEQUENCE:
+    if tok2 is None or not expander.is_control_sequence(tok2):
         # \expandafter doesnt strictly need 2 tokens
         # put back tok1
         expander.push_tokens([tok1])

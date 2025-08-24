@@ -23,14 +23,13 @@ def loop_handler(expander: ExpanderCore, token: Token):
     # check the final if condition right before \repeat (from reverse)
     for i in range(N - 1, -1, -1):
         tok = tokens[i]
-        if tok.type == TokenType.CONTROL_SEQUENCE:
-            macro = expander.get_macro(tok.value)
-            if isinstance(macro, IfMacro):
-                if_macro = macro
-                if_tokens = tokens[i:]
-                tokens = tokens[:i]
+        macro = expander.get_macro(tok)
+        if isinstance(macro, IfMacro):
+            if_macro = macro
+            if_tokens = tokens[i:]
+            tokens = tokens[:i]
 
-                break
+            break
 
     all_tokens = strip_whitespace_tokens(expander.expand_tokens(tokens))
 

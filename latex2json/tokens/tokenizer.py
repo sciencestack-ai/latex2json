@@ -269,38 +269,3 @@ $
     tokens = tokenizer.tokenize(input_text)
     for token in tokens:
         print(token)
-
-    # input_text = r"""
-    # -123.2 asdas \# ss
-    # """.strip()
-
-    # # Initialize the tokenizer with default catcodes
-    # tokenizer = Tokenizer(catcodes=DEFAULT_CATCODES.copy())
-    # tokenizer.set(input_text)  # Ensure the tokenizer is reset with the text
-
-    # print("--- Tokenizing Input Stream ---")
-
-    # # Simulate the main loop pulling tokens one by one
-    # # In a real system, the Parser would call get_next_token()
-    # token = tokenizer.get_next_token()
-    # while token is not None:
-    #     print(token)
-
-    #     # Simulate the Expander executing \makeatletter and \makeatother
-    #     # In a real system, this logic would be in the Expander's handlers
-    #     if token.type == TokenType.CONTROL_SEQUENCE and token.value == "makeatletter":
-    #         print("\n--- Simulating Expander executing \\makeatletter ---")
-    #         tokenizer.set_catcode(ord("@"), Catcode.LETTER)
-    #         print("--- Catcode of '@' changed to LETTER (11) ---")
-    #         print("--- Continuing tokenization with new catcode ---")
-
-    #     elif token.type == TokenType.CONTROL_SEQUENCE and token.value == "makeatother":
-    #         print("\n--- Simulating Expander executing \\makeatother ---")
-    #         tokenizer.set_catcode(ord("@"), Catcode.OTHER)
-    #         print("--- Catcode of '@' changed back to OTHER (12) ---")
-    #         print("--- Continuing tokenization with new catcode ---")
-
-    #     # Get the next token from the stream
-    #     token = tokenizer.get_next_token()
-
-    # print("\n--- End of Token Stream ---")

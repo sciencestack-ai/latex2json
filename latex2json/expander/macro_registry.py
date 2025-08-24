@@ -75,42 +75,50 @@ class MacroRegistry:
     def parent(self) -> Optional["MacroRegistry"]:
         return self._parent
 
-    def set(self, name: str, definition: Macro, is_global: bool = False):
+    def set(
+        self,
+        name: str,
+        definition: Macro,
+        is_global: bool = False,
+        is_active_char=False,
+    ):
         """
         Sets a definition in this registry layer.
         If is_global is True, it propagates the definition up to the root registry.
         """
-        if not name.startswith("\\"):
+        if not name.startswith("\\") and not is_active_char:
             name = f"\\{name}"
 
         if is_global and self._parent:
             # If global and has a parent, delegate to the parent's set method
             # until we reach the root registry (which has no parent).
-            self._parent.set(name, definition, is_global=True)
+            self._parent.set(
+                name, definition, is_global=True, is_active_char=is_active_char
+            )
         else:
             # Set the definition in the current layer's dictionary.
             # This definition shadows any definitions in parent layers.
             self._definitions[name] = definition
 
-    def delete(self, name: str, is_global: bool = False):
+    def delete(self, name: str, is_global: bool = False, is_active_char=False):
         """
         Deletes a definition from this registry layer.
         """
-        if not name.startswith("\\"):
+        if not name.startswith("\\") and not is_active_char:
             name = f"\\{name}"
 
         if is_global and self._parent:
-            self._parent.delete(name, is_global=True)
+            self._parent.delete(name, is_global=True, is_active_char=is_active_char)
         else:
             if name in self._definitions:
                 del self._definitions[name]
 
-    def get(self, name: str) -> Optional[Macro]:
+    def get(self, name: str, is_active_char=False) -> Optional[Macro]:
         """
         Retrieves the definition for the given name, checking this layer
         and then recursively checking parent layers.
         """
-        if not name.startswith("\\"):
+        if not name.startswith("\\") and not is_active_char:
             name = f"\\{name}"
 
         # Check the current layer first
@@ -119,22 +127,10 @@ class MacroRegistry:
 
         # If not found in the current layer, check the parent registry
         if self._parent:
-            return self._parent.get(name)
+            return self._parent.get(name, is_active_char=is_active_char)
 
         # If no parent and not found, the definition is not in scope
         return None
-
-    def register_handler(
-        self,
-        name: str,
-        handler: Handler,
-        is_global: bool = False,
-    ):
-        """Convenience method to define a primitive in this registry layer (usually the root)."""
-        macro_def = Macro(name, handler)
-        # Primitives are typically defined globally in the root registry.
-        # We use set with is_global=True to ensure it goes to the root if called on a child.
-        self.set(name, macro_def, is_global=is_global)
 
     def get_all_macros(self) -> Dict[str, Macro]:
         """Returns all macros in this registry and its parents."""

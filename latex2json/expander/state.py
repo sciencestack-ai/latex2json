@@ -44,14 +44,22 @@ class StateLayer:
         """Store the old catcode value before modification."""
         self.catcode_old_values.append((char_ord, old_value))
 
-    def get_macro(self, name: str) -> Optional[Macro]:
-        return self.macro_registry.get(name)
+    def get_macro(self, name: str, is_active_char=False) -> Optional[Macro]:
+        return self.macro_registry.get(name, is_active_char=is_active_char)
 
-    def set_macro(self, name: str, definition: Macro, is_global: bool = False):
-        self.macro_registry.set(name, definition, is_global)
+    def set_macro(
+        self,
+        name: str,
+        definition: Macro,
+        is_global: bool = False,
+        is_active_char=False,
+    ):
+        self.macro_registry.set(
+            name, definition, is_global, is_active_char=is_active_char
+        )
 
-    def delete_macro(self, name: str, is_global: bool = True):
-        self.macro_registry.delete(name, is_global)
+    def delete_macro(self, name: str, is_global: bool = True, is_active_char=False):
+        self.macro_registry.delete(name, is_global, is_active_char=is_active_char)
 
     def apply_old_values_to_state(self, state: "ExpanderState"):
         # Restore old catcode values
@@ -168,7 +176,7 @@ class ExpanderState:
             self._unset_math_catcode_values()
 
     def _set_math_catcode_values(self):
-        # Store original catcodes and set to ACTIVE
+        # Store original catcodes, then set
         for char_ord, catcode in MATHMODE_CATCODES.items():
             old_catcode = self.get_catcode(char_ord)
             if old_catcode != catcode:
@@ -226,18 +234,31 @@ class ExpanderState:
         last_state.apply_old_values_to_state(self)
 
     # MACROS
-    def get_macro(self, name: str) -> Optional[Macro]:
-        return self.current.get_macro(name)
+    def get_macro(self, name: str, is_active_char=False) -> Optional[Macro]:
+        return self.current.get_macro(name, is_active_char=is_active_char)
 
     def get_all_macros(self) -> Dict[str, Macro]:
         return self.current.macro_registry.get_all_macros()
 
-    def set_macro(self, name: str, definition: Macro, is_global: bool = False):
-        self.current.set_macro(name, definition, is_global or self.pending_global)
+    def set_macro(
+        self,
+        name: str,
+        definition: Macro,
+        is_global: bool = False,
+        is_active_char=False,
+    ):
+        self.current.set_macro(
+            name,
+            definition,
+            is_global or self.pending_global,
+            is_active_char=is_active_char,
+        )
         self.pending_global = False
 
-    def delete_macro(self, name: str, is_global: bool = True):
-        self.current.delete_macro(name, is_global=is_global)
+    def delete_macro(self, name: str, is_global: bool = True, is_active_char=False):
+        self.current.delete_macro(
+            name, is_global=is_global, is_active_char=is_active_char
+        )
 
     # CATCODES
     def set_catcode(self, char_ord: int, catcode: Catcode):

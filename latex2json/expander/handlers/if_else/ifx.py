@@ -14,10 +14,10 @@ def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
     if b_char:
         b = b_char
 
-    if a.type == TokenType.CONTROL_SEQUENCE and b.type == TokenType.CONTROL_SEQUENCE:
+    if expander.is_control_sequence(a) and expander.is_control_sequence(b):
         # check if undefined
-        undefined_a = expander.get_macro(a.value) is None
-        undefined_b = expander.get_macro(b.value) is None
+        undefined_a = expander.get_macro(a) is None
+        undefined_b = expander.get_macro(b) is None
         if undefined_a and undefined_b:
             # both undefined, so they are equal in \ifx
             return True

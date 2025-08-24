@@ -6,12 +6,10 @@ from latex2json.tokens.types import Token, TokenType
 
 def font_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
-    font_cmd_token = expander.consume()
-    if not font_cmd_token or font_cmd_token.type != TokenType.CONTROL_SEQUENCE:
+    cmd = expander.parse_command_name_token()
+    if not cmd:
         expander.logger.warning("Warning: \\font expects a font command name")
         return None
-
-    cmd_name = font_cmd_token.value
 
     if not expander.parse_equals():
         expander.logger.warning("Warning: \\font expects a = after the command name")
@@ -41,7 +39,7 @@ def font_handler(expander: ExpanderCore, token: Token):
         if break_out:
             break
 
-    expander.create_new_font(cmd_name, font_definition)
+    expander.create_new_font(cmd.value, font_definition)
 
     return []
 
@@ -51,14 +49,14 @@ def newfont_handler(expander: ExpanderCore, token: Token):
     \newfont{\grecomath}{cmmi12 at 15pt}
     """
     expander.skip_whitespace()
-    cmd_name = expander.parse_command_name()
+    cmd = expander.parse_command_name_token()
     expander.skip_whitespace()
     font_definition = expander.parse_brace_as_tokens() or []
-    if not cmd_name:
+    if not cmd:
         expander.logger.warning("Warning: \\newfont expects a command name")
         return None
 
-    expander.create_new_font(cmd_name, font_definition)
+    expander.create_new_font(cmd.value, font_definition)
 
     return []
 

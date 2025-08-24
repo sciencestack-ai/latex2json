@@ -32,7 +32,7 @@ def case_transform_handler(
             f"Warning: \\{transform_type.value} expects args, but None"
         )
         return None
-    if tok.type == TokenType.CONTROL_SEQUENCE:
+    if expander.is_control_sequence(tok):
         exp = expander.expand_next()
         if exp:
             expander.push_tokens(exp)

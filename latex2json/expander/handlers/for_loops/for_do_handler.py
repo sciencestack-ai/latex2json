@@ -25,7 +25,7 @@ def for_do_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
 
     tok = expander.peek()
-    if not tok or tok.type != TokenType.CONTROL_SEQUENCE:
+    if not tok or not expander.is_control_sequence(tok):
         expander.logger.warning(r"\@for expected control sequence after @for")
         return None
 
@@ -67,19 +67,17 @@ def for_do_handler(expander: ExpanderCore, token: Token):
     # split list tokens into groups by ','
     list_items = split_tokens_by_predicate(list_tokens, is_comma_token)
 
-    var_name = variable_token.to_str()
-
     result_tokens: List[Token] = []
     for item_tokens in list_items:
         # define the variable name as a local macro that holds the item tokens
         expander.register_handler(
-            var_name, lambda expander, token: item_tokens, is_global=False
+            variable_token, lambda expander, token: item_tokens, is_global=False
         )
         # then exec/expand the body tokens
         result_tokens.extend(expander.expand_tokens(body_tokens))
 
     # make sure the local macro is deleted after the loop (like in latex)
-    expander.delete_macro(var_name, is_global=False)
+    expander.delete_macro(variable_token, is_global=False)
 
     return result_tokens
 

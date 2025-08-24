@@ -46,7 +46,7 @@ def make_generic_command_handler(
                 #     break
             elif char == "\\":
                 tok = expander.peek()
-                if not tok or tok.type != TokenType.CONTROL_SEQUENCE:
+                if not tok or not expander.is_control_sequence(tok):
                     expander.logger.warning(
                         f"Required \\ not found for command {command_name}"
                     )
