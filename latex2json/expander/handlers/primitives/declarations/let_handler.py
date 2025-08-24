@@ -7,12 +7,14 @@ from latex2json.tokens.types import Token, TokenType
 
 def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
-    cmd_name = expander.parse_command_name()
-    if not cmd_name:
+    cmd = expander.peek()
+    if not cmd or not expander.is_control_sequence(cmd):
         expander.logger.warning(
-            f"Warning: \\let expects a command node, but found {cmd_name}"
+            f"Warning: \\let expects a command node, but found {cmd}"
         )
         return None
+
+    expander.consume()
 
     expander.skip_whitespace()
     expander.parse_equals()
@@ -40,7 +42,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 
             macro_copy.handler = handler
             expander.register_macro(
-                cmd_name, macro_copy, is_global=False, is_user_defined=True
+                cmd, macro_copy, is_global=False, is_user_defined=True
             )
             return []
 
@@ -52,8 +54,8 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.push_tokens([def_tok.copy()])
         return []
 
-    macro = Macro(cmd_name, handler, [def_tok], type=MacroType.CHAR)
-    expander.register_macro(cmd_name, macro, is_global=False, is_user_defined=True)
+    macro = Macro(cmd, handler, [def_tok], type=MacroType.CHAR)
+    expander.register_macro(cmd, macro, is_global=False, is_user_defined=True)
 
     return []
 
@@ -109,6 +111,34 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     return []
 
 
+def letltxmacro_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    expander.skip_whitespace()
+    cmd = expander.parse_command_name_token()
+    expander.skip_whitespace()
+    target_cmd = expander.parse_command_name_token()
+    if not cmd:
+        expander.logger.warning("\\letltxmacro: Requires a name argument")
+        return None
+    if not target_cmd:
+        expander.logger.warning("\\letltxmacro: Requires a target name argument")
+        return None
+
+    target_macro = expander.get_macro(target_cmd)
+    if target_macro is None:
+        # push the control sequence as is
+        def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+            return [target_cmd]
+
+        expander.register_handler(cmd, handler, is_global=False, is_user_defined=True)
+
+    else:
+        macro = target_macro.copy()
+        macro.name = cmd.value
+        expander.register_macro(cmd, macro, is_global=False, is_user_defined=True)
+
+    return []
+
+
 def register_let(expander: ExpanderCore):
     expander.register_handler(
         "\\let",
@@ -118,6 +148,12 @@ def register_let(expander: ExpanderCore):
     expander.register_handler(
         "\\futurelet",
         futurelet_handler,
+        is_global=True,
+    )
+
+    expander.register_macro(
+        "\\LetLtxMacro",
+        Macro("\\LetLtxMacro", letltxmacro_handler),
         is_global=True,
     )
 

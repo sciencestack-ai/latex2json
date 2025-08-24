@@ -1187,7 +1187,7 @@ class ExpanderCore:
             final_definition.append(tok)
         return final_definition
 
-    def parse_command_name(self) -> Optional[str]:
+    def parse_command_name_token(self) -> Optional[Token]:
         self.skip_whitespace()
 
         # Parse command name
@@ -1196,10 +1196,8 @@ class ExpanderCore:
         if not cmd:
             return None
         cmd = cmd[0]
-        if cmd.type == TokenType.CONTROL_SEQUENCE:
-            return cmd.value
-        elif cmd.catcode == Catcode.ACTIVE:
-            return cmd.value
+        if self.is_control_sequence(cmd):
+            return cmd
         return None
 
     def parse_brace_name(self, bracket=False) -> Optional[str]:

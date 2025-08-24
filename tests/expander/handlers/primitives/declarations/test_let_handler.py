@@ -163,3 +163,14 @@ def test_let_can_be_anything():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "XXX: 123"
+
+
+def test_LetLtxMacro():
+    expander = Expander()
+    text = r"""
+    \LetLtxMacro{\oldsqrt}{\sqrt}
+    $\oldsqrt{2}$
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"$\sqrt{2}$"

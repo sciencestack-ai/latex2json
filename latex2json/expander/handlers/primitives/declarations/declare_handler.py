@@ -40,8 +40,8 @@ def declare_math_operator_handler(
     expander.skip_whitespace()
 
     # Parse the operator name
-    name = expander.parse_command_name()
-    if name is None:
+    cmd = expander.parse_command_name_token()
+    if cmd is None:
         expander.logger.warning(
             f"Warning: \\DeclareMathOperator expects a command name, but found {expander.peek()}"
         )
@@ -71,8 +71,8 @@ def declare_math_operator_handler(
         return []
 
     expander.register_macro(
-        name,
-        Macro(name, operator_handler, definition=wrapped_definition),
+        cmd,
+        Macro(cmd, operator_handler, definition=wrapped_definition),
         is_global=True,
         is_user_defined=True,
     )
@@ -83,8 +83,8 @@ def declare_paired_delimiter_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[list[Token]]:
     r"""Handler for \DeclarePairedDelimiter"""
-    name = expander.parse_command_name()
-    if name is None:
+    cmd = expander.parse_command_name_token()
+    if cmd is None:
         expander.logger.warning(
             f"Warning: \\DeclarePairedDelimiter expects a command name, but found {expander.peek()}"
         )
@@ -109,8 +109,8 @@ def declare_paired_delimiter_handler(
         return []
 
     expander.register_macro(
-        name,
-        Macro(name, paired_delim_handler),
+        cmd,
+        Macro(cmd, paired_delim_handler),
         is_global=True,
         is_user_defined=True,
     )

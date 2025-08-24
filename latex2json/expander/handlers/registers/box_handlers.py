@@ -155,13 +155,14 @@ def make_savebox_handler(extended=False):
     """
 
     def savebox_handler(expander: ExpanderCore, token: Token):
-        box_name = expander.parse_command_name()
-        if box_name is None:
+        cmd = expander.parse_command_name_token()
+        if cmd is None:
             expander.logger.warning(
                 f"Warning: \\sbox|savebox expects a name, but found {expander.peek()}"
             )
             return None
 
+        box_name = cmd.value
         if extended:
             # ignore blocks..
             blocks = expander.parse_bracket_blocks(N_blocks=2)
@@ -191,14 +192,14 @@ def make_savebox_handler(extended=False):
 
 
 def usebox_handler(expander: ExpanderCore, token: Token):
-    box_name = expander.parse_command_name()
-    if box_name is None:
+    cmd = expander.parse_command_name_token()
+    if cmd is None:
         expander.logger.warning(
             f"Warning: \\usebox expects a name, but found {expander.peek()}"
         )
         return None
 
-    box = expander.get_register_value(REGISTER_TYPE, box_name)
+    box = expander.get_register_value(REGISTER_TYPE, cmd.value)
     if isinstance(box, Box):
         return _get_box_tokens(box)
 
@@ -234,14 +235,14 @@ def newbox_handler(expander: ExpanderCore, token: Token):
 
 
 def newsavebox_handler(expander: ExpanderCore, token: Token):
-    box_name = expander.parse_command_name()
-    if box_name is None:
+    cmd = expander.parse_command_name_token()
+    if cmd is None:
         expander.logger.warning(
             f"Warning: \\newsavebox expects a name, but found {expander.peek()}"
         )
         return None
 
-    _create_box_register(expander, box_name)
+    _create_box_register(expander, cmd.value)
     return []
 
 

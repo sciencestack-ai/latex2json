@@ -4,10 +4,12 @@ from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
 
 
-def _parse_cmd_name_and_int_value(expander: ExpanderCore) -> Optional[Tuple[str, int]]:
+def _parse_cmd_name_and_int_value(
+    expander: ExpanderCore,
+) -> Optional[Tuple[Token, int]]:
     expander.skip_whitespace()
-    cmd_name = expander.parse_command_name()
-    if not cmd_name:
+    cmd = expander.parse_command_name_token()
+    if not cmd:
         expander.logger.warning("Warning: \\chardef expects a command name")
         return None
 
@@ -17,7 +19,7 @@ def _parse_cmd_name_and_int_value(expander: ExpanderCore) -> Optional[Tuple[str,
     if value is None:
         return None
 
-    return cmd_name, value
+    return cmd, value
 
 
 def _parse_and_assign_def_values(
@@ -27,30 +29,30 @@ def _parse_and_assign_def_values(
     if not out:
         return False, None, None
 
-    cmd_name, value = out
+    cmd, value = out
 
     if not value_check_fn(value):
-        return False, cmd_name, value
+        return False, cmd, value
 
     catcode = expander.get_catcode(value)
     char = chr(value)
     out_token = Token(TokenType.CHARACTER, value=char, catcode=catcode)
     handler = lambda expander, token: [out_token]
-    macro = Macro(cmd_name, handler, [out_token], type=MacroType.CHAR)
-    expander.register_macro(cmd_name, macro, is_global=False, is_user_defined=True)
+    macro = Macro(cmd, handler, [out_token], type=MacroType.CHAR)
+    expander.register_macro(cmd, macro, is_global=False, is_user_defined=True)
 
-    return True, cmd_name, value
+    return True, cmd, value
 
 
 def chardef_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    rt, cmd_name, value = _parse_and_assign_def_values(
+    rt, cmd, value = _parse_and_assign_def_values(
         expander, lambda value: 0 <= value <= 255
     )
 
     if not rt:
-        if cmd_name:
+        if cmd:
             expander.logger.warning(
-                f"\\chardef \\{cmd_name} = {value} out of valid range (0-255)"
+                f"\\chardef {cmd} = {value} out of valid range (0-255)"
             )
         else:
             expander.logger.warning(
@@ -62,14 +64,14 @@ def chardef_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
 
 
 def mathchardef_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    rt, cmd_name, value = _parse_and_assign_def_values(
+    rt, cmd, value = _parse_and_assign_def_values(
         expander, lambda value: 0 <= value <= 32767
     )
 
     if not rt:
-        if cmd_name:
+        if cmd:
             expander.logger.warning(
-                f"\\mathchardef \\{cmd_name} = {value} out of valid range (0-32767)"
+                f"\\mathchardef {cmd} = {value} out of valid range (0-32767)"
             )
         else:
             expander.logger.warning(

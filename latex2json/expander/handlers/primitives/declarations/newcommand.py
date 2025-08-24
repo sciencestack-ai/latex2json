@@ -10,7 +10,7 @@ from latex2json.tokens.types import Token
 
 @dataclass
 class NewCommandResult:
-    name: str
+    cmd_token: Token
     definition: List[Token]
     num_args: int
     default_arg: Optional[List[Token]] = None
@@ -39,8 +39,10 @@ class NewCommandMacro(Macro):
             expander.push_tokens(subbed)
             return []
 
-        macro = Macro(out.name, handler, out.definition)
-        expander.register_macro(out.name, macro, is_global=True, is_user_defined=True)
+        macro = Macro(out.cmd_token, handler, out.definition)
+        expander.register_macro(
+            out.cmd_token, macro, is_global=True, is_user_defined=True
+        )
 
         return []
 
@@ -49,33 +51,36 @@ def newcommand_handler(
     expander: ExpanderCore, token: Token, allow_redefine: bool = True
 ) -> Optional[NewCommandResult]:
     expander.parse_asterisk()
-    name = expander.parse_command_name()
-    if name is None:
+    cmd = expander.parse_command_name_token()
+    if cmd is None:
         expander.logger.warning(
             f"Warning: \\newcommand expects a command name, but found {expander.peek()}"
         )
         return None
 
-    name = name.strip()
+    cmd.value = cmd.value.strip()
 
     out = get_newcommand_args_and_definition(expander)
     if out is None:
         expander.logger.warning(
-            f"Warning: \\newcommand {name} expects a definition in braces"
+            f"Warning: \\newcommand {cmd.value} expects a definition in braces"
         )
         return None
 
     # Check if command already exists
-    if not allow_redefine and expander.get_macro(name):
+    if not allow_redefine and expander.get_macro(cmd):
         expander.logger.info(
-            f"command {name} already exists. Use \\renewcommand to redefine"
+            f"command {cmd.value} already exists. Use \\renewcommand to redefine"
         )
         return None
 
     num_args, default_arg, definition = out
 
     return NewCommandResult(
-        name=name, definition=definition, num_args=num_args, default_arg=default_arg
+        cmd_token=cmd,
+        definition=definition,
+        num_args=num_args,
+        default_arg=default_arg,
     )
 
 

@@ -10,7 +10,7 @@ from latex2json.tokens.utils import is_begin_group_token, strip_whitespace_token
 
 @dataclass
 class DefResult:
-    name: str
+    cmd: Token
     definition: List[Token]
     usage_pattern: List[Token]
 
@@ -154,9 +154,9 @@ class DefMacro(Macro):
             expander.push_tokens(subbed)
             return []
 
-        macro = Macro(out.name, handler, out.definition)
+        macro = Macro(out.cmd, handler, out.definition)
         expander.register_macro(
-            out.name, macro, is_global=self.is_global, is_user_defined=True
+            out.cmd, macro, is_global=self.is_global, is_user_defined=True
         )
 
         return []
@@ -179,7 +179,7 @@ def get_def_usage_pattern_and_definition(
 
 
 def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
-    cmd = expander.parse_command_name()
+    cmd = expander.parse_command_name_token()
     if not cmd:
         expander.logger.warning(
             f"Warning: \\def expects a command node, but found {cmd}"
@@ -195,7 +195,7 @@ def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
         return None
 
     return DefResult(
-        name=cmd,
+        cmd=cmd,
         definition=definition,
         usage_pattern=usage_pattern,
     )
