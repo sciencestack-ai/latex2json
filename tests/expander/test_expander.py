@@ -161,6 +161,64 @@ def test_equation_numbering_with_tags_notags():
     assert inside_align_eq_tokens[3].numbering == "4"
 
 
+def test_catcode_active_as_control_sequence():
+    expander = Expander()
+
+    # test with \def
+    text = r"""
+\catcode`\� = \active
+\def �{EEE}
+�
+
+\catcode`\� = 12 % set back to other
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "EEE"
+
+    # test with \newcommand
+    text = r"""
+\catcode`\| = \active
+\newcommand{|}{FFF}
+|
+
+\catcode`\| = 12 % set back to other
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "FFF"
+
+    # test with \let
+    text = r"""
+\catcode`\x = \active
+\let x=3
+x
+
+\catcode`\x = 11 % set back to letter
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "3"
+
+    # CHECK control sequence and active of same value DO NOT CONFLICT
+    text = r"""
+\catcode`\z = \active
+
+\def\z{CONTROL-Z}
+\def z{ACTIVE-Z}
+
+\z, % CONTROL Z
+z % ACTIVE Z
+
+\catcode`\z = 11 % set back to letter
+
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_str = out_str.replace("\n", "").replace(" ", "")
+    assert out_str == "CONTROL-Z,ACTIVE-Z"
+
+
 def test_makeatletter_futurelet_ifx_lookahead():
     expander = Expander()
 
