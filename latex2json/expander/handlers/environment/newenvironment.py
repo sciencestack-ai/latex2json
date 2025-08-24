@@ -24,7 +24,7 @@ class NewEnvironmentMacro(Macro):
             return None
 
         # Check if environment already exists
-        if not self.allow_redefine and (expander.state.get_macro("\\" + name)):
+        if not self.allow_redefine and expander.get_environment_definition(name):
             expander.logger.info(
                 f"environment {name} already exists. Use \\renewenvironment to redefine"
             )

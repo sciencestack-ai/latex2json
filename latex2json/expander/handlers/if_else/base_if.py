@@ -67,10 +67,8 @@ def parse_if_else_block_tokens(
         return None
 
     def is_if_command(token: Token) -> bool:
-        if token.type == TokenType.CONTROL_SEQUENCE:
-            macro = expander.get_macro(token.value)
-            return isinstance(macro, IfMacro)
-        return False
+        macro = expander.get_macro(token)
+        return isinstance(macro, IfMacro)
 
     # parse out the entire \if ... \fi block as RAW TOKENS (DONT PROCESS)
     block = expander.parse_begin_end_as_tokens(
@@ -140,10 +138,10 @@ def make_if_defined_eval(check_undefined=False) -> Macro:
     ) -> tuple[bool | None, str | None]:
         expander.skip_whitespace()
         tok = expander.consume()
-        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+        if tok is None:
             return None, "\\ifdefined expects a token"
 
-        is_defined = expander.get_macro(tok.value) is not None
+        is_defined = expander.get_macro(tok) is not None
         if check_undefined:
             return not is_defined, None
         return is_defined, None

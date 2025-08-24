@@ -228,12 +228,29 @@ class ExpanderCore:
             is_global=True,
         )
 
-    # MACROS
-    def get_macro(self, name: str) -> Optional[Macro]:
-        return self.state.get_macro(name)
+    @staticmethod
+    def is_control_sequence(tok: Token) -> bool:
+        return tok.type == TokenType.CONTROL_SEQUENCE or tok.catcode == Catcode.ACTIVE
 
-    def delete_macro(self, name: str, is_global: bool = True):
-        self.state.delete_macro(name, is_global=is_global)
+    # MACROS
+    def get_macro(self, tok_or_name: str | Token) -> Optional[Macro]:
+        is_active_char = False
+        tok_str = tok_or_name
+        if isinstance(tok_or_name, Token):
+            if tok_or_name.catcode == Catcode.ACTIVE:
+                is_active_char = True
+            elif tok_or_name.type != TokenType.CONTROL_SEQUENCE:
+                return None
+            tok_str = tok_or_name.value
+        return self.state.get_macro(tok_str, is_active_char=is_active_char)
+
+    def delete_macro(self, tok_or_name: str | Token, is_global: bool = True):
+        is_active_char = False
+        if isinstance(tok_or_name, Token) and tok_or_name.catcode == Catcode.ACTIVE:
+            is_active_char = True
+        self.state.delete_macro(
+            tok_or_name, is_global=is_global, is_active_char=is_active_char
+        )
 
     def get_all_macros(self) -> Dict[str, Macro]:
         return self.state.get_all_macros()
@@ -258,8 +275,8 @@ class ExpanderCore:
         macro = Macro(name, handler, is_user_defined=is_user_defined)
         self.state.set_macro(name, macro, is_global=is_global)
 
-    def check_macro_is_user_defined(self, name: str) -> bool:
-        macro = self.get_macro(name)
+    def check_macro_is_user_defined(self, tok_or_name: str | Token) -> bool:
+        macro = self.get_macro(tok_or_name)
         if macro is None:
             return False
         return macro.is_user_defined
@@ -544,10 +561,7 @@ class ExpanderCore:
         # if self.state.is_verbatim_mode:
         #     return [tok]
 
-        if tok.type == TokenType.CONTROL_SEQUENCE:
-            return self._exec_macro(tok)
-        elif tok.catcode == Catcode.ACTIVE:
-            # TODO
+        if self.is_control_sequence(tok):
             return self._exec_macro(tok)
         else:
             self.state.pending_global = False
@@ -565,7 +579,7 @@ class ExpanderCore:
         return [tok]
 
     def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
-        macro = self.get_macro(tok.value)
+        macro = self.get_macro(tok)
         if macro and macro.handler:
             return macro.handler(self, tok)
         return [tok]
@@ -631,9 +645,8 @@ class ExpanderCore:
         return self.stream.match(token_type, value, catcode)
 
     def is_relax_token(self, token: Token) -> bool:
-        if token.type == TokenType.CONTROL_SEQUENCE and token.value == "relax":
-            if isinstance(self.get_macro(token.value), RelaxMacro):
-                return True
+        if isinstance(self.get_macro(token), RelaxMacro):
+            return True
         return False
 
     def _expand_and_combine_as_str(
@@ -744,9 +757,9 @@ class ExpanderCore:
         if tok is None:
             return False
 
-        if tok.type == TokenType.CONTROL_SEQUENCE:
-            macro = self.get_macro(tok.value)
-            return macro and macro.type == MacroType.REGISTER
+        macro = self.get_macro(tok)
+        if macro and macro.type == MacroType.REGISTER:
+            return True
         return False
 
     def parse_register(
@@ -760,10 +773,10 @@ class ExpanderCore:
         )
 
         tok = self.peek()
-        if tok is None or tok.type != TokenType.CONTROL_SEQUENCE:
+        if tok is None:
             return None
 
-        macro = self.get_macro(tok.value)
+        macro = self.get_macro(tok)
         if macro and isinstance(macro, RegisterMacro):
             return macro.parse_register(self, tok)
 
@@ -777,7 +790,7 @@ class ExpanderCore:
             if tok is None:
                 return None
             out = None
-            macro = self.get_macro(tok.value)
+            macro = self.get_macro(tok)
             if macro and isinstance(macro, RegisterMacro):
                 out = macro.parse_register(self, tok)
 
@@ -1129,9 +1142,9 @@ class ExpanderCore:
         return self.state.get_catcode(char_ord)
 
     def convert_token_to_char_token(self, token: Token) -> Optional[Token]:
-        if token.type == TokenType.CONTROL_SEQUENCE:
-            macro = self.get_macro(token.value)
-            if macro and macro.type == MacroType.CHAR and len(macro.definition) > 0:
+        macro = self.get_macro(token)
+        if macro:
+            if macro.type == MacroType.CHAR and len(macro.definition) > 0:
                 # example \let\a=3, \bgroup -> {, \egroup -> }, etc
                 return macro.definition[0]
             return None
@@ -1141,11 +1154,10 @@ class ExpanderCore:
     def convert_to_macro_definitions(self, definition: List[Token]) -> List[Token]:
         final_definition = []
         for tok in definition:
-            if tok.type == TokenType.CONTROL_SEQUENCE:
-                macro = self.state.get_macro(tok.value)
-                if macro:
-                    final_definition.extend(macro.definition)
-                    continue
+            macro = self.get_macro(tok)
+            if macro:
+                final_definition.extend(macro.definition)
+                continue
             final_definition.append(tok)
         return final_definition
 

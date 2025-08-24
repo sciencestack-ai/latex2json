@@ -25,10 +25,10 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         )
         return None
 
-    is_control_sequence = def_tok.type == TokenType.CONTROL_SEQUENCE
-    if is_control_sequence:
+    is_control_sequence = expander.is_control_sequence(def_tok)
+    if expander.is_control_sequence(def_tok):
         # check if existing macro
-        macro = expander.get_macro(def_tok.value)
+        macro = expander.get_macro(def_tok)
         if macro:
             macro_copy = macro.copy()
 
@@ -72,13 +72,13 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
     expander.skip_whitespace()
     handler_cmd = expander.consume()
-    if not handler_cmd or handler_cmd.type != TokenType.CONTROL_SEQUENCE:
+    if not handler_cmd or not expander.is_control_sequence(handler_cmd):
         expander.logger.warning(
             f"Warning: \\futurelet expects <control1><control2>, but <control2> is {handler_cmd}"
         )
         return None
 
-    handler_macro = expander.get_macro(handler_cmd.value)
+    handler_macro = expander.get_macro(handler_cmd)
     if not handler_macro or not handler_macro.handler:
         expander.logger.warning(
             f"\\futurelet: handler macro {handler_cmd.value} not defined"
