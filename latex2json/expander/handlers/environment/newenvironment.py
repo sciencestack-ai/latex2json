@@ -3,7 +3,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.primitives.declarations.declaration_utils import (
     get_newcommand_args_and_definition,
 )
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import Token, TokenType
 
@@ -13,6 +13,7 @@ class NewEnvironmentMacro(Macro):
         super().__init__(name)
         self.allow_redefine = allow_redefine
         self.handler = lambda expander, node: self._expand(expander, node)
+        self.type = MacroType.DECLARATION
 
     def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         expander.parse_asterisk()

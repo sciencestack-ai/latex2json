@@ -3,9 +3,9 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 from latex2json.expander.handlers.primitives.declarations.newcommand import (
     NewCommandMacro,
 )
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN, Token, TokenType
-from typing import Optional
+from typing import Callable, Optional
 
 from latex2json.tokens.utils import wrap_tokens_in_braces
 
@@ -141,21 +141,33 @@ def register_declare_commands(expander: ExpanderCore):
         NewCommandMacro("\\DeclareRobustCommand", allow_redefine=True),
         is_global=True,
     )
-    expander.register_handler(
+    expander.register_macro(
         "\\DeclareMathOperator",
-        declare_math_operator_handler,
+        Macro(
+            "\\DeclareMathOperator",
+            declare_math_operator_handler,
+            type=MacroType.DECLARATION,
+        ),
         is_global=True,
     )
 
-    expander.register_handler(
+    expander.register_macro(
         "\\DeclarePairedDelimiter",
-        declare_paired_delimiter_handler,
+        Macro(
+            "\\DeclarePairedDelimiter",
+            declare_paired_delimiter_handler,
+            type=MacroType.DECLARATION,
+        ),
         is_global=True,
     )
 
-    expander.register_handler(
+    expander.register_macro(
         "\\DeclareOption",
-        declare_option_handler,
+        Macro(
+            "\\DeclareOption",
+            declare_option_handler,
+            type=MacroType.DECLARATION,
+        ),
         is_global=True,
     )
 

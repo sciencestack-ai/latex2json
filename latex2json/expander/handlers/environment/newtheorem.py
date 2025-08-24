@@ -1,7 +1,7 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import Token, TokenType, EnvironmentType
 
@@ -100,9 +100,10 @@ def register_newtheorem(expander: ExpanderCore):
     % All share same counter within sections
 
     """
-    expander.register_handler(
+    macro = Macro("\\newtheorem", newtheorem_handler, type=MacroType.DECLARATION)
+    expander.register_macro(
         "\\newtheorem",
-        newtheorem_handler,
+        macro,
         is_global=True,
     )
 

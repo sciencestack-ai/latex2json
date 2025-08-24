@@ -202,10 +202,7 @@ x
 
     # CHECK control sequence and active of same value DO NOT CONFLICT
     text = r"""
-\catcode`\z = \active
-
-\def\z{CONTROL-Z}
-\def z{ACTIVE-Z}
+\catcode`\z = \active\def\z{CONTROL-Z}\def z{ACTIVE-Z}
 
 \z, % CONTROL Z
 z % ACTIVE Z

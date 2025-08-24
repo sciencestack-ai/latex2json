@@ -680,6 +680,9 @@ class ExpanderCore:
         tok_cur_str_predicate: Callable[[Token, str], bool],
         expand_registers=False,
     ) -> Tuple[str, bool]:
+        """
+        Returns (str, bool) where str is the combined string and bool is whether relax was encountered
+        """
         out = ""
 
         last_exp = None
@@ -689,6 +692,11 @@ class ExpanderCore:
                 self.consume()
                 out += tok.value
             elif self.is_control_sequence(tok):
+                # if we see a declaration macro e.g. \def or \newcommand, exit
+                macro = self.get_macro(tok)
+                if macro and macro.type in [MacroType.DECLARATION]:
+                    return out, False
+
                 # check \relax token and that it is RelaxMacro i.e. has not been redefined
                 if self.is_relax_token(tok):
                     self.consume()  # consume \relax token itself

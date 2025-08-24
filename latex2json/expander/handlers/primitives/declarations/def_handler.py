@@ -1,6 +1,6 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Macro, MacroType
 from dataclasses import dataclass, field
 
 from latex2json.tokens.catcodes import Catcode
@@ -129,6 +129,8 @@ class DefMacro(Macro):
         self.is_lazy = is_lazy
         self.is_global = is_global
 
+        self.type = MacroType.DECLARATION
+
         self.handler = lambda expander, node: self._expand(expander, node)
 
     def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -182,7 +184,7 @@ def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
     cmd = expander.parse_command_name_token()
     if not cmd:
         expander.logger.warning(
-            f"Warning: \\def expects a command node, but found {cmd}"
+            f"Warning: \\def expects a control sequence, but found {cmd}"
         )
         return None
 
