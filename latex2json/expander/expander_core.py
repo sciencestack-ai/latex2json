@@ -715,8 +715,9 @@ class ExpanderCore:
 
                 # expand and continue loop
                 exp = self.expand_next()
-                if exp is None:
+                if not exp:
                     continue
+
                 # if expanded are not equal, push expanded tokens back onto stream
                 if not self.check_tokens_equal(exp, [tok]):
                     self.push_tokens(exp)

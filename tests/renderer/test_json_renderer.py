@@ -89,5 +89,5 @@ def test_output_excludes_tokens_after_document_env():
     assert len(json) == 2
     assert json[0]["type"] == NodeTypes.TEXT
     assert json[0]["content"].strip() == "PRE DOC"
-    # assert json[1]["type"] == NodeTypes.DOCUMENT
-    assert json[1]["name"] == NodeTypes.DOCUMENT
+    assert json[1]["type"] == NodeTypes.DOCUMENT
+    # assert json[1]["name"] == NodeTypes.DOCUMENT

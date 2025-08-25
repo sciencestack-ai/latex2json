@@ -82,6 +82,22 @@ class EnvironmentNode(ASTNode):
         )
 
 
+class DocumentNode(EnvironmentNode):
+    def __init__(self, body: List[ASTNode] = []):
+        super().__init__(NodeTypes.DOCUMENT, body)
+
+    def __eq__(self, other: ASTNode):
+        if not isinstance(other, DocumentNode):
+            return False
+        return super().__eq__(other)
+
+    def to_json(self):
+        result = super().to_json()
+        result["type"] = NodeTypes.DOCUMENT
+        del result["name"]
+        return result
+
+
 class TheoremNode(EnvironmentNode):
     def __init__(
         self,

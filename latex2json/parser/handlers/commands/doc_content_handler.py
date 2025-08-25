@@ -8,6 +8,7 @@ from latex2json.nodes import (
     MetadataNode,
     NodeTypes,
 )
+from latex2json.nodes.environment_nodes import DocumentNode
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
 from latex2json.parser.parser_core import ParserCore
 
@@ -54,7 +55,9 @@ def make_metadata_handler(name: str, has_short_bracket=False):
 
 def document_env_handler(parser: ParserCore, token: Token):
     env = parser.parse_environment(token)
-    return [env]
+    doc_node = DocumentNode(env.body)
+    doc_node.labels = env.labels
+    return [doc_node]
 
 
 def abstract_env_handler(parser: ParserCore, token: Token):

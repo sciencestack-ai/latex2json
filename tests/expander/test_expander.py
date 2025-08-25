@@ -190,15 +190,17 @@ def test_catcode_active_as_control_sequence():
 
     # test with \let
     text = r"""
-\catcode`\x = \active
-\let x=3
+% mock \active (13) as commands
+\def\one{1}\def\three{3}
+\catcode`\x = \one\three % 13
+\let x=4
 x
 
 \catcode`\x = 11 % set back to letter
 """
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
-    assert out_str == "3"
+    assert out_str == "4"
 
     # CHECK control sequence and active of same value DO NOT CONFLICT
     text = r"""

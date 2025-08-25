@@ -136,6 +136,16 @@ class JSONRenderer:
                 return section_stack[-1]["content"]
             return root
 
+        # first, preprocess tokens to remove all tokens after \end{document}
+        last_document_idx = -1
+        for i, token in enumerate(tokens):
+            if isinstance(token, dict) and token["type"] == "document":
+                last_document_idx = i
+        if last_document_idx != -1:
+            # strip out all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
+            tokens = tokens[: last_document_idx + 1]
+
+        # then organize them into hierachies with nested 'content'
         for token in tokens:
             if not isinstance(token, dict):
                 get_current_target().append(token)
@@ -218,7 +228,6 @@ class JSONRenderer:
         if strip_whitespace_tokens:
             tokens = strip_whitespace_json_tokens(tokens)
 
-        last_document_idx = -1
         for i, token in enumerate(tokens):
             if not isinstance(token, dict):
                 if isinstance(token, list):
@@ -256,18 +265,10 @@ class JSONRenderer:
                 if token_name == "quote":
                     # make quote type
                     token["type"] = "quote"
-                elif token_name == "document":
-                    last_document_idx = i
-            elif token_type == "document":
-                last_document_idx = i
 
             # Reorder the dictionary to ensure 'content' field is last.
             # This makes it easier to read the json metadata format before 'content'
             tokens[i] = self._reorder_dict_keys(token)
-
-        if last_document_idx != -1:
-            # remove all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
-            tokens = tokens[: last_document_idx + 1]
 
         for token in tokens:
             if isinstance(token, dict) and token.get("type") == "command":
