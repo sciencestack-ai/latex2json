@@ -1,6 +1,8 @@
+from typing import List
 import pytest
 
-from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.base_nodes import ASTNode, TextNode
+from latex2json.nodes.math_nodes import EquationNode
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
@@ -179,15 +181,28 @@ def test_proper_cells_with_braces():
     """.strip()
 
     out = parser.parse(text, postprocess=True)
-    assert len(out) == 1 and isinstance(out[0], TabularNode)
-    tabular = out[0]
-    assert len(tabular.row_nodes) == 2
-    assert len(tabular.row_nodes[0].cells) == 2
-    assert len(tabular.row_nodes[1].cells) == 2
 
-    row1_cell1 = tabular.row_nodes[0].cells[0]
-    assert len(row1_cell1.body) == 1 and isinstance(row1_cell1.body[0], TextNode)
-    cell1_text = row1_cell1.body[0]
-    assert cell1_text.styles == ["bold"]
-    # { \bf one single \\ cell } -> one single\ncell
-    assert cell1_text.text.replace(" ", "") == "onesingle\ncell"
+    def assert_out_tabular(out: List[ASTNode]):
+        assert len(out) == 1 and isinstance(out[0], TabularNode)
+        tabular = out[0]
+        assert len(tabular.row_nodes) == 2
+        assert len(tabular.row_nodes[0].cells) == 2
+        assert len(tabular.row_nodes[1].cells) == 2
+
+        row1_cell1 = tabular.row_nodes[0].cells[0]
+        assert len(row1_cell1.body) == 1 and isinstance(row1_cell1.body[0], TextNode)
+        cell1_text = row1_cell1.body[0]
+        assert cell1_text.styles == ["bold"]
+        # { \bf one single \\ cell } -> one single\ncell
+        assert cell1_text.text.replace(" ", "") == "onesingle\ncell"
+
+    assert_out_tabular(out)
+
+    # check that the same tabular structure works inside an equation too
+
+    eq_tab_text = r"""\begin{equation}%s\end{equation}""" % (text)
+    out = parser.parse(eq_tab_text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    equation = out[0]
+    assert len(equation.children) == 1 and isinstance(equation.children[0], TabularNode)
+    assert_out_tabular(equation.children)

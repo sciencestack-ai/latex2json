@@ -57,8 +57,8 @@ class EquationNode(ASTNode):
 
         self.set_body(math_nodes)
 
-        # don't postprocess equation nodes
-        self.should_postprocess = False
+        # # don't postprocess equation nodes
+        # self.should_postprocess = False
 
     def set_body(self, body: List[ASTNode]):
         body = strip_whitespace_nodes(body)
@@ -195,8 +195,8 @@ class EquationArrayNode(ASTNode):
         self.args_str = args_str
         self.set_children(row_nodes)
 
-        # don't postprocess equation array nodes
-        self.should_postprocess = False
+        # # don't postprocess equation array nodes
+        # self.should_postprocess = False
 
     @property
     def row_nodes(self) -> List[RowNode]:

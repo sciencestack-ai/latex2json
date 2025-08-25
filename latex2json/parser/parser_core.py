@@ -567,6 +567,8 @@ class ParserCore:
 
         if is_math:
             self.push_mode(ProcessingMode.MATH_DISPLAY)
+        else:
+            self.push_mode(ProcessingMode.TEXT)
 
         begin_predicate: TokenPredicate = (
             lambda tok: tok.type == TokenType.ENVIRONMENT_START
@@ -584,8 +586,7 @@ class ParserCore:
             self.logger.warning(f"Unmatched environment: {env_name}")
 
         self.pop_env_stack(env_node)
-        if is_math:
-            self.pop_mode()
+        self.pop_mode()
         return env_node
 
     def _check_macro_valid(self, macro: Macro | MacroPattern) -> bool:
