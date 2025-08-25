@@ -322,7 +322,24 @@ MATH_ENVIRONMENTS = {
 
 # Theorem-like environments
 THEOREM_ENVIRONMENTS = {
-    # "theorem": EnvironmentDefinition("theorem", step_counter=True),
+    "theorem": EnvironmentDefinition(
+        "theorem", counter_name="theorem", env_type=EnvironmentType.THEOREM
+    ),
+    "lemma": EnvironmentDefinition(
+        "lemma", counter_name="lemma", env_type=EnvironmentType.THEOREM
+    ),
+    "corollary": EnvironmentDefinition(
+        "corollary", counter_name="corollary", env_type=EnvironmentType.THEOREM
+    ),
+    "proposition": EnvironmentDefinition(
+        "proposition", counter_name="proposition", env_type=EnvironmentType.THEOREM
+    ),
+    "definition": EnvironmentDefinition(
+        "definition", counter_name="definition", env_type=EnvironmentType.THEOREM
+    ),
+    "remark": EnvironmentDefinition(
+        "remark", counter_name="remark", env_type=EnvironmentType.THEOREM
+    ),
     "proof": EnvironmentDefinition(
         "proof", env_type=EnvironmentType.THEOREM, has_direct_command=True
     ),
