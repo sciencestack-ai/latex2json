@@ -340,9 +340,7 @@ THEOREM_ENVIRONMENTS = {
     "remark": EnvironmentDefinition(
         "remark", counter_name="remark", env_type=EnvironmentType.THEOREM
     ),
-    "proof": EnvironmentDefinition(
-        "proof", env_type=EnvironmentType.THEOREM, has_direct_command=True
-    ),
+    "proof": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
     "proof*": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
 }
 

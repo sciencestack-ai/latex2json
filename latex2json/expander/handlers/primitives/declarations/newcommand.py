@@ -88,7 +88,7 @@ def newcommand_handler(
 def register_newcommand(expander: ExpanderCore):
     expander.register_macro(
         "\\newcommand",
-        NewCommandMacro("\\newcommand", allow_redefine=False),
+        NewCommandMacro("\\newcommand", allow_redefine=True),
         is_global=True,
     )
     expander.register_macro(

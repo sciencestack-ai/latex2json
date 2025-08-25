@@ -19,6 +19,7 @@ ADVANCED_BOX_SPECS = {
     "rotatebox": "{{",  # \rotatebox{angle}{text}
     "adjustbox": "{{",  # \adjustbox{max width=\textwidth}{text}
     "tcbox": "[{",  # \tcbox[options]{text}
+    "llap": "{",
 }
 
 KATEX_SUPPORTED_BOXES = [

@@ -100,6 +100,7 @@ formatting_patterns = {
     "captionsetup": "[{",
     #
     "tracinglostchars": "=i",
+    "tracingpages": "=i",
     # language
     "setdefaultlanguage": 1,
     # class
@@ -147,6 +148,8 @@ formatting_patterns = {
     # mag
     "mag": "=i",
     "magstep": "i",
+    # eps
+    "epsfxsize": "=d",
 }
 
 content_formatting_patterns = {

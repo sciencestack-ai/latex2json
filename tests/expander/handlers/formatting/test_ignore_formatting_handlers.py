@@ -42,7 +42,9 @@ def test_ignore_formatting_handlers():
 
     \setdefaultlanguage{english}
     \tracinglostchars=3
+    \tracingpages 1
 
+    \epsfxsize8truecm
     
     \tcbset{colback=pink!50!20, colframe=white, boxrule=0mm, sharp corners}
     \tcbuselibrary{skins}

@@ -68,7 +68,7 @@ class NewEnvironmentMacro(Macro):
 def register_newenvironment(expander: ExpanderCore):
     expander.register_macro(
         "\\newenvironment",
-        NewEnvironmentMacro("\\newenvironment", allow_redefine=False),
+        NewEnvironmentMacro("\\newenvironment", allow_redefine=True),
         is_global=True,
     )
     expander.register_macro(
