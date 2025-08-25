@@ -8,12 +8,19 @@ from latex2json.parser.handlers.commands.command_handler_utils import (
 
 
 def make_picture_handler(env_name: str):
-    def picture_handler(parser: ParserCore, token: Token):
+    def picture_handler(parser: ParserCore, start_token: Token):
         # parse remaining env block
+        def is_end_token(tok: Token):
+            return tok.type == TokenType.ENVIRONMENT_END and tok.value == env_name
+
         tokens = parser.parse_tokens_until(
-            lambda tok: tok == Token(TokenType.ENVIRONMENT_END, env_name),
-            consume_predicate=True,
+            is_end_token,
+            consume_predicate=False,
         )
+        end_token = parser.consume()
+        if not tokens:
+            return []
+        tokens = [start_token] + tokens + [end_token]
         return [DiagramNode(env_name, parser.convert_tokens_to_str(tokens).strip())]
 
     return picture_handler

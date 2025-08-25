@@ -9,6 +9,7 @@ from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
     CommandWithArgsToken,
+    EnvironmentEndToken,
     EnvironmentStartToken,
     EnvironmentType,
 )
@@ -1340,11 +1341,15 @@ class ExpanderCore:
             if is_math:
                 state.push_mode(ProcessingMode.MATH_DISPLAY)
 
+            direct_command = None
+            if token.value != "begin":
+                direct_command = token.value
+
             args = expander.get_parsed_args(
                 env_def.num_args,
                 env_def.default_arg,
                 force_braces_for_req_args=True,
-                command_name=f"\\begin{{{env_name}}}",
+                command_name=direct_command or f"\\begin{{{env_name}}}",
             )
 
             subbed = expander.substitute_token_args(
@@ -1364,6 +1369,7 @@ class ExpanderCore:
                 numbering=numbering,
                 env_type=env_def.env_type,
                 args=args,
+                direct_command=direct_command,
             )
             begin_token.position = token.position
 
@@ -1375,11 +1381,16 @@ class ExpanderCore:
                 # if verbatim, we parse until we find the matching end environment token
                 def is_end_env_token(token: Token) -> bool:
                     r"""check for \end"""
-                    is_end_env_ctrl = (
-                        token.type == TokenType.CONTROL_SEQUENCE
-                        and token.value == "end"
-                    )
-                    if is_end_env_ctrl:
+                    is_ctrl_seq = token.type == TokenType.CONTROL_SEQUENCE
+                    if not is_ctrl_seq:
+                        return False
+
+                    # direct end_command e.g. \endpicture
+                    if env_def.end_command and token.value == env_def.end_command:
+                        return True
+
+                    # regular \end{...}
+                    if token.value == "end":
                         # parse {...} after \end to get the env name
 
                         # tokens_to_return is \end (and whitespace) up to {...}
@@ -1466,9 +1477,7 @@ class ExpanderCore:
                         )
                         equation_tokens.extend(newblock)
                         # add an env end token of Equation
-                        equation_tokens.append(
-                            Token(TokenType.ENVIRONMENT_END, "equation")
-                        )
+                        equation_tokens.append(EnvironmentEndToken("equation"))
 
                     out_tokens.extend(equation_tokens)
                 else:
@@ -1508,9 +1517,12 @@ class ExpanderCore:
 
         def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
             state = expander.state
-            end_token = Token(
-                TokenType.ENVIRONMENT_END, value=out_env_name, position=token.position
-            )
+
+            direct_command = None
+            if token.value != "end":
+                direct_command = token.value
+
+            end_token = EnvironmentEndToken(out_env_name, direct_command=direct_command)
 
             subbed = expander.substitute_token_args(env_def.end_definition, [])
             out_tokens = expander.expand_tokens(subbed)
@@ -1538,6 +1550,20 @@ class ExpanderCore:
             self.register_macro(
                 "end" + env_name,
                 Macro("end" + env_name, end_handler, env_def.end_definition),
+                is_global=is_global,
+            )
+
+        if env_def.begin_command:
+            self.register_macro(
+                env_def.begin_command,
+                Macro(env_def.begin_command, begin_handler, env_def.begin_definition),
+                is_global=is_global,
+            )
+
+        if env_def.end_command:
+            self.register_macro(
+                env_def.end_command,
+                Macro(env_def.end_command, end_handler, env_def.end_definition),
                 is_global=is_global,
             )
 

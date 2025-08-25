@@ -86,7 +86,7 @@ class DiagramNode(ASTNode):
         return self.detokenize()
 
     def detokenize(self):
-        return f"\\begin{{{self.env_name}}}\n{self.diagram}\n\\end{{{self.env_name}}}"
+        return self.diagram
 
     def to_json(self):
         result = {}

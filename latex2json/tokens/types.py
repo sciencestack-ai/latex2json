@@ -100,6 +100,7 @@ class EnvironmentStartToken(Token):
         env_type: EnvironmentType = EnvironmentType.DEFAULT,
         display_name: Optional[str] = None,
         args: Optional[List[List[Token]]] = None,
+        direct_command: Optional[str] = None,
     ):
         super().__init__(TokenType.ENVIRONMENT_START, value=name)
         self.name = name
@@ -107,6 +108,10 @@ class EnvironmentStartToken(Token):
         self.env_type = env_type
         self.display_name = display_name if display_name else name
         self.args = args
+
+        if direct_command and not direct_command.startswith("\\"):
+            direct_command = "\\" + direct_command
+        self.direct_command = direct_command
 
     def copy(self) -> "EnvironmentStartToken":
         return EnvironmentStartToken(
@@ -118,6 +123,8 @@ class EnvironmentStartToken(Token):
         )
 
     def to_str(self):
+        if self.direct_command:
+            return self.direct_command
         return f"\\begin{{{self.name}}}"
 
     def __str__(self) -> str:
@@ -140,6 +147,26 @@ class EnvironmentStartToken(Token):
             and self.display_name == other.display_name
             # and self.args == other.args
         )
+
+
+class EnvironmentEndToken(Token):
+    def __init__(self, value: str, direct_command: Optional[str] = None):
+        super().__init__(TokenType.ENVIRONMENT_END, value=value)
+        if direct_command and not direct_command.startswith("\\"):
+            direct_command = "\\" + direct_command
+        self.direct_command = direct_command
+
+    def to_str(self):
+        if self.direct_command:
+            return self.direct_command
+        return f"\\end{{{self.value}}}"
+
+    def __eq__(self, other: Token) -> bool:
+        if other.type != TokenType.ENVIRONMENT_END:
+            return False
+        if other.value != self.value:
+            return False
+        return True
 
 
 class CommandWithArgsToken(Token):

@@ -30,6 +30,8 @@ class EnvironmentDefinition:
         counter_name: Optional[str] = None,  # e.g. "equation"
         env_type: EnvironmentType = EnvironmentType.DEFAULT,
         has_direct_command: bool = False,  # e.g. \begin{document} -> \document + \enddocument
+        begin_command: Optional[str] = None,
+        end_command: Optional[str] = None,
         is_float_env=False,
     ):
         self.name = name
@@ -43,6 +45,8 @@ class EnvironmentDefinition:
         self.counter_name = counter_name
         self.env_type = env_type
         self.has_direct_command = has_direct_command
+        self.begin_command = begin_command  # e.g. direct \beginpicture
+        self.end_command = end_command  # e.g. direct \endpicture
         self.is_float_env = is_float_env
 
         # other state e.g. hooks
@@ -60,6 +64,8 @@ class EnvironmentDefinition:
             counter_name=self.counter_name,
             env_type=self.env_type,
             has_direct_command=self.has_direct_command,
+            begin_command=self.begin_command,
+            end_command=self.end_command,
             is_float_env=self.is_float_env,
         )
         new_env.hooks = Hooks(begin=self.hooks.begin.copy(), end=self.hooks.end.copy())
@@ -123,6 +129,12 @@ ALGORITHM_ENVIRONMENTS = {
 PICTURE_ENVIRONMENTS = {
     # picture/tikz
     "picture": EnvironmentDefinition("picture", env_type=EnvironmentType.VERBATIM),
+    "beginpicture": EnvironmentDefinition(
+        "picture",
+        env_type=EnvironmentType.VERBATIM,
+        begin_command="beginpicture",
+        end_command="endpicture",
+    ),
     "tikzpicture": EnvironmentDefinition(
         "tikzpicture", env_type=EnvironmentType.VERBATIM
     ),
@@ -311,7 +323,9 @@ MATH_ENVIRONMENTS = {
 # Theorem-like environments
 THEOREM_ENVIRONMENTS = {
     # "theorem": EnvironmentDefinition("theorem", step_counter=True),
-    "proof": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
+    "proof": EnvironmentDefinition(
+        "proof", env_type=EnvironmentType.THEOREM, has_direct_command=True
+    ),
     "proof*": EnvironmentDefinition("proof", env_type=EnvironmentType.THEOREM),
 }
 
