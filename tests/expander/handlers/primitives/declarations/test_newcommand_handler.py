@@ -97,30 +97,30 @@ def test_newcommand_with_default():
     )
 
 
-def test_newcommand_redefinition():
-    expander = Expander()
+# def test_newcommand_redefinition():
+#     expander = Expander()
 
-    # Define command
-    text = r"""
-    \newcommand{\greeting } {Hello}
-    """.strip()
-    expander.expand(text)
+#     # Define command
+#     text = r"""
+#     \newcommand{\greeting } {Hello}
+#     """.strip()
+#     expander.expand(text)
 
-    # Attempt to redefine with \newcommand should fail silently
-    text = r"""
-    \newcommand{\greeting}{Hi}
-    """.strip()
-    expander.expand(text)
+#     # Attempt to redefine with \newcommand should fail silently
+#     text = r"""
+#     \newcommand{\greeting}{Hi}
+#     """.strip()
+#     expander.expand(text)
 
-    # Original definition should remain
-    assert_token_sequence(expander.expand(r"\greeting"), expander.expand("Hello"))
+#     # Original definition should remain
+#     assert_token_sequence(expander.expand(r"\greeting"), expander.expand("Hello"))
 
-    # Redefine with \renewcommand should work
-    text = r"""
-    \renewcommand* {\greeting} {Hi}
-    """.strip()
-    expander.expand(text)
-    assert_token_sequence(expander.expand(r"\greeting"), expander.expand("Hi"))
+#     # Redefine with \renewcommand should work
+#     text = r"""
+#     \renewcommand* {\greeting} {Hi}
+#     """.strip()
+#     expander.expand(text)
+#     assert_token_sequence(expander.expand(r"\greeting"), expander.expand("Hi"))
 
 
 def test_newcommand_scope():

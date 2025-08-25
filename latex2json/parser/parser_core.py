@@ -474,14 +474,10 @@ class ParserCore:
         self.push_mode(
             ProcessingMode.MATH_INLINE if is_inline else ProcessingMode.MATH_DISPLAY
         )
-        # process even if $$ ... $?
-        math_nodes = self.process(
-            lambda tok: tok.type
-            in [
-                TokenType.MATH_SHIFT_INLINE,
-                TokenType.MATH_SHIFT_DISPLAY,
-            ]
+        tok_type = (
+            TokenType.MATH_SHIFT_INLINE if is_inline else TokenType.MATH_SHIFT_DISPLAY
         )
+        math_nodes = self.process(lambda tok: tok.type == tok_type)
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
         self.pop_mode()
         return [EquationNode(math_nodes, equation_type=eq_type)]

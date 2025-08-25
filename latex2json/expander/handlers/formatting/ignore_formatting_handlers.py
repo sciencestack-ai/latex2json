@@ -148,6 +148,7 @@ formatting_patterns = {
     # mag
     "mag": "=i",
     "magstep": "i",
+    "magnification": "=i",
     # eps
     "epsfxsize": "=d",
 }

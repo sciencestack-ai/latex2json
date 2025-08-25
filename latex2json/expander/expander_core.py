@@ -186,12 +186,18 @@ class ExpanderCore:
             expander.state.pending_global = True
             return []
 
+        def bye_handler(expander: "ExpanderCore", token: Token):
+            expander.logger.info(r"\bye triggered, popped source")
+            expander.stream.pop_source()
+            return []
+
         self.register_handler("\\global", global_handler, is_global=True)
         self.register_macro("\\empty", EmptyMacro(), is_global=True)
         self.register_macro("\\@empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
         self.register_handler("\\null", lambda expander, token: [], is_global=True)
         self.register_handler("\\protect", lambda expander, token: [], is_global=True)
+        self.register_handler("\\bye", bye_handler, is_global=True)
 
     def _init_counter_macros(self):
         for counter_name in self.state.counter_manager.counters:

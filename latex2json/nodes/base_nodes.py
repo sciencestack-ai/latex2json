@@ -160,7 +160,7 @@ class SpecialCharNode(ASTNode):
     def to_json(self):
         # this node should not ever be needed to be json, but just in case
         result = super().to_json()
-        result["type"] = "text"
+        result["type"] = NodeTypes.TEXT
         result["content"] = self.value
         return result
 
