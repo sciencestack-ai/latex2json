@@ -775,9 +775,10 @@ class ExpanderCore:
             is_valid = integer_tok_cur_str_predicate(tok, cur_str)
             if is_valid:
                 return True
-            # float can only have one decimal point
-            if tok.value == "." and "." not in cur_str:
-                return True
+            # float can only have one decimal point. Allow , for decimals
+            if tok.value in ".,":
+                if not ("." in cur_str or "," in cur_str):
+                    return True
             return False
 
         sequence, relax = self._expand_and_combine_as_str(

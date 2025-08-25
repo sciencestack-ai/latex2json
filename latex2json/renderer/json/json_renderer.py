@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, List, Optional
 from latex2json.nodes import ASTNode
-from latex2json.parser.parser_parallel import ParserParallel
+from latex2json.parser import ParserCore, ParserParallel
 
 INLINE_TYPES = ["text", "ref", "citation", "url", "footnote", "command"]
 
@@ -53,9 +53,19 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
 
 
 class JSONRenderer:
+    parser: ParserCore
+
     def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
         self.logger = logger or logging.getLogger(__name__)
-        self.parser = ParserParallel(logger=self.logger, n_processors=n_processors)
+        self.n_processors = n_processors
+        self._init_parser()
+
+    def _init_parser(self):
+        self.parser = ParserParallel(logger=self.logger, n_processors=self.n_processors)
+
+    def clear(self):
+        # create new parser instance
+        self._init_parser()
 
     def get_colors(self):
         return self.parser.get_colors()
@@ -456,9 +466,7 @@ Appendix 2 content
 """
 
     text = r"""
-\begin{tabular}{| c | l | l |}
-$l_{\lambda,0}$
-\end{tabular} ssss
+$\hbox to 7,2cm{} $
 """.strip()
 
     json = renderer.parse(text)

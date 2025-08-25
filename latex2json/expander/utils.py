@@ -2,6 +2,9 @@ from typing import List
 
 
 def parse_number_str_to_float(sequence: str) -> float:
+    # replace comma with dot for decimal point (TeX uses comma for decimals too)
+    sequence = sequence.replace(",", ".")
+
     # Count leading +/- signs (TeX allows multiple)
     sign = 1
     i = 0

@@ -110,20 +110,12 @@ class TexReader:
         logger: Logger instance for tracking operations
     """
 
-    json_renderer: JSONRenderer
-
     def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
         self.logger = logger or logging.getLogger(__name__)
-        self.n_processors = n_processors
-        self._init_renderer()
+        self.json_renderer = JSONRenderer(logger=self.logger, n_processors=n_processors)
 
     def clear(self):
-        self._init_renderer()
-
-    def _init_renderer(self):
-        self.json_renderer = JSONRenderer(
-            logger=self.logger, n_processors=self.n_processors
-        )
+        self.json_renderer.clear()
 
     def _handle_file_operation(
         self, operation: Callable[..., T], error_msg: str, *args, **kwargs

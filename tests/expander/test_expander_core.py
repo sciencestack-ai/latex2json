@@ -285,6 +285,10 @@ def test_parse_int_float_arguments():
     expander.set_text(".23fe")
     assert expander.parse_float() == 0.23
 
+    # test float with comma
+    expander.set_text("-123,456")
+    assert expander.parse_float() == -123.456
+
     # test with \relax\empty
     expander.set_text(r"0.23\relax44")
     assert expander.parse_float() == 0.23
