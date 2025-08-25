@@ -6,7 +6,7 @@ from latex2json.nodes.node_types import NodeTypes
 
 SECTION_LEVELS = {
     "part": 0,
-    "chapter": 1,
+    "chapter": 0,
     "section": 1,
     "subsection": 2,
     "subsubsection": 3,

@@ -191,6 +191,8 @@ content_formatting_patterns = {
     "width": 0,
     "height": 0,
     "depth": 0,
+    # mark
+    "markboth": 2,
 }
 
 

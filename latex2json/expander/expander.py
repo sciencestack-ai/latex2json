@@ -79,20 +79,25 @@ class Expander(ExpanderCore):
     # override
     def register_macro(
         self,
-        name: str,
+        tok_or_name: str | Token,
         macro: Macro,
         is_global: bool = False,
         is_user_defined: bool = False,
     ):
+        normalized = self.normalize_macro_name(tok_or_name)
+        if normalized is None:
+            return  # Invalid token type, cannot register
+        tok_str, is_active_char = normalized
+
         # prevent redefinition of white-listed commands in package/class files
         if is_user_defined and self.prevent_whitelisted_redefinitions:
-            if name in self.white_listed_commands:
+            if tok_str in self.white_listed_commands:
                 self.logger.info(
-                    f"Preventing redefinition of white-listed command \\{name}"  # inside package/class: \\{name}"
+                    f"Preventing redefinition of white-listed command \\{tok_str}"  # inside package/class: \\{name}"
                 )
                 return
 
-        super().register_macro(name, macro, is_global, is_user_defined)
+        super().register_macro(tok_or_name, macro, is_global, is_user_defined)
 
 
 if __name__ == "__main__":
