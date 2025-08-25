@@ -694,7 +694,7 @@ class ExpanderCore:
             elif self.is_control_sequence(tok):
                 # if we see a declaration macro e.g. \def or \newcommand, exit
                 macro = self.get_macro(tok)
-                if macro and macro.type in [MacroType.DECLARATION]:
+                if macro and macro.type == MacroType.DECLARATION:
                     return out, False
 
                 # check \relax token and that it is RelaxMacro i.e. has not been redefined

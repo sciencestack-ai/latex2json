@@ -140,20 +140,20 @@ def letltxmacro_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 
 
 def register_let(expander: ExpanderCore):
-    expander.register_handler(
+    expander.register_macro(
         "\\let",
-        let_handler,
+        Macro("\\let", let_handler, type=MacroType.DECLARATION),
         is_global=True,
     )
-    expander.register_handler(
+    expander.register_macro(
         "\\futurelet",
-        futurelet_handler,
+        Macro("\\futurelet", futurelet_handler, type=MacroType.DECLARATION),
         is_global=True,
     )
 
     expander.register_macro(
         "\\LetLtxMacro",
-        Macro("\\LetLtxMacro", letltxmacro_handler),
+        Macro("\\LetLtxMacro", letltxmacro_handler, type=MacroType.DECLARATION),
         is_global=True,
     )
 
