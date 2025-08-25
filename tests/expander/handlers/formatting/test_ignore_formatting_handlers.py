@@ -65,6 +65,9 @@ def test_ignore_formatting_handlers():
 
     \mag=1000
     \magstep2
+    
+    \newsymbol\upharpoonright 1316
+
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

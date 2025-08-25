@@ -155,6 +155,10 @@ formatting_patterns = {
     # frenchspacing
     "frenchspacing": 0,
     "nonfrenchspacing": 0,
+    # psfrag (ignoring this will affect the ps output e.g. eps)
+    "psfrag": "{{",
+    # newsymbol (creating a new math symbol.., should add support in future)
+    "newsymbol": "\\i",
 }
 
 content_formatting_patterns = {
