@@ -72,6 +72,7 @@ def register_font_handlers(expander: ExpanderCore):
         "scriptfont": "\\=\\",
         "scriptscriptfont": "\\=\\",
         "setmathfont": "[{",
+        "theoremheaderfont": "{",
     }
     register_ignore_handlers_util(expander, ignore_patterns)
 

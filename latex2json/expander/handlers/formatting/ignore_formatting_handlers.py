@@ -149,6 +149,12 @@ formatting_patterns = {
     "mag": "=i",
     "magstep": "i",
     "magnification": "=i",
+    # unskips/postskips
+    "unskip": 0,
+    "theorempostskipamount": 0,
+    # frenchspacing
+    "frenchspacing": 0,
+    "nonfrenchspacing": 0,
 }
 
 content_formatting_patterns = {

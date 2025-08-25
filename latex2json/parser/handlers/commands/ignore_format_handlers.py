@@ -26,7 +26,7 @@ def register_ignore_separators(parser: ParserCore):
         "cdashline": "{",
         "specialrule": "{{{",
         "addlinespace": "[",
-        "rule": "{{",
+        "rule": "[{{",
         "hrule": 0,
         "morecmidrules": 0,
         "fboxsep": "{",
