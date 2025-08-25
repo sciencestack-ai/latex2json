@@ -2,6 +2,9 @@ from typing import List, Optional
 from latex2json.nodes import ASTNode, BibEntryNode, BibliographyNode
 from latex2json.nodes.base_nodes import CommandNode, TextNode
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.parser_core import Macro, ParserCore
 from latex2json.tokens.types import EnvironmentStartToken, Token
 
@@ -90,6 +93,13 @@ def register_bibitem_handler(parser: ParserCore):
     parser.register_handler("newblock", lambda parser, token: [])
     parser.register_env_handler("thebibliography", bibliography_handler)
     parser.register_handler("natexlab", natexlab_handler)
+
+    ignore_patterns = {
+        # macro provided by the AMS document classes/packages, e.g. Mathematical Reviews MR
+        "MR": "{",
+    }
+
+    register_ignore_handlers_util(parser, ignore_patterns)
 
 
 if __name__ == "__main__":

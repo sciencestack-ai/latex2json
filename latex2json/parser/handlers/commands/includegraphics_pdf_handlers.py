@@ -56,8 +56,7 @@ def graphicspath_handler(parser: ParserCore, token: Token):
 
 
 def register_includegraphics_pdf_handlers(parser: ParserCore):
-    for graphics in ["includegraphics", "epsfbox"]:
-        parser.register_handler(graphics, includegraphics_handler)
+    parser.register_handler("includegraphics", includegraphics_handler)
     parser.register_handler("includepdf", includepdf_handler)
 
     parser.register_handler("graphicspath", graphicspath_handler)

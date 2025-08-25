@@ -4,49 +4,7 @@ from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import EnvironmentType
 from typing import Dict, Optional, List
 
-
-def parse_options(options_str: str) -> Dict[str, str]:
-    result = {}
-    current_key = ""
-    current_value = ""
-    in_key = True
-    brace_depth = 0
-    i = 0
-
-    while i < len(options_str):
-        char = options_str[i]
-
-        if char == "{":
-            brace_depth += 1
-            if in_key:
-                current_key += char
-            else:
-                current_value += char
-        elif char == "}":
-            brace_depth -= 1
-            if in_key:
-                current_key += char
-            else:
-                current_value += char
-        elif char == "=" and brace_depth == 0:
-            in_key = False
-        elif char == "," and brace_depth == 0:
-            if current_key.strip():
-                result[current_key.strip()] = current_value.strip()
-            current_key = ""
-            current_value = ""
-            in_key = True
-        else:
-            if in_key:
-                current_key += char
-            else:
-                current_value += char
-        i += 1
-
-    if current_key.strip():
-        result[current_key.strip()] = current_value.strip()
-
-    return result
+from latex2json.utils.tex_utils import parse_key_val_string
 
 
 def declaretheorem_handler(expander: ExpanderCore, token: Token):
@@ -62,7 +20,7 @@ def declaretheorem_handler(expander: ExpanderCore, token: Token):
 
     options_str = expander.convert_tokens_to_str(options) if options else ""
 
-    parsed_options = parse_options(options_str)
+    parsed_options = parse_key_val_string(options_str)
 
     display_name = parsed_options.get("name", env_name)
     counter_name = env_name

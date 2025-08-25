@@ -13,6 +13,52 @@ def strip_tex_extension(filename: str) -> str:
     return filename
 
 
+def parse_key_val_string(keyval_str: str, include_braces=True) -> Dict[str, str]:
+    result = {}
+    current_key = ""
+    current_value = ""
+    in_key = True
+    brace_depth = 0
+    i = 0
+
+    while i < len(keyval_str):
+        char = keyval_str[i]
+
+        if char == "{":
+            brace_depth += 1
+            if include_braces:
+                if in_key:
+                    current_key += char
+                else:
+                    current_value += char
+        elif char == "}":
+            brace_depth -= 1
+            if include_braces:
+                if in_key:
+                    current_key += char
+                else:
+                    current_value += char
+        elif char == "=" and brace_depth == 0:
+            in_key = False
+        elif char == "," and brace_depth == 0:
+            if current_key.strip():
+                result[current_key.strip()] = current_value.strip()
+            current_key = ""
+            current_value = ""
+            in_key = True
+        else:
+            if in_key:
+                current_key += char
+            else:
+                current_value += char
+        i += 1
+
+    if current_key.strip():
+        result[current_key.strip()] = current_value.strip()
+
+    return result
+
+
 def convert_color_to_css(model: str, spec: str) -> str:
     """Convert LaTeX color specifications to CSS values"""
 

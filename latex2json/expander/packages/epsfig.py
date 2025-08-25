@@ -1,0 +1,70 @@
+from typing import List
+from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import wrap_tokens_in_braces
+from latex2json.utils.tex_utils import parse_key_val_string
+
+
+def _path_to_includegraphics_token(path: str) -> List[Token]:
+    path_tokens: List[Token] = []
+    for c in path:
+        path_tokens.append(Token(TokenType.CHARACTER, c, catcode=Catcode.LETTER))
+    return [
+        Token(TokenType.CONTROL_SEQUENCE, "includegraphics"),
+        *wrap_tokens_in_braces(path_tokens),
+    ]
+
+
+def epsfig_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    brace_str = expander.parse_brace_name()
+    if not brace_str:
+        expander.logger.warning(f"Warning: \\epsfig expects a path")
+        return None
+
+    opts = parse_key_val_string(brace_str)
+    if not opts:
+        return []
+    if "file" in opts:
+        path = opts["file"]
+        return _path_to_includegraphics_token(path)
+
+    return []
+
+
+def epsfbox_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    path = expander.parse_brace_name()
+    if not path:
+        expander.logger.warning(f"Warning: \\epsfbox expects a path")
+        return None
+
+    return _path_to_includegraphics_token(path)
+
+
+def register_epsfig(expander: ExpanderCore):
+    # convert these to includegraphics..
+    expander.register_handler("epsfig", epsfig_handler, is_global=True)
+    expander.register_handler("epsfbox", epsfbox_handler, is_global=True)
+
+    ignore_patterns = {
+        "epsfxsize": "=d",
+    }
+    register_ignore_handlers_util(expander, ignore_patterns)
+
+
+if __name__ == "__main__":
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    register_epsfig(expander)
+
+    text = r"""
+    \epsfig{file=eee.eps,other=opts}
+    \epsfbox{aaa.eps}
+""".strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)

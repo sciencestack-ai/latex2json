@@ -149,8 +149,6 @@ formatting_patterns = {
     "mag": "=i",
     "magstep": "i",
     "magnification": "=i",
-    # eps
-    "epsfxsize": "=d",
 }
 
 content_formatting_patterns = {

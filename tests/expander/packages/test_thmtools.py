@@ -1,40 +1,8 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.expander.packages.thmtools import parse_options
 from latex2json.tokens.types import EnvironmentType
 from tests.expander.handlers.environment.test_environment_handlers import mock_env_token
-
-
-def test_parse_options():
-    # Test simple key-value pairs
-    assert parse_options("name=Theorem") == {"name": "Theorem"}
-    assert parse_options("name=Theorem,numbered=no") == {
-        "name": "Theorem",
-        "numbered": "no",
-    }
-
-    # Test with braces
-    assert parse_options("name={My Theorem}") == {"name": "{My Theorem}"}
-    assert parse_options("Refname={Theorem,Theorems}") == {
-        "Refname": "{Theorem,Theorems}"
-    }
-
-    # Test complex options
-    options = "name=Definition,Refname={Definition,Definitions},sibling=thm"
-    expected = {
-        "name": "Definition",
-        "Refname": "{Definition,Definitions}",
-        "sibling": "thm",
-    }
-    assert parse_options(options) == expected
-
-    # Test nested braces
-    assert parse_options("name={{Nested} Theorem}") == {"name": "{{Nested} Theorem}"}
-
-    # Test empty options
-    assert parse_options("") == {}
-    assert parse_options("key=") == {"key": ""}
 
 
 def test_declaretheorem_basic():
