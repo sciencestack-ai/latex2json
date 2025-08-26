@@ -205,9 +205,12 @@ TABULAR_ENVIRONMENTS = {
     "tabular": EnvironmentDefinition(
         "tabular", num_args=2, default_arg=[], has_direct_command=True
     ),
+    "tabular*": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
     "tabularx": EnvironmentDefinition("tabular", num_args=2),
+    "tabularx*": EnvironmentDefinition("tabular", num_args=2),
     "tabulary": EnvironmentDefinition("tabular", num_args=1),
     "longtable": EnvironmentDefinition("tabular", num_args=1),
+    "longtable*": EnvironmentDefinition("tabular", num_args=1),
 }
 
 # List environments
@@ -234,6 +237,10 @@ MATH_ENVIRONMENTS = {
         env_type=EnvironmentType.EQUATION,
         has_direct_command=True,
     ),
+    "equation*": EnvironmentDefinition(
+        "equation*",
+        env_type=EnvironmentType.EQUATION,
+    ),
     "math": EnvironmentDefinition(  # equivalent to inline math
         "math",
         env_type=EnvironmentType.EQUATION,
@@ -245,9 +252,11 @@ MATH_ENVIRONMENTS = {
     "multline": EnvironmentDefinition(
         "multline", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
+    "multline*": EnvironmentDefinition("multline*", env_type=EnvironmentType.EQUATION),
     "dmath": EnvironmentDefinition(
         "dmath", counter_name="equation", env_type=EnvironmentType.EQUATION
     ),
+    "dmath*": EnvironmentDefinition("dmath*", env_type=EnvironmentType.EQUATION),
     # inner environments inside equation/align
     "gathered": EnvironmentDefinition(
         "gathered", env_type=EnvironmentType.EQUATION, has_direct_command=True
@@ -311,13 +320,28 @@ MATH_ENVIRONMENTS = {
     ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "align*": EnvironmentDefinition("align*", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "eqnarray*": EnvironmentDefinition(
+        "align*", env_type=EnvironmentType.EQUATION_ALIGN
+    ),
     "gather": EnvironmentDefinition("gather", env_type=EnvironmentType.EQUATION_ALIGN),
+    "gather*": EnvironmentDefinition(
+        "gather*", env_type=EnvironmentType.EQUATION_ALIGN
+    ),
     "flalign": EnvironmentDefinition(
         "flalign", env_type=EnvironmentType.EQUATION_ALIGN
     ),
+    "flalign*": EnvironmentDefinition(
+        "flalign*", env_type=EnvironmentType.EQUATION_ALIGN
+    ),
     "alignat": EnvironmentDefinition(
         "alignat",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_ALIGN,
+    ),
+    "alignat*": EnvironmentDefinition(
+        "alignat*",
         num_args=1,
         env_type=EnvironmentType.EQUATION_ALIGN,
     ),
@@ -364,28 +388,19 @@ COMMON_ENVIRONMENTS = {
     **THEOREM_ENVIRONMENTS,
 }
 
-STAR_VARIANTS = [
-    "equation",
-    "align",
-    "gather",
-    "multline",
-    "eqnarray",  # though deprecated
-    "flalign",
-    "alignat",
-    "dmath",
-    "tabular",
-    "tabularx",
-    "longtable",
-    # "theorem",  # when using amsthm package
-    # "lemma",  # when using amsthm package
-]
+# STAR_VARIANTS = [
+#     "tabularx",
+#     "longtable",
+#     # "theorem",  # when using amsthm package
+#     # "lemma",  # when using amsthm package
+# ]
 
-for env in STAR_VARIANTS:
-    env_def = COMMON_ENVIRONMENTS.get(env)
-    if not env_def:
-        continue
-    env_star = env_def.copy()
-    env_star.name = env_star.name + "*"
-    env_star.has_direct_command = False
-    env_star.counter_name = None
-    COMMON_ENVIRONMENTS[env_star.name] = env_star
+# for env in STAR_VARIANTS:
+#     env_def = COMMON_ENVIRONMENTS.get(env)
+#     if not env_def:
+#         continue
+#     env_star = env_def.copy()
+#     env_star.name = env_star.name + "*"
+#     env_star.has_direct_command = False
+#     env_star.counter_name = None
+#     COMMON_ENVIRONMENTS[env + "*"] = env_star
