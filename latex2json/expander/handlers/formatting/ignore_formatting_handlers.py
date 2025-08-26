@@ -62,6 +62,7 @@ formatting_patterns = {
     # other
     "enlargethispage": 1,
     "pagecolor": "*{",
+    "center": 0,
     "centering": 0,
     "raggedright": 0,
     "raggedleft": 0,

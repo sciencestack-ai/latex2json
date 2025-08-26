@@ -36,6 +36,8 @@ def tikz_cmd_handler(expander: ExpanderCore, token: Token):
 
 def register_tikz(expander: ExpanderCore):
     expander.register_handler("tikz", tikz_cmd_handler, is_global=True)
+    ignore_patterns = {"usetikzlibrary": 1, "tikzcdset": 1}
+    register_ignore_handlers_util(expander, ignore_patterns)
 
 
 if __name__ == "__main__":

@@ -136,6 +136,7 @@ PICTURE_ENVIRONMENTS = {
         begin_command="beginpicture",
         end_command="endpicture",
     ),
+    "tikzcd": EnvironmentDefinition("tikzcd", env_type=EnvironmentType.VERBATIM),
     "tikzpicture": EnvironmentDefinition(
         "tikzpicture", env_type=EnvironmentType.VERBATIM
     ),
