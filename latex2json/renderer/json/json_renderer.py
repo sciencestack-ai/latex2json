@@ -151,6 +151,7 @@ class JSONRenderer:
         for i, token in enumerate(tokens):
             if isinstance(token, dict) and token["type"] == "document":
                 last_document_idx = i
+                break
         if last_document_idx != -1:
             # strip out all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
             tokens = tokens[: last_document_idx + 1]

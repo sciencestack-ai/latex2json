@@ -159,6 +159,8 @@ formatting_patterns = {
     "psfrag": "{{",
     # newsymbol (creating a new math symbol.., should add support in future)
     "newsymbol": "\\i",
+    # other
+    "tolerance": "=i",
 }
 
 content_formatting_patterns = {
@@ -201,6 +203,8 @@ content_formatting_patterns = {
     "depth": 0,
     # mark
     "markboth": 2,
+    # marginpar
+    "marginpar": 1,
 }
 
 

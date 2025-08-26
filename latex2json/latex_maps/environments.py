@@ -151,6 +151,7 @@ PICTURE_ENVIRONMENTS = {
 LAYOUT_ENVIRONMENTS = {
     "titlepage": EnvironmentDefinition("titlepage"),
     "center": EnvironmentDefinition("center"),
+    "centering": EnvironmentDefinition("centering"),
     "verse": EnvironmentDefinition("verse"),
     "tcolorbox": EnvironmentDefinition("tcolorbox"),
     "flushleft": EnvironmentDefinition("flushleft"),
@@ -235,6 +236,10 @@ MATH_ENVIRONMENTS = {
     ),
     "math": EnvironmentDefinition(  # equivalent to inline math
         "math",
+        env_type=EnvironmentType.EQUATION,
+    ),
+    "displaymath": EnvironmentDefinition(  # equivalent to inline math
+        "displaymath",
         env_type=EnvironmentType.EQUATION,
     ),
     "multline": EnvironmentDefinition(
