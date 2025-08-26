@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
+    EnvironmentEndToken,
     EnvironmentStartToken,
     EnvironmentType,
     Token,
@@ -22,19 +23,25 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         return None
 
     env_def = expander.state.get_environment_definition(name)
+
     if not env_def:
-        expander.logger.info(
-            f"{prefix}{{{name}}} not found, returning default environment start token"
-        )
+        log_str = f"{prefix}{{{name}}} not found -> "
+        if expander.get_macro(name):
+            log_str += f"Found \\{name} instead"
+            # convert to macro
+            expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
+        else:
+            log_str += " returning default env"
+        expander.logger.info(log_str)
     elif env_def.begin_handler:
         return env_def.begin_handler(expander, token)
     else:
         # env is defined but has no begin handler
         expander.logger.info(
-            f"Warning: {prefix}{{{name}}} has no begin handler, returning default environment start token"
+            f"Warning: {prefix}{{{name}}} has no begin handler, returning default env"
         )
 
-    counter_name = name
+    counter_name = None  # name
     env_type = EnvironmentType.DEFAULT
     if env_def:
         counter_name = env_def.counter_name
@@ -60,7 +67,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
 
     env_def = expander.state.get_environment_definition(name)
 
-    out_tokens = [Token(TokenType.ENVIRONMENT_END, name)]
+    out_tokens = [EnvironmentEndToken(name)]
 
     if not env_def:
         expander.logger.info(

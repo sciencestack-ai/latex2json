@@ -1,11 +1,13 @@
 import pytest
 from latex2json.expander.expander import Expander
 from latex2json.tokens.types import (
+    EnvironmentEndToken,
     EnvironmentStartToken,
     Token,
     TokenType,
 )
 from latex2json.tokens.utils import strip_whitespace_tokens
+from tests.expander.handlers.sectioning.test_section_handlers import mock_section_token
 from tests.test_utils import assert_token_sequence
 
 
@@ -22,7 +24,7 @@ def test_basic_begin_end():
     expected = [
         EnvironmentStartToken("test"),
         *expander.expand("BEGIN ABC 123CONTENTEND"),
-        Token(TokenType.ENVIRONMENT_END, "test"),
+        EnvironmentEndToken("test"),
     ]
     assert_token_sequence(out, expected)
 
@@ -39,9 +41,9 @@ def test_nested_environments():
         *expander.expand("<A"),
         EnvironmentStartToken("inner"),
         *expander.expand("[B]"),
-        Token(TokenType.ENVIRONMENT_END, "inner"),
+        EnvironmentEndToken("inner"),
         *expander.expand("C>"),
-        Token(TokenType.ENVIRONMENT_END, "outer"),
+        EnvironmentEndToken("outer"),
     ]
     assert_token_sequence(out, expected)
 
@@ -113,7 +115,7 @@ def test_begin_end_with_csname():
         *expander.expand("START"),
         *expander.expand("CONTENT"),
         *expander.expand("END"),
-        Token(TokenType.ENVIRONMENT_END, "test"),
+        EnvironmentEndToken("test"),
     ]
     assert_token_sequence(out, expected)
 
@@ -123,3 +125,20 @@ def test_begin_end_with_csname():
         r"\begin{\csname envname\endcsname}CONTENT\end{\csname envname\endcsname}"
     )
     assert_token_sequence(out, expected)
+
+
+def test_begin_end_default_to_macro():
+    expander = Expander()
+
+    text = r"""
+    % \begin{section} is not defined, so it should expand to to \section but wrapped in \begin{section} block as well
+    \begin{section}{Intro} \label{sec:intro}
+    x = 1
+    \end{section}
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out[0] == EnvironmentStartToken("section")
+    # second token is the numbered section
+    assert out[1] == mock_section_token(expander, "section", "Intro", numbering="1")[0]
+    assert out[-1] == EnvironmentEndToken("section")

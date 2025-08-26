@@ -3,6 +3,8 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 from latex2json.tokens.types import Token, TokenType
 
 formatting_patterns = {
+    "pageheight": 1,
+    "pagewidth": 1,
     "NeedsTeXFormat": 1,
     "ProvidesClass": "{[",
     "ProvidesPackage": "{[",

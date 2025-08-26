@@ -311,10 +311,8 @@ MATH_ENVIRONMENTS = {
     ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "eqnarray": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
     "gather": EnvironmentDefinition("gather", env_type=EnvironmentType.EQUATION_ALIGN),
-    "eqnarray": EnvironmentDefinition(
-        "eqnarray", env_type=EnvironmentType.EQUATION_ALIGN
-    ),
     "flalign": EnvironmentDefinition(
         "flalign", env_type=EnvironmentType.EQUATION_ALIGN
     ),

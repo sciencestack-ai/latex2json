@@ -91,3 +91,77 @@ def test_output_excludes_tokens_after_document_env():
     assert json[0]["content"].strip() == "PRE DOC"
     assert json[1]["type"] == NodeTypes.DOCUMENT
     # assert json[1]["name"] == NodeTypes.DOCUMENT
+
+
+def test_json_output_of_begin_end_sections():
+    # ensure that begin/end sections are properly nested
+    text = r"""
+    \begin{section}{Intro}\label{sec:intro}
+    Section 1
+    \begin{subsection}{Subsec 1}\label{subsec:1}
+    Subsec 1
+    \end{subsection}
+    \end{section}
+
+    Post Sec Intro
+
+    \begin{section}{Sec 2}
+    Section 2
+    \end{section}
+
+    Post Sec 2
+    """.strip()
+    renderer = JSONRenderer()
+    json = renderer.parse(text)
+
+    expected = [
+        {
+            "type": NodeTypes.ENVIRONMENT,
+            "name": "section",
+            "content": [
+                {
+                    "type": NodeTypes.SECTION,
+                    "labels": ["sec:intro"],
+                    "level": 1,
+                    "numbering": "1",
+                    "title": [{"type": "text", "content": "Intro"}],
+                    "content": [
+                        {"type": "text", "content": "Section 1 "},
+                        {
+                            "type": NodeTypes.ENVIRONMENT,
+                            "name": "subsection",
+                            "content": [
+                                {
+                                    "type": NodeTypes.SECTION,
+                                    "labels": ["subsec:1"],
+                                    "level": 2,
+                                    "numbering": "1.1",
+                                    "title": [{"type": "text", "content": "Subsec 1"}],
+                                    "content": [
+                                        {"type": "text", "content": "Subsec 1"}
+                                    ],
+                                }
+                            ],
+                        },
+                    ],
+                }
+            ],
+        },
+        {"type": "text", "content": "Post Sec Intro\n"},
+        {
+            "type": NodeTypes.ENVIRONMENT,
+            "name": "section",
+            "content": [
+                {
+                    "type": NodeTypes.SECTION,
+                    "level": 1,
+                    "numbering": "2",
+                    "title": [{"type": "text", "content": "Sec 2"}],
+                    "content": [{"type": "text", "content": "Section 2"}],
+                }
+            ],
+        },
+        {"type": "text", "content": "Post Sec 2"},
+    ]
+
+    assert json == expected

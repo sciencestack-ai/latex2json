@@ -270,10 +270,10 @@ def test_subequations_and_align():
     \label{eq:2}
     \end{equation}
 
-    \begin{eqnarray}
+    \begin{align}
     a &= b \\ % eq number 3
     c &= d % eq number 4
-    \end{eqnarray}
+    \end{align}
 
     \begin{subequations}
     \begin{equation} % eq number 5.a
@@ -344,8 +344,8 @@ def test_subequations_and_align():
             "equation", numbering="2", env_type=EnvironmentType.EQUATION
         ),
         Token(TokenType.ENVIRONMENT_END, "equation"),
-        # \begin{eqnarray}
-        EnvironmentStartToken("eqnarray", env_type=EnvironmentType.EQUATION_ALIGN),
+        # \begin{align}
+        EnvironmentStartToken("align", env_type=EnvironmentType.EQUATION_ALIGN),
         EnvironmentStartToken(
             "equation", numbering="3", env_type=EnvironmentType.EQUATION
         ),
@@ -354,7 +354,7 @@ def test_subequations_and_align():
             "equation", numbering="4", env_type=EnvironmentType.EQUATION
         ),
         Token(TokenType.ENVIRONMENT_END, "equation"),
-        Token(TokenType.ENVIRONMENT_END, "eqnarray"),
+        Token(TokenType.ENVIRONMENT_END, "align"),
         # \begin{subequations}
         EnvironmentStartToken("subequations"),
         EnvironmentStartToken(
