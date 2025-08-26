@@ -17,6 +17,22 @@ A python package for parsing LaTeX (.tex) files into structured JSON output. Sim
 
 Currently supports a wide variety of latex papers on arxiv.
 
+## Why LaTeX2JSON instead of Pandoc or plasTeX?
+
+LaTeX2JSON is first and foremost a **much more reliable LaTeX parser**. Where other tools often fail on complex, real-world documents, LaTeX2JSON is designed to handle a wide range of macros, environments, and scoping rules you actually see in academic papers.
+### What makes it different
+- **Stronger Core Parsing**  
+  Handles tricky macro definitions and expansions (`\newcommand`, `\def`, `\renewcommand`, nested parameters, `##1` patterns) that Pandoc ignores and plasTeX only partially supports.
+- **Tested on Real Research Papers**  
+  Built and stress-tested against hundreds of arXiv papers in math, physics, and CS. It works on the documents that typically break Pandoc/plasTeX, not just minimal LaTeX examples.
+- **Structured JSON Output**  
+  Instead of HTML or XML, LaTeX2JSON gives you a clean JSON AST — making it easy to plug into React frontends, annotation systems, or AI pipelines without post-processing.
+- **Scoping and Redefinitions**  
+  Tracks scope correctly when macros are redefined mid-document (common in math papers). This avoids subtle inconsistencies that appear in other parsers.
+- **Built for Developers**  
+  Designed as a transpiler — you get a semantically faithful representation of the document, ready for programmatic use, not just a rendered view.
+
+## Brief
 This parser focuses on extracting document content rather than preserving LaTeX's visual format:
 
 - While the semantic structure (sections, equations, etc.) is maintained, layout-specific elements like page formatting, column arrangements, and table styling are not represented in the JSON output.

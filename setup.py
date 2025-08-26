@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="latex2json",
-    version="1.0.0",
+    version="1.1.0",
     package_dir={"": "."},
     packages=find_packages(exclude=["tests*"]),
     include_package_data=True,
