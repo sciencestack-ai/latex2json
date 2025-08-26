@@ -6,6 +6,7 @@ from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
     END_BRACE_TOKEN,
     EnvironmentStartToken,
+    EnvironmentType,
     Token,
     TokenType,
 )
@@ -101,6 +102,26 @@ def test_edef_with_counters():
         ],
     )
     assert_token_sequence(bar, expander.expand("123"))
+
+
+def test_counter_displays_with_thecountername_redefinitions():
+    expander = Expander()
+    text = r"""
+    \renewcommand{\theequation}{\arabic{section}.\arabic{equation} nice}
+    \section{Section 1} % section is now 1
+    """
+    expander.expand(text)
+
+    # this is now 1.1 due to the redefinition of \theequation
+    out = expander.expand(r"\begin{equation}")
+    assert_token_sequence(
+        out,
+        [
+            EnvironmentStartToken(
+                name="equation", env_type=EnvironmentType.EQUATION, numbering="1.1 nice"
+            )
+        ],
+    )
 
 
 def test_equation_numbering_with_tags_notags():

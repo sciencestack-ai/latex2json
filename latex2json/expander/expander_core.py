@@ -75,7 +75,7 @@ class RelaxMacro(Macro):
         )
 
 
-def make_the_counter_handler(counter_name: str, formatted=True):
+def make_the_counter_macro(counter_name: str, formatted=True):
     def the_counter_handler(expander: "ExpanderCore", token: Token):
         value = (
             expander.state.get_counter_display(counter_name)
@@ -86,7 +86,7 @@ def make_the_counter_handler(counter_name: str, formatted=True):
             return None
         return expander.convert_str_to_tokens(f"{value}")
 
-    return the_counter_handler
+    return Macro(f"\\the{counter_name}", the_counter_handler)
 
 
 def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
@@ -201,14 +201,14 @@ class ExpanderCore:
 
     def _init_counter_macros(self):
         for counter_name in self.state.counter_manager.counters:
-            self.register_handler(
+            self.register_macro(
                 f"\\the{counter_name}",
-                make_the_counter_handler(counter_name, formatted=True),
+                make_the_counter_macro(counter_name, formatted=True),
                 is_global=True,
             )
-            self.register_handler(
+            self.register_macro(
                 f"\\c@{counter_name}",
-                make_the_counter_handler(counter_name, formatted=False),
+                make_the_counter_macro(counter_name, formatted=False),
                 is_global=True,
             )
 
@@ -218,12 +218,26 @@ class ExpanderCore:
     ):
         self.state.new_counter(counter_name, parent)
         if counter_name.isalpha():
-            self.register_handler(
+            self.register_macro(
                 f"\\the{counter_name}",
-                make_the_counter_handler(counter_name),
+                make_the_counter_macro(counter_name),
                 is_global=True,
                 is_user_defined=is_user_defined,
             )
+
+    def has_counter(self, counter_name: str) -> bool:
+        return self.state.has_counter(counter_name)
+
+    def get_counter_display(self, counter_name: str) -> Optional[str]:
+        # check for \thecountername first, since it mimics latex.
+        # people sometimes redefine it e.g. \renewcommand{\theequation}{\thesection.\arabic{equation}}
+        name = "the" + counter_name
+        the_macro = self.get_macro(name)
+        if the_macro:
+            out_tokens = self.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
+            if out_tokens:
+                return self.convert_tokens_to_str(out_tokens)
+        return self.state.get_counter_display(counter_name)
 
     # fonts
     def create_new_font(self, font_name: str, font_definition: List[Token]):
@@ -1367,7 +1381,7 @@ class ExpanderCore:
             # e.g. some newenvironment definitions place \refstepcounter in the begin definition
             numbering = None
             if counter_name:
-                numbering = state.get_counter_display(counter_name)
+                numbering = expander.get_counter_display(counter_name)
 
             begin_token = EnvironmentStartToken(
                 out_env_name,
@@ -1472,7 +1486,7 @@ class ExpanderCore:
 
                         if is_auto_numbered:
                             state.step_counter("equation")
-                            numbering = state.get_counter_display("equation")
+                            numbering = expander.get_counter_display("equation")
                         # add an env start token of Equation
                         equation_tokens.append(
                             EnvironmentStartToken(

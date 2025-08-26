@@ -48,8 +48,8 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         env_type = env_def.env_type
 
     numbering = None
-    if counter_name and expander.state.has_counter(counter_name):
-        numbering = expander.state.get_counter_display(counter_name)
+    if counter_name and expander.has_counter(counter_name):
+        numbering = expander.get_counter_display(counter_name)
     begin_token = EnvironmentStartToken(name, numbering=numbering, env_type=env_type)
 
     return [begin_token]

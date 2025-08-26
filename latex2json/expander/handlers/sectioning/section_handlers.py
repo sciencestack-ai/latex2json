@@ -20,13 +20,9 @@ def make_section_handler(
         content = expander.parse_brace_as_tokens(expand=True) or []
 
         numbering = None
-        if (
-            counter_name
-            and not has_asterisk
-            and expander.state.has_counter(counter_name)
-        ):
+        if counter_name and not has_asterisk and expander.has_counter(counter_name):
             expander.state.step_counter(counter_name)  # e.g. section/subsection.. +1
-            numbering = expander.state.get_counter_display(counter_name)
+            numbering = expander.get_counter_display(counter_name)
 
         expanded_opt_args = []
         if opt_arg:
