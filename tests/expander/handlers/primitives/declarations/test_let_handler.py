@@ -164,6 +164,16 @@ def test_let_can_be_anything():
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "XXX: 123"
 
+    # test_let_on_text_cmd
+    expander = Expander()
+    text = r"""
+    \let\rom\textbf
+    \rom{a}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"\textbf{a}"
+
 
 def test_LetLtxMacro():
     expander = Expander()

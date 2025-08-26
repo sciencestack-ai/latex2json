@@ -28,18 +28,20 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         return None
 
     is_control_sequence = expander.is_control_sequence(def_tok)
-    if expander.is_control_sequence(def_tok):
+    if is_control_sequence:
         # check if existing macro
         macro = expander.get_macro(def_tok)
         if macro:
+            # copy it and adjust the handler to force return the definition token
             macro_copy = macro.copy()
 
             def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-                out = macro.handler(expander, token)
+                out = macro.handler(expander, def_tok)
                 if out:
                     expander.push_tokens(out)
                 return []
 
+            macro_copy.name = cmd.value
             macro_copy.handler = handler
             expander.register_macro(
                 cmd, macro_copy, is_global=False, is_user_defined=True
