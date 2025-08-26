@@ -37,8 +37,9 @@ class CatcodeHandler:
         if char is None:
             return None
 
-        if not expander.parse_equals():
-            return []
+        # if not expander.parse_equals():
+        #     return []
+        expander.parse_equals()
 
         expander.skip_whitespace()
         new_catcode_int = expander.parse_integer()
