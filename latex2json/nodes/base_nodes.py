@@ -23,8 +23,9 @@ class ASTNode(ABC):
         self.labels = labels if labels is not None else []
         self._styles = styles if styles is not None else []
 
+        # variables for postprocessing
         self.should_postprocess = True
-
+        self.is_math = False
         self.source_file: Optional[str] = None
 
     def __repr__(self):

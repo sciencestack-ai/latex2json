@@ -108,7 +108,7 @@ class TheoremNode(EnvironmentNode):
         title: List[ASTNode] = [],
     ):
         super().__init__(name, body, numbering, display_name)
-        self.title = title
+        self.title = strip_whitespace_nodes(title)
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, TheoremNode):

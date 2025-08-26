@@ -206,3 +206,14 @@ def test_subfiles_and_external_documents_reference_resolution():
         exp = expected_sec_labels_n_sourcefile[i]
         assert sec_node.labels == exp[0]
         assert sec_node.get_source_file() == exp[1]
+
+
+def test_postprocessing():
+    parser = Parser()
+    # check that postprocessing converts e.g. \& -> &, \@ -> "", but NOT in mathmode
+    text = r"""
+    \& $\&$ \@\# 
+    """.strip()
+    out = parser.parse(text, postprocess=True)
+    out_str = parser.convert_nodes_to_str(out).strip()
+    assert out_str == r"& $\&$ #"

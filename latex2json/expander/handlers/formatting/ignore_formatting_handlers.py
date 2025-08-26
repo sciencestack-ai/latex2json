@@ -72,7 +72,6 @@ formatting_patterns = {
     "samepage": 0,
     "thepage": 0,
     "indent": 0,
-    "noindent": 0,
     "clearpage": 0,
     "cleardoublepage": 0,
     "nopagebreak": 0,

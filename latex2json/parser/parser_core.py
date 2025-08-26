@@ -698,8 +698,8 @@ class ParserCore:
         """
         final_nodes: List[ASTNode] = []
 
-        STOP_TOKEN = self._generate_stop_token()
-        stop_token_value = STOP_TOKEN.value
+        # parse out all existing stop tokens (shouldn't happen)
+        stop_token_value = self._generate_stop_token().value
 
         for node in nodes:
             if not node.should_postprocess:
@@ -707,21 +707,28 @@ class ParserCore:
                 continue
 
             replacement_node: Optional[ASTNode] = None
+
+            is_parent_math = node.parent and node.parent.is_math
+
             if isinstance(node, CommandNode):
                 name = node.name
-                if name == "space":
-                    replacement_node = TextNode(" ")
-                elif name == "newline":
-                    replacement_node = TextNode("\n")
-                elif name == "\\":
-                    replacement_node = TextNode("\n")
-                elif name == stop_token_value:  # clean up existing stop command markers
+                if name in ["@", stop_token_value]:
+                    # \@ -> ""
                     replacement_node = TextNode("")
-                elif (
-                    len(name) == 1 and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
-                ):
-                    # e.g. \& -> &, \# -> #, \@ -> ""
-                    replacement_node = TextNode(name if name != "@" else "")
+                elif not is_parent_math:
+                    # dont convert these in math nodes
+                    if name == "space":
+                        replacement_node = TextNode(" ")
+                    elif name == "newline":
+                        replacement_node = TextNode("\n")
+                    elif name == "\\":
+                        replacement_node = TextNode("\n")
+                    elif (
+                        len(name) == 1
+                        and DEFAULT_CATCODES.get(ord(name)) != Catcode.LETTER
+                    ):
+                        # e.g. \& -> &, \# -> #, etc
+                        replacement_node = TextNode(name)
             elif isinstance(node, (AlignmentNode, SpecialCharNode)):
                 replacement_node = TextNode("")  # empty
 

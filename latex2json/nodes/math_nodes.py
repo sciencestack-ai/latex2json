@@ -57,6 +57,8 @@ class EquationNode(ASTNode):
 
         self.set_body(math_nodes)
 
+        self.is_math = True
+
         # # don't postprocess equation nodes
         # self.should_postprocess = False
 
@@ -195,8 +197,18 @@ class EquationArrayNode(ASTNode):
         self.args_str = args_str
         self.set_children(row_nodes)
 
+        self.is_math = True
+
         # # don't postprocess equation array nodes
         # self.should_postprocess = False
+
+    def set_children(self, children: List[RowNode]):
+        super().set_children(children)
+        for row in children:
+            row.is_math = True
+            # also set is_math for all cells in the row
+            for cell in row.cells:
+                cell.is_math = True
 
     @property
     def row_nodes(self) -> List[RowNode]:

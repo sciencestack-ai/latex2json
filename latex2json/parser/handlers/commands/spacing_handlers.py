@@ -1,8 +1,7 @@
 from typing import List, Optional
 from latex2json.nodes.base_nodes import CommandNode
 from latex2json.parser.parser_core import ParserCore
-from latex2json.tokens.types import WHITESPACE_TOKEN, Token, TokenType
-from latex2json.tokens.utils import is_whitespace_token
+from latex2json.tokens.types import Token, TokenType
 
 
 def ignorespaces_handler(parser: ParserCore, token: Token):
@@ -59,10 +58,8 @@ def vspace_handler(parser: ParserCore, token: Token) -> Optional[List[Token]]:
 
 
 def register_spacing_handlers(parser: ParserCore):
-    parser.register_handler(
-        "\\ignorespaces",
-        ignorespaces_handler,
-    )
+    for cmd in ["ignorespaces", "noindent"]:
+        parser.register_handler(cmd, ignorespaces_handler)
 
     parser.register_handler(
         "\\linebreak",
