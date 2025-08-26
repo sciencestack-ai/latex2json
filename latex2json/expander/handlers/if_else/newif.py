@@ -24,6 +24,36 @@ def evaluate_newif_condition(
     return get_newif_register_value(expander, token.value), None
 
 
+def register_newif_name_macros(expander: ExpanderCore, name: str, is_user_defined=True):
+    r"""
+    Where name is the name of the newif, e.g. "cool"
+    """
+    ifname = "if" + name
+    # Create the condition macro
+    condition = IfMacro(ifname, evaluate_newif_condition)
+    expander.register_macro(
+        ifname, condition, is_global=True, is_user_defined=is_user_defined
+    )
+
+    # Create the true/false setters
+    def create_bool_setter(value: bool):
+        def set_bool_handler(
+            expander: ExpanderCore, token: Token
+        ) -> Optional[List[Token]]:
+            expander.set_register(RegisterType.BOOL, ifname, value, is_global=True)
+            return []
+
+        return set_bool_handler
+
+    true_setter = create_bool_setter(True)
+    false_setter = create_bool_setter(False)
+    false_setter(expander, None)  # set false by default
+
+    # Register the setters
+    expander.register_handler(name + "true", true_setter, is_global=True)
+    expander.register_handler(name + "false", false_setter, is_global=True)
+
+
 def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handles \newif command which creates a new if condition.
     Format: \newif\ifname
@@ -53,36 +83,19 @@ def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         expander.logger.warning("Warning: \\newif name cannot be single \\if")
         return None
 
-    # Create the condition macro
-    condition = IfMacro(ifname, evaluate_newif_condition)
-    expander.register_macro(ifname, condition, is_global=True, is_user_defined=True)
-
-    # Create the true/false setters
-    def create_bool_setter(value: bool):
-        def set_bool_handler(
-            expander: ExpanderCore, token: Token
-        ) -> Optional[List[Token]]:
-            expander.set_register(RegisterType.BOOL, ifname, value, is_global=True)
-            return []
-
-        return set_bool_handler
-
-    true_setter = create_bool_setter(True)
-    false_setter = create_bool_setter(False)
-    false_setter(expander, None)  # set false by default
-
-    true_name = f"\\{base_name}true"
-    false_name = f"\\{base_name}false"
-
-    # Register the setters
-    expander.register_handler(true_name, true_setter, is_global=True)
-    expander.register_handler(false_name, false_setter, is_global=True)
+    register_newif_name_macros(expander, base_name)
 
     return []
 
 
+INTERNAL_NEW_IFS = ["@ignore"]
+
+
 def register_newif(expander: ExpanderCore):
     expander.register_handler("\\newif", newif_handler, is_global=True)
+
+    for name in INTERNAL_NEW_IFS:
+        register_newif_name_macros(expander, name, is_user_defined=False)
 
 
 if __name__ == "__main__":

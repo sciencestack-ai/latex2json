@@ -174,3 +174,20 @@ def test_newif_redefinition():
 
     out = strip_whitespace_tokens(expander.expand(test_redef))
     assert_token_sequence(out, expander.expand("FALSE"))
+
+
+def test_newif_internals():
+    expander = Expander()
+
+    test_internals = r"""
+    \makeatletter
+    \@ignoretrue
+    \if@ignore
+        TRUE
+    \else
+        FALSE
+    \fi
+    """.strip()
+
+    out = strip_whitespace_tokens(expander.expand(test_internals))
+    assert_token_sequence(out, expander.expand("TRUE"))

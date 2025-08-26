@@ -338,6 +338,8 @@ class ExpanderCore:
             for i, token in enumerate(tokens):
                 if token.type == TokenType.CONTROL_SEQUENCE:
                     continue
+                elif len(token.value) > 1:
+                    continue
                 ord_char = ord(token.value)
                 if ord_char in MATHMODE_CATCODES:
                     token.catcode = MATHMODE_CATCODES[ord_char]
@@ -1117,10 +1119,7 @@ class ExpanderCore:
             return Token(TokenType.PARAMETER, tok.value)
 
         # Case 3: # followed by something else (error in definition)
-        self.logger.error(
-            f"Error: Illegal parameter number or escape sequence after '#'. "
-            f"Found '{tok})."
-        )
+        self.logger.info(f"Illegal token: {tok} after '#'. Skipping.")
         return None  # Indicate an error for the parser to handle
 
     def parse_begin_end_as_tokens(

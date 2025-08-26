@@ -4,6 +4,8 @@
 from typing import Optional
 
 BUILTIN_DIMENSIONS = [
+    "displaywidth",
+    "displayheight",
     "maxdimen",
     # Page layout dimensions
     "textwidth",  # Width of text area
