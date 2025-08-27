@@ -265,6 +265,7 @@ class JSONRenderer:
                         continue
             elif "content" in token and isinstance(token["content"], list):
                 is_tabular = token.get("type") == "tabular"
+                # dont strip tabular since null cells are not supposed to be stripped
                 token["content"] = self._recursive_postprocess(
                     token["content"],
                     strip_whitespace_tokens=strip_whitespace_tokens and not is_tabular,

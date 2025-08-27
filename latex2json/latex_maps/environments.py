@@ -130,6 +130,7 @@ PICTURE_ENVIRONMENTS = {
     # picture/tikz
     "picture": EnvironmentDefinition("picture", env_type=EnvironmentType.VERBATIM),
     "pspicture": EnvironmentDefinition("pspicture", env_type=EnvironmentType.VERBATIM),
+    "CD": EnvironmentDefinition("CD", env_type=EnvironmentType.VERBATIM),
     "beginpicture": EnvironmentDefinition(
         "picture",
         env_type=EnvironmentType.VERBATIM,
