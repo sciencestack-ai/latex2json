@@ -9,8 +9,6 @@ from latex2json.expander.handlers.registers.counter_handlers import (
 
 def test_counter_formats():
     expander = Expander()
-    register_counter_handlers(expander)
-    register_counter_format_handlers(expander)
 
     # Set up a counter value
     expander.expand(r"\setcounter{section}{4}")
@@ -37,10 +35,20 @@ def test_counter_formats():
     assert expander.convert_tokens_to_str(out) == "1"
 
 
+def test_at_counter_formats():
+    expander = Expander()
+
+    expander.expand(r"\makeatletter \section{1}")
+    out = expander.expand(r"\@arabic\c@section")
+    assert expander.convert_tokens_to_str(out) == "1"
+
+    # test @Roman
+    out = expander.expand(r"\@Roman\c@section")
+    assert expander.convert_tokens_to_str(out) == "I"
+
+
 def test_format_error_cases():
     expander = Expander()
-    register_counter_handlers(expander)
-    register_counter_format_handlers(expander)
 
     # Test missing counter name
     out = expander.expand(r"\roman{}")
