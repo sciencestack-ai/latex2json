@@ -3,7 +3,7 @@ import os
 from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
 
 
-from latex2json.latex_maps.boxes import BASE_BOXES
+from latex2json.registers.defaults.boxes import BASE_BOXES
 from latex2json.utils.encoding import read_file
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
@@ -36,7 +36,7 @@ from latex2json.registers import (
 
 from latex2json.expander.state import ExpanderState, ProcessingMode
 from latex2json.expander.utils import parse_number_str_to_float
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
+from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import (
     TokenStream,

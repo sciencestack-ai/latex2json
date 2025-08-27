@@ -3,7 +3,6 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     parse_register_setter,
 )
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -91,7 +90,6 @@ if __name__ == "__main__":
     register_advance_handler(expander)
 
     expander.expand(r"\newdimen\mydimen")
-    pt_10 = dimension_to_scaled_points(10, "pt")
 
     # test with multiplier
     expander.expand(r"\advance \mydimen by 10 pt")

@@ -1,9 +1,8 @@
 from latex2json.expander.expander import Expander
-from latex2json.latex_maps.counts import BUILTIN_COUNTS
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
-from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
-from latex2json.registers.types import Box
+from latex2json.registers.defaults.counts import BUILTIN_COUNTS
+from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens

@@ -1,5 +1,3 @@
-from typing import List, Optional
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.tokens.types import Token
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro

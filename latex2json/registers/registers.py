@@ -1,6 +1,6 @@
 from typing import Any, Optional, Union
-from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
-from latex2json.latex_maps.skips import BUILTIN_SKIPS
+from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 

@@ -5,7 +5,7 @@ from latex2json.expander.handlers.primitives.declarations.newcommand import (
     newcommand_handler,
 )
 from latex2json.expander.macro_registry import Macro
-from latex2json.latex_maps.boxes import ADVANCED_BOX_SPECS
+from latex2json.registers.defaults.boxes import ADVANCED_BOX_SPECS
 from latex2json.tokens.types import (
     BEGIN_BRACKET_TOKEN,
     END_BRACKET_TOKEN,
