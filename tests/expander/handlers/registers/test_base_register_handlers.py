@@ -1,7 +1,6 @@
 from latex2json.expander.expander import Expander
 from latex2json.registers import RegisterType
-from latex2json.registers.defaults.counts import BUILTIN_COUNTS
-from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers import BUILTIN_COUNTS, BUILTIN_DIMENSIONS, BUILTIN_INSERTS
 from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
@@ -181,13 +180,27 @@ def test_skips():
 def test_newinserts():
     expander = Expander()
 
+    expander.expand(r"\makeatletter")
+
     expander.expand(r"\newinsert\myins")
 
-    myins_counter = expander.get_register_value(RegisterType.INSERT, "myins")
-    assert myins_counter > 0
+    def assert_insert_registers(insert_name: str):
+        myins_counter = expander.get_register_value(RegisterType.INSERT, insert_name)
+        assert myins_counter > 0
+        assert expander.get_register_value(RegisterType.BOX, myins_counter) is not None
+        assert expander.get_register_value(RegisterType.SKIP, myins_counter) is not None
+        assert (
+            expander.get_register_value(RegisterType.COUNT, myins_counter) is not None
+        )
+        assert (
+            expander.get_register_value(RegisterType.DIMEN, myins_counter) is not None
+        )
 
-    # check that it creates the box, skip, count, and dimen registers
-    assert expander.get_register_value(RegisterType.BOX, myins_counter) is not None
-    assert expander.get_register_value(RegisterType.SKIP, myins_counter) is not None
-    assert expander.get_register_value(RegisterType.COUNT, myins_counter) is not None
-    assert expander.get_register_value(RegisterType.DIMEN, myins_counter) is not None
+    assert_insert_registers("myins")
+
+    # test builtin inserts too
+    for builtin_insert in BUILTIN_INSERTS:
+        assert_insert_registers(builtin_insert)
+
+        test_assignment = r"\skip" + f"\\{builtin_insert}" + r" = \skip\footins"
+        assert expander.expand(test_assignment) == []

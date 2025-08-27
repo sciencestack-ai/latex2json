@@ -138,6 +138,8 @@ def base_counter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     # simple setter
     counter_name = token.value
     expander.skip_whitespace()
+    expander.parse_equals()
+    expander.skip_whitespace()
     value = expander.parse_integer()
     if value is None:
         expander.logger.warning(rf"Counter {counter_name}: Missing value argument")
