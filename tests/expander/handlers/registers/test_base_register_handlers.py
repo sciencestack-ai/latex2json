@@ -176,3 +176,18 @@ def test_skips():
 #     assert box is not None
 #     assert box.type == "hbox"
 #     assert box.content == expander.expand("abc")
+
+
+def test_newinserts():
+    expander = Expander()
+
+    expander.expand(r"\newinsert\myins")
+
+    myins_counter = expander.get_register_value(RegisterType.INSERT, "myins")
+    assert myins_counter > 0
+
+    # check that it creates the box, skip, count, and dimen registers
+    assert expander.get_register_value(RegisterType.BOX, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.SKIP, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.COUNT, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.DIMEN, myins_counter) is not None

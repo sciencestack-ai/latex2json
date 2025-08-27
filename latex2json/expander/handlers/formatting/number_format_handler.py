@@ -13,7 +13,7 @@ from latex2json.tokens.types import (
     TokenType,
 )
 from latex2json.tokens.utils import (
-    convert_str_to_default_token_catcodes,
+    convert_str_to_tokens,
     wrap_tokens_in_braces,
 )
 
@@ -134,7 +134,7 @@ def newmcodes_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
 
 def make_convert_to_str_handler(text: str) -> Handler:
-    tokens = convert_str_to_default_token_catcodes(text)
+    tokens = convert_str_to_tokens(text)
 
     def convert_to_str_handler(
         expander: ExpanderCore, token: Token

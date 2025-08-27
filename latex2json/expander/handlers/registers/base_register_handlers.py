@@ -1,6 +1,7 @@
 from typing import Tuple, Optional, List, Union
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
 from latex2json.registers.defaults.counts import BUILTIN_COUNTS
+from latex2json.registers.defaults.inserts import BUILTIN_INSERTS
 from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers import RegisterType
 from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
@@ -16,6 +17,8 @@ def parse_register_setter(
     value = None
     expander.skip_whitespace()
     if register_type == RegisterType.COUNT:
+        return expander.parse_integer()
+    elif register_type == RegisterType.INSERT:
         return expander.parse_integer()
     elif register_type == RegisterType.DIMEN:
         return expander.parse_dimensions()
@@ -38,6 +41,7 @@ def set_register_value_handler(
 ) -> bool:
     # if check_equals and expander.parse_equals():
     #     return False
+    expander.skip_whitespace()
     is_assignment = expander.parse_equals()
 
     # if = is found, it's an assignment
@@ -193,6 +197,15 @@ def register_base_register_macros(expander: ExpanderCore):
         expander.register_macro(
             builtin_skip,
             make_register_macro(RegisterType.SKIP, builtin_skip, is_id_integer=False),
+            is_global=True,
+        )
+
+    for builtin_insert in BUILTIN_INSERTS:
+        expander.register_macro(
+            builtin_insert,
+            make_register_macro(
+                RegisterType.INSERT, builtin_insert, is_id_integer=False
+            ),
             is_global=True,
         )
 

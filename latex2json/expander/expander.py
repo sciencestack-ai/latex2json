@@ -23,15 +23,15 @@ class Expander(ExpanderCore):
     ):
         super().__init__(tokenizer, logger)
 
-        self._register_handlers_and_packages()
-
         self.prevent_package_macro_execution = prevent_package_macro_execution
-
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
+
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
         self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
         self.white_listed_classes: List[str] = WHITELISTED_CLASSES.copy()
         self.white_listed_packages: List[str] = WHITELISTED_PACKAGES.copy()
+
+        self._register_handlers_and_packages()
 
     def _register_handlers_and_packages(self):
         from latex2json.expander.handlers import register_handlers

@@ -1279,11 +1279,13 @@ class ExpanderCore:
 
         return None
 
-    def convert_str_to_tokens(self, text: str) -> List[Token]:
+    def convert_str_to_tokens(
+        self, text: str, catcode: Optional[Catcode] = None
+    ) -> List[Token]:
         out = []
-        for c in text:
-            catcode = self.get_catcode(ord(c))
-            out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
+        for t in text:
+            c = catcode or self.get_catcode(ord(t))
+            out.append(Token(TokenType.CHARACTER, t, catcode=c))
         return out
 
     @staticmethod
@@ -1379,7 +1381,7 @@ class ExpanderCore:
 
         counter_name = env_def.counter_name
         if counter_name:
-            self.state.new_counter(counter_name)
+            self.create_new_counter(counter_name)
 
         def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
             state = expander.state

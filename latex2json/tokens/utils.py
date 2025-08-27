@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, List
+from typing import Callable, List, Optional
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
@@ -312,11 +312,11 @@ def segment_tokens_by_begin_end_and_braces(tokens: List[Token]) -> List[Segment]
     return groups
 
 
-def convert_str_to_default_token_catcodes(text: str) -> List[Token]:
+def convert_str_to_tokens(text: str, catcode: Optional[Catcode] = None) -> List[Token]:
     out = []
-    for c in text:
-        catcode = DEFAULT_CATCODES[ord(c)]
-        out.append(Token(TokenType.CHARACTER, c, catcode=catcode))
+    for t in text:
+        c = catcode or DEFAULT_CATCODES[ord(t)]
+        out.append(Token(TokenType.CHARACTER, t, catcode=c))
     return out
 
 

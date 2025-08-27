@@ -6,3 +6,4 @@ from latex2json.registers.defaults.boxes import (
     ADVANCED_BOX_SPECS,
     KATEX_SUPPORTED_BOXES,
 )
+from latex2json.registers.defaults.inserts import BUILTIN_INSERTS

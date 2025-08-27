@@ -3,14 +3,12 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import wrap_tokens_in_braces
+from latex2json.tokens.utils import convert_str_to_tokens, wrap_tokens_in_braces
 from latex2json.utils.tex_utils import parse_key_val_string
 
 
 def _path_to_includegraphics_token(path: str) -> List[Token]:
-    path_tokens: List[Token] = []
-    for c in path:
-        path_tokens.append(Token(TokenType.CHARACTER, c, catcode=Catcode.LETTER))
+    path_tokens = convert_str_to_tokens(path, catcode=Catcode.LETTER)
     return [
         Token(TokenType.CONTROL_SEQUENCE, "includegraphics"),
         *wrap_tokens_in_braces(path_tokens),
