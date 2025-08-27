@@ -9,6 +9,9 @@ import shutil
 
 from latex2json.tex_file_extractor import TexFileExtractor
 from latex2json.renderer.json import JSONRenderer
+from latex2json.utils.encoding import read_file
+from latex2json.utils.tex_utils import strip_latex_comments
+from latex2json.utils.tex_versions import is_content_amstex, is_content_expl3
 
 T = TypeVar("T")
 
@@ -32,17 +35,10 @@ class ProcessingResult:
             self.temp_dir = None
 
 
+MERGE_TYPES = ["text", "ref", "citation"]
+
+
 def merge_inline_tokens_func(tokens: List[Dict]) -> List[Dict]:
-    """
-    Merge consecutive inline tokens into a single text token recursively.
-
-    Args:
-        tokens: List of token dictionaries
-
-    Returns:
-        List of merged tokens
-    """
-    MERGE_TYPES = ["text", "ref", "citation"]
     merged: List[Dict] = []
     buffer = ""
 
@@ -103,13 +99,6 @@ class TexProcessingError(Exception):
 
 
 class TexReader:
-    """
-    Handles reading and processing TeX files into tokens and JSON output.
-
-    Attributes:
-        logger: Logger instance for tracking operations
-    """
-
     def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
         self.logger = logger or logging.getLogger(__name__)
         self.json_renderer = JSONRenderer(logger=self.logger, n_processors=n_processors)
@@ -120,22 +109,6 @@ class TexReader:
     def _handle_file_operation(
         self, operation: Callable[..., T], error_msg: str, *args, **kwargs
     ) -> T:
-        """
-        Generic error handler for file operations.
-
-        Args:
-            operation: Callable to execute
-            error_msg: Error message template
-            *args: Positional arguments for operation
-            **kwargs: Keyword arguments for operation
-
-        Returns:
-            Result of the operation
-
-        Raises:
-            FileNotFoundError: If required files are missing
-            TexProcessingError: If processing fails
-        """
         try:
             return operation(*args, **kwargs)
         except FileNotFoundError as e:
@@ -146,38 +119,28 @@ class TexReader:
             raise TexProcessingError(f"{error_msg}: {str(e)}") from e
 
     def _verify_file_exists(self, file_path: Path, file_type: str = "File") -> None:
-        """
-        Verify file exists and log appropriate error if not.
-
-        Args:
-            file_path: Path to verify
-            file_type: Type of file for error messaging
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
-        """
         if not file_path.exists():
             raise FileNotFoundError(f"{file_type} not found: {file_path}")
 
+    def is_supported_tex_version(self, file_path: Path | str) -> Tuple[bool, str]:
+        file_path = Path(file_path)
+        content = read_file(str(file_path))
+        content = strip_latex_comments(content)
+        if is_content_amstex(content):
+            return False, "AMSTeX not supported"
+        if is_content_expl3(content):
+            return False, "Expl3 not supported"
+        return True, ""
+
     def process_file(self, file_path: Path | str) -> ProcessingResult:
-        """
-        Process a single TeX file and return the token output.
-
-        Args:
-            file_path: Path to the TeX file
-
-        Returns:
-            ProcessingResult containing the processed tokens
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
-            TexProcessingError: If processing fails
-        """
         file_path = Path(file_path)
 
         def _process() -> ProcessingResult:
             self.clear()
             self._verify_file_exists(file_path)
+            is_supported, error_msg = self.is_supported_tex_version(file_path)
+            if not is_supported:
+                raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
             output = self.json_renderer.parse_file(file_path) or []
             # tokens = self.parser.parse_file(file_path)
             # output = self.token_builder.build(tokens)
@@ -194,19 +157,6 @@ class TexReader:
         )
 
     def to_json(self, result: ProcessingResult, merge_inline_tokens=False) -> str:
-        """
-        Convert token output to JSON string.
-
-        Args:
-            result: ProcessingResult containing tokens to convert
-
-        Returns:
-            JSON string representation of the tokens
-
-        Raises:
-            TexProcessingError: If conversion fails
-        """
-
         def _convert() -> str:
             # with warnings.catch_warnings():
             #     warnings.filterwarnings("ignore", module="pydantic")
@@ -227,16 +177,6 @@ class TexReader:
     def save_to_json(
         self, result: ProcessingResult, json_path: Path | str = "output.json"
     ) -> None:
-        """
-        Save token output to JSON file.
-
-        Args:
-            result: ProcessingResult containing tokens to save
-            json_path: Path where to save the JSON
-
-        Raises:
-            TexProcessingError: If saving fails
-        """
         json_path = Path(json_path)
 
         def _save() -> None:
@@ -252,7 +192,6 @@ class TexReader:
     def process_compressed(
         self, compressed_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
     ):
-        """Process a compressed TeX file and save results to JSON."""
         if not os.path.exists(compressed_path):
             error_msg = f"Compressed file not found: {compressed_path}"
             self.logger.error(error_msg, exc_info=True)
@@ -278,18 +217,6 @@ class TexReader:
             raise RuntimeError(error_msg) from e
 
     def process_folder(self, folder_path: str | Path) -> ProcessingResult:
-        """Process a folder containing TeX files and return results.
-
-        Args:
-            folder_path: Path to the folder containing TeX files
-
-        Returns:
-            ProcessingResult containing the processed tokens
-
-        Raises:
-            FileNotFoundError: If folder doesn't exist or no main TeX file found
-            TexProcessingError: If processing fails
-        """
         folder_path = Path(folder_path)
 
         def _process() -> ProcessingResult:
@@ -308,20 +235,6 @@ class TexReader:
     def process(
         self, input_path: str | Path, cleanup: bool = False
     ) -> ProcessingResult:
-        """
-        Process input which can be a single file, folder, or compressed archive.
-
-        Args:
-            input_path: Path to the input (file, folder, or compressed archive)
-            cleanup: Whether to clean up temporary files (for compressed archives)
-
-        Returns:
-            ProcessingResult containing the processed tokens
-
-        Raises:
-            FileNotFoundError: If input doesn't exist
-            TexProcessingError: If processing fails
-        """
         input_path = Path(input_path)
         self._verify_file_exists(input_path)
 
@@ -380,8 +293,8 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-1712.01815v1"
         # "papers/new/arXiv-2103.07867v1.gz",
         # "/Users/cj/Downloads/arXiv-math0610903v1.gz"
-        # "papers/new/arXiv-0911.5501v2"
-        "papers/faulty/math_0503087v1"
+        "papers/new/arXiv-0911.5501v2"
+        # "papers/faulty/math_0503319v1"
     ]
     merge_inline = False
     stem_postfix = "_merged" if merge_inline else ""

@@ -39,7 +39,7 @@ def detect_encoding(path: str) -> str:
     return encoding_map.get(encoding, encoding)
 
 
-def read_file(path):
+def read_file(path: str) -> str:
     """
     Read a file with proper encoding detection.
 
