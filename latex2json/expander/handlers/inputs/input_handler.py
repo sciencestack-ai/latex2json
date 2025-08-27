@@ -3,11 +3,17 @@ from latex2json.tokens.types import Token
 
 
 def input_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
     input_file = expander.parse_brace_name()
     if not input_file:
-        expander.logger.warning("No input file provided")
-        return None
+        # try to parse until eol or relax
+        input_file = expander.expand_until_eol_or_relax()
+        if not input_file:
+            expander.logger.warning("No input file provided")
+            return None
+        input_file = expander.convert_tokens_to_str(input_file)
 
+    input_file = input_file.strip()
     expander.logger.info(f"Expanding input file: {input_file}")
     expander.push_file(input_file)
     return []
@@ -34,11 +40,7 @@ if __name__ == "__main__":
 
     text = r"""
     
-    \def\myinput{\input{/Users/cj/Documents/python/latex2json/tests/test_data/sample.tex}}
-    
-    For some \myinput
-
-    POST 
+    \input ssss.sty
 """
 
     expander = Expander()

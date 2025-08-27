@@ -17,27 +17,7 @@ def font_handler(expander: ExpanderCore, token: Token):
 
     expander.skip_whitespace()
 
-    font_definition: List[Token] = []
-    while not expander.eof():
-        tokens = expander.expand_next()
-        if not tokens:
-            break
-
-        break_out = False
-        for i, tok in enumerate(tokens):
-            if expander.is_relax_token(tok):
-                expander.push_tokens(tokens[i + 1 :])
-                break_out = True
-                break
-            elif tok.type == TokenType.END_OF_LINE:
-                expander.push_tokens(tokens[i:])
-                break_out = True
-                break
-            else:
-                font_definition.append(tok)
-
-        if break_out:
-            break
+    font_definition = expander.expand_until_eol_or_relax()
 
     expander.create_new_font(cmd.value, font_definition)
 

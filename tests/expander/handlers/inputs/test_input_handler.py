@@ -46,10 +46,12 @@ def test_input_handler():
     assert expander.get_macro("foo")
 
     assert not expander.get_macro("somecmd")
-    expander.expand(r"\input{%s/basecls.cls}" % test_data_path)
+
+    # also works without {...}
+    expander.expand(r"\input %s/basecls.cls" % test_data_path)
     assert expander.get_macro("somecmd")
 
-    # check that anything post endinput is not reached
+    # check that anything after \endinput is not reached
     text = r"""
     \input{%s/package2.sty}
     """ % (

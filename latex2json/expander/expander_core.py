@@ -16,6 +16,7 @@ from latex2json.tokens.types import (
 from latex2json.tokens.utils import (
     is_mathshift_token,
     is_newline_token,
+    is_whitespace_token,
     segment_tokens_by_begin_end_and_braces,
     strip_whitespace_tokens,
     substitute_token_args,
@@ -476,6 +477,36 @@ class ExpanderCore:
         self, stop_token_logic: TokenPredicate, consume_stop_token: bool = True
     ) -> List[Token]:
         return self.process(stop_token_logic, consume_stop_token=consume_stop_token)
+
+    def expand_until_eol_or_relax(self, skip_whitespace: bool = True) -> List[Token]:
+        out: List[Token] = []
+        while not self.eof():
+            tokens = self.expand_next()
+            if not tokens:
+                break
+
+            exit = False
+            for i, tok in enumerate(tokens):
+                # if encounter any tokens that have been expanded, return and exit
+                if self.is_relax_token(tok):
+                    self.push_tokens(tokens[i + 1 :])
+                    exit = True
+                    break
+                elif tok.type == TokenType.END_OF_LINE:
+                    self.push_tokens(tokens[i:])
+                    exit = True
+                    break
+                elif not skip_whitespace and is_whitespace_token(tok):
+                    self.push_tokens(tokens[i:])
+                    exit = True
+                    break
+                else:
+                    out.append(tok)
+
+            if exit:
+                break
+
+        return out
 
     def push_scope(self):
         self.state.push_scope()
