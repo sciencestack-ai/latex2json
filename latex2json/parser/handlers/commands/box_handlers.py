@@ -11,7 +11,7 @@ from latex2json.parser.handlers.commands.text_handlers import (
     merge_nodes_in_mathmode_text,
 )
 from latex2json.parser.parser_core import Handler, ParserCore
-from latex2json.latex_maps.boxes import (
+from latex2json.registers.defaults.boxes import (
     BASE_BOXES,
     ADVANCED_BOX_SPECS,
     KATEX_SUPPORTED_BOXES,

@@ -5,7 +5,7 @@ from latex2json.nodes import TextNode, EquationNode, TabularNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
-from latex2json.latex_maps.boxes import KATEX_SUPPORTED_BOXES
+from latex2json.registers.defaults.boxes import KATEX_SUPPORTED_BOXES
 
 
 def test_box_commands():

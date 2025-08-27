@@ -115,9 +115,7 @@ def string_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
     if tok.type == TokenType.CONTROL_SEQUENCE:
         # convert all to character tokens
         tok_str = "\\" + tok.value
-        out_tokens = [
-            Token(TokenType.CHARACTER, c, catcode=Catcode.LETTER) for c in tok_str
-        ]
+        out_tokens = expander.convert_str_to_tokens(tok_str, catcode=Catcode.LETTER)
         return out_tokens
 
     return [tok]

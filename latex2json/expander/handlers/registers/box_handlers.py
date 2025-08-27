@@ -1,7 +1,7 @@
 from typing import Callable, List, Optional, Tuple, Union
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
 from latex2json.expander.macro_registry import Macro
-from latex2json.latex_maps.boxes import ADVANCED_BOX_SPECS, BASE_BOXES
+from latex2json.registers.defaults.boxes import ADVANCED_BOX_SPECS, BASE_BOXES
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens import Token
 from latex2json.expander.expander_core import ExpanderCore

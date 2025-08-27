@@ -147,7 +147,7 @@ ABSTRACT
 \end{abstract}
 """
 
-    parser = Parser(prevent_whitelisted_redefinitions=False)
+    parser = Parser()
     out = parser.parse(text, postprocess=True)
     # out = strip_whitespace_nodes(out)
     # out = [node for node in out if not is_whitespace_node(node)]

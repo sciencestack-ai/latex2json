@@ -1,6 +1,7 @@
 from typing import Any, Optional, Union
-from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
-from latex2json.latex_maps.skips import BUILTIN_SKIPS
+from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers.defaults.inserts import BUILTIN_INSERTS
+from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 
@@ -18,7 +19,7 @@ class TexRegisters:
         self._muskips: list[int] = [0] * 256  # Math skip stored as scaled points (int)
 
         self._toks: list[list[Token]] = [[] for _ in range(256)]
-        self._boxes: list[Optional[Box]] = [None] * 256
+        self._boxes: list[Optional[Box]] = [Box()] * 256
 
         # For named registers (e.g., \newcount\mycounter)
         self._named_counts: dict[str, int] = {}
@@ -28,6 +29,7 @@ class TexRegisters:
         self._named_toks: dict[str, list[Token]] = {}
         self._named_boxes: dict[str, Optional[Box]] = {}
         self._named_bools: dict[str, bool] = {}
+        self._named_inserts: dict[str, int] = {}
 
         # A mapping for quick lookup in generic internal helpers
         self._register_pools = {
@@ -46,7 +48,11 @@ class TexRegisters:
             RegisterType.TOKS: self._named_toks,
             RegisterType.BOX: self._named_boxes,
             RegisterType.BOOL: self._named_bools,
+            RegisterType.INSERT: self._named_inserts,
         }
+
+        # inserts
+        self._insert_counter = 255  # mimic tex
 
         self._init_builtin_registers()
 
@@ -55,6 +61,8 @@ class TexRegisters:
             self.create_register(RegisterType.DIMEN, dimen, 0)
         for skip in BUILTIN_SKIPS:
             self.create_register(RegisterType.SKIP, skip, 0)
+        for insert in BUILTIN_INSERTS:
+            self.create_new_insert(insert)
 
         self.create_register(RegisterType.BOX, "@tempboxa")
         self.create_register(RegisterType.TOKS, "@temptokena")
@@ -86,8 +94,26 @@ class TexRegisters:
         self, reg_type: RegisterType, reg_id: str, default_value: Optional[Any] = None
     ):
         if default_value is None:
-            default_value = reg_type.get_default_value()
+            if reg_type == RegisterType.INSERT:
+                default_value = self._insert_counter - 1
+            else:
+                default_value = reg_type.get_default_value()
         self._set_generic_register(reg_type, reg_id, default_value)
+
+    def create_new_insert(self, insert_name: str) -> int:
+        self._insert_counter -= 1
+        counter = self._insert_counter
+
+        self.create_register(RegisterType.INSERT, insert_name, default_value=counter)
+        # inserts create box, skip, count, and dimen registers
+        # e.g. \newinsert\myins (suppose the counter is 254)
+        # then becomes \box\myins -> \box254, \skip\myins -> \skip254, etc.
+        self.create_register(RegisterType.BOX, counter)
+        self.create_register(RegisterType.SKIP, counter)
+        self.create_register(RegisterType.COUNT, counter)
+        self.create_register(RegisterType.DIMEN, counter)
+
+        return counter
 
     def delete_register(self, reg_type: RegisterType, reg_id: str):
         if reg_id in self._named_register_pools.get(reg_type, {}):

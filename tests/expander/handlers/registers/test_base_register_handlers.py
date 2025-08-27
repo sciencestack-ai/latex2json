@@ -1,9 +1,8 @@
 from latex2json.expander.expander import Expander
-from latex2json.latex_maps.counts import BUILTIN_COUNTS
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
 from latex2json.registers import RegisterType
-from latex2json.latex_maps.dimensions import BUILTIN_DIMENSIONS
-from latex2json.registers.types import Box
+from latex2json.registers.defaults.counts import BUILTIN_COUNTS
+from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import strip_whitespace_tokens
@@ -177,3 +176,18 @@ def test_skips():
 #     assert box is not None
 #     assert box.type == "hbox"
 #     assert box.content == expander.expand("abc")
+
+
+def test_newinserts():
+    expander = Expander()
+
+    expander.expand(r"\newinsert\myins")
+
+    myins_counter = expander.get_register_value(RegisterType.INSERT, "myins")
+    assert myins_counter > 0
+
+    # check that it creates the box, skip, count, and dimen registers
+    assert expander.get_register_value(RegisterType.BOX, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.SKIP, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.COUNT, myins_counter) is not None
+    assert expander.get_register_value(RegisterType.DIMEN, myins_counter) is not None

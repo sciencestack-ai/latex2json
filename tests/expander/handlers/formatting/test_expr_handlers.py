@@ -1,5 +1,5 @@
 from latex2json.expander.expander import Expander
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
+from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens.utils import strip_whitespace_tokens
 
 

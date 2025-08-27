@@ -8,7 +8,7 @@ from latex2json.expander.handlers.registers.box_handlers import register_box_han
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.expander.state import ProcessingMode
 from latex2json.registers import RegisterType
-from latex2json.latex_maps.dimensions import dimension_to_scaled_points
+from latex2json.registers.utils import dimension_to_scaled_points
 from latex2json.tokens.catcodes import Catcode, get_default_catcodes
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import (

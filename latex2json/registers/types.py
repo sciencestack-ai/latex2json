@@ -15,6 +15,7 @@ class RegisterType(Enum):
     TOKS = "toks"
     BOX = "box"
     BOOL = "bool"
+    INSERT = "insert"
     OTHER = "other"
 
     def __str__(self):
@@ -37,6 +38,7 @@ class RegisterType(Enum):
             RegisterType.DIMEN,
             RegisterType.SKIP,
             RegisterType.MUSKIP,
+            RegisterType.INSERT,
         ]:
             return 0
         elif self == RegisterType.TOKS:

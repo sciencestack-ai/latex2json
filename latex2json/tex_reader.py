@@ -378,9 +378,10 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-2301.10945v1"
         # "papers/tested/arXiv-2408.07934v1"
         # "papers/tested/arXiv-1712.01815v1"
-        "papers/new/arXiv-2103.07867v1.gz",
+        # "papers/new/arXiv-2103.07867v1.gz",
         # "/Users/cj/Downloads/arXiv-math0610903v1.gz"
         # "papers/new/arXiv-0911.5501v2"
+        "papers/faulty/math_0503087v1"
     ]
     merge_inline = False
     stem_postfix = "_merged" if merge_inline else ""

@@ -17,6 +17,9 @@ from latex2json.expander.handlers.registers.counter_format_handlers import (
 from latex2json.expander.handlers.registers.length_handlers import (
     register_length_handlers,
 )
+from latex2json.expander.handlers.registers.insert_handlers import (
+    register_insert_handlers,
+)
 from latex2json.expander.handlers.registers.skip_handlers import register_skip_handlers
 
 
@@ -29,3 +32,4 @@ def register_register_handlers(expander: ExpanderCore):
     register_box_handlers(expander)
     register_skip_handlers(expander)
     register_bool_handlers(expander)
+    register_insert_handlers(expander)

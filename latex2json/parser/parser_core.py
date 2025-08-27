@@ -96,10 +96,7 @@ class ParserCore:
         expander: Optional[Expander] = None,
     ):
         self.logger = logger or logging.getLogger(__name__)
-        self.expander = expander or Expander(
-            logger=logger,
-            prevent_whitelisted_redefinitions=True,
-        )
+        self.expander = expander or Expander(logger=logger)
         self.standalone_mode: bool = False
 
         # token buffer

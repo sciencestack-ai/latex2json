@@ -170,6 +170,8 @@ content_formatting_patterns = {
     "maketitle": 0,
     "@title": 0,
     "titlecontents": "{[{{{{[",
+    # files
+    "listfiles": 0,
     # TOCs
     "tableofcontents": 0,
     # other contents
