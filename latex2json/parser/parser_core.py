@@ -52,6 +52,7 @@ from latex2json.tokens.utils import (
     is_end_parenthesis_token,
     is_whitespace_token,
 )
+from latex2json.utils.tex_versions import is_supported_tex_version
 
 # Type alias for stop token predicate
 TokenPredicate = Callable[[Token], bool]
@@ -397,13 +398,9 @@ class ParserCore:
         self.cwd = dir_path
 
         # Read and parse the file content
-        try:
-            content = read_file(file_path)
-        except Exception as e:
-            self.logger.error(f"Failed to read file {file_path}: {e}")
+        content = self.expander.read_file(file_path)
+        if content is None:
             return None
-
-        self.logger.info(f"Parsing file {file_path}...")
 
         # Use the main parse method for consistent behavior
         out = self.parse(

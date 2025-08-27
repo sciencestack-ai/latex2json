@@ -49,6 +49,7 @@ from latex2json.tokens.utils import (
     is_end_group_token,
     is_param_token,
 )
+from latex2json.utils.tex_versions import is_supported_tex_version
 
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 
@@ -544,11 +545,9 @@ class ExpanderCore:
                 self.load_class(file_path, extension=ext)
                 return
 
-        if not self.if_file_exists(file_path):
-            self.logger.warning(f"Input file {file_path} does not exist")
+        input_text = self.read_file(file_path)
+        if input_text is None:
             return
-
-        input_text = read_file(file_path)
         # ensure to put \n at the end of the file to delimit/split, in case file ends with %
         self.push_text(input_text + "\n")
 
@@ -558,9 +557,25 @@ class ExpanderCore:
             self.logger.warning(f"Input file {file_path} does not exist")
             return None
         self.logger.info("EXPANDING FILE " + file_path)
-        input_text = read_file(file_path)
+        input_text = self.read_file(file_path)
+        if input_text is None:
+            return None
         tokens = self.expand_text(input_text)
         return tokens
+
+    def read_file(self, file_path: str) -> Optional[str]:
+        if not os.path.exists(file_path):
+            self.logger.warning(f"Input file {file_path} does not exist")
+            return None
+        is_supported, error_msg = is_supported_tex_version(file_path)
+        if not is_supported:
+            self.logger.error(f"Unsupported TeX version {file_path}: {error_msg}")
+            return None
+        try:
+            return read_file(file_path)
+        except Exception as e:
+            self.logger.error(f"Failed to read file {file_path}: {e}")
+            return None
 
     def _load_package_or_class(
         self,
