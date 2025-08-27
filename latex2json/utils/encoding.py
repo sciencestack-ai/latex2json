@@ -40,15 +40,6 @@ def detect_encoding(path: str) -> str:
 
 
 def read_file(path: str) -> str:
-    """
-    Read a file with proper encoding detection.
-
-    Args:
-        path (str): Path to the file
-
-    Returns:
-        str: Content of the file
-    """
     encoding = detect_encoding(path)
 
     try:

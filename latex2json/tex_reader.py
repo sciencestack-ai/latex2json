@@ -9,9 +9,7 @@ import shutil
 
 from latex2json.tex_file_extractor import TexFileExtractor
 from latex2json.renderer.json import JSONRenderer
-from latex2json.utils.encoding import read_file
-from latex2json.utils.tex_utils import strip_latex_comments
-from latex2json.utils.tex_versions import is_content_amstex, is_content_expl3
+from latex2json.utils.tex_versions import is_supported_tex_version
 
 T = TypeVar("T")
 
@@ -122,23 +120,13 @@ class TexReader:
         if not file_path.exists():
             raise FileNotFoundError(f"{file_type} not found: {file_path}")
 
-    def is_supported_tex_version(self, file_path: Path | str) -> Tuple[bool, str]:
-        file_path = Path(file_path)
-        content = read_file(str(file_path))
-        content = strip_latex_comments(content)
-        if is_content_amstex(content):
-            return False, "AMSTeX not supported"
-        if is_content_expl3(content):
-            return False, "Expl3 not supported"
-        return True, ""
-
     def process_file(self, file_path: Path | str) -> ProcessingResult:
         file_path = Path(file_path)
 
         def _process() -> ProcessingResult:
             self.clear()
             self._verify_file_exists(file_path)
-            is_supported, error_msg = self.is_supported_tex_version(file_path)
+            is_supported, error_msg = is_supported_tex_version(file_path)
             if not is_supported:
                 raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
             output = self.json_renderer.parse_file(file_path) or []
@@ -293,8 +281,8 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-1712.01815v1"
         # "papers/new/arXiv-2103.07867v1.gz",
         # "/Users/cj/Downloads/arXiv-math0610903v1.gz"
-        "papers/new/arXiv-0911.5501v2"
-        # "papers/faulty/math_0503319v1"
+        # "papers/new/arXiv-0911.5501v2"
+        "papers/faulty/math_0503319v1"
     ]
     merge_inline = False
     stem_postfix = "_merged" if merge_inline else ""

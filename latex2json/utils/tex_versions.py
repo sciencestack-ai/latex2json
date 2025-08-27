@@ -1,5 +1,9 @@
+from pathlib import Path
 import re
-from typing import Dict, List
+from typing import Dict, List, Tuple
+
+from latex2json.utils.encoding import read_file
+from latex2json.utils.tex_utils import strip_latex_comments
 
 
 def _check_content_matches_pattern(
@@ -57,3 +61,13 @@ def is_content_expl3(content: str) -> bool:
     }
 
     return _check_content_matches_pattern(content, expl3_patterns, threshold=3)
+
+
+def is_supported_tex_version(file_path: Path | str) -> Tuple[bool, str]:
+    content = read_file(str(file_path))
+    content = strip_latex_comments(content)
+    if is_content_amstex(content):
+        return False, "AMSTeX not supported"
+    if is_content_expl3(content):
+        return False, "Expl3 not supported"
+    return True, ""
