@@ -33,6 +33,7 @@ formatting_patterns = {
     "newgeometry": 1,
     "setstretch": 1,  # \setstretch{1.5} - line spacing
     # Package processing
+    "ExecuteOptions": 1,
     "ProcessOptions": 0,  # Actually takes no arguments
     "PassOptionsToClass": 2,
     "PassOptionsToPackage": 2,

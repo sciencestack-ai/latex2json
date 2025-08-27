@@ -165,7 +165,6 @@ def test_let_can_be_anything():
     assert out_str == "XXX: 123"
 
     # test_let_on_text_cmd
-    expander = Expander()
     text = r"""
     \let\rom\textbf
     \rom{a}
@@ -173,6 +172,20 @@ def test_let_can_be_anything():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == r"\textbf{a}"
+
+    # test let on ifs
+    text = r"""
+    \makeatletter
+\let\if@mathematic\iftrue
+\if@mathematic
+    MATHEMATIC
+\else
+    NOT MATHEMATIC
+\fi
+""".strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "MATHEMATIC"
 
 
 def test_LetLtxMacro():
