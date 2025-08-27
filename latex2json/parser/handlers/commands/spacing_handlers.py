@@ -90,6 +90,7 @@ def register_spacing_handlers(parser: ParserCore):
         "qquad",
         "xspace",
         "space",
+        "enspace",
         "thinspace",
         ",",
         ";",
@@ -109,7 +110,7 @@ def register_spacing_handlers(parser: ParserCore):
             hspace_handler,
         )
 
-    for vspace in ["vphantom", "vspace"]:
+    for vspace in ["vphantom", "vspace", "addvspace"]:
         parser.register_handler(
             vspace,
             vspace_handler,

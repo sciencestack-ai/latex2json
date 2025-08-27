@@ -300,7 +300,7 @@ if __name__ == "__main__":
             json_output = tex_reader.to_json(output, merge_inline_tokens=merge_inline)
             # tex_reader.save_to_json(output, save_path)
             with open(save_path, "w") as f:
-                f.write(json_output)
+                json.dump(json.loads(json_output), f, indent=2)
             print("SAVED TO", save_path)
         finally:
             if cleanup:

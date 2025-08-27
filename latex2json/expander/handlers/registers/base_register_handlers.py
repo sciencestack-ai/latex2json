@@ -69,15 +69,18 @@ def make_primitive_register_handler(is_id_integer: bool = True) -> Handler:
 
         register_type, reg_id = macro.parse_register(expander, token)
         if reg_id is None:
-            return [token]
+            # return [token]
+            return []
 
         if set_register_value_handler(expander, register_type, reg_id):
             return []
 
-        if is_id_integer:
-            # e.g. \count20 -> [\count, 2, 0]
-            return [token] + expander.convert_str_to_tokens(str(reg_id))
-        return [token]
+        return []
+
+        # if is_id_integer:
+        #     # e.g. \count20 -> [\count, 2, 0]
+        #     return [token] + expander.convert_str_to_tokens(str(reg_id))
+        # return [token]
 
     return primitive_register_handler
 

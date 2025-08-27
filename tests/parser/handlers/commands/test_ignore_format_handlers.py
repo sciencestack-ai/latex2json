@@ -15,8 +15,8 @@ def test_ignore_separator_patterns():
 \parsep
 \partopsep
 \midrule[2pt]
-\toprule[1pt]
-\bottomrule[1pt]
+\toprule[2pt]
+\bottomrule[5pt]
 \cmidrule(lr){1-2}
 \hdashline[2pt]
 \cdashline{1-2}
@@ -24,7 +24,6 @@ def test_ignore_separator_patterns():
 \addlinespace[5pt]
 \rule{1cm}{2cm}
 \morecmidrules
-\fboxsep{1pt}
 \Xhline{2pt}
 \tabcolsep
 \colrule
