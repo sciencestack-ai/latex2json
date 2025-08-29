@@ -132,6 +132,7 @@ def new_register_macro_handler(
     token: Token,
     register_type: RegisterType,
 ) -> Optional[List[Token]]:
+    expander.skip_whitespace()
     tok = expander.peek()
     if tok is None or not expander.is_control_sequence(tok):
         expander.logger.warning(
