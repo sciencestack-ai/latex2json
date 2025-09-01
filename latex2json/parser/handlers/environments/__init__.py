@@ -12,11 +12,8 @@ from latex2json.parser.handlers.environments.subfloat_handler import (
 from latex2json.parser.handlers.environments.verbatim_lst_handlers import (
     register_verbatim_lst_handlers,
 )
-from latex2json.parser.handlers.environments.overpic_handler import (
-    register_overpic_handler,
-)
-from latex2json.parser.handlers.environments.tikz_pgf_handlers import (
-    register_tikz_pgf_handlers,
+from latex2json.parser.handlers.environments.picture_handlers import (
+    register_picture_handlers,
 )
 from latex2json.parser.handlers.environments.algorithm_handlers import (
     register_algorithm_handlers,
@@ -32,7 +29,6 @@ def register_env_handlers(parser: ParserCore):
     register_list_handlers(parser)
     register_subfloat_handler(parser)
     register_verbatim_lst_handlers(parser)
-    register_overpic_handler(parser)
-    register_tikz_pgf_handlers(parser)
+    register_picture_handlers(parser)
     register_algorithm_handlers(parser)
     register_table_figure_handlers(parser)

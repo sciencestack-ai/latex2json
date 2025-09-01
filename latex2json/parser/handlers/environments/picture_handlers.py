@@ -1,5 +1,7 @@
+from typing import List
 from latex2json.latex_maps.environments import PICTURE_ENVIRONMENTS
 from latex2json.nodes import DiagramNode
+from latex2json.nodes.graphics_pdf_diagram_nodes import IncludeGraphicsNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token, TokenType
 from latex2json.parser.handlers.commands.command_handler_utils import (
@@ -8,7 +10,7 @@ from latex2json.parser.handlers.commands.command_handler_utils import (
 
 
 def make_picture_handler(env_name: str):
-    def picture_handler(parser: ParserCore, start_token: Token):
+    def picture_handler(parser: ParserCore, start_token: Token) -> List[DiagramNode]:
         # parse remaining env block
         def is_end_token(tok: Token):
             return tok.type == TokenType.ENVIRONMENT_END and tok.value == env_name
@@ -26,9 +28,21 @@ def make_picture_handler(env_name: str):
     return picture_handler
 
 
-def register_tikz_pgf_handlers(parser: ParserCore):
+def overpic_handler(parser: ParserCore, token: Token):
+    nodes = make_picture_handler("overpic")(parser, token)
+    if not nodes:
+        return []
+    diagram_node = nodes[0]
+
+    return [IncludeGraphicsNode("", code=diagram_node.diagram)]
+
+
+def register_picture_handlers(parser: ParserCore):
     for env in PICTURE_ENVIRONMENTS:
-        parser.register_env_handler(env, make_picture_handler(env))
+        if env == "overpic":
+            parser.register_env_handler(env, overpic_handler)
+        else:
+            parser.register_env_handler(env, make_picture_handler(env))
 
     ignore_patterns = {
         "usetikzlibrary": 1,
@@ -52,6 +66,12 @@ if __name__ == "__main__":
 \end{tikzpicture}
 
 POST
+    """.strip()
+
+    text = r"""
+    \begin{overpic}[width=0.5\textwidth]{example-image}
+    \put(33,29){\tiny Faster R-CNN}
+    \end{overpic} 
     """.strip()
 
     out = parser.parse(text)
