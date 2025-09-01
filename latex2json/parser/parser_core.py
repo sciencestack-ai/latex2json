@@ -148,7 +148,7 @@ class ParserCore:
         """Create a ParserCore instance for isolated token processing without expander dependency."""
         parser = cls(logger=logger, expander=expander)
         parser.standalone_mode = True
-        if expander.cwd:
+        if expander and expander.cwd:
             parser.cwd = expander.cwd
         return parser
 

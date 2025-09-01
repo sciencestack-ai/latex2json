@@ -45,7 +45,9 @@ class Parser(ParserCore):
         # entries = self.bib_parser.parse_file(full_path)
         # return entries
         parser = self.create_standalone(logger=self.logger, expander=self.expander)
+        parser.standalone_mode = False
         nodes = parser.parse(text)
+
         bib_items: List[BibEntryNode] = []
         for node in nodes:
             if isinstance(node, BibEntryNode):

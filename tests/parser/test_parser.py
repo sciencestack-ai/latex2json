@@ -1,5 +1,6 @@
 from typing import List
 from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
+from latex2json.nodes.bibliography_nodes import BibEntryNode
 from latex2json.nodes.environment_nodes import TheoremNode
 from latex2json.nodes.math_nodes import EquationNode
 from latex2json.nodes.ref_cite_url_nodes import RefNode
@@ -217,3 +218,15 @@ def test_postprocessing():
     out = parser.parse(text, postprocess=True)
     out_str = parser.convert_nodes_to_str(out).strip()
     assert out_str == r"& $\&$ #"
+
+
+def test_with_bib():
+    parser = Parser()
+    filepath = os.path.join(SAMPLES_DIR_PATH, "test_with_bib.tex")
+    nodes = parser.parse_file(filepath, postprocess=True)
+    nodes = strip_whitespace_nodes(nodes)
+    assert len(nodes) >= 1
+
+    # check that the bib entries are parsed
+    bib_nodes: List[BibEntryNode] = find_nodes_by_type(nodes, BibEntryNode)
+    assert len(bib_nodes) >= 1

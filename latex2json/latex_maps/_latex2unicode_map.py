@@ -8,6 +8,7 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "qedsymbol": 9633,
     "copyright": 169,  # ©
     "circledR": 174,  # ®
+    "sep": 44,  # ,
     # "\\@": "",
     "checkmark": 10003,  # ✓
     "dots": 8230,  # …
