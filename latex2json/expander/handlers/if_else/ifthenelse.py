@@ -13,7 +13,7 @@ def if_then_else_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     blocks = expander.parse_braced_blocks(3, check_immediate_tokens=True)
 
     if len(blocks) != 3:
-        expander.logger.warning("Warning: \\ifthenelse expects 3 blocks")
+        expander.logger.warning("\\ifthenelse expects 3 blocks")
         return None
 
     eval_block = blocks[0]

@@ -43,7 +43,7 @@ def declare_math_operator_handler(
     cmd = expander.parse_command_name_token()
     if cmd is None:
         expander.logger.warning(
-            f"Warning: \\DeclareMathOperator expects a command name, but found {expander.peek()}"
+            f"\\DeclareMathOperator expects a command name, but found {expander.peek()}"
         )
         return None
 
@@ -52,7 +52,7 @@ def declare_math_operator_handler(
     definition = expander.parse_brace_as_tokens()
     if definition is None:
         expander.logger.warning(
-            f"Warning: \\DeclareMathOperator requires an operator definition"
+            f"\\DeclareMathOperator requires an operator definition"
         )
         return None
 
@@ -86,14 +86,14 @@ def declare_paired_delimiter_handler(
     cmd = expander.parse_command_name_token()
     if cmd is None:
         expander.logger.warning(
-            f"Warning: \\DeclarePairedDelimiter expects a command name, but found {expander.peek()}"
+            f"\\DeclarePairedDelimiter expects a command name, but found {expander.peek()}"
         )
         return None
 
     blocks = expander.parse_braced_blocks(2)
     if len(blocks) != 2:
         expander.logger.warning(
-            f"Warning: \\DeclarePairedDelimiter requires two delimiter pairs"
+            f"\\DeclarePairedDelimiter requires two delimiter pairs"
         )
         return None
 
@@ -129,7 +129,7 @@ def declare_option_handler(
     blocks = expander.parse_braced_blocks(braced_blocks, check_immediate_tokens=True)
     # if len(blocks) != braced_blocks:
     #     expander.logger.warning(
-    #         f"Warning: \\DeclareOption requires {braced_blocks} braced blocks"
+    #         f"\\DeclareOption requires {braced_blocks} braced blocks"
     #     )
     #     return None
     return []

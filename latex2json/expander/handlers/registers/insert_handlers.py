@@ -11,9 +11,7 @@ def insert_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
     expander.skip_whitespace()
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning(
-            f"Warning: \\insert expects a name, but found {expander.peek()}"
-        )
+        expander.logger.warning(f"\\insert expects a name, but found {expander.peek()}")
         return None
 
     expander.skip_whitespace()

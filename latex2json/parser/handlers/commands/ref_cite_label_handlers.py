@@ -10,7 +10,7 @@ def label_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     label_nodes = parser.parse_brace_as_nodes()
     if not label_nodes:
-        # parser.logger.warning("Warning: \\label expects a label")
+        # parser.logger.warning("\\label expects a label")
         return None
 
     label_str = parser.convert_nodes_to_str(label_nodes)
@@ -64,7 +64,7 @@ def cite_handler(parser: ParserCore, token: Token):
         parser.skip_whitespace()
     citation_nodes = parser.parse_brace_as_nodes()
     if citation_nodes is None:
-        parser.logger.warning("Warning: \\cite expects a citation")
+        parser.logger.warning("\\cite expects a citation")
         return None
 
     title = []
@@ -101,11 +101,11 @@ def defcitealias_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     cite_key = parser.parse_brace_as_nodes()
     if not cite_key:
-        parser.logger.warning("Warning: \\defcitealias expects a citation key")
+        parser.logger.warning("\\defcitealias expects a citation key")
         return None
     alias_nodes = parser.parse_brace_as_nodes()
     if not alias_nodes:
-        parser.logger.warning("Warning: \\defcitealias expects an alias")
+        parser.logger.warning("\\defcitealias expects an alias")
         return None
     cite_key_str = parser.convert_nodes_to_str(cite_key)
     alias_str = parser.convert_nodes_to_str(alias_nodes)
@@ -117,7 +117,7 @@ def citealias_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     cite_key = parser.parse_brace_as_nodes()
     if not cite_key:
-        parser.logger.warning("Warning: \\cite[tp]alias expects a citation key")
+        parser.logger.warning("\\cite[tp]alias expects a citation key")
         return None
     cite_key_str = parser.convert_nodes_to_str(cite_key)
     alias_str = parser.cite_aliases.get(cite_key_str, None)
@@ -130,7 +130,7 @@ def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
         parser.skip_whitespace()
         url_nodes = parser.parse_brace_as_nodes()
         if not url_nodes:
-            parser.logger.warning("Warning: \\url expects a URL")
+            parser.logger.warning("\\url expects a URL")
             return None
         url_str = parser.convert_nodes_to_str(url_nodes)
         title = []

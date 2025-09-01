@@ -136,7 +136,7 @@ def new_register_macro_handler(
     tok = expander.peek()
     if tok is None or not expander.is_control_sequence(tok):
         expander.logger.warning(
-            f"Warning: \\new{register_type.value} expects a \\name, but found {tok}"
+            f"\\new{register_type.value} expects a \\name, but found {tok}"
         )
         return None
     count_name = tok.value

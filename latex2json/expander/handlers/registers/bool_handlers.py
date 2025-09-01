@@ -9,7 +9,7 @@ def newbool_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     bool_name = expander.parse_brace_name()
     if not bool_name:
         expander.logger.warning(
-            f"Warning: \\newbool expects a boolean name, but found {expander.peek()}"
+            f"\\newbool expects a boolean name, but found {expander.peek()}"
         )
         return None
 
@@ -24,7 +24,7 @@ def make_setbool_handler(flag: bool):
         bool_name = expander.parse_brace_name()
         if not bool_name:
             expander.logger.warning(
-                f"Warning: \\booltrue/false expects a boolean name, but found {expander.peek()}"
+                f"\\booltrue/false expects a boolean name, but found {expander.peek()}"
             )
             return None
 
@@ -39,14 +39,14 @@ def make_if_bool_handler(flag: bool = True):
         blocks = expander.parse_braced_blocks(3)
 
         if len(blocks) != 3:
-            expander.logger.warning("Warning: \\ifbool expects 3 blocks")
+            expander.logger.warning("\\ifbool expects 3 blocks")
             return None
 
         eval_block = blocks[0]
         bool_name = expander.convert_tokens_to_str(eval_block)
         bool_value = expander.state.get_register(RegisterType.BOOL, bool_name)
         # if not bool_value:
-        #     expander.logger.warning(f"Warning: \\ifbool expects a boolean name")
+        #     expander.logger.warning(f"\\ifbool expects a boolean name")
         #     return None
 
         block = blocks[1] if bool_value == flag else blocks[2]
@@ -61,7 +61,7 @@ def set_boolean_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     bool_name = expander.parse_brace_name()
     if not bool_name:
         expander.logger.warning(
-            f"Warning: \\setboolean expects a boolean name, but found {expander.peek()}"
+            f"\\setboolean expects a boolean name, but found {expander.peek()}"
         )
         return None
 
@@ -69,7 +69,7 @@ def set_boolean_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     value = expander.parse_brace_name().strip()
     if not value:
         expander.logger.warning(
-            f"Warning: \\setboolean expects a boolean value, but found {expander.peek()}"
+            f"\\setboolean expects a boolean value, but found {expander.peek()}"
         )
         return None
 

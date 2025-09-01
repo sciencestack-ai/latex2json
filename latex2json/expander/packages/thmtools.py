@@ -13,9 +13,7 @@ def declaretheorem_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     env_name = expander.parse_brace_name()
     if not env_name:
-        expander.logger.warning(
-            f"Warning: \\declaretheorem expects an environment name"
-        )
+        expander.logger.warning(f"\\declaretheorem expects an environment name")
         return None
 
     options_str = expander.convert_tokens_to_str(options) if options else ""

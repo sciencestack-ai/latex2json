@@ -27,7 +27,7 @@ def subfile_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     file_name = parser.parse_brace_name()
     if not file_name:
-        parser.logger.warning("Warning: \\subfile expects a file path")
+        parser.logger.warning("\\subfile expects a file path")
         return None
 
     # create standalone parser + fresh expander (to mimic subfiles as standalone documents)
@@ -47,7 +47,7 @@ def externaldocument_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     ext_file = parser.parse_brace_name()
     if not ext_file or not prefix_nodes:
-        # parser.logger.warning("Warning: \\externaldocument expects a file path")
+        # parser.logger.warning("\\externaldocument expects a file path")
         return None
 
     prefix_str = parser.convert_nodes_to_str(prefix_nodes)

@@ -244,9 +244,7 @@ def newline_handler(expander: ExpanderCore, token: Token):
 def mathpalette_handler(expander: ExpanderCore, token: Token):
     toks1 = expander.parse_immediate_token(skip_whitespace=False, expand=False)
     if not toks1:
-        expander.logger.warning(
-            f"Warning: \\mathpalette expected argument but found nothing"
-        )
+        expander.logger.warning(f"\\mathpalette expected argument but found nothing")
         return None
 
     # arbitrarily push a displaystyle token to stream
@@ -263,9 +261,7 @@ def rcsinfo_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     tok = expander.peek()
     if not tok or not is_dollar_token(tok):
-        expander.logger.info(
-            f"Warning: \\rcsInfo expected math shift inline but found {tok}"
-        )
+        expander.logger.info(f"\\rcsInfo expected math shift inline but found {tok}")
         return None
     expander.consume()
     tokens = expander.parse_tokens_until(is_dollar_token, consume_predicate=True)

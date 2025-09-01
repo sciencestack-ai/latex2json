@@ -55,7 +55,7 @@ def newcommand_handler(
     cmd = expander.parse_command_name_token()
     if cmd is None:
         expander.logger.warning(
-            f"Warning: \\newcommand expects a command name, but found {expander.peek()}"
+            f"\\newcommand expects a command name, but found {expander.peek()}"
         )
         return None
 
@@ -64,7 +64,7 @@ def newcommand_handler(
     out = get_newcommand_args_and_definition(expander)
     if out is None:
         expander.logger.warning(
-            f"Warning: \\newcommand {cmd.value} expects a definition in braces"
+            f"\\newcommand {cmd.value} expects a definition in braces"
         )
         return None
 

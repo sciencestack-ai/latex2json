@@ -15,17 +15,13 @@ def parse_char_value(expander: ExpanderCore) -> Optional[str]:
     # check for controlsequence
     tok = expander.consume()
     if tok is None:
-        expander.logger.warning(
-            f"WARNING: \\catcode expected control sequence, but found None"
-        )
+        expander.logger.warning(f"\\catcode expected control sequence, but found None")
         return None
     char = tok.value
 
     if len(char) > 1:
         char = char[0]
-        expander.logger.warning(
-            f"WARNING: \\catcode only takes one character, using {char}"
-        )
+        expander.logger.warning(f"\\catcode only takes one character, using {char}")
 
     return char
 
@@ -48,7 +44,7 @@ class CatcodeHandler:
 
         if new_catcode_int < 0 or new_catcode_int > 15:
             expander.logger.warning(
-                f"Error: Invalid catcode value {new_catcode_int} for \\catcode {char}. Must be 0-15."
+                f"Invalid catcode value {new_catcode_int} for \\catcode {char}. Must be 0-15."
             )
             return []  # Return empty list on error
 

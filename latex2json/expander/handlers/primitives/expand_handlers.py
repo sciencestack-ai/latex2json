@@ -23,7 +23,7 @@ def unexpanded_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     expander.skip_whitespace()
     brace = expander.parse_brace_as_tokens()
     if brace is None:
-        expander.logger.warning("Warning: \\unexpanded expects a brace")
+        expander.logger.warning("\\unexpanded expects a brace")
         return None
     return brace
 
@@ -38,7 +38,7 @@ def expandafter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     expander.skip_whitespace()
     tok1 = expander.consume()
     if tok1 is None:
-        expander.logger.warning("Warning: \\expandafter expects 2 tokens")
+        expander.logger.warning("\\expandafter expects 2 tokens")
         return None
     expander.skip_whitespace()
     tok2 = expander.peek()

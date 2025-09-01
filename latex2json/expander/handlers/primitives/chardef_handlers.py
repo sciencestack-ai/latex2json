@@ -10,7 +10,7 @@ def _parse_cmd_name_and_int_value(
     expander.skip_whitespace()
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning("Warning: \\chardef expects a command name")
+        expander.logger.warning("\\chardef expects a command name")
         return None
 
     expander.parse_equals()
@@ -56,7 +56,7 @@ def chardef_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
             )
         else:
             expander.logger.warning(
-                "Warning: \\chardef expects a valid command name + value str"
+                "\\chardef expects a valid command name + value str"
             )
         return None
 
@@ -75,7 +75,7 @@ def mathchardef_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
             )
         else:
             expander.logger.warning(
-                "Warning: \\mathchardef expects a valid command name + value str"
+                "\\mathchardef expects a valid command name + value str"
             )
         return None
 

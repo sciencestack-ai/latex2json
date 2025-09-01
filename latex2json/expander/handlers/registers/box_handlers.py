@@ -55,7 +55,7 @@ class BoxDimRegisterMacro(RegisterMacro):
         box_id = parse_box_id(expander)
         if box_id is None:
             expander.logger.warning(
-                f"Warning: \\{self.dim} expects a valid box id, but found {expander.peek()}"
+                f"\\{self.dim} expects a valid box id, but found {expander.peek()}"
             )
             return self.register_type, None
 
@@ -80,7 +80,7 @@ class BoxDimRegisterMacro(RegisterMacro):
         dim_val = expander.parse_dimensions()
         if dim_val is None:
             expander.logger.warning(
-                f"Warning: \\{self.dim} expects = dimension, but found {expander.peek()}"
+                f"\\{self.dim} expects = dimension, but found {expander.peek()}"
             )
             return None
 
@@ -100,13 +100,13 @@ def box_n_copy_handler(copy=False):
         box_id = parse_box_id(expander)
         if box_id is None:
             expander.logger.warning(
-                f"Warning: {prefix} expects a valid box id, but found {expander.peek()}"
+                f"{prefix} expects a valid box id, but found {expander.peek()}"
             )
             return None
 
         box = expander.get_register_value(REGISTER_TYPE, box_id)
         if not isinstance(box, Box):
-            expander.logger.warning(f"Warning: {prefix} expects a box, but found {box}")
+            expander.logger.warning(f"{prefix} expects a box, but found {box}")
             return None
 
         out_tokens = _get_box_tokens(box)
@@ -123,22 +123,18 @@ def setbox_handler(expander: ExpanderCore, token: Token):
     box_id = parse_box_id(expander)
     if box_id is None:
         expander.logger.warning(
-            f"Warning: \\setbox expects a valid box id, but found {expander.peek()}"
+            f"\\setbox expects a valid box id, but found {expander.peek()}"
         )
         return None
 
     if not expander.parse_equals():
-        expander.logger.warning(
-            f"Warning: \\setbox expects a =, but found {expander.peek()}"
-        )
+        expander.logger.warning(f"\\setbox expects a =, but found {expander.peek()}")
         return None
 
     expander.skip_whitespace()
     box = expander.parse_box()
     if not box:
-        expander.logger.warning(
-            f"Warning: \\setbox expects a box, but found {expander.peek()}"
-        )
+        expander.logger.warning(f"\\setbox expects a box, but found {expander.peek()}")
         return None
 
     expander.set_register(REGISTER_TYPE, box_id, box)
@@ -158,7 +154,7 @@ def make_savebox_handler(extended=False):
         cmd = expander.parse_command_name_token()
         if cmd is None:
             expander.logger.warning(
-                f"Warning: \\sbox|savebox expects a name, but found {expander.peek()}"
+                f"\\sbox|savebox expects a name, but found {expander.peek()}"
             )
             return None
 
@@ -171,7 +167,7 @@ def make_savebox_handler(extended=False):
         box_content = expander.parse_brace_as_tokens(expand=True)
         if box_content is None:
             expander.logger.warning(
-                f"Warning: \\sbox|savebox expects box content, but found {expander.peek()}"
+                f"\\sbox|savebox expects box content, but found {expander.peek()}"
             )
             return None
 
@@ -194,9 +190,7 @@ def make_savebox_handler(extended=False):
 def usebox_handler(expander: ExpanderCore, token: Token):
     cmd = expander.parse_command_name_token()
     if cmd is None:
-        expander.logger.warning(
-            f"Warning: \\usebox expects a name, but found {expander.peek()}"
-        )
+        expander.logger.warning(f"\\usebox expects a name, but found {expander.peek()}")
         return None
 
     box = expander.get_register_value(REGISTER_TYPE, cmd.value)
@@ -225,7 +219,7 @@ def _create_box_register(expander: ExpanderCore, box_name: str):
 def newbox_handler(expander: ExpanderCore, token: Token):
     tok = expander.peek()
     if tok is None or not expander.is_control_sequence(tok):
-        expander.logger.warning(f"Warning: \\newbox expects a \\name, but found {tok}")
+        expander.logger.warning(f"\\newbox expects a \\name, but found {tok}")
         return None
     box_name = tok.value
     expander.consume()
@@ -238,7 +232,7 @@ def newsavebox_handler(expander: ExpanderCore, token: Token):
     cmd = expander.parse_command_name_token()
     if cmd is None:
         expander.logger.warning(
-            f"Warning: \\newsavebox expects a name, but found {expander.peek()}"
+            f"\\newsavebox expects a name, but found {expander.peek()}"
         )
         return None
 

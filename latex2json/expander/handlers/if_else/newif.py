@@ -65,22 +65,22 @@ def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     expander.skip_whitespace()
     name_token = expander.consume()
     if name_token is None:
-        expander.logger.warning("Warning: \\newif expects a name")
+        expander.logger.warning("\\newif expects a name")
         return None
 
     if name_token.type != TokenType.CONTROL_SEQUENCE:
-        expander.logger.warning("Warning: \\newif name must be a control sequence")
+        expander.logger.warning("\\newif name must be a control sequence")
         return None
 
     # Name must start with \if
     ifname = name_token.value
     if not ifname.startswith("if"):
-        expander.logger.warning("Warning: \\newif name must start with \\if")
+        expander.logger.warning("\\newif name must start with \\if")
         return None
 
     base_name = ifname[2:]
     if base_name == "":
-        expander.logger.warning("Warning: \\newif name cannot be single \\if")
+        expander.logger.warning("\\newif name cannot be single \\if")
         return None
 
     register_newif_name_macros(expander, base_name)

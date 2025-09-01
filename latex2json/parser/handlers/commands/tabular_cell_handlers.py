@@ -107,7 +107,7 @@ def makecell_handler(parser: ParserCore, token: Token):
 def cellcolor_handler(parser: ParserCore, token: Token):
     color_name = parser.parse_color_name()
     if not color_name:
-        parser.logger.warning("Warning: \\cellcolor expects a color name")
+        parser.logger.warning("\\cellcolor expects a color name")
         return []
 
     # create empty cellnode with style

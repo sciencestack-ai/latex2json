@@ -1138,7 +1138,7 @@ class ExpanderCore:
             return None
         if not is_param_token(tok):
             self.logger.warning(
-                f"WARNING: parse_parameter_sequence called without current Catcode.PARAMETER: {tok}"
+                f"parse_parameter_sequence called without current Catcode.PARAMETER: {tok}"
             )
             return None  # Not the start of a parameter sequence
 
@@ -1150,7 +1150,7 @@ class ExpanderCore:
 
         if tok is None:
             self.logger.error(
-                "Error: Unexpected end of input after '#'. Expected a digit (1-9) or another '#'."
+                "Unexpected end of input after '#'. Expected a digit (1-9) or another '#'."
             )
             return None  # Syntax error: incomplete sequence
 
@@ -1345,12 +1345,12 @@ class ExpanderCore:
                 tokens = self.parse_immediate_token()
             if tokens is None:
                 self.logger.warning(
-                    f"Warning: {command_name} expected argument {i+1} but found nothing"
+                    f"{command_name} expected argument {i+1} but found nothing"
                 )
                 return None
             elif tokens and is_end_group_token(tokens[0]):
                 self.logger.warning(
-                    f"Warning: {command_name} expected argument {i+1}"
+                    f"{command_name} expected argument {i+1}"
                     + " but found early closing brace }"
                 )
                 # push tokens back to stream, since this is invalid

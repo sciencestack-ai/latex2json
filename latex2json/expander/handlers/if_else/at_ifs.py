@@ -13,7 +13,7 @@ def if_star_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
 
     if len(blocks) != 2:
-        expander.logger.warning("Warning: \\@ifstar expects 2 blocks")
+        expander.logger.warning("\\@ifstar expects 2 blocks")
         return None
 
     has_star = expander.parse_asterisk()
@@ -31,20 +31,20 @@ def if_nextchar_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     expander.skip_whitespace()
     tok1 = expander.consume()
     if tok1 is None:
-        expander.logger.warning("Warning: \\@ifnextchar expects a char")
+        expander.logger.warning("\\@ifnextchar expects a char")
         return None
 
     expander.skip_whitespace()
     blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
-        expander.logger.warning("Warning: \\@ifnextchar expects 2 blocks")
+        expander.logger.warning("\\@ifnextchar expects 2 blocks")
         return None
 
     expander.skip_whitespace()
     tok2 = expander.peek()
     if tok2 is None:
         expander.logger.warning(
-            "Warning: \\@ifnextchar expects a token after \\@ifnextchar[{}{}"
+            "\\@ifnextchar expects a token after \\@ifnextchar[{}{}"
         )
         return None
 
@@ -63,7 +63,7 @@ def if_nextchar_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
 def if_mathmode_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
-        expander.logger.warning("Warning: \\@ifmmode expects 2 blocks")
+        expander.logger.warning("\\@ifmmode expects 2 blocks")
         return None
 
     block = blocks[0] if expander.state.is_math_mode else blocks[1]
@@ -76,7 +76,7 @@ def if_undefined_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     command_name = expander.parse_command_name_token()
     blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
     if len(blocks) != 2:
-        expander.logger.warning("Warning: \\@ifundefined expects 3 blocks")
+        expander.logger.warning("\\@ifundefined expects 3 blocks")
         return None
 
     is_undefined = True
@@ -91,7 +91,7 @@ def ifdefinable_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     expander.skip_whitespace()
     command_name = expander.parse_command_name_token()
     if command_name is None:
-        expander.logger.warning("Warning: \\@ifdefinable expects a command name")
+        expander.logger.warning("\\@ifdefinable expects a command name")
         return None
 
     is_definable = expander.get_macro(command_name) is None
@@ -109,7 +109,7 @@ def iflatar_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     """
     blocks = expander.parse_braced_blocks(4, check_immediate_tokens=True)
     if len(blocks) != 4:
-        expander.logger.warning("Warning: \\@ifl@t@r expects 4 blocks")
+        expander.logger.warning("\\@ifl@t@r expects 4 blocks")
         return None
 
     block1 = expander.expand_tokens(blocks[0])
@@ -137,7 +137,7 @@ def make_ifloaded_handler(load_type: str = "package"):
         package_name = expander.parse_brace_name()
         blocks = expander.parse_braced_blocks(2, check_immediate_tokens=True)
         if len(blocks) != 2:
-            expander.logger.warning(f"Warning: \\@if{load_type}loaded expects 3 blocks")
+            expander.logger.warning(f"\\@if{load_type}loaded expects 3 blocks")
             return None
 
         if not package_name:

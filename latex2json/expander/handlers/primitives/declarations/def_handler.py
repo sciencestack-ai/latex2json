@@ -90,9 +90,7 @@ def get_parsed_args_from_usage_pattern(
             # parameter matching
             tokens = expander.parse_immediate_token()
             if tokens is None:
-                expander.logger.warning(
-                    f"Warning: expected an argument but found nothing"
-                )
+                expander.logger.warning(f"expected an argument but found nothing")
                 return parsed_args
 
             param_tok = segment.tokens[0]  # must be a parameter token
@@ -183,17 +181,13 @@ def get_def_usage_pattern_and_definition(
 def def_handler(expander: ExpanderCore, token: Token) -> Optional[DefResult]:
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning(
-            f"Warning: \\def expects a control sequence, but found {cmd}"
-        )
+        expander.logger.warning(f"\\def expects a control sequence, but found {cmd}")
         return None
 
     usage_pattern, definition = get_def_usage_pattern_and_definition(expander)
 
     if usage_pattern is None or definition is None:
-        expander.logger.warning(
-            f"Warning: \\def expects a proper usage pattern and definition"
-        )
+        expander.logger.warning(f"\\def expects a proper usage pattern and definition")
         return None
 
     return DefResult(

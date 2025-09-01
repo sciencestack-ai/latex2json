@@ -28,9 +28,7 @@ def case_transform_handler(
     expander.skip_whitespace()
     tok = expander.peek()
     if tok is None:
-        expander.logger.warning(
-            f"Warning: \\{transform_type.value} expects args, but None"
-        )
+        expander.logger.warning(f"\\{transform_type.value} expects args, but None")
         return None
     if expander.is_control_sequence(tok):
         exp = expander.expand_next()
@@ -42,7 +40,7 @@ def case_transform_handler(
     tokens = expander.parse_brace_as_tokens()
     if tokens is None:
         expander.logger.warning(
-            f"Warning: \\{transform_type.value} expects a brace-enclosed argument"
+            f"\\{transform_type.value} expects a brace-enclosed argument"
         )
         return None
 

@@ -7,7 +7,7 @@ def verb_handler(expander: ExpanderCore, token: Token):
     expander.parse_asterisk()
     delim_token = expander.consume()
     if not delim_token:
-        expander.logger.warning("Warning: \\verb expects a delimiter token")
+        expander.logger.warning("\\verb expects a delimiter token")
         return None
     verb_tokens = expander.parse_tokens_until(
         lambda tok: tok == delim_token, consume_predicate=True, verbatim=True
@@ -22,7 +22,7 @@ def lst_inline_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     delim_token = expander.consume()
     if not delim_token:
-        expander.logger.warning("Warning: \\lstinline expects a delimiter token")
+        expander.logger.warning("\\lstinline expects a delimiter token")
         return None
     lst_inline_tokens = expander.parse_tokens_until(
         lambda tok: tok == delim_token, consume_predicate=True, verbatim=True

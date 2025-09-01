@@ -8,7 +8,7 @@ from latex2json.tokens.utils import wrap_tokens_in_braces
 def for_loop_handler(expander: ExpanderCore, token: Token):
     blocks = expander.parse_braced_blocks(4)
     if len(blocks) != 4:
-        expander.logger.warning("Warning: \\forloop expects 4 blocks")
+        expander.logger.warning("\\forloop expects 4 blocks")
         return None
 
     counter_name_toks = expander.expand_tokens(blocks[0])
@@ -18,7 +18,7 @@ def for_loop_handler(expander: ExpanderCore, token: Token):
 
     counter_name_str = expander.convert_tokens_to_str(counter_name_toks).strip()
     if not counter_name_str:
-        expander.logger.warning("Warning: \\forloop expects a counter name")
+        expander.logger.warning("\\forloop expects a counter name")
         return None
 
     start_value_str = expander.convert_tokens_to_str(start_value_toks).strip()
@@ -27,7 +27,7 @@ def for_loop_handler(expander: ExpanderCore, token: Token):
         start_value = int(start_value_str)
     except ValueError:
         expander.logger.warning(
-            f"Warning: \\forloop expects an integer start value, got {start_value_str}"
+            f"\\forloop expects an integer start value, got {start_value_str}"
         )
         return None
 
@@ -71,9 +71,7 @@ def at_for_loop_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     tok = expander.peek()
     if tok is None or not expander.is_control_sequence(tok):
-        expander.logger.warning(
-            r"Warning: \@forloop expected variable after \@nil,\@nil\@@"
-        )
+        expander.logger.warning(r"\@forloop expected variable after \@nil,\@nil\@@")
         return None
     expander.consume()
 

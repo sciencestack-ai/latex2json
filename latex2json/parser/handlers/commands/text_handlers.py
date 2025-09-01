@@ -76,7 +76,7 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
 def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     color_name = parser.parse_color_name()
     if not color_name:
-        parser.logger.warning("Warning: \\textcolor expects a color name")
+        parser.logger.warning("\\textcolor expects a color name")
         return []
 
     if parser.is_math_mode:
@@ -102,7 +102,7 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
 def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     color_name = parser.parse_color_name()
     if not color_name:
-        parser.logger.warning("Warning: \\color expects a color name")
+        parser.logger.warning("\\color expects a color name")
         return []
 
     parser.set_font(FontStyle(FontStyleType.COLOR, color_name))

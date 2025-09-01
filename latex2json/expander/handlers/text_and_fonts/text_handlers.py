@@ -23,7 +23,7 @@ def textcolor_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     color = expander.parse_brace_name()
     if not color:
-        expander.logger.warning("Warning: \\textcolor expects a color {...}")
+        expander.logger.warning("\\textcolor expects a color {...}")
         return None
     expander.skip_whitespace()
 

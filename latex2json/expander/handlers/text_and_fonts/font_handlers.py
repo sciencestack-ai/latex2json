@@ -8,11 +8,11 @@ def font_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning("Warning: \\font expects a font command name")
+        expander.logger.warning("\\font expects a font command name")
         return None
 
     if not expander.parse_equals():
-        expander.logger.warning("Warning: \\font expects a = after the command name")
+        expander.logger.warning("\\font expects a = after the command name")
         return None
 
     expander.skip_whitespace()
@@ -33,7 +33,7 @@ def newfont_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     font_definition = expander.parse_brace_as_tokens() or []
     if not cmd:
-        expander.logger.warning("Warning: \\newfont expects a command name")
+        expander.logger.warning("\\newfont expects a command name")
         return None
 
     expander.create_new_font(cmd.value, font_definition)

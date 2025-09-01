@@ -18,7 +18,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     name = expander.parse_brace_name()
     if name is None:
         expander.logger.warning(
-            f"Warning: {prefix} expects an environment name, but found {expander.peek()}"
+            f"{prefix} expects an environment name, but found {expander.peek()}"
         )
         return None
 
@@ -38,7 +38,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     else:
         # env is defined but has no begin handler
         expander.logger.info(
-            f"Warning: {prefix}{{{name}}} has no begin handler, returning default env"
+            f"{prefix}{{{name}}} has no begin handler, returning default env"
         )
 
     counter_name = None  # name
@@ -61,7 +61,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     name = expander.parse_brace_name()
     if name is None:
         expander.logger.warning(
-            f"Warning: {prefix} expects an environment name, but found {expander.peek()}"
+            f"{prefix} expects an environment name, but found {expander.peek()}"
         )
         return None
 

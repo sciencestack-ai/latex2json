@@ -6,7 +6,7 @@ from latex2json.utils.tex_utils import convert_color_to_css
 def define_color_handler(expander: ExpanderCore, token: Token):
     blocks = expander.parse_braced_blocks(3, expand=True)
     if len(blocks) != 3:
-        expander.logger.warning("Warning: \\definecolor expects 3 arguments")
+        expander.logger.warning("\\definecolor expects 3 arguments")
         return []
 
     color_name = expander.convert_tokens_to_str(blocks[0])

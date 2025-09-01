@@ -10,16 +10,16 @@ from latex2json.tokens.types import Token
 def floatname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     env_name = expander.parse_brace_name()
     if env_name is None:
-        expander.logger.warning(f"Warning: \\floatname: Missing environment name")
+        expander.logger.warning(f"\\floatname: Missing environment name")
         return None
     display_name = expander.parse_brace_name()
     if display_name is None:
-        expander.logger.warning(f"Warning: \\floatname: Missing display name")
+        expander.logger.warning(f"\\floatname: Missing display name")
         return None
 
     env_def = expander.get_environment_definition(env_name)
     if env_def is None:
-        # expander.logger.warning(f"Warning: \\floatname: Unknown environment {env_name}")
+        # expander.logger.warning(f"\\floatname: Unknown environment {env_name}")
         return None
     env_def.display_name = display_name
     return []

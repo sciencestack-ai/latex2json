@@ -16,9 +16,7 @@ def the_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         return None
 
     if not expander.is_control_sequence(tok):
-        expander.logger.warning(
-            f"Warning: \\the expects a control sequence, but found {tok}"
-        )
+        expander.logger.warning(f"\\the expects a control sequence, but found {tok}")
         return None
 
     name = tok.value

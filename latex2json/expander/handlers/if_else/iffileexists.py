@@ -11,7 +11,7 @@ def if_file_exists_handler(
     file_name = expander.parse_brace_name()
     blocks = expander.parse_braced_blocks(2)
     if len(blocks) != 2:
-        expander.logger.warning(f"Warning: \\IfFileExists expects 3 blocks")
+        expander.logger.warning(f"\\IfFileExists expects 3 blocks")
         return None
 
     if not file_name:

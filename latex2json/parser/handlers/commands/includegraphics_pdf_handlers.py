@@ -14,7 +14,7 @@ def includegraphics_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     path = parser.parse_brace_as_nodes()
     if path is None:
-        parser.logger.warning(f"Warning: \\includegraphics: Missing path")
+        parser.logger.warning(f"\\includegraphics: Missing path")
         return None
     path_str = parser.convert_nodes_to_str(path)
 
@@ -32,7 +32,7 @@ def includepdf_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     path = parser.parse_brace_as_nodes()
     if path is None:
-        parser.logger.warning(f"Warning: \\includepdf: Missing path")
+        parser.logger.warning(f"\\includepdf: Missing path")
         return None
     path_str = parser.convert_nodes_to_str(path)
 

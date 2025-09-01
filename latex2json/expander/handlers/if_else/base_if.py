@@ -31,7 +31,7 @@ class IfMacro(Macro):
         invalid = is_true is None
         if invalid:
             if error:
-                expander.logger.warning(f"Warning: {error}")
+                expander.logger.warning(f"IfMacro error: {error}")
             # don't return, continue to parse if-else blocks
             # return None
 

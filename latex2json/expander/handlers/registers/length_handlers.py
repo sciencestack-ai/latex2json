@@ -18,7 +18,7 @@ def make_length_setter_handler(command_name: str):
         expander.skip_whitespace()
         cmd = expander.parse_command_name_token()
         if not cmd:
-            # expander.logger.warning(f"Warning: \\{command_name} expects a length name")
+            # expander.logger.warning(f"\\{command_name} expects a length name")
             return None
 
         length_name = cmd.value
@@ -71,7 +71,7 @@ def addtolength_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
             break
 
     if reg_type is None:
-        expander.logger.warning(f"Warning: Length {length_name} not defined")
+        expander.logger.warning(f"Length {length_name} not defined")
         return None
 
     expander.set_register(reg_type, length_name, current_value + parsed)
@@ -82,7 +82,7 @@ def newlength_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     expander.skip_whitespace()
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning("Warning: \\newlength expects a length name")
+        expander.logger.warning("\\newlength expects a length name")
         return None
 
     expander.state.create_register(REGISTER_TYPE, cmd.value)

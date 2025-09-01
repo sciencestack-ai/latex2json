@@ -194,17 +194,17 @@ def ding_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     toks = expander.parse_immediate_token()
     if not toks:
-        expander.logger.warning("Warning: \\ding expects a number")
+        expander.logger.warning("\\ding expects a number")
         return []
 
     try:
         num = int(expander.convert_tokens_to_str(toks).strip())
     except ValueError:
-        expander.logger.warning(f"Warning: \\ding expects a number, found {toks}")
+        expander.logger.warning(f"\\ding expects a number, found {toks}")
         return []
 
     if num not in ding_mapping:
-        expander.logger.warning("Warning: \\ding expects a number between 172 and 254")
+        expander.logger.warning("\\ding expects a number between 172 and 254")
         return []
     out_str = chr(ding_mapping[num])
     return expander.convert_str_to_tokens(out_str)

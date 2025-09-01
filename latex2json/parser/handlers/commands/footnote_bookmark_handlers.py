@@ -14,7 +14,7 @@ def footnote_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     content = parser.parse_brace_as_nodes()
     if content is None:
-        parser.logger.warning(f"Warning: \\footnote: Missing content")
+        parser.logger.warning(f"\\footnote: Missing content")
         return None
     return [FootnoteNode(content, title)]
 

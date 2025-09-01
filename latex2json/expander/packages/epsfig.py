@@ -19,7 +19,7 @@ def epsfig_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     brace_str = expander.parse_brace_name()
     if not brace_str:
-        expander.logger.warning(f"Warning: \\epsfig expects a path")
+        expander.logger.warning(f"\\epsfig expects a path")
         return None
 
     opts = parse_key_val_string(brace_str)
@@ -36,7 +36,7 @@ def epsfbox_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     path = expander.parse_brace_name()
     if not path:
-        expander.logger.warning(f"Warning: \\epsfbox expects a path")
+        expander.logger.warning(f"\\epsfbox expects a path")
         return None
 
     return _path_to_includegraphics_token(path)

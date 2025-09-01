@@ -11,12 +11,12 @@ def ifdefempty_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     blocks = expander.parse_braced_blocks(3)
 
     if len(blocks) != 3:
-        expander.logger.warning("Warning: \\ifdefempty expects 3 blocks")
+        expander.logger.warning("\\ifdefempty expects 3 blocks")
         return None
 
     macro_block = blocks[0]
     if not macro_block:
-        expander.logger.warning("Warning: \\ifdefempty expects a macro")
+        expander.logger.warning("\\ifdefempty expects a macro")
         return None
 
     block = blocks[2]

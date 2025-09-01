@@ -14,7 +14,7 @@ def make_advance_handler(operation: str = "add"):
         parsed = expander.parse_register()
         if not parsed:
             expander.logger.warning(
-                f"Warning: \\advance expects a register, but found {expander.peek()}"
+                f"\\advance expects a register, but found {expander.peek()}"
             )
             return None
 
@@ -35,15 +35,13 @@ def make_advance_handler(operation: str = "add"):
 
         tok = expander.peek()
         if tok is None:
-            expander.logger.warning(
-                f"Warning: \\advance [by] expects a value, but found {tok}"
-            )
+            expander.logger.warning(f"\\advance [by] expects a value, but found {tok}")
             return None
 
         value = parse_register_setter(expander, register_type)
         if value is None or not isinstance(value, int | float):
             expander.logger.warning(
-                f"Warning: \\advance [by] expects a number, but found {value}"
+                f"\\advance [by] expects a number, but found {value}"
             )
             return None
 
@@ -64,7 +62,7 @@ def make_advance_handler(operation: str = "add"):
             expander.set_register(register_type, register_name, new_value)
         except Exception as e:
             expander.logger.warning(
-                f"Warning: Could not {operation} {value} to {cur_value} in register {register_name}"
+                f"Could not {operation} {value} to {cur_value} in register {register_name}"
             )
             return None
 

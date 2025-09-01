@@ -16,7 +16,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     env_name = expander.parse_brace_name()
     if env_name is None:
         expander.logger.warning(
-            f"Warning: \\newtheorem expects an environment name, but found {token}"
+            f"\\newtheorem expects an environment name, but found {token}"
         )
         return None
 
@@ -31,7 +31,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         shared_counter = expander.parse_brace_name(bracket=True)
         if not shared_counter:
             expander.logger.warning(
-                f"Warning: {token} expects a shared counter, but found {expander.peek()}"
+                f"{token} expects a shared counter, but found {expander.peek()}"
             )
             return None
         counter_name = shared_counter
@@ -53,9 +53,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     if tok.value == "{":
         display_name = expander.parse_brace_name()
         if display_name is None:
-            expander.logger.warning(
-                f"Warning: \\newtheorem [{env_name}] expects a display name"
-            )
+            expander.logger.warning(f"\\newtheorem [{env_name}] expects a display name")
             return None
         expander.skip_whitespace()
 

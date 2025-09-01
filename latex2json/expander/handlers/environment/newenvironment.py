@@ -20,7 +20,7 @@ class NewEnvironmentMacro(Macro):
         name = expander.parse_brace_name()
         if name is None:
             expander.logger.warning(
-                f"Warning: \\newenvironment expects an environment name, but found {token}"
+                f"\\newenvironment expects an environment name, but found {token}"
             )
             return None
 
@@ -34,7 +34,7 @@ class NewEnvironmentMacro(Macro):
         parsed = get_newcommand_args_and_definition(expander)
         if parsed is None:
             expander.logger.warning(
-                f"Warning: \\newenvironment {self.name} expects an environment definition in braces"
+                f"\\newenvironment {self.name} expects an environment definition in braces"
             )
             return None
 
@@ -45,7 +45,7 @@ class NewEnvironmentMacro(Macro):
         end_definition = expander.parse_brace_as_tokens()
         if end_definition is None:
             expander.logger.warning(
-                f"Warning: \\newenvironment expects an end definition in braces"
+                f"\\newenvironment expects an end definition in braces"
             )
             return None
 

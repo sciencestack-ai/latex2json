@@ -19,7 +19,7 @@ def get_newcommand_args_and_definition(
             num_args = int("".join(t.value for t in arg_tokens))
         except ValueError:
             expander.logger.warning(
-                f"Warning: invalid number of arguments: {''.join(t.value for t in arg_tokens)}"
+                f"invalid number of arguments: {''.join(t.value for t in arg_tokens)}"
             )
             return None
 

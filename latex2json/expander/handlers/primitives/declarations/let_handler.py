@@ -9,9 +9,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     expander.skip_whitespace()
     cmd = expander.peek()
     if not cmd or not expander.is_control_sequence(cmd):
-        expander.logger.warning(
-            f"Warning: \\let expects a command node, but found {cmd}"
-        )
+        expander.logger.warning(f"\\let expects a command node, but found {cmd}")
         return None
 
     expander.consume()
@@ -22,9 +20,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     def_tok = expander.consume()
 
     if not def_tok:
-        expander.logger.warning(
-            f"Warning: \\let expects a definition, but found {def_tok}"
-        )
+        expander.logger.warning(f"\\let expects a definition, but found {def_tok}")
         return None
 
     is_control_sequence = expander.is_control_sequence(def_tok)
@@ -67,7 +63,7 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     temp_cmd = expander.peek()
     if not temp_cmd or not expander.is_control_sequence(temp_cmd):
         expander.logger.warning(
-            f"Warning: \\futurelet expects <control1><control2>, but <control1> is {temp_cmd}"
+            f"\\futurelet expects <control1><control2>, but <control1> is {temp_cmd}"
         )
         return None
 
@@ -77,7 +73,7 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     handler_cmd = expander.consume()
     if not handler_cmd or not expander.is_control_sequence(handler_cmd):
         expander.logger.warning(
-            f"Warning: \\futurelet expects <control1><control2>, but <control2> is {handler_cmd}"
+            f"\\futurelet expects <control1><control2>, but <control2> is {handler_cmd}"
         )
         return None
 
@@ -93,7 +89,7 @@ def futurelet_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     # 1. Peek at the next token in the stream, but do NOT consume it
     next_token = expander.peek()
     if not next_token:
-        expander.logger.warning("Warning: \\futurelet: no token to peek at.")
+        expander.logger.warning("\\futurelet: no token to peek at.")
         return None
 
     # 2. Define temp macro as raw passthrough (like \let), without expanding
