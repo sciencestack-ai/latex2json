@@ -732,10 +732,11 @@ class ParserCore:
                 continue
 
             if isinstance(node, TextNode):
-                text = node.text
-                # collapse multiple spaces into single space (latex)
-                text = normalize_whitespace_and_lines(text)
-                node.text = text.replace("~", " ")
+                if not is_parent_math:
+                    text = node.text
+                    # collapse multiple spaces into single space (latex)
+                    text = normalize_whitespace_and_lines(text)
+                    node.text = text.replace("~", " ")
             elif node.children:
                 new_children = self.postprocess_nodes(node.children)
                 node.set_children(new_children)
