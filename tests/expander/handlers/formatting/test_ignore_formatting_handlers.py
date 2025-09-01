@@ -56,6 +56,7 @@ def test_ignore_formatting_handlers():
     \subjclass[xx]{Secondary 01A80}
 
     \hyphenchar\font45
+    \skewchar\somefont='177
 
     \fontsize{.4\dimexpr(\f@size pt)}{0}
 

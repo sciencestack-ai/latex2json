@@ -49,6 +49,9 @@ def test_builtin_dimens():
 
 def test_builtin_counts():
     expander = Expander()
+
+    expander.expand(r"\makeatletter")
+
     for builtin_count in BUILTIN_COUNTS:
         out = expander.expand(f"\\{builtin_count}=10")
         assert out == []
@@ -57,6 +60,8 @@ def test_builtin_counts():
 
 def test_new_register_macros():
     expander = Expander()
+
+    expander.expand(r"\makeatletter")
 
     # count
     expander.expand(r"\newcount\mycount")
@@ -100,6 +105,8 @@ def test_new_register_macros():
 def test_toks():
     expander = Expander()
 
+    expander.expand(r"\makeatletter")
+
     expander.expand(r"\newtoks\mytoks")
     out = expander.expand(r"\mytoks={abc}")
     assert len(out) == 0
@@ -130,6 +137,8 @@ def test_toks():
 
 def test_skips():
     expander = Expander()
+
+    expander.expand(r"\makeatletter")
 
     expander.expand(r"\newskip\myskip")
     expander.expand(r"\myskip=10pt plus 2pt minus 5pt")

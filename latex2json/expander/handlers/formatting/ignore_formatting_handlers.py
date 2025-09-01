@@ -123,8 +123,9 @@ formatting_patterns = {
     # leavemode
     "leavevmode": 0,  # % vertical mode → horizontal mode
     "strut": 0,
-    # hyphenchar
+    # hyphenchar/skewchar
     "hyphenchar": "\\=i",
+    "skewchar": "\\=i",
     # @onlypreamble is a special command that is used to ignore commands that are only allowed in the preamble
     "@onlypreamble": "{",
     # fancyhead/headers

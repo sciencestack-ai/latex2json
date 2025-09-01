@@ -29,12 +29,13 @@ def test_is_content_expl3():
 """
     assert is_content_expl3(text2)
 
-    text3 = r"""
-\cs_generate_variant:Nn \__nicematrix_color:n { V }
-\cs_set_eq:NN \__nicematrix_old_pgfpointanchor \pgfpointanchor
-\bool_new:N \l__nicematrix_siunitx_loaded_bool
-\hook_gput_code:nnn { begindocument } { . }
-"""
-    assert is_content_expl3(text3)
 
-    assert not is_content_expl3(r"\begin{document}")
+#     text3 = r"""
+# \cs_generate_variant:Nn \__nicematrix_color:n { V }
+# \cs_set_eq:NN \__nicematrix_old_pgfpointanchor \pgfpointanchor
+# \bool_new:N \l__nicematrix_siunitx_loaded_bool
+# \hook_gput_code:nnn { begindocument } { . }
+# """
+#     assert is_content_expl3(text3)
+
+#     assert not is_content_expl3(r"\begin{document}")

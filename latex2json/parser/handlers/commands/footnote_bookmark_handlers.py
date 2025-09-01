@@ -22,7 +22,8 @@ def footnote_handler(parser: ParserCore, token: Token):
 def footnotemark_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     nodes = parser.parse_bracket_as_nodes() or [TextNode("*")]
-    return [FootnoteNode(nodes)]
+    return []  # TODO?
+    # return [FootnoteNode(nodes)]
 
 
 def register_footnote_bookmark_handlers(parser: ParserCore):
