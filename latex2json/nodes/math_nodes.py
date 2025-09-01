@@ -12,36 +12,6 @@ from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 from latex2json.nodes.node_types import NodeTypes
 
 
-def strip_balanced_braces(text: str) -> str:
-    # Strip balanced braces from start/end using stack matching
-    while text and text.startswith("{"):
-        # Check if braces are balanced and match at start/end
-        stack = []
-        balanced = True
-        should_strip = False
-
-        for i, char in enumerate(text):
-            if char == "{":
-                stack.append(i)
-            elif char == "}":
-                if not stack:
-                    balanced = False
-                    break
-                start_pos = stack.pop()
-                # If this is the closing brace and matches opening,
-                # and there are no other unmatched braces
-                if not stack and i == len(text) - 1 and start_pos == 0:
-                    should_strip = True
-
-        # Only continue if we found a matching pair to strip
-        if not balanced or not should_strip:
-            break
-
-        text = text[1:-1]
-
-    return text
-
-
 class EquationNode(ASTNode):
     def __init__(
         self,
@@ -155,12 +125,12 @@ class EquationNode(ASTNode):
                 eq_str = child.equation_to_str()
                 # if an inner equation node, convert the equation str (without $$) to text node
                 node = TextNode(eq_str)
-            elif isinstance(child, EquationArrayNode):
-                # if an inner equation array node that is not numbered
-                # and is all text and commands, i.e. no special nodes like \ref \cite \envs
-                # convert the equation array str to text node
-                if child.is_all_text_and_commands() and not child.has_numbering():
-                    node = TextNode(child.detokenize())
+            # elif isinstance(child, EquationArrayNode):
+            #     # if an inner equation array node that is not numbered
+            #     # and is all text and commands, i.e. no special nodes like \ref \cite \envs
+            #     # convert the equation array str to text node
+            #     if child.is_all_text_and_commands() and not child.has_numbering():
+            #         node = TextNode(child.detokenize())
             else:
                 node = child.copy()
             node.add_styles(styles)
