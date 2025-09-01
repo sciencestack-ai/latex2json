@@ -173,3 +173,13 @@ def test_textmode_inside_math():
     assert eq.children[0] == TextNode(r"\textbf{abc }")
     assert eq.children[1] == CiteNode("ref1")
     assert eq.children[2] == TextNode(r"\textbf{$123$}")
+
+
+def test_say_handler():
+    text = r"""
+    \say{hello}
+    """.strip()
+    parser = Parser()
+    out = parser.parse(text)
+    out_str = parser.convert_nodes_to_str(out).strip()
+    assert out_str == '"hello"'

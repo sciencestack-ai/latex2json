@@ -119,6 +119,12 @@ def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]
     return parser.parse_brace_as_nodes()
 
 
+def say_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
+    parser.skip_whitespace()
+    nodes = parser.parse_brace_as_nodes() or []
+    return [TextNode('"'), *nodes, TextNode('"')]
+
+
 def register_text_handlers(parser: ParserCore):
     """
     Register text handling.
@@ -159,6 +165,8 @@ def register_text_handlers(parser: ParserCore):
 
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
 
+    parser.register_handler("say", say_handler)
+
 
 if __name__ == "__main__":
     from latex2json.parser.parser import Parser
@@ -186,6 +194,10 @@ $1+1$ \textbf{aa bb $1+1$ \ref{eq:xx} bold} 2+2
 \begin{equation}
 1+1 \ref{eq:xx} bold
 \end{equation}
+"""
+
+    text = r"""
+\say{hello}
 """
 
     out = parser.parse(text)
