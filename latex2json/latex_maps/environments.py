@@ -276,7 +276,8 @@ MATH_ENVIRONMENTS = {
     ),
     "array": EnvironmentDefinition(
         "array",
-        num_args=1,
+        num_args=2,
+        default_arg=[],
         env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
         has_direct_command=True,
     ),

@@ -104,6 +104,14 @@ class ExpanderState:
         self.pending_global = False
         # self.is_verbatim_mode = False
 
+        # collect frontmatter tokens and only emit on \maketitle
+        self.frontmatter: Dict[str, List[Token]] = {
+            "title": [],
+            "author": [],
+            "address": [],
+            "date": [],
+        }
+
         # appendix
         self.in_appendix = False
 
