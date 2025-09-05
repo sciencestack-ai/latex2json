@@ -23,10 +23,6 @@ def vskip_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
 
 
 ignored_skip_pattern_N_blocks = {
-    # Basic skips
-    "smallskip": 0,
-    "medskip": 0,
-    "bigskip": 0,
     # Horizontal fills
     "hfil": 0,
     "hfill": 0,

@@ -1430,12 +1430,15 @@ class ExpanderCore:
             if counter_name:
                 numbering = expander.get_counter_display(counter_name)
 
+            default_skip = 1 if env_def.default_arg is not None else 0
+            # only pass non-optional i.e. non-default args?
+            token_args = (args or [])[default_skip:]
             begin_token = EnvironmentStartToken(
                 out_env_name,
                 display_name=env_def.display_name,
                 numbering=numbering,
                 env_type=env_def.env_type,
-                args=args,
+                args=token_args,
                 direct_command=direct_command,
             )
             begin_token.position = token.position

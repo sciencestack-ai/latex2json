@@ -110,7 +110,7 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_handler("keywords", make_metadata_handler(NodeTypes.KEYWORDS))
 
     # other
-    for other in ["dedicatory", "commby", "urladdr", "subclass"]:
+    for other in ["date", "dedicatory", "commby", "urladdr", "subclass"]:
         parser.register_handler(other, make_metadata_handler(other))
 
     # appendix

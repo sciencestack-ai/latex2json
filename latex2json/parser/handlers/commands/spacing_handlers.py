@@ -79,6 +79,9 @@ def register_spacing_handlers(parser: ParserCore):
         "medbreak",
         "bigbreak",
         "break",
+        "smallskip",
+        "medskip",
+        "bigskip",
     ]:
         parser.register_handler(
             newline,

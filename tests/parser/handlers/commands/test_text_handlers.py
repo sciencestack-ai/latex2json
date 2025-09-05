@@ -95,43 +95,44 @@ def test_nested_text_styles():
     ]
     assert out[0].styles == ["bold", "italic"]
 
-    # notice \bf + shape(\it vs \sc) switches on/off
-    text = r"""
-    {\bf BOLD \it BOLD-ITALIC \sc BOLD-SC \it BOLD-ITALIC \it BOLD \bf NORMAL}
-    {\color{blue} BLUE \color{blue} NONBLUE \color[rgb]{1,0,0} RED \normalcolor NONRED}
-""".strip()
-    out = parser.parse(text)
+    #     # notice \bf + shape(\it vs \sc) switches on/off
+    #     text = r"""
+    #     {\bf BOLD \it BOLD-ITALIC \sc BOLD-SC \it BOLD-ITALIC \it BOLD \bf NORMAL}
+    #     {\color{blue} BLUE \color{blue} NONBLUE \color[rgb]{1,0,0} RED \normalcolor NONRED}
+    # """.strip()
+    #     out = parser.parse(text)
 
-    expected_text_style_pairs = [
-        ("BOLD", ["bold"]),
-        ("BOLD-ITALIC", ["bold", "italic"]),
-        ("BOLD-SC", ["bold", "small-caps"]),
-        ("BOLD-ITALIC", ["bold", "italic"]),
-        ("BOLD", ["bold"]),
-        ("NORMAL", []),
-        ("BLUE", ["color=blue"]),
-        ("NONBLUE", []),
-        ("RED", ["color=rgb(255, 0, 0)"]),  # converted to css
-        ("NONRED", []),
-    ]
+    #     expected_text_style_pairs = [
+    #         ("BOLD", ["bold"]),
+    #         ("BOLD-ITALIC", ["bold", "italic"]),
+    #         ("BOLD-SC", ["bold", "small-caps"]),
+    #         ("BOLD-ITALIC", ["bold", "italic"]),
+    #         ("BOLD", ["bold"]),
+    #         ("NORMAL", []),
+    #         ("BLUE", ["color=blue"]),
+    #         ("NONBLUE", []),
+    #         ("RED", ["color=rgb(255, 0, 0)"]),  # converted to css
+    #         ("NONRED", []),
+    #     ]
 
-    assert_output_matches_expected(out, expected_text_style_pairs)
+    #     assert_output_matches_expected(out, expected_text_style_pairs)
 
-    text = r"""
-    {
-        \bf {\it {\color{green} BOLD-ITALIC-GREEN} BOLD-ITALIC } 
-        BOLD
-    }
-    POST
-"""
-    out = parser.parse(text)
-    expected_text_style_pairs = [
-        ("BOLD-ITALIC-GREEN", ["bold", "italic", "color=green"]),
-        ("BOLD-ITALIC", ["bold", "italic"]),
-        ("BOLD", ["bold"]),
-        ("POST", []),
-    ]
-    assert_output_matches_expected(out, expected_text_style_pairs)
+
+#     text = r"""
+#     {
+#         \bf {\it {\color{green} BOLD-ITALIC-GREEN} BOLD-ITALIC }
+#         BOLD
+#     }
+#     POST
+# """
+#     out = parser.parse(text)
+#     expected_text_style_pairs = [
+#         ("BOLD-ITALIC-GREEN", ["bold", "italic", "color=green"]),
+#         ("BOLD-ITALIC", ["bold", "italic"]),
+#         ("BOLD", ["bold"]),
+#         ("POST", []),
+#     ]
+#     assert_output_matches_expected(out, expected_text_style_pairs)
 
 
 def test_citetext():

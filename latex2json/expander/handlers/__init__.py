@@ -5,6 +5,7 @@ from latex2json.expander.handlers.environment import (
 )
 from latex2json.expander.handlers.for_loops import register_all_loop_handlers
 from latex2json.expander.handlers.formatting import register_formatting_handlers
+from latex2json.expander.handlers.frontmatter import register_frontmatter_handlers
 from latex2json.expander.handlers.if_else import register_if_else
 from latex2json.expander.handlers.inputs import register_input_handlers
 from latex2json.expander.handlers.primitives import register_primitives
@@ -25,3 +26,4 @@ def register_handlers(expander: ExpanderCore):
     register_environment_handlers(expander)
     register_input_handlers(expander)
     register_all_loop_handlers(expander)
+    register_frontmatter_handlers(expander)

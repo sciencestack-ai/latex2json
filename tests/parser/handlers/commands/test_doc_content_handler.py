@@ -15,8 +15,8 @@ def test_doc_content_handler():
     parser = Parser()
     text = r"""
     \title{My Title}
-    \address {123 Main St, Anytown, USA}
     \author{John Doe \url{https://example.com} \And some dude \thanks{haha} }
+    \maketitle
     """.strip()
     out = parser.parse(text)
     # assert out == []
@@ -24,7 +24,6 @@ def test_doc_content_handler():
     out = [n for n in out if not isinstance(n, TextNode)]
     assert out == [
         MetadataNode("title", [TextNode("My Title")]),
-        MetadataNode("address", [TextNode("123 Main St, Anytown, USA")]),
         AuthorsNode(
             [
                 AuthorNode(
