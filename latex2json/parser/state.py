@@ -138,8 +138,10 @@ class ParserState:
     def __repr__(self) -> str:
         return f"ParserState(stack_depth={len(self._stack)})"
 
-    def set_font(self, style: FontStyle):
+    def set_font(self, style: FontStyle, reset=True):
         """Set font attribute based on FontStyle, toggling back to default if same style is set"""
+        if reset:
+            self.current.font = DEFAULT_FONT.copy()
         font = self.current.font
 
         if style.type == FontStyleType.SERIES:
