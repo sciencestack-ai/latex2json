@@ -39,11 +39,19 @@ def maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
 
 def make_frontmatter_key_handler(key: str) -> Handler:
     def handler(expander: ExpanderCore, token: Token) -> List[Token]:
-        tokens = expander.parse_immediate_token(expand=False, skip_whitespace=True)
+        expander.skip_whitespace()
+        expander.parse_bracket_as_tokens()
+        expander.skip_whitespace()
+        tokens = expander.parse_immediate_token(expand=False)
         if key not in expander.state.frontmatter:
             expander.state.frontmatter[key] = []
         if key == "author":
             # additive
+            # if exists, add \and between them
+            if expander.state.frontmatter[key]:
+                expander.state.frontmatter[key].append(
+                    Token(TokenType.CONTROL_SEQUENCE, "and")
+                )
             expander.state.frontmatter[key].extend(tokens)
         else:
             expander.state.frontmatter[key] = tokens
