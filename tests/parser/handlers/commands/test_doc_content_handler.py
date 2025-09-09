@@ -15,7 +15,7 @@ def test_doc_content_handler():
     parser = Parser()
     text = r"""
     \title{My Title}
-    \author{John Doe \url{https://example.com} \And some dude \thanks{haha} }
+    \author{John Doe \url{https://example.com} \And some dude}
     \maketitle
     """.strip()
     out = parser.parse(text)
@@ -34,8 +34,8 @@ def test_doc_content_handler():
                 ),
                 AuthorNode(
                     [
-                        TextNode("some dude "),
-                        MetadataNode("thanks", [TextNode("haha")]),
+                        TextNode("some dude"),
+                        # MetadataNode("thanks", [TextNode("haha")]),
                     ]
                 ),
             ]

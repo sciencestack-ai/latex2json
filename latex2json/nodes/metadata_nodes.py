@@ -50,7 +50,14 @@ class AuthorsNode(ASTNode):
 
     def detokenize(self) -> str:
         """Convert the authors node back to LaTeX source code."""
-        return "\n\\and\n".join(author.detokenize() for author in self.children)
+        out_str = ""
+        N = len(self.children)
+        for i, author in enumerate(self.children):
+            for c in author.children:
+                out_str += c.detokenize()
+            if i < N - 1:
+                out_str += "\n\\and\n"
+        return f"\\author{{{out_str}}}"
 
     def __str__(self):
         return self.detokenize()

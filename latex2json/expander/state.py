@@ -110,6 +110,7 @@ class ExpanderState:
             "author": [],
             "address": [],
             "date": [],
+            "thanks": [],
         }
 
         # appendix
