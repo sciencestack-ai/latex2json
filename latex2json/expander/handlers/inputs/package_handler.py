@@ -18,6 +18,19 @@ def usepackage_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def replace_package_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    old_package = expander.parse_brace_name()
+    expander.skip_whitespace()
+    new_package = expander.parse_brace_name()
+    if old_package:
+        # load old package to register/add to loaded set, but dont read file
+        expander.load_package(old_package, read_file=False)
+    if new_package:
+        expander.load_package(new_package)
+    return []
+
+
 def loadclass_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     options = expander.parse_bracket_as_tokens(expand=True)
@@ -56,6 +69,7 @@ def register_package_handlers(expander: ExpanderCore):
             usepackage_handler,
             is_global=True,
         )
+    expander.register_handler("ReplacePackage", replace_package_handler, is_global=True)
     # class
     expander.register_handler("documentclass", documentclass_handler, is_global=True)
     expander.register_handler("LoadClass", loadclass_handler, is_global=True)
@@ -86,4 +100,12 @@ if __name__ == "__main__":
         samples_dir,
     )
 
+    text = r"""
+        \ReplacePackage{%s/package1.sty}{%s/package2.sty}
+    """ % (
+        samples_dir,
+        samples_dir,
+    )
+
     out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
