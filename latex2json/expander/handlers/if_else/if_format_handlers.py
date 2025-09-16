@@ -17,6 +17,8 @@ def register_if_format_handlers(expander: ExpanderCore):
         "if@filesw": False,
         "if@tempswa": False,
         "if@newlist": False,
+        "ifhmode": True,
+        "ifvmode": False,
     }
 
     for name, condition in LATEX_FORMATTING_IFS.items():
