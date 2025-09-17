@@ -34,9 +34,19 @@ def tikz_cmd_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-def register_tikz(expander: ExpanderCore):
+def register_tikz_pgf_handlers(expander: ExpanderCore):
     expander.register_handler("tikz", tikz_cmd_handler, is_global=True)
-    ignore_patterns = {"usetikzlibrary": 1, "tikzcdset": 1}
+
+    ignore_patterns = {
+        "usetikzlibrary": 1,
+        "tikzset": 1,
+        "tikzcdset": 1,
+        "usepgflibrary": 1,
+        "usepgfplotslibrary": 1,
+        "pgfplotsset": 1,
+        "pgfdeclareshape": 2,
+    }
+
     register_ignore_handlers_util(expander, ignore_patterns)
 
 
@@ -44,6 +54,6 @@ if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    register_tikz(expander)
+    register_tikz_pgf_handlers(expander)
 
     out = expander.expand(r"\tikz\fill[natural] (0,0) circle (.5ex);")
