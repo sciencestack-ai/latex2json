@@ -170,3 +170,23 @@ def test_direct_counter_setting():
     out = expander.expand(r"\ifodd\c@section ODD \else EVEN \fi")
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "EVEN"
+
+
+def test_counter_uses_parent_theparentcountername():
+    expander = Expander()
+
+    text = r"""
+    \newcommand{\papernumber}{I}
+\renewcommand{\thesection}{\papernumber.\arabic{section}}
+
+\section{Introduction} % numbered I.1
+\label{sec:introduction}
+
+\subsection{Critical phenomena in long-range percolation} % numbered I.1.1
+""".strip()
+    expander.expand(text)
+    out = expander.expand(r"\thesection")
+    assert expander.convert_tokens_to_str(out) == "I.1"
+
+    out = expander.expand(r"\thesubsection")
+    assert expander.convert_tokens_to_str(out) == "I.1.1"

@@ -9,7 +9,7 @@ from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
 from latex2json.tokens.catcodes import Catcode, MATHMODE_CATCODES
 from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.registers.counters import CounterManager
+from latex2json.registers.counters import CounterInfo, CounterManager
 from latex2json.tokens.types import Token
 
 
@@ -339,15 +339,14 @@ class ExpanderState:
                 name = "subequation"
         self.counter_manager.step_counter(name)
 
-    def get_counter_display(
-        self,
-        name: str,
-        strict=False,
-    ) -> str:
+    def get_counter_display(self, name: str, strict=False, hierarchy=True) -> str:
         if not strict:
             if name == "equation" and self.in_subequations:
                 name = "subequation"
-        return self.counter_manager.get_counter_display(name)
+        return self.counter_manager.get_counter_display(name, hierarchy=hierarchy)
+
+    def get_counter_info(self, name: str) -> Optional[CounterInfo]:
+        return self.counter_manager.get_counter_info(name)
 
     def set_counter(self, name: str, value: int) -> None:
         """Set counter value"""

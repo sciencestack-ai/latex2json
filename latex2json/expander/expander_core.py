@@ -88,7 +88,7 @@ def make_the_counter_macro(counter_name: str, formatted=True):
             return None
         return expander.convert_str_to_tokens(f"{value}")
 
-    return Macro(f"\\the{counter_name}", the_counter_handler)
+    return Macro(f"the{counter_name}", the_counter_handler)
 
 
 def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
@@ -203,16 +203,45 @@ class ExpanderCore:
 
     def _init_counter_macros(self):
         for counter_name in self.state.counter_manager.counters:
+            self.register_counter_macro(counter_name, is_user_defined=False)
             self.register_macro(
-                f"\\the{counter_name}",
-                make_the_counter_macro(counter_name, formatted=True),
-                is_global=True,
-            )
-            self.register_macro(
-                f"\\c@{counter_name}",
+                f"c@{counter_name}",
                 make_the_counter_macro(counter_name, formatted=False),
                 is_global=True,
             )
+
+    def register_counter_macro(self, counter_name: str, is_user_defined=False):
+        macro_name = f"the{counter_name}"
+
+        def the_counter_handler(expander: "ExpanderCore", token: Token):
+            value = expander.state.get_counter_display(
+                counter_name, strict=True, hierarchy=False
+            )
+            if value is None:
+                return None
+            # if parent counter exists, use \the{parentname} to get its value
+            # then append the value of the current counter
+            counter_info = expander.state.get_counter_info(counter_name)
+            if counter_info and counter_info.parent:
+                parent_counter_name = counter_info.parent.name
+                parent_value = expander.expand_tokens(
+                    [Token(TokenType.CONTROL_SEQUENCE, "the" + parent_counter_name)]
+                )
+                if parent_value:
+                    parent_value_str = expander.convert_tokens_to_str(parent_value)
+                    if parent_value_str:
+                        value = parent_value_str + "." + value
+                        if counter_info.skip_parent_zeros:
+                            while value.startswith("0."):
+                                value = value[2:]
+            return expander.convert_str_to_tokens(f"{value}")
+
+        self.register_handler(
+            macro_name,
+            the_counter_handler,
+            is_global=True,
+            is_user_defined=is_user_defined,
+        )
 
     # counters
     def create_new_counter(
@@ -220,17 +249,14 @@ class ExpanderCore:
     ):
         self.state.new_counter(counter_name, parent)
         if counter_name.isalpha():
-            self.register_macro(
-                f"\\the{counter_name}",
-                make_the_counter_macro(counter_name),
-                is_global=True,
-                is_user_defined=is_user_defined,
-            )
+            self.register_counter_macro(counter_name, is_user_defined=is_user_defined)
 
     def has_counter(self, counter_name: str) -> bool:
         return self.state.has_counter(counter_name)
 
     def get_counter_display(self, counter_name: str) -> Optional[str]:
+        if counter_name == "equation" and self.state.in_subequations:
+            counter_name = "subequation"
         # check for \thecountername first, since it mimics latex.
         # people sometimes redefine it e.g. \renewcommand{\theequation}{\thesection.\arabic{equation}}
         name = "the" + counter_name
@@ -239,6 +265,7 @@ class ExpanderCore:
             out_tokens = self.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
             if out_tokens:
                 return self.convert_tokens_to_str(out_tokens)
+        # check the parent to get its counter display
         return self.state.get_counter_display(counter_name)
 
     # fonts
@@ -1669,8 +1696,17 @@ class ExpanderCore:
 
 
 if __name__ == "__main__":
-    expander = ExpanderCore()
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
 
     # base component only
-    out = expander.expand("$$11$$ $22$")
-    print(out)
+    text = r"""
+    \begin{subequations}
+    \begin{equation}
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    # out_str = expander.convert_tokens_to_str(out).strip()
+
+    # print(out_str)

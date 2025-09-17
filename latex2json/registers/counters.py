@@ -259,6 +259,11 @@ class CounterManager:
         collect_descendants(counter)
         return descendants
 
+    def get_counter_info(self, name: str) -> Optional[CounterInfo]:
+        if name not in self.counters:
+            return None
+        return self.counters[name]
+
     def get_counter_display(
         self,
         name: str,
