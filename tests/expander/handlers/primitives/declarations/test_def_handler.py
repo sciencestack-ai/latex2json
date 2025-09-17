@@ -340,9 +340,9 @@ def test_def_with_global():
     assert_token_sequence(expander.expand(r"\foo"), expander.expand("FOO"))
 
     # ensure \global is not persisting...
-    text = r"""{ \def\bar{BAR} }"""
+    text = r"""{ \def\barx{BAR} }"""
     expander.expand(text)
-    assert not expander.get_macro("bar")
+    assert not expander.get_macro("barx")
 
 
 def test_nested_defs2():
@@ -458,8 +458,8 @@ def test_nested_defs():
     text = r"""
     \def\foo#1{
         {
-            \def\bar##1{BAR #1 ##1}
-            \gdef\barx{\bar{BRO}}
+            \def\bary##1{BAR #1 ##1}
+            \gdef\barx{\bary{BRO}}
         }
     }
     \foo{hello}
@@ -469,11 +469,11 @@ def test_nested_defs():
     expander.expand(text)
     assert expander.get_macro("foo")
     assert expander.get_macro("barx")
-    assert not expander.get_macro("bar")
+    assert not expander.get_macro("bary")
 
-    # Since \bar is not defined in scope, \barx expands literally
+    # Since \bary is not defined in scope, \barx expands literally
     expected = [
-        Token(TokenType.CONTROL_SEQUENCE, "bar"),
+        Token(TokenType.CONTROL_SEQUENCE, "bary"),
         BEGIN_BRACE_TOKEN,
         Token(TokenType.CHARACTER, "B", catcode=Catcode.LETTER),
         Token(TokenType.CHARACTER, "R", catcode=Catcode.LETTER),
@@ -482,9 +482,9 @@ def test_nested_defs():
     ]
     assert_token_sequence(expander.expand(r"\barx"), expected)
 
-    # Now define \bar in scope
-    expander.expand(r"\def\bar{BAR}")
-    assert expander.get_macro("bar")
+    # Now define \bary in scope
+    expander.expand(r"\def\bary{BAR}")
+    assert expander.get_macro("bary")
     assert_token_sequence(expander.expand(r"\barx"), expander.expand("BAR{BRO}"))
 
 

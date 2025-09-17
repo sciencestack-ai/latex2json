@@ -167,7 +167,14 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
 
     # frac
-    math_commands = {"frac": "{{", "tilde": "{", "mathcal": "{", "vec": "{", "hat": "{"}
+    math_commands = {
+        "frac": "{{",
+        "tilde": "{",
+        "mathcal": "{",
+        "vec": "{",
+        "hat": "{",
+        "bar": "{",
+    }
     for command, argspec in math_commands.items():
         expander.register_handler(
             command, make_math_command_handler(command, argspec), is_global=True
