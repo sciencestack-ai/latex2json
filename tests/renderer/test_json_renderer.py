@@ -92,6 +92,28 @@ def test_output_excludes_tokens_after_document_env():
     assert json[1]["type"] == NodeTypes.DOCUMENT
     # assert json[1]["name"] == NodeTypes.DOCUMENT
 
+    # BUT test nested documents
+    text = r"""
+    \begin{document}
+    \begin{document}
+    DOC
+    \end{document}
+    AFTER INNER END DOC % not stripped! This is after all inside the document env
+    \end{document}
+    AFTER OUTER END DOC % this is stripped!
+    """.strip()
+    json = renderer.parse(text)
+    assert len(json) == 1
+    assert json[0]["type"] == NodeTypes.DOCUMENT
+    doc_content = json[0]["content"]
+    assert len(doc_content) == 2
+    assert doc_content[0]["type"] == NodeTypes.DOCUMENT
+    assert doc_content[1]["type"] == NodeTypes.TEXT
+    assert doc_content[1]["content"].strip() == "AFTER INNER END DOC"
+    # assert json[1]["type"] == NodeTypes.DOCUMENT
+    # assert json[2]["type"] == NodeTypes.TEXT
+    # assert json[2]["content"].strip() == "AFTER INNER END DOC"
+
 
 def test_json_output_of_begin_end_sections():
     # ensure that begin/end sections are properly nested

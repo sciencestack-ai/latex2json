@@ -133,7 +133,9 @@ class JSONRenderer:
         token["content"] = []
         stack.append(token)
 
-    def _recursive_organize(self, tokens: List[Dict]):
+    def _recursive_organize(
+        self, tokens: List[Dict], parent_token: Optional[Dict] = None
+    ):
         organized = []
         section_stack = []
         paragraph_stack = []
@@ -147,15 +149,17 @@ class JSONRenderer:
             return root
 
         # first, preprocess tokens to remove all tokens after \end{document}
-        last_document_idx = -1
-        for i, token in enumerate(tokens):
-            if isinstance(token, dict) and token["type"] == "document":
-                last_document_idx = i
-                # don't break here due to possibility of sibling documents i.e. \subfile{...}
-                # break
-        if last_document_idx != -1:
-            # strip out all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
-            tokens = tokens[: last_document_idx + 1]
+        is_parent_document = parent_token and parent_token["type"] == "document"
+        if not is_parent_document:
+            last_document_idx = -1
+            for i, token in enumerate(tokens):
+                if isinstance(token, dict) and token["type"] == "document":
+                    last_document_idx = i
+                    # don't break here due to possibility of sibling documents i.e. \subfile{...}
+                    # break
+            if last_document_idx != -1:
+                # strip out all tokens after last document env (mimics latex document structure i.e. tokens after \end{document} are not included)
+                tokens = tokens[: last_document_idx + 1]
 
         # then organize them into hierachies with nested 'content'
         for token in tokens:
@@ -171,7 +175,9 @@ class JSONRenderer:
                 if not token.get("content"):
                     token["content"] = []
                 else:
-                    token["content"] = self._recursive_organize(token["content"])
+                    token["content"] = self._recursive_organize(
+                        token["content"], parent_token=token
+                    )
 
                 if organized and organized[-1]["type"] == "appendix":
                     # if previous token is also an appendix, merge content
@@ -185,6 +191,7 @@ class JSONRenderer:
             if isinstance(token.get("content"), list):
                 token["content"] = self._recursive_organize(
                     token["content"],
+                    parent_token=token,
                 )
 
             # Handle special token types
