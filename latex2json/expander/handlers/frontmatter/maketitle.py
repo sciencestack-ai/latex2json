@@ -8,28 +8,28 @@ from latex2json.tokens.utils import wrap_tokens_in_braces
 def get_frontmatter_key_to_tokens(
     expander: ExpanderCore, key: str
 ) -> Optional[List[Token]]:
-    at_key = "@" + key
-    if not expander.get_macro(at_key):
+    # at_key = "@" + key
+    # if not expander.get_macro(at_key):
+    #     return None
+    # out_tokens: List[Token] = [Token(TokenType.CONTROL_SEQUENCE, at_key)]
+    # exp = expander.expand_tokens(out_tokens)
+    # return [
+    #     Token(TokenType.CONTROL_SEQUENCE, key),
+    #     *wrap_tokens_in_braces(exp),
+    # ]
+
+    if key not in expander.state.frontmatter:
         return None
-    out_tokens: List[Token] = [Token(TokenType.CONTROL_SEQUENCE, at_key)]
-    exp = expander.expand_tokens(out_tokens)
-    return [
-        Token(TokenType.CONTROL_SEQUENCE, key),
-        *wrap_tokens_in_braces(exp),
-    ]
+    tokens = expander.state.frontmatter[key]
+    if not tokens:
+        return None
 
-    # if key not in expander.state.frontmatter:
-    #     return None
-    # tokens = expander.state.frontmatter[key]
-    # if not tokens:
-    #     return None
-
-    # out_tokens: List[Token] = []
-    # tokens_exp = expander.expand_tokens(tokens)
-    # # e.g. output \author{...} for parser later to handle
-    # out_tokens.append(Token(TokenType.CONTROL_SEQUENCE, key))
-    # out_tokens.extend(wrap_tokens_in_braces(tokens_exp))
-    # return out_tokens
+    out_tokens: List[Token] = []
+    tokens_exp = expander.expand_tokens(tokens)
+    # e.g. output \author{...} for parser later to handle
+    out_tokens.append(Token(TokenType.CONTROL_SEQUENCE, key))
+    out_tokens.extend(wrap_tokens_in_braces(tokens_exp))
+    return out_tokens
 
 
 def at_maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
@@ -58,25 +58,25 @@ def make_frontmatter_key_handler(key: str) -> Handler:
         if not tokens:
             return []
 
-        out_tokens: List[Token] = [
-            Token(TokenType.CONTROL_SEQUENCE, "gdef"),
-            Token(TokenType.CONTROL_SEQUENCE, "@" + key),
-            *wrap_tokens_in_braces(tokens),
-        ]
-        expander.push_tokens(out_tokens)
+        # out_tokens: List[Token] = [
+        #     Token(TokenType.CONTROL_SEQUENCE, "gdef"),
+        #     Token(TokenType.CONTROL_SEQUENCE, "@" + key),
+        #     *wrap_tokens_in_braces(tokens),
+        # ]
+        # expander.push_tokens(out_tokens)
 
-        # if key not in expander.state.frontmatter:
-        #     expander.state.frontmatter[key] = []
-        # if key == "author":
-        #     # additive
-        #     # if exists, add \and between them
-        #     if expander.state.frontmatter[key]:
-        #         expander.state.frontmatter[key].append(
-        #             Token(TokenType.CONTROL_SEQUENCE, "and")
-        #         )
-        #     expander.state.frontmatter[key].extend(tokens)
-        # else:
-        #     expander.state.frontmatter[key] = tokens
+        if key not in expander.state.frontmatter:
+            expander.state.frontmatter[key] = []
+        if key == "author":
+            # additive
+            # if exists, add \and between them
+            if expander.state.frontmatter[key]:
+                expander.state.frontmatter[key].append(
+                    Token(TokenType.CONTROL_SEQUENCE, "and")
+                )
+            expander.state.frontmatter[key].extend(tokens)
+        else:
+            expander.state.frontmatter[key] = tokens
         return []
 
     return handler
@@ -113,10 +113,8 @@ if __name__ == "__main__":
     text = r"""
     \makeatletter
     \author{Yu Deng \thanks{THANKS}}
+    \author{X MAN}
     \title{First title}
-    \title[Spacetime Integral Bounds on Asymptotically Flat Spacetimes]{Global Spacetime Bounds for the Energy-Critical Wave Equation on Asymptotically Flat Spacetimes}
-
-
     \def\xxx{XXX}
 
     \maketitle

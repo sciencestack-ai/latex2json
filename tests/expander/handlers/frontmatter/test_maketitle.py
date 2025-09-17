@@ -8,6 +8,7 @@ def test_maketitle():
 
     text = r"""
     \author{Yu Deng \xxx} % defer expansion until \maketitle
+    \author{Second man} % \and is added between them
     \title{First title}
     \title{My title}
 
@@ -19,7 +20,7 @@ def test_maketitle():
     out_str = expander.convert_tokens_to_str(out).strip()
 
     # check that title is using the last one, and is the first thing in the string
-    expected_strs = [r"\title{My title}", r"\author{Yu Deng XXX}"]
+    expected_strs = [r"\title{My title}", r"\author{Yu Deng XXX\andSecond man}"]
 
     check_str = out_str
     for expected_str in expected_strs:
