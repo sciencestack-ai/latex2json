@@ -3,6 +3,7 @@ from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
 from latex2json.registers.defaults.inserts import BUILTIN_INSERTS
 from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers.defaults.boxes import BASE_BOXES, ADVANCED_BOX_SPECS
+from latex2json.registers.defaults.toks import BUILTIN_TOKS
 from latex2json.registers.types import Box, RegisterType
 from latex2json.tokens.types import Token
 
@@ -64,13 +65,14 @@ class TexRegisters:
             self.create_register(RegisterType.SKIP, skip, 0)
         for insert in BUILTIN_INSERTS:
             self.create_new_insert(insert)
+        for tok in BUILTIN_TOKS:
+            self.create_register(RegisterType.TOKS, tok)
 
         boxes = BASE_BOXES + list(ADVANCED_BOX_SPECS.keys())
         for box in boxes:
             self.create_register(RegisterType.BOX, box)
 
         self.create_register(RegisterType.BOX, "@tempboxa")
-        self.create_register(RegisterType.TOKS, "@temptokena")
 
     def get_register_value(self, reg_type: RegisterType, reg_id: Union[int, str]):
         out = self._get_generic_register_value(reg_type, reg_id)

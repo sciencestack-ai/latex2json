@@ -159,6 +159,7 @@ def register_debug_handlers(expander: ExpanderCore):
         "ClassNotice": "{{",
         "ClassDebug": "{{",
         "PackageError": "{{{",
+        "PackageWarning": "{{",
     }
 
     register_ignore_handlers_util(

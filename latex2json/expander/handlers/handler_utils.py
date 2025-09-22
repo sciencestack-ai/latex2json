@@ -14,6 +14,7 @@ def make_generic_command_handler(
         - * : star (asterisk)
         - [ : optional bracket argument
         - { : required brace argument or immediate token
+        - ( : optional parenthesis argument
         - = : required equals sign
         - \ : required backslash
         - f : parse float
@@ -52,6 +53,8 @@ def make_generic_command_handler(
                     )
                     break
                 expander.consume()
+            elif char == "(":
+                expander.parse_parenthesis_as_tokens(expand=expand)
             elif char == "[":
                 opt_arg = expander.parse_bracket_as_tokens(expand=expand)
                 if opt_arg:

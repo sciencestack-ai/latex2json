@@ -17,6 +17,8 @@ from latex2json.tokens.types import (
 )
 from latex2json.tokens.utils import (
     convert_str_to_tokens,
+    is_begin_parenthesis_token,
+    is_end_parenthesis_token,
     is_mathshift_token,
     is_newline_token,
     is_whitespace_token,
@@ -1272,6 +1274,14 @@ class ExpanderCore:
     def parse_bracket_as_tokens(self, expand=False) -> Optional[List[Token]]:
         tokens = self.parse_begin_end_as_tokens(
             is_begin_bracket_token, is_end_bracket_token
+        )
+        if expand and tokens:
+            tokens = self.expand_tokens(tokens)
+        return tokens
+
+    def parse_parenthesis_as_tokens(self, expand=False) -> Optional[List[Token]]:
+        tokens = self.parse_begin_end_as_tokens(
+            is_begin_parenthesis_token, is_end_parenthesis_token
         )
         if expand and tokens:
             tokens = self.expand_tokens(tokens)

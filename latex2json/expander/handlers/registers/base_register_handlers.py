@@ -5,6 +5,7 @@ from latex2json.registers.defaults.inserts import BUILTIN_INSERTS
 from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers import RegisterType
 from latex2json.registers.defaults.dimensions import BUILTIN_DIMENSIONS
+from latex2json.registers.defaults.toks import BUILTIN_TOKS
 from latex2json.tokens import Token
 from latex2json.tokens.types import TokenType
 
@@ -210,6 +211,13 @@ def register_base_register_macros(expander: ExpanderCore):
             make_register_macro(
                 RegisterType.INSERT, builtin_insert, is_id_integer=False
             ),
+            is_global=True,
+        )
+
+    for builtin_tok in BUILTIN_TOKS:
+        expander.register_macro(
+            builtin_tok,
+            make_register_macro(RegisterType.TOKS, builtin_tok, is_id_integer=False),
             is_global=True,
         )
 

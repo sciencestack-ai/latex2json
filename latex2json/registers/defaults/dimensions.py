@@ -1,8 +1,3 @@
-# Conversion factors to scaled points (sp)
-# 1 pt = 65536 sp (by definition)
-# Other conversions are calculated relative to points
-from typing import Optional
-
 BUILTIN_DIMENSIONS = [
     "displaywidth",
     "displayheight",
@@ -61,6 +56,8 @@ BUILTIN_DIMENSIONS = [
     "bibindent",  # Indentation in bibliography
     # Page breaking
     "maxdepth",  # Maximum depth of page
+    "splitmaxdepth",
+    "prevdepth",
     # Emergency stretching
     "emergencystretch",  # Extra stretch in emergency
     # Hyphenation

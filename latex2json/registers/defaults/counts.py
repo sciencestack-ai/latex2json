@@ -5,6 +5,8 @@ BUILTIN_COUNTS = [
     "hyphenpenalty",
     "discretionarypenalty",
     "interfootnotelinepenalty",
+    "interlinepenalty",
+    "floatingpenalty",
     "lastpenalty",
     "spacefactor",
     #

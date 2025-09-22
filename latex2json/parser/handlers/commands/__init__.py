@@ -6,9 +6,6 @@ from latex2json.parser.handlers.commands.doc_content_handler import (
 from latex2json.parser.handlers.commands.footnote_bookmark_handlers import (
     register_footnote_bookmark_handlers,
 )
-from latex2json.parser.handlers.commands.ignore_format_handlers import (
-    register_ignore_format_handlers,
-)
 from latex2json.parser.handlers.commands.includegraphics_pdf_handlers import (
     register_includegraphics_pdf_handlers,
 )
@@ -40,7 +37,6 @@ def register_command_handlers(parser: ParserCore):
     register_tabular_cell_handlers(parser)
     register_footnote_bookmark_handlers(parser)
     register_includegraphics_pdf_handlers(parser)
-    register_ignore_format_handlers(parser)
     register_doc_content_handlers(parser)
     register_spacing_handlers(parser)
     register_box_handlers(parser)

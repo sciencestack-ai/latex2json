@@ -94,3 +94,35 @@ def test_ignore_formatting_handlers():
         r"\rcsInfo $Id: manuscript.tex,v 1792 2025/06/07 13:02:08 karplavi Exp karplavi $"
     )
     assert out == []
+
+
+def test_ignore_separator_patterns():
+    expander = Expander()
+    text = r"""
+    \hline
+    \vline
+    \hrulefill
+    \centerline
+    \cline{1}
+    \topsep
+    \parsep
+    \partopsep
+    \midrule[2pt]
+    \toprule[2pt]
+    \bottomrule[5pt]
+    \cmidrule(lr){1-2}
+    \hdashline[2pt]
+    \cdashline{1-2}
+    \specialrule{1pt}{2pt}{3pt}
+    \addlinespace[5pt]
+    \rule{1cm}{2cm}
+    \morecmidrules
+    \Xhline{2pt}
+    \tabcolsep
+    \colrule
+    \noalign
+    \endfirsthead
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert out == []

@@ -165,6 +165,8 @@ formatting_patterns = {
     "newsymbol": "\\i",
     # other
     "tolerance": "=i",
+    # mathversion
+    "mathversion": "{",
 }
 
 content_formatting_patterns = {
@@ -211,6 +213,35 @@ content_formatting_patterns = {
     "markboth": 2,
     # marginpar
     "marginpar": 1,
+}
+
+separator_patterns = {
+    "hline": 0,
+    "vline": 0,
+    "hrulefill": 0,
+    "centerline": 0,
+    "cline": "{",
+    "topsep": 0,
+    "parsep": 0,
+    "partopsep": 0,
+    "labelsep": "{",
+    "midrule": "[",
+    "toprule": "[",
+    "bottomrule": "[",
+    "cmidrule": "([{",
+    "hdashline": "[",
+    "cdashline": "{",
+    "specialrule": "{{{",
+    "addlinespace": "[",
+    "rule": "[{{",
+    "hrule": 0,
+    "morecmidrules": 0,
+    "fboxsep": "{",
+    "Xhline": "{",
+    "tabcolsep": 0,
+    "colrule": 0,
+    "noalign": 0,
+    "endfirsthead": 0,
 }
 
 
@@ -283,6 +314,8 @@ def register_ignore_format_handlers(expander: ExpanderCore):
     """Register all formatting-related command handlers"""
     register_ignore_handlers_util(expander, formatting_patterns, expand=False)
     register_ignore_handlers_util(expander, content_formatting_patterns, expand=False)
+    register_ignore_handlers_util(expander, separator_patterns, expand=False)
+
     expander.register_handler(r"\vrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\mathpalette", mathpalette_handler, is_global=True)
