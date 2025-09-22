@@ -22,6 +22,7 @@ WHITELISTED_COMMANDS = [
     "paragraph",
     "subparagraph",
     "newline",
+    "newtheorem",
     "maketitle",
     "title",
     "author",

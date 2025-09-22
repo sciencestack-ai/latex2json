@@ -56,7 +56,8 @@ def documentclass_handler(expander: ExpanderCore, token: Token):
         expander.logger.warning("No class name provided")
         return None
 
-    expander.load_class(cls.strip())
+    # don't ingest documentclass file? i.e. read_file=False
+    expander.load_class(cls.strip(), read_file=False)
 
     return []
 
