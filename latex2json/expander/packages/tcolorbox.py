@@ -4,16 +4,12 @@ from latex2json.expander.handlers.handler_utils import register_ignore_handlers_
 from latex2json.expander.handlers.primitives.declarations.newcommand import (
     newcommand_handler,
 )
-from latex2json.expander.macro_registry import Macro
-from latex2json.registers.defaults.boxes import ADVANCED_BOX_SPECS
 from latex2json.tokens.types import (
     BEGIN_BRACKET_TOKEN,
     END_BRACKET_TOKEN,
     Token,
     TokenType,
 )
-
-ADVANCED_BOX_SPECS["tcbox"] = "[{"  # \tcbox[options]{text}
 
 
 def newtcbox_handler(expander: ExpanderCore, token: Token):
