@@ -1,5 +1,6 @@
 import pytest
 
+from latex2json.expander.expander import Expander
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     register_base_register_macros,
@@ -16,6 +17,9 @@ from latex2json.tokens.types import (
     BEGIN_BRACKET_TOKEN,
     END_BRACE_TOKEN,
     END_BRACKET_TOKEN,
+    EnvironmentEndToken,
+    EnvironmentStartToken,
+    EnvironmentType,
     Token,
     TokenType,
 )
@@ -622,7 +626,7 @@ def test_consecutive_math_shifts():
 
 # \( \), \[ \]
 def test_math_macros():
-    expander = ExpanderCore()
+    expander = Expander()
 
     out = expander.expand(r"\(1^1\)")
     assert_token_sequence(
@@ -636,22 +640,24 @@ def test_math_macros():
         ],
     )
 
+    # \[ \] mock \begin{equation*} \end{equation*}
+
     out = expander.expand(r"\[1&1\]")
     assert_token_sequence(
         out,
         [
-            Token(TokenType.MATH_SHIFT_DISPLAY, "$$", 0),
+            EnvironmentStartToken("equation*", env_type=EnvironmentType.EQUATION),
             Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
             Token(TokenType.CHARACTER, "&", catcode=Catcode.ACTIVE),
             Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
-            Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+            EnvironmentEndToken("equation*"),
         ],
     )
 
     # test weird edge case but valid latex
     out = expander.expand(r"\[1_1\$$$_$$2^2\]_^")
     expected = [
-        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        EnvironmentStartToken("equation*", env_type=EnvironmentType.EQUATION),
         Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
         Token(TokenType.CHARACTER, "_", catcode=Catcode.ACTIVE),
         Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
@@ -662,7 +668,7 @@ def test_math_macros():
         Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
         Token(TokenType.CHARACTER, "^", catcode=Catcode.ACTIVE),
         Token(TokenType.CHARACTER, "2", catcode=Catcode.OTHER),
-        Token(TokenType.MATH_SHIFT_DISPLAY, "$$"),
+        EnvironmentEndToken("equation*"),
         Token(TokenType.CHARACTER, "_", catcode=Catcode.SUBSCRIPT),
         Token(TokenType.CHARACTER, "^", catcode=Catcode.SUPERSCRIPT),
     ]

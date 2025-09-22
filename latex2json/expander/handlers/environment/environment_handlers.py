@@ -61,6 +61,14 @@ def register_base_environment_handlers(expander: ExpanderCore):
             env_def_instance.hooks.end.append(
                 outappendices,
             )
+        # elif env_name == "document":
+
+        #     # pop source when \end{document} is encountered
+        #     def enddocument():
+        #         expander.stream.pop_source()
+        #         return []
+
+        #     env_def_instance.hooks.end.append(enddocument)
 
         expander.register_environment(env_name, env_def_instance)
     expander.register_handler("floatname", floatname_handler, is_global=True)

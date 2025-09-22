@@ -8,18 +8,22 @@ from latex2json.utils.encoding import read_file
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import (
+    BEGIN_ENV_TOKEN,
+    END_ENV_TOKEN,
     CommandWithArgsToken,
     EnvironmentEndToken,
     EnvironmentStartToken,
     EnvironmentType,
 )
 from latex2json.tokens.utils import (
+    convert_str_to_tokens,
     is_mathshift_token,
     is_newline_token,
     is_whitespace_token,
     segment_tokens_by_begin_end_and_braces,
     strip_whitespace_tokens,
     substitute_token_args,
+    wrap_tokens_in_braces,
 )
 from latex2json.expander.macro_registry import (
     Handler,
@@ -154,13 +158,11 @@ class ExpanderCore:
         self.register_handler("\\tag", tag_handler, is_global=True)
 
     def _init_math_macros(self):
-        def make_begin_end_math_handlers(mode: ProcessingMode):
+        def make_begin_end_math_handlers():
             out_token = Token(TokenType.MATH_SHIFT_INLINE, "$")
-            if mode == ProcessingMode.MATH_DISPLAY:
-                out_token = Token(TokenType.MATH_SHIFT_DISPLAY, "$$")
 
             def begin_math_handler(expander: "ExpanderCore", token: Token):
-                expander.state.push_mode(mode)
+                expander.state.push_mode(ProcessingMode.MATH_INLINE)
                 return [out_token.copy()]
 
             def end_math_handler(expander: "ExpanderCore", token: Token):
@@ -170,15 +172,26 @@ class ExpanderCore:
 
             return begin_math_handler, end_math_handler
 
-        inline_begin, inline_end = make_begin_end_math_handlers(
-            ProcessingMode.MATH_INLINE
-        )
-        display_begin, display_end = make_begin_end_math_handlers(
-            ProcessingMode.MATH_DISPLAY
-        )
+        inline_begin, inline_end = make_begin_end_math_handlers()
 
         self.register_handler("\\(", inline_begin, is_global=True)
         self.register_handler("\\)", inline_end, is_global=True)
+
+        equation_star_tokens = convert_str_to_tokens(
+            "equation*", catcode=Catcode.LETTER
+        )
+
+        def display_begin(expander: "ExpanderCore", token: Token):
+            # mock \begin{equation*}
+            out_tokens = wrap_tokens_in_braces(equation_star_tokens)
+            expander.push_tokens([BEGIN_ENV_TOKEN.copy()] + out_tokens)
+            return []
+
+        def display_end(expander: "ExpanderCore", token: Token):
+            # mock \end{equation*}
+            out_tokens = wrap_tokens_in_braces(equation_star_tokens)
+            expander.push_tokens([END_ENV_TOKEN.copy()] + out_tokens)
+            return []
 
         self.register_handler("\\[", display_begin, is_global=True)
         self.register_handler("\\]", display_end, is_global=True)
@@ -1583,30 +1596,28 @@ class ExpanderCore:
                     body_block = expander.expand_until(
                         stop_token_logic=is_end_env_token, consume_stop_token=False
                     )
-                    if numbering:
-                        newblock = []
-                        is_auto_numbered = True
-                        for tok in body_block:
-                            if is_nonumber_token(tok):
-                                numbering = None
-                                is_auto_numbered = False
-                            elif (
-                                isinstance(tok, CommandWithArgsToken)
-                                and tok.value == "tag"
-                            ):
-                                numbering = tok.numbering
-                                is_auto_numbered = False
-                            else:
-                                newblock.append(tok)
-                        body_block = newblock
+                    newblock = []
+                    is_auto_numbered = True
+                    for tok in body_block:
+                        if is_nonumber_token(tok):
+                            numbering = None
+                            is_auto_numbered = False
+                        elif (
+                            isinstance(tok, CommandWithArgsToken) and tok.value == "tag"
+                        ):
+                            numbering = tok.numbering
+                            is_auto_numbered = False
+                        else:
+                            newblock.append(tok)
+                    body_block = newblock
 
-                        if not is_auto_numbered:
-                            # undo step_counter with -1
-                            if (
-                                counter_name
-                            ):  # should always be true if numbering is not None to begin with
-                                state.add_to_counter(counter_name, -1)
-                        begin_token.numbering = numbering
+                    if not is_auto_numbered:
+                        # undo step_counter with -1
+                        if (
+                            counter_name
+                        ):  # should always be true if numbering is not None to begin with
+                            state.add_to_counter(counter_name, -1)
+                    begin_token.numbering = numbering
 
                     out_tokens.extend(body_block)
 

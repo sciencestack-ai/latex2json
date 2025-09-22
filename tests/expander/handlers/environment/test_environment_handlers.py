@@ -148,6 +148,18 @@ def test_math_environments_numbers():
         "equation*", env_type=EnvironmentType.EQUATION
     )
 
+    # But equation* with \tag should be numbered/tagged
+    out = expander.expand(r"\begin{equation*}2+2\tag{eq22}\end{equation*}")
+    assert out[0] == EnvironmentStartToken(
+        "equation*", numbering="eq22", env_type=EnvironmentType.EQUATION
+    )
+
+    # also \[ \] with \tag should be numbered/tagged
+    out = expander.expand(r"\[2+2\tag{xxx}\]")
+    assert out[0] == EnvironmentStartToken(
+        "equation*", numbering="xxx", env_type=EnvironmentType.EQUATION
+    )
+
 
 def test_mock_env_token():
     expander = Expander()
