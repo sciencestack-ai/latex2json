@@ -18,6 +18,9 @@ from latex2json.expander.handlers.primitives.debug_handlers import (
     register_debug_handlers,
 )
 from latex2json.expander.handlers.primitives.exec_handlers import register_exec_handlers
+from latex2json.expander.handlers.primitives.addtomacro import (
+    register_addtomacro_handler,
+)
 
 
 def register_primitives(expander: ExpanderCore):
@@ -31,3 +34,4 @@ def register_primitives(expander: ExpanderCore):
     register_csname_handlers(expander)
     register_exec_handlers(expander)
     register_chardef_handlers(expander)
+    register_addtomacro_handler(expander)

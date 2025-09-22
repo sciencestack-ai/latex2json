@@ -3,7 +3,7 @@ import re
 from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.handlers.handler_utils import make_generic_command_handler
-from latex2json.expander.macro_registry import Handler
+from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
 from latex2json.tokens.types import (
@@ -133,15 +133,12 @@ def newmcodes_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     return []
 
 
-def make_convert_to_str_handler(text: str) -> Handler:
+def make_convert_to_str_macro(text: str) -> Macro:
     tokens = convert_str_to_tokens(text)
 
-    def convert_to_str_handler(
-        expander: ExpanderCore, token: Token
-    ) -> Optional[List[Token]]:
-        return tokens.copy()
+    macro = Macro(text, definition=tokens)
 
-    return convert_to_str_handler
+    return macro
 
 
 def make_math_command_handler(command: str, argspec: str) -> Handler:
@@ -216,9 +213,9 @@ def register_number_format_handlers(expander: ExpanderCore):
         "endlinechar": 5,
     }
     for cmd, v in primitive_num_cmds.items():
-        expander.register_handler(
+        expander.register_macro(
             cmd,
-            make_convert_to_str_handler(str(v)),
+            make_convert_to_str_macro(str(v)),
             is_global=True,
         )
 
