@@ -14,6 +14,7 @@ from latex2json.expander.handlers.if_else.ifdefempty import register_ifdefempty
 from latex2json.expander.handlers.if_else.if_format_handlers import (
     register_if_format_handlers,
 )
+from latex2json.expander.handlers.if_else.ifvoid import register_ifvoid
 
 
 def register_if_else(expander: ExpanderCore):
@@ -29,3 +30,4 @@ def register_if_else(expander: ExpanderCore):
     register_iffileexists(expander)
     register_ifdefempty(expander)
     register_if_format_handlers(expander)
+    register_ifvoid(expander)

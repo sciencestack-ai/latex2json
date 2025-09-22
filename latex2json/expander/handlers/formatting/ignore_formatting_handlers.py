@@ -167,6 +167,7 @@ formatting_patterns = {
     "tolerance": "=i",
     # mathversion
     "mathversion": "{",
+    "@nocounterr": 0,
 }
 
 content_formatting_patterns = {
