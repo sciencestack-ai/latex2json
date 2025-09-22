@@ -11,4 +11,5 @@ BUILTIN_COUNTS = [
     "@tempcnta",
     "@tempcntb",
     "@tempcntc",
+    "count@",
 ]

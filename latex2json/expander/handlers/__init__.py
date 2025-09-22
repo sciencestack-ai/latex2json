@@ -19,8 +19,8 @@ def register_handlers(expander: ExpanderCore):
         expander
     )  # put formatting ignore first so that the others can override any aggressive ignore formatting
     register_register_handlers(expander)
-    register_primitives(expander)
     register_if_else(expander)
+    register_primitives(expander)
     register_text_and_font_handlers(expander)
     register_sectioning_handlers(expander)
     register_environment_handlers(expander)
