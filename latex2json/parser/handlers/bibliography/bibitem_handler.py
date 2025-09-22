@@ -97,6 +97,9 @@ def register_bibitem_handler(parser: ParserCore):
     ignore_patterns = {
         # macro provided by the AMS document classes/packages, e.g. Mathematical Reviews MR
         "MR": "{",
+        "zbl": "{",
+        "mrev": "{",
+        "arx": "{",
     }
 
     register_ignore_handlers_util(parser, ignore_patterns)

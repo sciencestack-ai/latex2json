@@ -73,6 +73,7 @@ BUILTIN_DIMENSIONS = [
     # @
     "p@",
     "z@",
+    "dimen@",
     "@tempdima",
     "@tempdimb",
     "@tempdimc",

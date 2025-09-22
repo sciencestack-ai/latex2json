@@ -23,6 +23,8 @@ ADVANCED_BOX_SPECS = {
     "llap": "{",
     "rlap": "{",
     "clap": "{",
+    "strutbox": "{",
+    "tcbox": "[{",  # \tcbox[options]{text}
 }
 
 KATEX_SUPPORTED_BOXES = [

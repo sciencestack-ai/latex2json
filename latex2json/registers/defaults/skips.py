@@ -40,4 +40,6 @@ BUILTIN_SKIPS = [
     # temps
     "@tempskipa",
     "@tempskipb",
+    "skip@",
+    "@topsep",
 ]
