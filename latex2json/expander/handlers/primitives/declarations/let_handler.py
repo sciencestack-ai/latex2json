@@ -32,10 +32,7 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             macro_copy = macro.copy()
 
             def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-                out = macro.handler(expander, def_tok)
-                if out:
-                    expander.push_tokens(out)
-                return []
+                return macro.handler(expander, def_tok)
 
             macro_copy.name = cmd.value
             macro_copy.handler = handler

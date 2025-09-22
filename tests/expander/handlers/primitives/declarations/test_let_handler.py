@@ -187,6 +187,18 @@ def test_let_can_be_anything():
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "MATHEMATIC"
 
+    # test let on noexpand expandafter
+    text = r"""
+\let\@xp=\expandafter
+\let\@nx=\noexpand
+\@xp\@nx\csname title\endcsname % should be \title token itself
+% expandafter expands \csname...\endname, which becomes \title literal
+% noexpand \title becomes \title token itself
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"\title"
+
 
 def test_LetLtxMacro():
     expander = Expander()
