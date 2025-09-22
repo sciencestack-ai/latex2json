@@ -57,3 +57,26 @@ def test_csname_in_definition():
 
     out = expander.expand(r"\makemacro{testmacro}")
     assert_token_sequence(out, expander.expand("SUCCESS"))
+
+
+def test_csname_expandafter():
+    expander = Expander()
+
+    text = r"""
+\def\foo{foo}
+\edef\foo{\expandafter\noexpand\csname\foo\endcsname} % this leads to infinite recursion!
+"""
+    out = expander.expand(text)
+    macro = expander.get_macro("foo")
+    assert macro is not None
+    assert macro.definition is not None
+    assert macro.definition == [Token(TokenType.CONTROL_SEQUENCE, "foo")]
+
+    # now redefine it with \string
+    text = r"""
+\edef\foo{\expandafter\noexpand\csname\string\foo\endcsname} % this leads to \\foo (not \foo)
+"""
+    out = expander.expand(text)
+    macro = expander.get_macro("foo")
+    assert macro is not None
+    assert macro.definition == [Token(TokenType.CONTROL_SEQUENCE, "\\foo")]

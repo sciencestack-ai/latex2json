@@ -304,16 +304,13 @@ class ExpanderCore:
         Normalize a token or string to (name, is_active_char) for macro operations.
         Returns None if the token is not a valid macro name.
         """
-        is_active_char = False
         if isinstance(tok_or_name, Token):
             if tok_or_name.catcode == Catcode.ACTIVE:
-                is_active_char = True
-            elif tok_or_name.type != TokenType.CONTROL_SEQUENCE:
-                return None
-            tok_str = tok_or_name.value
-        else:
-            tok_str = tok_or_name
-        return tok_str, is_active_char
+                return tok_or_name.value, True
+            if tok_or_name.type == TokenType.CONTROL_SEQUENCE:
+                return "\\" + tok_or_name.value, False
+            return None
+        return tok_or_name, False
 
     def get_macro(self, tok_or_name: str | Token) -> Optional[Macro]:
         normalized = self.normalize_macro_name(tok_or_name)

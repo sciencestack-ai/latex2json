@@ -321,7 +321,7 @@ def register_ignore_format_handlers(expander: ExpanderCore):
     expander.register_handler(r"\hrule", vrule_hrule_handler, is_global=True)
     expander.register_handler(r"\mathpalette", mathpalette_handler, is_global=True)
     expander.register_handler(r"\rcsInfo", rcsinfo_handler, is_global=True)
-    expander.register_handler("\\", newline_handler, is_global=True)
+    expander.register_handler(r"\\", newline_handler, is_global=True)
 
     for big in ["big", "Big", "bigg", "Bigg"]:
         expander.register_handler(big, big_handler, is_global=True)

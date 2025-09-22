@@ -53,10 +53,11 @@ if __name__ == "__main__":
     # print(expander.expand(r"\def\bar{bar}\csname foo\bar\endcsname"))
 
     text = r"""
-    \def\cmdbarx{barx}
-\def\bar{\cmdbarx}
-\def\ecs{\bar\endcsname}
-\def\ecsname{\ecs}
-\expandafter\def\csname foo\ecsname{BARXs}
+\def\foo{foo}
+\edef\foo{%
+  \expandafter\noexpand\csname\foo\endcsname}
+\foo
 """
-    expander.expand(text)
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)
