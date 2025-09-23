@@ -285,3 +285,39 @@ def test_multiline_items():
     assert first_item_text.startswith("This is a long item")
     assert "that spans multiple lines" in first_item_text
     assert first_item_text.endswith("in the source")
+
+
+def test_nested_list_item_labels():
+    parser = Parser()
+
+    text = r"""
+    \begin{itemize}
+    \label{list:1}
+    \item \label{item:1} Item 1 
+            \begin{itemize} \label{list:2}
+            \item[3] \label{item:1.1} Item 1.1
+            \item \label{item:1.2} Item 1.2
+            \end{itemize}
+    Post item 1
+    \item[basd]\label{item:2} Item 2
+    \item \label{item:3} Item 3
+    \end{itemize}
+    """.strip()
+
+    out = parser.parse(text)
+    list_node = out[0]
+
+    assert list_node.labels == ["list:1"]
+    items = list_node.children
+    assert len(items) == 3
+    assert items[0].labels == ["item:1"]
+    assert items[1].labels == ["item:2"]
+    assert items[2].labels == ["item:3"]
+
+    # now check the nested list labels
+    nested_list = items[0].children[1]
+    assert nested_list.labels == ["list:2"]
+    nested_items = nested_list.children
+    assert len(nested_items) == 2
+    assert nested_items[0].labels == ["item:1.1"]
+    assert nested_items[1].labels == ["item:1.2"]

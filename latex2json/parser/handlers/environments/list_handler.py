@@ -12,7 +12,15 @@ def list_item_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     label = parser.parse_bracket_as_nodes()
     label_str = parser.convert_nodes_to_str(label) if label else None
     # return as empty list item node for now. Append body buffer in split_into_items.
-    return [ListItemNode([], label=label_str)]
+    item_node = ListItemNode([], label=label_str)
+    # check current env stack to see if it's a fellow listitemnode
+    if isinstance(parser.current_env, ListItemNode):
+        # if so, pop it
+        parser.pop_env_stack()
+
+    # push current item node to the env stack to allow labels to be registered
+    parser.push_env_stack(item_node)
+    return [item_node]
 
 
 def split_into_items(nodes: List[ASTNode]) -> List[ListItemNode]:
@@ -59,7 +67,7 @@ def list_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNo
     return [list_node]
 
 
-def register_list_handlers(parser: ParserCore):
+def register_list_handler(parser: ParserCore):
     parser.register_handler("item", list_item_handler)
 
     for env_name in LIST_ENVIRONMENTS:
@@ -72,16 +80,18 @@ if __name__ == "__main__":
 
     text = r"""
     \begin{itemize}
-    \label{list:item1}
-    \item Item 1 \begin{itemize}
-                \item[3] Item 1.1
-                \item Item 1.2
-                \end{itemize}
+    \label{list:1}
+    \item \label{item:1} Item 1 
+            \begin{itemize} \label{list:2}
+            \item[3] \label{item:1.1} Item 1.1
+            \item \label{item:1.2} Item 1.2
+            \end{itemize}
     Post item 1
-    \item[basd] Item 2
-    \item Item 3
+    \item[basd]\label{item:2} Item 2
+    \item \label{item:3} Item 3
+    \end{itemize}
     """.strip()
 
     parser = Parser()
     out = parser.parse(text)
-    print(out)
+    x = out[0].to_json()
