@@ -168,6 +168,8 @@ formatting_patterns = {
     # mathversion
     "mathversion": "{",
     "@nocounterr": 0,
+    # metadata
+    "DocumentMetadata": "{",
 }
 
 content_formatting_patterns = {
