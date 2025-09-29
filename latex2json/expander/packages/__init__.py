@@ -6,6 +6,7 @@ from latex2json.expander.packages.keyval import register_keyval_handlers
 from latex2json.expander.packages.thmtools import register_thmtools
 from latex2json.expander.packages.tcolorbox import register_tcolorbox
 from latex2json.expander.packages.titling import register_titling
+from latex2json.expander.packages.siunitx import register_siunitx
 
 
 def register_packages(expander: ExpanderCore):
@@ -16,3 +17,4 @@ def register_packages(expander: ExpanderCore):
     register_tcolorbox(expander)
     register_epsfig(expander)
     register_titling(expander)
+    register_siunitx(expander)
