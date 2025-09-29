@@ -153,7 +153,7 @@ LAYOUT_ENVIRONMENTS = {
     "center": EnvironmentDefinition("center"),
     "centering": EnvironmentDefinition("centering"),
     "verse": EnvironmentDefinition("verse"),
-    "tcolorbox": EnvironmentDefinition("tcolorbox"),
+    "tcolorbox": EnvironmentDefinition("tcolorbox", num_args=1, default_arg=[]),
     "flushleft": EnvironmentDefinition("flushleft"),
     "flushright": EnvironmentDefinition("flushright"),
     "small": EnvironmentDefinition("small"),

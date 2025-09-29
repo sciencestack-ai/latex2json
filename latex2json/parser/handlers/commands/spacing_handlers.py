@@ -61,6 +61,10 @@ def register_spacing_handlers(parser: ParserCore):
     for cmd in ["ignorespaces", "noindent"]:
         parser.register_handler(cmd, ignorespaces_handler)
 
+    # allowbreak is only useful in pdf
+    for cmd in ["allowbreak"]:
+        parser.register_handler(cmd, lambda parser, token: [])
+
     parser.register_handler(
         "\\linebreak",
         linebreak_handler,
@@ -73,7 +77,6 @@ def register_spacing_handlers(parser: ParserCore):
         "filbreak",
         "eject",
         "newpage",
-        "allowbreak",
         "goodbreak",
         "smallbreak",
         "medbreak",

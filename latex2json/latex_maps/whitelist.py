@@ -31,7 +31,7 @@ WHITELISTED_COMMANDS = [
     "and",
     "part",
     "chapter",
-    # "abstract",
+    "abstract",
     "table",
     "figure",
     "cite",
