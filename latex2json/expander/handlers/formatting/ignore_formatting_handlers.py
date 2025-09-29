@@ -40,6 +40,8 @@ formatting_patterns = {
     "ExecuteBibliographyOptions": 1,
     # pdf options
     "pdfinfo": "{",
+    "pdfinfoomitdate": "{",
+    "pdftrailerid": "{",
     "pdfoutput": "=i",
     "pdfsuppresswarningpagegroup": "=i",
     "pdfmapline": "{",

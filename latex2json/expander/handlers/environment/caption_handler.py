@@ -44,6 +44,7 @@ def register_caption_handler(expander: ExpanderCore):
 
     ignore_patterns = {
         "captionsetup": "[{",
+        "DeclareCaptionFont": "{{",  # fontsize and line height
     }
     register_ignore_handlers_util(expander, ignore_patterns)
 
