@@ -11,7 +11,8 @@ def evaluate_ifnum(
     # Parse first number
     expander.skip_whitespace()
     num1 = expander.parse_integer()
-    # if num1 is None:
+    if num1 is None:
+        tok = expander.parse_immediate_token()
     #     return None, f"\\ifnum expects a number, found {expander.peek()}"
 
     # Parse relation operator
@@ -24,15 +25,17 @@ def evaluate_ifnum(
     expander.skip_whitespace()
     num2 = expander.parse_integer()
 
-    if num1 is None:
-        return None, "\\ifnum expects a first number"
+    if num2 is None:
+        tok = expander.parse_immediate_token()
+
+    if num1 is None or num2 is None:
+        return None, "\\ifnum expects a first/second number"
+        # return False, None
     if relation_tok is None:
         return None, "\\ifnum expects a relation operator"
     relation = relation_tok.value
     if relation not in ["<", "=", ">"]:
         return None, f"\\ifnum expects <, =, or > operator, found {relation}"
-    if num2 is None:
-        return None, "\\ifnum expects a second number"
 
     # Compare numbers based on relation
     is_true = False

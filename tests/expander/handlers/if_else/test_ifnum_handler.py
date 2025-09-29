@@ -212,3 +212,19 @@ def test_with_value():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert_token_sequence(out, expander.expand("A"))
+
+
+def test_ifnum_with_unresolved_tokens():
+    expander = Expander()
+
+    # default to false
+    text = r"""
+    \ifnum\undefinedmacro > \sometoken
+        TRUE
+    \else
+        FALSE
+    \fi
+    """
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    assert_token_sequence(out, expander.expand("FALSE"))

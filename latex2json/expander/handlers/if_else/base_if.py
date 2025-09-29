@@ -26,17 +26,17 @@ class IfMacro(Macro):
 
     def expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         # Evaluate the condition
-        is_true, error = self.evaluate_condition(expander, token)
+        is_true, msg = self.evaluate_condition(expander, token)
 
         invalid = is_true is None
         if invalid:
-            if error:
-                expander.logger.warning(f"IfMacro error: {error}")
+            if msg:
+                expander.logger.warning(f"IfMacro error: {msg}")
             # don't return, continue to parse if-else blocks
             # return None
 
         blocks = parse_if_else_block_tokens(expander)
-        if blocks is None or invalid:
+        if blocks is None:
             return []
         block = blocks[0] if is_true else blocks[1]
 

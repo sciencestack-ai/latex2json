@@ -29,3 +29,30 @@ def test_maketitle():
         check_str = check_str.strip()
 
     assert not check_str
+
+
+def test_maketitle_with_atauthor():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+    \@author{Yu Deng}
+
+    \@title{First title}
+    \@title{My title}
+
+    \maketitle
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+
+    # check that title is using the last one, and is the first thing in the string
+    expected_strs = [r"\title{My title}", r"\author{Yu Deng}"]
+
+    check_str = out_str
+    for expected_str in expected_strs:
+        assert check_str.startswith(expected_str)
+        check_str = check_str.replace(expected_str, "")
+        check_str = check_str.strip()
+
+    assert not check_str

@@ -99,9 +99,9 @@ def register_maketitle_handlers(expander: ExpanderCore):
         expander.register_handler(
             cmd, make_frontmatter_key_handler(cmd), is_global=True
         )
-        # expander.register_handler(
-        #     f"@{cmd}", make_at_frontmatter_key_handler(cmd), is_global=True
-        # )
+        expander.register_handler(
+            f"@{cmd}", make_frontmatter_key_handler(cmd), is_global=True
+        )
 
 
 if __name__ == "__main__":

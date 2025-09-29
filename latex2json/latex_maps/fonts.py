@@ -125,6 +125,7 @@ LEGACY_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "rmfamily": FontFamily.ROMAN,
     "sffamily": FontFamily.SANS,
     "ttfamily": FontFamily.TYPEWRITER,
+    "opensans": FontFamily.SANS,
     # Font shape declarations
     "itshape": FontShape.ITALIC,
     "scshape": FontShape.SMALL_CAPS,

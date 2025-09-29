@@ -58,13 +58,15 @@ def cite_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     prenote = parser.parse_bracket_as_nodes()
     postnote = []
-    if prenote:
+    if prenote is not None:
         parser.skip_whitespace()
         postnote = parser.parse_bracket_as_nodes()
         parser.skip_whitespace()
     citation_nodes = parser.parse_brace_as_nodes()
     if citation_nodes is None:
-        parser.logger.warning("\\cite expects a citation")
+        parser.logger.warning(
+            f"\\cite expects a citation, found {parser.peek()} instead"
+        )
         return None
 
     title = []
