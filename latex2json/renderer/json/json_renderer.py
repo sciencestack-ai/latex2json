@@ -1,9 +1,17 @@
 import logging
 from typing import Dict, List, Optional
 from latex2json.nodes import ASTNode
+from latex2json.nodes.node_types import NodeTypes
 from latex2json.parser import ParserCore, ParserParallel
 
-INLINE_TYPES = ["text", "ref", "citation", "url", "footnote", "command"]
+INLINE_TYPES = [
+    NodeTypes.TEXT,
+    NodeTypes.REF,
+    NodeTypes.CITATION,
+    NodeTypes.URL,
+    NodeTypes.FOOTNOTE,
+    NodeTypes.COMMAND,
+]
 
 
 def is_token_inline(token: Dict) -> bool:
@@ -12,24 +20,31 @@ def is_token_inline(token: Dict) -> bool:
     typing = token.get("type")
     if typing in INLINE_TYPES:
         return True
-    elif typing == "equation" and token.get("display") != "block":
+    elif typing == NodeTypes.EQUATION and token.get("display") != "block":
         return True
     return False
+
+
+def is_text_token(token: Dict) -> bool:
+    if not isinstance(token, dict):
+        return False
+    return token.get("type") == NodeTypes.TEXT
 
 
 def strip_whitespace_json_tokens(tokens: List[Dict]):
     if not tokens:
         return tokens
 
-    # First strip whitespace from start/end tokens
-    while tokens and isinstance(tokens[0], dict) and tokens[0].get("type") == "text":
+    # lstrip whitespace from start tokens
+    while tokens and is_text_token(tokens[0]):
         text: str = tokens[0].get("content")
         if text and text.strip():
             tokens[0]["content"] = text.lstrip()
             break
         tokens.pop(0)
 
-    while tokens and isinstance(tokens[-1], dict) and tokens[-1].get("type") == "text":
+    # rstrip whitespace from end tokens
+    while tokens and is_text_token(tokens[-1]):
         text: str = tokens[-1].get("content")
         if text and text.strip():
             tokens[-1]["content"] = text.rstrip()
@@ -38,14 +53,27 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
 
     # Then remove all empty text tokens in between
     stripped_tokens = []
+    N = len(tokens)
     for i, token in enumerate(tokens):
-        if isinstance(token, dict) and token.get("type") == "text":
-            # check if token is has content
-            if token.get("content").strip():
-                stripped_tokens.append(token)
+        if is_text_token(token):
+            content: str = token.get("content")
+            if not content:
+                continue
+            # check if text token has content
+            if content.strip():
                 # also lstrip the content if prev token is not inline.
                 if i > 0 and not is_token_inline(tokens[i - 1]):
-                    token["content"] = token["content"].lstrip()
+                    token["content"] = content.lstrip()
+                stripped_tokens.append(token)
+            else:
+                # if content is "\n", preserve it and add to next token if next is also a text token
+                if i < N - 1 and is_text_token(tokens[i + 1]):
+                    next_token = tokens[i + 1]
+                    next_content: str = next_token.get("content")
+                    if not next_content:
+                        continue
+                    new_str = content.replace(" ", "") + next_content.lstrip(" ")
+                    next_token["content"] = new_str
         else:
             stripped_tokens.append(token)
 
@@ -89,6 +117,7 @@ class JSONRenderer:
         json_tokens = self.convert_nodes_to_json(
             nodes, organize_hierachy=organize_hierachy
         )
+
         return json_tokens
 
     def convert_nodes_to_json(
@@ -149,11 +178,11 @@ class JSONRenderer:
             return root
 
         # first, preprocess tokens to remove all tokens after \end{document}
-        is_parent_document = parent_token and parent_token["type"] == "document"
+        is_parent_document = parent_token and parent_token["type"] == NodeTypes.DOCUMENT
         if not is_parent_document:
             last_document_idx = -1
             for i, token in enumerate(tokens):
-                if isinstance(token, dict) and token["type"] == "document":
+                if isinstance(token, dict) and token["type"] == NodeTypes.DOCUMENT:
                     last_document_idx = i
                     # don't break here due to possibility of sibling documents i.e. \subfile{...}
                     # break
@@ -168,7 +197,7 @@ class JSONRenderer:
                 continue
 
             # Handle appendix declaration
-            if token["type"] == "appendix":
+            if token["type"] == NodeTypes.APPENDIX:
                 section_stack.clear()
                 paragraph_stack.clear()
 
@@ -179,7 +208,7 @@ class JSONRenderer:
                         token["content"], parent_token=token
                     )
 
-                if organized and organized[-1]["type"] == "appendix":
+                if organized and organized[-1]["type"] == NodeTypes.APPENDIX:
                     # if previous token is also an appendix, merge content
                     organized[-1]["content"] += token["content"]
                     continue
@@ -195,15 +224,15 @@ class JSONRenderer:
                 )
 
             # Handle special token types
-            if token["type"] == "bibliography":
+            if token["type"] == NodeTypes.BIBLIOGRAPHY:
                 section_stack.clear()
                 paragraph_stack.clear()
                 organized.append(token)
-            elif token["type"] == "section":
+            elif token["type"] == NodeTypes.SECTION:
                 paragraph_stack.clear()
 
                 self._manage_stack(token, section_stack, root)
-            elif token["type"] == "paragraph":
+            elif token["type"] == NodeTypes.PARAGRAPH:
                 self._manage_stack(token, paragraph_stack, root, section_stack)
             else:
                 get_current_target().append(token)
@@ -255,24 +284,21 @@ class JSONRenderer:
                     )
                 continue
 
-            if token.get("type") == "equation":
+            if token.get("type") == NodeTypes.EQUATION:
                 # strip off display attribute if inline
                 if token.get("display") == "inline":
                     del token["display"]
                 content = token.get("content")
                 if content and isinstance(content, list):
                     # check if all content is "text"
-                    if all(
-                        isinstance(item, dict) and item.get("type") == "text"
-                        for item in content
-                    ):
+                    if all(is_text_token(item) for item in content):
                         # if so, merge into a single string
                         token["content"] = "".join(
                             item.get("content", "") for item in content
                         )
                         continue
             elif "content" in token and isinstance(token["content"], list):
-                is_tabular = token.get("type") == "tabular"
+                is_tabular = token.get("type") == NodeTypes.TABULAR
                 # dont strip tabular since null cells are not supposed to be stripped
                 token["content"] = self._recursive_postprocess(
                     token["content"],
@@ -280,18 +306,18 @@ class JSONRenderer:
                 )
 
             token_type = token.get("type", "")
-            if token_type == "environment":
+            if token_type == NodeTypes.ENVIRONMENT:
                 token_name = token.get("name", "")
                 if token_name == "quote":
                     # make quote type
-                    token["type"] = "quote"
+                    token["type"] = NodeTypes.QUOTE
 
             # Reorder the dictionary to ensure 'content' field is last.
             # This makes it easier to read the json metadata format before 'content'
             tokens[i] = self._reorder_dict_keys(token)
 
         for token in tokens:
-            if isinstance(token, dict) and token.get("type") == "command":
+            if isinstance(token, dict) and token.get("type") == NodeTypes.COMMAND:
                 self.logger.warning(f"Found unknown command: {token.get('command')}")
 
         return tokens
@@ -476,7 +502,11 @@ Appendix 2 content
 """
 
     text = r"""
-$\hbox to 7,2cm{} $
+\def\geminipro{Geminipro}
+\textbf{\geminipro{} T2T}\\
+\textcolor{black!70}{\textsc{system}}\\
+\itshape
+Think step by step
 """.strip()
 
     json = renderer.parse(text)

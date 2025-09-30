@@ -66,7 +66,7 @@ def register_spacing_handlers(parser: ParserCore):
         parser.register_handler(cmd, lambda parser, token: [])
 
     parser.register_handler(
-        "\\linebreak",
+        "linebreak",
         linebreak_handler,
     )
 
