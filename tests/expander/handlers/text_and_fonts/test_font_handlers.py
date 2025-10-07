@@ -36,11 +36,13 @@ def test_ignored_font_handlers():
     expander = Expander()
 
     text = r"""
+    \makeatletter
 \newfam\fontfam
 \textfont\fontfam=\xxxx
 \scriptfont\fontfam=\sss
 \scriptscriptfont\fontfam=\yyy
 \setmathfont[range=\setminus, Scale=MatchUppercase]{Asana-Math.otf}
+\@setfontsize\normalsize\@xpt{13}
 """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

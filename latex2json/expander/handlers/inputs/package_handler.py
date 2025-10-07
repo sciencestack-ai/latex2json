@@ -57,7 +57,7 @@ def documentclass_handler(expander: ExpanderCore, token: Token):
         return None
 
     # don't ingest documentclass file? i.e. read_file=False
-    expander.load_class(cls.strip(), read_file=False)
+    expander.load_class(cls.strip())  # , read_file=False)
 
     return []
 

@@ -21,10 +21,9 @@ class Expander(ExpanderCore):
         prevent_whitelisted_redefinitions: bool = True,
         prevent_package_macro_execution: bool = False,
     ):
-        super().__init__(tokenizer, logger)
-
         self.prevent_package_macro_execution = prevent_package_macro_execution
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
+        super().__init__(tokenizer, logger)
 
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
         self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
@@ -91,6 +90,8 @@ class Expander(ExpanderCore):
 
         # prevent redefinition of white-listed commands in package/class files
         if is_user_defined and self.prevent_whitelisted_redefinitions:
+            if not is_active_char:
+                tok_str = tok_str.lstrip("\\")
             if tok_str in self.white_listed_commands:
                 self.logger.info(
                     f"Preventing redefinition of white-listed command \\{tok_str}"  # inside package/class: \\{name}"

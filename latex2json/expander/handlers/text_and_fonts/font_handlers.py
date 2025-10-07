@@ -53,6 +53,16 @@ def register_font_handlers(expander: ExpanderCore):
         "scriptscriptfont": "\\=\\",
         "setmathfont": "[{",
         "theoremheaderfont": "{",
+        # Font-related formatting
+        "setmathfont": "[{",
+        "theorembodyfont": "{",
+        "setmainfont": 1,
+        "setsansfont": 1,
+        "setmonofont": 1,
+        "fontsize": 2,
+        "@setfontsize": 3,
+        "selectfont": 0,
+        "usefont": 4,
     }
     register_ignore_handlers_util(expander, ignore_patterns)
 

@@ -19,15 +19,6 @@ formatting_patterns = {
     "titlecontents": "{[" + "{" * 4,
     "titleline": "{",
     "sectionformat": 1,
-    # Font-related formatting
-    "setmathfont": "[{",
-    "theorembodyfont": "{",
-    "setmainfont": 1,
-    "setsansfont": 1,
-    "setmonofont": 1,
-    "fontsize": 2,
-    "selectfont": 0,
-    "usefont": 4,
     # You might also add:
     "geometry": 1,  # \geometry{margin=1in}
     "newgeometry": 1,

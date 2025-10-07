@@ -77,7 +77,9 @@ def make_N_blocks_ignore_handler(
     command: str, n_blocks: int, expand: bool = False
 ) -> Handler:
     def ignore_handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
-        blocks = expander.parse_braced_blocks(n_blocks, expand=expand)
+        blocks = expander.parse_braced_blocks(
+            n_blocks, expand=expand, check_immediate_tokens=True
+        )
         return []
 
     return ignore_handler

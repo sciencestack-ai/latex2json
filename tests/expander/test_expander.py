@@ -14,6 +14,15 @@ from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
 
+def test_prevent_whitelisted_redefinitions():
+    expander = Expander(prevent_whitelisted_redefinitions=True)
+    assert "normalsize" in expander.white_listed_commands
+
+    # prevent redefinition of white-listed commands e.g. \newcommand
+    expander.expand(r"\renewcommand\newcommand{NEWCOMMAND}")
+    assert expander.expand(r"\newcommand") == []
+
+
 def test_bgroup_egroup():
     expander = Expander()
 
