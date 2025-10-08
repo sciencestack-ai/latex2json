@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 from latex2json.nodes import (
     TextNode,
@@ -9,7 +10,8 @@ from latex2json.nodes import (
 )
 
 
-from latex2json.nodes.base_nodes import DisplayType
+from latex2json.nodes.base_nodes import ASTNode, DisplayType
+from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 
 
@@ -33,6 +35,27 @@ def test_ensure_begin_math_handler():
     assert out == [
         EquationNode([TextNode("x^2")], equation_type=DisplayType.BLOCK, numbering="1")
     ]
+
+    # test with nested \ensuremath and newcommands with ensuremath
+    text = r"""
+    \newcommand{\R}{\ensuremath{\mathbb{R}}} 
+    \newcommand{\Rd}{\ensuremath{\R^{d+1}}}
+
+    $\Rd$
+    """
+    out = parser.parse(text)
+
+    def check_eq(nodes: List[ASTNode]):
+        nodes = strip_whitespace_nodes(nodes)
+        assert len(nodes) == 1 and isinstance(nodes[0], EquationNode)
+        eq_str = parser.convert_nodes_to_str(nodes[0].children)
+        assert eq_str == r"\mathbb{R}^{d+1}"
+
+    check_eq(out)
+
+    # also for regular \Rd
+    out = parser.parse(r"\Rd")
+    check_eq(out)
 
 
 def test_math_env_handlers():

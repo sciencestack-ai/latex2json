@@ -1,4 +1,5 @@
 from typing import List, Optional
+from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.environments import MATH_ENVIRONMENTS
 from latex2json.nodes import (
     EquationNode,
@@ -17,8 +18,19 @@ from latex2json.tokens.types import EnvironmentStartToken, EnvironmentType, Toke
 
 
 def ensuremath_handler(parser: ParserCore, token: Token):
-    nodes = parser.parse_brace_as_nodes()
-    return [EquationNode(nodes)]
+    is_math = parser.is_math_mode
+    if not is_math:
+        # push math mode inline
+        parser.push_mode(ProcessingMode.MATH_INLINE)
+
+    nodes = parser.parse_brace_as_nodes() or []
+    if not is_math:
+        # return as equation node itself
+        parser.pop_mode()
+        return [EquationNode(nodes)]
+
+    # return as normal
+    return nodes
 
 
 def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
