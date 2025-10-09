@@ -471,10 +471,15 @@ class ParserCore:
         tok_type = (
             TokenType.MATH_SHIFT_INLINE if is_inline else TokenType.MATH_SHIFT_DISPLAY
         )
-        math_nodes = self.process(lambda tok: tok.type == tok_type)
         eq_type = DisplayType.INLINE if is_inline else DisplayType.BLOCK
+        eq_node = EquationNode(math_nodes=[], equation_type=eq_type)
+
+        self.push_env_stack(eq_node)
+        math_nodes = self.process(lambda tok: tok.type == tok_type)
         self.pop_mode()
-        return [EquationNode(math_nodes, equation_type=eq_type)]
+        self.pop_env_stack(eq_node)
+        eq_node.set_body(math_nodes)
+        return [eq_node]
 
     def is_in_env(self, env_name: str) -> bool:
         return any(
@@ -657,6 +662,11 @@ class ParserCore:
             return [
                 VerbatimNode(verb_text, title=title_text, display=DisplayType.INLINE)
             ]
+        elif token.name == "tag":
+            # in the wild \tag?
+            if isinstance(self.current_env, EquationNode):
+                self.current_env.numbering = token.numbering
+            return []
         else:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []

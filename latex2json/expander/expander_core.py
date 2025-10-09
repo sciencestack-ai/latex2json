@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from logging import Logger
 import os
 from typing import Callable, List, Any, Dict, Optional, Set, Tuple, Type, Union
@@ -67,6 +68,28 @@ def is_nonumber_token(tok: Token) -> bool:
         "nonumber",
         "notag",
     ]
+
+
+@dataclass
+class TagExtractionResult:
+    notag: bool  # explicit \notag or \nonumber
+    tag: Optional[str]
+    tokens: List[Token]
+
+
+def extract_tag_from_tokens(tokens: List[Token]) -> TagExtractionResult:
+    notag: bool = False
+    numbering: Optional[str] = None
+    newblock: List[Token] = []
+    for tok in tokens:
+        if is_nonumber_token(tok):
+            notag = True
+        elif isinstance(tok, CommandWithArgsToken) and tok.value == "tag":
+            notag = False
+            numbering = tok.numbering
+        else:
+            newblock.append(tok)
+    return TagExtractionResult(notag=notag, tag=numbering, tokens=newblock)
 
 
 class EmptyMacro(Macro):
@@ -147,9 +170,10 @@ class ExpanderCore:
         self._init_state_macros()
         self._init_counter_macros()
         self._init_math_macros()
+        self._init_equation_tag_macros()
 
-        # init tag macro for equation numbering
-        def tag_handler(expander: "ExpanderCore", token: Token):
+    def _init_equation_tag_macros(self):
+        def equation_tag_handler(expander: "ExpanderCore", token: Token):
             expander.skip_whitespace()
             tag_tokens = expander.parse_brace_as_tokens(expand=True)
             if tag_tokens is None:
@@ -157,7 +181,17 @@ class ExpanderCore:
             tag_str = expander.convert_tokens_to_str(tag_tokens)
             return [CommandWithArgsToken("tag", numbering=tag_str)]
 
-        self.register_handler("\\tag", tag_handler, is_global=True)
+        def eqno_handler(expander: "ExpanderCore", token: Token):
+            r"""\eqno(1.1) -> \tag{1.1}"""
+            expander.skip_whitespace()
+            tag_tokens = expander.parse_parenthesis_as_tokens(expand=True)
+            if tag_tokens is None:
+                return None
+            tag_str = expander.convert_tokens_to_str(tag_tokens)
+            return [CommandWithArgsToken("tag", numbering=tag_str)]
+
+        self.register_handler("\\tag", equation_tag_handler, is_global=True)
+        self.register_handler("\\eqno", eqno_handler, is_global=True)
 
     def _init_math_macros(self):
         def make_begin_end_math_handlers():
@@ -1567,19 +1601,13 @@ class ExpanderCore:
                         numbering = None
 
                         # check for \nonumber
-                        newblock = []
-                        for tok in block:
-                            if is_nonumber_token(tok):
-                                is_auto_numbered = False
-                            elif (
-                                isinstance(tok, CommandWithArgsToken)
-                                and tok.value == "tag"
-                            ):
-                                is_auto_numbered = False
-                                numbering = tok.numbering
-                            else:
-                                newblock.append(tok)
-                        newblock = strip_whitespace_tokens(newblock)
+                        eq_result = extract_tag_from_tokens(block)
+                        if eq_result.notag:
+                            is_auto_numbered = False
+                        if eq_result.tag:
+                            numbering = eq_result.tag
+                            is_auto_numbered = False
+                        newblock = strip_whitespace_tokens(eq_result.tokens)
 
                         if is_auto_numbered:
                             state.step_counter("equation")
@@ -1605,18 +1633,14 @@ class ExpanderCore:
                     )
                     newblock = []
                     is_auto_numbered = True
-                    for tok in body_block:
-                        if is_nonumber_token(tok):
-                            numbering = None
-                            is_auto_numbered = False
-                        elif (
-                            isinstance(tok, CommandWithArgsToken) and tok.value == "tag"
-                        ):
-                            numbering = tok.numbering
-                            is_auto_numbered = False
-                        else:
-                            newblock.append(tok)
-                    body_block = newblock
+                    eq_result = extract_tag_from_tokens(body_block)
+                    if eq_result.notag:
+                        numbering = None
+                        is_auto_numbered = False
+                    if eq_result.tag:
+                        numbering = eq_result.tag
+                        is_auto_numbered = False
+                    body_block = eq_result.tokens
 
                     if not is_auto_numbered:
                         # undo step_counter with -1
@@ -1720,8 +1744,7 @@ if __name__ == "__main__":
 
     # base component only
     text = r"""
-    \begin{subequations}
-    \begin{equation}
+    $$ 2 + 2 \tag{1.1} $$
     """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

@@ -33,6 +33,17 @@ def ensuremath_handler(parser: ParserCore, token: Token):
     return nodes
 
 
+# Note: \tag should've been handled in the expander. But just in case.
+def tag_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    nodes = parser.parse_brace_as_nodes()
+    if not nodes:
+        return []
+    if isinstance(parser.current_env, EquationNode):
+        parser.current_env.numbering = parser.convert_nodes_to_str(nodes)
+    return []
+
+
 def equation_align_handler(parser: ParserCore, token: EnvironmentStartToken):
     env = parser.parse_environment(token)
 
@@ -124,6 +135,8 @@ def proof_cmd_handler(parser: ParserCore, token: Token):
 
 def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("ensuremath", ensuremath_handler)
+
+    parser.register_handler("tag", tag_handler)
 
     # lone \proof
     parser.register_handler("proof", proof_cmd_handler)

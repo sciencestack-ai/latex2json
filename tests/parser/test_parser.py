@@ -147,6 +147,12 @@ def test_equation_tag_numbering_n_sanitization():
     assert isinstance(out[0], EquationNode)
     assert out[0].numbering == "P"
 
+    text = r"""$$ 1+1 \eqno(1.1) $$"""
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert isinstance(out[0], EquationNode)
+    assert out[0].numbering == "1.1"
+
 
 SAMPLES_DIR_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)), "../samples"

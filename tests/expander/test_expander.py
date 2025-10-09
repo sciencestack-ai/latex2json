@@ -148,7 +148,7 @@ def test_equation_numbering_with_tags_notags():
     \end{equation}
 
     \begin{equation} % tag=EU
-    \tag{EU}
+    \eqno(EU)
     \end{equation}
 
     \begin{equation} % second auto increment tag=2
