@@ -16,6 +16,9 @@ from latex2json.expander.handlers.environment.newtheorem import register_newtheo
 from latex2json.expander.handlers.environment.at_begin_end_handler import (
     register_at_begin_end_handler,
 )
+from latex2json.expander.handlers.environment.midend_insert_handler import (
+    register_midend_insert_handler,
+)
 
 
 def register_environment_handlers(expander: ExpanderCore):
@@ -25,3 +28,4 @@ def register_environment_handlers(expander: ExpanderCore):
     register_newenvironment(expander)
     register_newtheorem(expander)
     register_at_begin_end_handler(expander)
+    register_midend_insert_handler(expander)
