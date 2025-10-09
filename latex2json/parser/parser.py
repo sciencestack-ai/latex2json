@@ -100,11 +100,13 @@ class Parser(ParserCore):
                 full_path = os.path.join(self.cwd, full_path)
 
             try:
-                bib_content = self.bib_parser.search_and_extract_bib_content(full_path)
+                bib_content, bib_path = self.bib_parser.search_and_extract_bib_content(
+                    full_path, cwd=self.cwd
+                )
                 if not bib_content:
                     continue
                 bib_type = self.bib_parser.check_bib_file_type(bib_content)
-                self.logger.info(f"Bib type: {bib_type}, path: {full_path}")
+                self.logger.info(f"Bib type: {bib_type}, path: {bib_path}")
                 if bib_type == "bibitem":
                     # use native parser if possible:
                     entries = self.parse_bibitem_text_standalone(bib_content)
@@ -113,7 +115,7 @@ class Parser(ParserCore):
                 all_entries.extend(entries)
             except Exception as e:
                 self.logger.warning(
-                    f"Failed to parse bibliography file: {full_path}, error: {str(e)}"
+                    f"Failed to parse bibliography file: {bib_path}, error: {str(e)}"
                 )
 
         # check and remove duplicate cite_keys

@@ -1,7 +1,7 @@
 from logging import Logger
 import logging
 import os
-from typing import List
+from typing import List, Optional, Tuple
 
 from latex2json.nodes.bibliography_nodes import BibEntryNode
 from latex2json.utils.encoding import read_file
@@ -88,11 +88,14 @@ class BibParser:
         # self._parsed_files.add(file_path)
         return read_file(file_path)
 
-    def search_and_extract_bib_content(self, file_path: str) -> str | None:
+    def search_and_extract_bib_content(
+        self, file_path: str, cwd: Optional[str] = None
+    ) -> Tuple[str | None, str | None]:
         exts = [".bbl", ".bib"]
 
         # Try to find and read the bib file
         bib_content = None
+        bib_path = file_path
 
         # Case 1: File already has correct extension
         if file_path.endswith(tuple(exts)) and os.path.exists(file_path):
@@ -101,19 +104,20 @@ class BibParser:
         # Case 2: Need to try adding extensions
         else:
             for ext in exts:
-                full_path = file_path + ext
-                if os.path.exists(full_path):
-                    bib_content = self._open_file(full_path)
+                bib_path = file_path + ext
+                if os.path.exists(bib_path):
+                    bib_content = self._open_file(bib_path)
                     break
 
         # Case 3: Try main.bbl first, then any .bbl file in the same directory
         if not bib_content:
-            directory = os.path.dirname(file_path)
+            directory = cwd or os.path.dirname(file_path)
             main_bbl = os.path.join(directory, "main.bbl")
 
             if os.path.exists(main_bbl):
                 self.logger.info("Bib fallback -> Found main.bbl")
                 bib_content = self._open_file(main_bbl)
+                bib_path = main_bbl
             else:
                 # Look for any .bbl file
                 bbl_files = [f for f in os.listdir(directory) if f.endswith(".bbl")]
@@ -121,8 +125,9 @@ class BibParser:
                     first_bbl = os.path.join(directory, bbl_files[0])
                     self.logger.info(f"Bib fallback -> Found {bbl_files[0]}")
                     bib_content = self._open_file(first_bbl)
+                    bib_path = first_bbl
 
-        return bib_content
+        return bib_content, bib_path
 
     def parse_file(self, file_path: str) -> List[BibEntryNode]:
         """Parse a bibliography file and return list of entries.
@@ -133,7 +138,7 @@ class BibParser:
         Returns:
             List[BibEntry]: List of parsed bibliography entries
         """
-        bib_content = self.search_and_extract_bib_content(file_path)
+        bib_content, bib_path = self.search_and_extract_bib_content(file_path)
 
         if bib_content:
             self.logger.info(f"BibParser: Parsing ...")

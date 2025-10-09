@@ -36,6 +36,7 @@ formatting_patterns = {
     "pdfoutput": "=i",
     "pdfsuppresswarningpagegroup": "=i",
     "pdfmapline": "{",
+    "suppressfloats": "[",
     # Page-related formatting
     # Style commands
     "pagestyle": 1,
@@ -151,6 +152,9 @@ formatting_patterns = {
     "theorempostskipamount": 0,
     # frenchspacing
     "frenchspacing": 0,
+    "singlespacing": 0,
+    "doublespacing": 0,
+    "onehalfspacing": 0,
     "nonfrenchspacing": 0,
     # psfrag (ignoring this will affect the ps output e.g. eps)
     "psfrag": "{{",
@@ -163,6 +167,8 @@ formatting_patterns = {
     "@nocounterr": 0,
     # metadata
     "DocumentMetadata": "{",
+    "refpage": 0,
+    "afterpage": "{",
 }
 
 content_formatting_patterns = {
@@ -207,8 +213,13 @@ content_formatting_patterns = {
     "depth": 0,
     # mark
     "markboth": 2,
+    "markright": 1,
+    "markleft": 1,
     # marginpar
     "marginpar": 1,
+    # glossary
+    "makeglossary": 0,
+    "printglossary": 0,
 }
 
 separator_patterns = {
