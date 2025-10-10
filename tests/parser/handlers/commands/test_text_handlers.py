@@ -175,6 +175,14 @@ def test_textmode_inside_math():
     assert eq.children[1] == CiteNode("ref1")
     assert eq.children[2] == TextNode(r"\textbf{$123$}")
 
+    # check that \textcolor{red}{\frac{1}{2}} is wrapped as one single TextNode containing the raw string, with '{}' inside frac preserved
+    text = r"$$\textcolor{red}{\frac{1}{2}}$$"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    eq = out[0]
+    assert len(eq.children) == 1
+    assert eq.children[0] == TextNode(r"\textcolor{red}{\frac{1}{2}}")
+
 
 def test_say_handler():
     text = r"""

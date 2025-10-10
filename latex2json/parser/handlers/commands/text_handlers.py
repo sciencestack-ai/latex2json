@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from latex2json.expander.state import ProcessingMode
 from latex2json.nodes import ASTNode
-from latex2json.nodes.base_nodes import TextNode
+from latex2json.nodes.base_nodes import CommandNode, TextNode
 from latex2json.nodes.math_nodes import EquationNode
 from latex2json.parser.parser_core import Handler, ParserCore
 from latex2json.latex_maps.fonts import (
@@ -13,6 +13,7 @@ from latex2json.latex_maps.fonts import (
     FontStyleType,
 )
 from latex2json.tokens.types import Token
+from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
 def make_legacy_text_handler(style: FontStyle) -> Handler:
@@ -26,18 +27,31 @@ def make_legacy_text_handler(style: FontStyle) -> Handler:
 def merge_nodes_in_mathmode_text(
     text_str_decorator: str, nodes: List[ASTNode]
 ) -> List[ASTNode]:
-    r"""e.g. text_str_decorator = \textbf or \raisebox{1in} etc"""
+    r"""e.g. text_str_decorator = \textbf or \raisebox{1in} etc
+
+    This function maintains KaTeX compatibility while preserving the node AST structure.
+
+    Goal: Convert text formatting commands (like \textbf, \textcolor) to raw strings that
+    KaTeX can render, BUT keep semantic nodes (like CitationNode, RefNode) as separate
+    nodes in the AST so they can be processed independently.
+
+    Example:
+        Input: \textbf{abc \cite{ref1} $123$}
+        Output: [TextNode(\textbf{abc }), CitationNode(...), TextNode(\textbf{$123$})]
+
+        The \textbf formatting is preserved as raw text for KaTeX rendering, but the
+        \cite node remains a separate CitationNode for AST processing.
+    """
     out_nodes = []
     str_buffer = ""
     for node in nodes:
-        if isinstance(node, TextNode):
-            if node.text.strip():
-                str_buffer += node.text
-            continue
-        elif isinstance(node, EquationNode):
+        # Merge simple nodes (text, equations, commands) into raw string for KaTeX rendering
+        if isinstance(node, (EquationNode, CommandNode, TextNode)):
             str_buffer += node.detokenize()
             continue
 
+        # When we hit a semantic node (e.g., RefNode, CitationNode), flush the buffer
+        # and keep the semantic node separate in the AST
         if str_buffer:
             out_nodes.append(TextNode(text_str_decorator + "{%s}" % (str_buffer)))
             str_buffer = ""
@@ -47,28 +61,52 @@ def merge_nodes_in_mathmode_text(
     return out_nodes
 
 
+def _parse_textcommand_to_nodes(
+    parser: ParserCore, text_cmd_name: str, style_value: Optional[str]
+) -> List[ASTNode]:
+    r"""Parse text commands like \textbf, \textit, \textcolor inside equations.
+
+    When in math mode, we need special handling to maintain KaTeX compatibility:
+    - Preserve the text decorator (e.g., \textbf{...}) as raw LaTeX for KaTeX to render
+    - BUT extract semantic nodes (CitationNode, RefNode, etc.) to maintain the AST structure
+
+    This allows the equation string to be KaTeX-compatible (e.g., "1+1 \textbf{aa $1+1$ bb} 2+2")
+    while keeping non-textual nodes separate for independent processing.
+
+    Test cases that drove this design:
+        $$\textbf{aa $1+1$ bb}$$  -> equation_to_str() == r"1+1 \textbf{aa $1+1$ bb} 2+2"
+        $$\textbf{abc \cite{ref1}$123$}$$  -> \textbf wraps text but CitationNode stays in AST
+    """
+    parser.skip_whitespace()
+    if parser.is_math_mode:
+        parser.push_mode(ProcessingMode.TEXT)
+        parser.skip_whitespace()
+        preserve_braces_as_text = parser.preserve_braces_as_text
+        # force preserve braces as '{}' literal text to keep the braces verbatim for KaTeX
+        parser.preserve_braces_as_text = True
+        nodes = parser.parse_brace_as_nodes()
+        parser.preserve_braces_as_text = preserve_braces_as_text
+        parser.pop_mode()
+        if not nodes:
+            return []
+
+        return merge_nodes_in_mathmode_text(text_cmd_name, nodes)
+    else:
+        nodes = parser.parse_brace_as_nodes()
+        if not nodes:
+            return []
+        if style_value:
+            for node in nodes:
+                # Use the frontend style mapping for consistent CSS-like values
+                node.add_styles([style_value], insert_at_front=True)
+        return nodes
+
+
 def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
     def text_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
-        parser.skip_whitespace()
-        if parser.is_math_mode:
-            # we need to push textmode to handle e.g. $.. \textbf{...$1+1$...} .. $
-            parser.push_mode(ProcessingMode.TEXT)
-            nodes = parser.parse_brace_as_nodes()
-            parser.pop_mode()
-            if not nodes:
-                return []
-
-            cmd_name = token.to_str()  # e.g. '\textbf'
-            return merge_nodes_in_mathmode_text(cmd_name, nodes)
-        else:
-            nodes = parser.parse_brace_as_nodes()
-            if not nodes:
-                return []
-            if style:
-                for node in nodes:
-                    # Use the frontend style mapping for consistent CSS-like values
-                    node.add_styles([style.value], insert_at_front=True)
-            return nodes
+        return _parse_textcommand_to_nodes(
+            parser, token.to_str(), style.value if style else None
+        )
 
     return text_handler
 
@@ -79,24 +117,8 @@ def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         parser.logger.warning("\\textcolor expects a color name")
         return []
 
-    if parser.is_math_mode:
-        # we need to push textmode to handle e.g. $.. \textcolor{red}{...$1+1$...} .. $
-        parser.push_mode(ProcessingMode.TEXT)
-        nodes = parser.parse_brace_as_nodes()
-        parser.pop_mode()
-        if not nodes:
-            return []
-
-        cmd_name = token.to_str()  # '\textcolor'
-        # if mathmode, we wrap it as one single TextNode containing the raw string
-        return merge_nodes_in_mathmode_text(cmd_name + "{%s}" % (color_name), nodes)
-    else:
-        nodes = parser.parse_brace_as_nodes()
-        if not nodes:
-            return []
-        for node in nodes:
-            node.add_styles(["color=" + color_name], insert_at_front=True)
-        return nodes
+    cmd_name = "%s{%s}" % (token.to_str(), color_name)
+    return _parse_textcommand_to_nodes(parser, cmd_name, "color=" + color_name)
 
 
 def legacy_color_handler(parser: ParserCore, token: Token) -> List[ASTNode]:

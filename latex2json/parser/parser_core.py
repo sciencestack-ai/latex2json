@@ -123,6 +123,8 @@ class ParserCore:
         )  # file_path -> {filename: prefix}
         self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
 
+        self.preserve_braces_as_text: bool = False
+
     def register_label(self, label: str):
         key = self.filename
         if not key:
@@ -453,11 +455,15 @@ class ParserCore:
                 if self.is_in_tabular():
                     # we need to mark this as a special char to delineate {...\\...} inside cells
                     return [SpecialCharNode("{")]
+                elif self.preserve_braces_as_text:
+                    return [TextNode(token.value)]
                 return []
             elif is_end_group_token(token):
                 self.pop_scope()
                 if self.is_in_tabular():
                     return [SpecialCharNode("}")]
+                elif self.preserve_braces_as_text:
+                    return [TextNode(token.value)]
                 return []
 
         return [TextNode(token.value)]
