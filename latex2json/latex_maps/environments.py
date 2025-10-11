@@ -141,6 +141,9 @@ PICTURE_ENVIRONMENTS = {
     "tikzpicture": EnvironmentDefinition(
         "tikzpicture", env_type=EnvironmentType.VERBATIM
     ),
+    "circuitikz": EnvironmentDefinition(
+        "circuitikz", env_type=EnvironmentType.VERBATIM
+    ),
     "pgfpicture": EnvironmentDefinition(
         "pgfpicture", env_type=EnvironmentType.VERBATIM
     ),

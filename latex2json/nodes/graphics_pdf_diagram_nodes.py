@@ -106,6 +106,9 @@ class DiagramNode(ASTNode):
         result["type"] = NodeTypes.DIAGRAM
         result["name"] = self.env_name
         result["content"] = self.diagram
+        if self.source_file:
+            # include source file for downstream processing
+            result["source_file"] = self.source_file
         return result
 
     def copy(self):

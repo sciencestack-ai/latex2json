@@ -822,12 +822,15 @@ class ParserCore:
         if not first_token:
             return None
 
+        out_tokens: List[Token] = []
+
         if check_first_token:
             if not begin_predicate(first_token):
                 return None
-            self.consume()
+            begin_token = self.consume()
+            if include_begin_end_tokens:
+                out_tokens.append(begin_token)
 
-        out_tokens: List[Token] = []
         brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
 
         # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
