@@ -189,8 +189,8 @@ class ParserCore:
     def get_colors(self):
         return self.expander.get_colors()
 
-    def set_text(self, text: str):
-        self.expander.set_text(text)
+    def set_text(self, text: str, source_file: Optional[str] = None):
+        self.expander.stream.set_text(text, source_file=source_file)
         self.token_buffer.clear()
 
     def push_tokens(self, tokens: List[Token]):
@@ -209,6 +209,9 @@ class ParserCore:
             tokens = self.expander.next_non_expandable_tokens()
             if tokens:
                 self.token_buffer.extend(tokens)
+                for token in tokens:
+                    if token.type == TokenType.CONTROL_SEQUENCE:
+                        print(token, token.source_file)
         return self.token_buffer[0] if self.token_buffer else None
 
     def consume(self) -> Optional[Token]:
@@ -375,9 +378,10 @@ class ParserCore:
         text: Optional[str] = None,
         postprocess=False,
         resolve_cross_document_references=False,
+        source_file: Optional[str] = None,
     ) -> List[ASTNode]:
         if text:
-            self.set_text(text)
+            self.set_text(text, source_file=source_file)
 
         out = self.process()
         if postprocess:
@@ -407,6 +411,7 @@ class ParserCore:
         # Use the main parse method for consistent behavior
         out = self.parse(
             text=content,
+            source_file=file_path,
             postprocess=postprocess,
             resolve_cross_document_references=resolve_cross_document_references,
         )
