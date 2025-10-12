@@ -767,9 +767,12 @@ class ExpanderCore:
         while not self.eof():
             out = self.expand_next()
             if out and len(out) > 0:
-                for tok in out:
-                    if not tok.source_file:
-                        tok.source_file = self.stream.get_current_source_file()
+                # assign source file to tokens if not already set
+                current_source_file = self.stream.get_current_source_file()
+                if current_source_file:
+                    for tok in out:
+                        if not tok.source_file:
+                            tok.source_file = current_source_file
                 return out
         return None
 
