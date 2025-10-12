@@ -172,6 +172,8 @@ formatting_patterns = {
 }
 
 content_formatting_patterns = {
+    # math
+    "everymath": 1,
     # title
     "maketitle": 0,
     "@title": 0,
