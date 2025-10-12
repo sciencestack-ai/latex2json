@@ -475,6 +475,9 @@ class ExpanderCore:
         self.state.increment_register(register_type, reg_id, increment)
 
     # PROCESSING
+    def clear(self):
+        self.stream.clear()
+
     def set_text(self, text: str):
         self.stream.set_text(text)
 
@@ -592,6 +595,14 @@ class ExpanderCore:
         self.stream.push_tokens([t for t in tokens if t is not None])
 
     def push_text(self, text: str, source_file: Optional[str] = None):
+        if source_file:
+            # Ensure source_file is relative to cwd if within cwd, otherwise keep absolute
+            abs_source = os.path.abspath(source_file)
+            abs_cwd = os.path.abspath(self.cwd)
+
+            rel_path = os.path.relpath(abs_source, abs_cwd)
+            # Only use relative path if it doesn't start with '..' (i.e., is within cwd)
+            source_file = rel_path if not rel_path.startswith("..") else abs_source
         self.stream.push_text(text, source_file=source_file)
 
     def get_cwd_path(self, file_path: str) -> str:

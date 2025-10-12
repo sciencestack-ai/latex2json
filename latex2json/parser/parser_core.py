@@ -189,9 +189,13 @@ class ParserCore:
     def get_colors(self):
         return self.expander.get_colors()
 
-    def set_text(self, text: str, source_file: Optional[str] = None):
-        self.expander.stream.set_text(text, source_file=source_file)
+    def clear(self):
+        self.expander.clear()
         self.token_buffer.clear()
+
+    def set_text(self, text: str, source_file: Optional[str] = None):
+        self.clear()
+        self.expander.push_text(text, source_file=source_file)
 
     def push_tokens(self, tokens: List[Token]):
         """Push tokens to the front of the token buffer."""
