@@ -209,9 +209,6 @@ class ParserCore:
             tokens = self.expander.next_non_expandable_tokens()
             if tokens:
                 self.token_buffer.extend(tokens)
-                for token in tokens:
-                    if token.type == TokenType.CONTROL_SEQUENCE:
-                        print(token, token.source_file)
         return self.token_buffer[0] if self.token_buffer else None
 
     def consume(self) -> Optional[Token]:

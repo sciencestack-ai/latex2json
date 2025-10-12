@@ -37,7 +37,7 @@ class StringSource(TokenSource):
         source_file: Optional[str] = None,
     ):
         self.content = content
-        self.source_file = source_file
+        self.source_file = str(source_file) if source_file else None
         # Create new tokenizer with same settings
         self.tokenizer = Tokenizer()
         self.tokenizer.set_catcode_table(shared_tokenizer._catcodes)
