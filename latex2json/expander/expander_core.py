@@ -475,6 +475,9 @@ class ExpanderCore:
         self.state.increment_register(register_type, reg_id, increment)
 
     # PROCESSING
+    def clear(self):
+        self.stream.clear()
+
     def set_text(self, text: str):
         self.stream.set_text(text)
 
@@ -490,10 +493,10 @@ class ExpanderCore:
         # this control sequence is invalid in latex, so we can use it as an arbitrary stop token
         return Token(TokenType.CONTROL_SEQUENCE, f"\\@#STOP", catcode=Catcode.OTHER)
 
-    def expand_text(self, text: str) -> List[Token]:
+    def expand_text(self, text: str, source_file: Optional[str] = None) -> List[Token]:
         STOP_TOKEN = self._generate_stop_token()
         self.push_tokens([STOP_TOKEN])
-        self.push_text(text)
+        self.push_text(text, source_file=source_file)
         # use `tok is STOP_TOKEN` to check for identity
         out = self.process(
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
@@ -591,8 +594,16 @@ class ExpanderCore:
     def push_tokens(self, tokens: List[Token]):
         self.stream.push_tokens([t for t in tokens if t is not None])
 
-    def push_text(self, text: str):
-        self.stream.push_text(text)
+    def push_text(self, text: str, source_file: Optional[str] = None):
+        if source_file:
+            # Ensure source_file is relative to cwd if within cwd, otherwise keep absolute
+            abs_source = os.path.abspath(source_file)
+            abs_cwd = os.path.abspath(self.cwd)
+
+            rel_path = os.path.relpath(abs_source, abs_cwd)
+            # Only use relative path if it doesn't start with '..' (i.e., is within cwd)
+            source_file = rel_path if not rel_path.startswith("..") else abs_source
+        self.stream.push_text(text, source_file=source_file)
 
     def get_cwd_path(self, file_path: str) -> str:
         if not os.path.isabs(file_path):
@@ -622,7 +633,7 @@ class ExpanderCore:
         if input_text is None:
             return
         # ensure to put \n at the end of the file to delimit/split, in case file ends with %
-        self.push_text(input_text + "\n")
+        self.push_text(input_text + "\n", source_file=file_path)
 
     def expand_file(self, file_path: str):
         file_path = self.get_cwd_path(file_path)
@@ -633,7 +644,7 @@ class ExpanderCore:
         input_text = self.read_file(file_path)
         if input_text is None:
             return None
-        tokens = self.expand_text(input_text)
+        tokens = self.expand_text(input_text, source_file=file_path)
         return tokens
 
     def read_file(self, file_path: str) -> Optional[str]:
@@ -756,6 +767,12 @@ class ExpanderCore:
         while not self.eof():
             out = self.expand_next()
             if out and len(out) > 0:
+                # assign source file to tokens if not already set
+                current_source_file = self.stream.get_current_source_file()
+                if current_source_file:
+                    for tok in out:
+                        if not tok.source_file:
+                            tok.source_file = current_source_file
                 return out
         return None
 

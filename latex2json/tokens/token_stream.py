@@ -30,8 +30,14 @@ class TokenSource(ABC):
 class StringSource(TokenSource):
     """Tokenizes string content using shared tokenizer"""
 
-    def __init__(self, content: str, shared_tokenizer: Tokenizer):
+    def __init__(
+        self,
+        content: str,
+        shared_tokenizer: Tokenizer,
+        source_file: Optional[str] = None,
+    ):
         self.content = content
+        self.source_file = str(source_file) if source_file else None
         # Create new tokenizer with same settings
         self.tokenizer = Tokenizer()
         self.tokenizer.set_catcode_table(shared_tokenizer._catcodes)
@@ -46,7 +52,10 @@ class StringSource(TokenSource):
         # self.current_pos = self.tokenizer.pos
 
     def consume(self) -> Optional[Token]:
-        return self.tokenizer.get_next_token()
+        token = self.tokenizer.get_next_token()
+        if token and self.source_file:
+            token.source_file = self.source_file
+        return token
 
     def peek(self, n: int = 0) -> Optional[Token]:
         saved_pos = self.tokenizer.pos
@@ -60,6 +69,8 @@ class StringSource(TokenSource):
 
         # Restore position
         self.tokenizer.pos = saved_pos
+        # if token and self.source_file:
+        #     token.source_file = self.source_file
         return token
 
     def eof(self) -> bool:
@@ -131,15 +142,15 @@ class TokenStream:
 
         return token
 
-    def set_text(self, text: str):
+    def set_text(self, text: str, source_file: Optional[str] = None):
         """Reset stream with new text"""
         self.clear()
-        self.push_text(text)
+        self.push_text(text, source_file=source_file)
 
-    def push_text(self, text: str):
+    def push_text(self, text: str, source_file: Optional[str] = None):
         """Push string content for tokenization (files, macros, etc.)"""
         # Deactivate current StringSource if it exists
-        self._push_source(StringSource(text, self.tokenizer))
+        self._push_source(StringSource(text, self.tokenizer, source_file=source_file))
 
     def push_tokens(self, tokens: List[Token]):
         """Push pre-tokenized tokens (for simple macro expansion)"""
@@ -194,6 +205,14 @@ class TokenStream:
     def get_current_source(self) -> Optional[TokenSource]:
         if self.source_stack:
             return self.source_stack[-1]
+        return None
+
+    def get_current_source_file(self) -> Optional[str]:
+        """Get the source file from the top StringSource in the stack."""
+        # Iterate from top of stack backwards to find first StringSource with source_file
+        for source in reversed(self.source_stack):
+            if isinstance(source, StringSource) and source.source_file:
+                return source.source_file
         return None
 
     def has_source(self, source: TokenSource) -> bool:

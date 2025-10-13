@@ -189,9 +189,13 @@ class ParserCore:
     def get_colors(self):
         return self.expander.get_colors()
 
-    def set_text(self, text: str):
-        self.expander.set_text(text)
+    def clear(self):
+        self.expander.clear()
         self.token_buffer.clear()
+
+    def set_text(self, text: str, source_file: Optional[str] = None):
+        self.clear()
+        self.expander.push_text(text, source_file=source_file)
 
     def push_tokens(self, tokens: List[Token]):
         """Push tokens to the front of the token buffer."""
@@ -375,9 +379,10 @@ class ParserCore:
         text: Optional[str] = None,
         postprocess=False,
         resolve_cross_document_references=False,
+        source_file: Optional[str] = None,
     ) -> List[ASTNode]:
         if text:
-            self.set_text(text)
+            self.set_text(text, source_file=source_file)
 
         out = self.process()
         if postprocess:
@@ -407,6 +412,7 @@ class ParserCore:
         # Use the main parse method for consistent behavior
         out = self.parse(
             text=content,
+            source_file=file_path,
             postprocess=postprocess,
             resolve_cross_document_references=resolve_cross_document_references,
         )

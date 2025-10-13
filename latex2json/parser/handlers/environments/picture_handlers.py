@@ -8,7 +8,7 @@ from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
 def make_picture_handler(env_name: str):
-    def picture_handler(parser: ParserCore, start_token: Token) -> List[DiagramNode]:
+    def picture_handler(parser: ParserCore, token: Token) -> List[DiagramNode]:
         # parse remaining env block
         def is_end_token(tok: Token):
             return tok.type == TokenType.ENVIRONMENT_END and tok.value == env_name
@@ -20,8 +20,12 @@ def make_picture_handler(env_name: str):
         end_token = parser.consume()
         if not tokens:
             return []
-        tokens = [start_token] + tokens + [end_token]
-        return [DiagramNode(env_name, parser.convert_tokens_to_str(tokens).strip())]
+        tokens = [token] + tokens + [end_token]
+        diagram_node = DiagramNode(
+            env_name, parser.convert_tokens_to_str(tokens).strip()
+        )
+        diagram_node.source_file = token.source_file
+        return [diagram_node]
 
     return picture_handler
 
@@ -31,8 +35,9 @@ def overpic_handler(parser: ParserCore, token: Token):
     if not nodes:
         return []
     diagram_node = nodes[0]
-
-    return [IncludeGraphicsNode("", code=diagram_node.diagram)]
+    out_node = IncludeGraphicsNode("", code=diagram_node.diagram)
+    out_node.source_file = diagram_node.source_file
+    return [out_node]
 
 
 def diagram_command_handler(parser: ParserCore, token: Token):
@@ -48,8 +53,9 @@ def diagram_command_handler(parser: ParserCore, token: Token):
     if not tokens:
         return []
     diagram_str = parser.convert_tokens_to_str([token] + tokens)
-
-    return [DiagramNode(token.value, diagram_str)]
+    diagram_node = DiagramNode(token.value, diagram_str)
+    diagram_node.source_file = token.source_file
+    return [diagram_node]
 
 
 def register_picture_handlers(parser: ParserCore):

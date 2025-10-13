@@ -48,11 +48,13 @@ class Token:
         value: str,  # Can be a string (command name) or a character
         position: int = -1,
         catcode: Optional[Catcode] = None,  # Use the Catcode enum for type hinting
+        source_file: Optional[str] = None,
     ):
         self.type = type
         self.value = value
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
+        self.source_file = source_file
 
     def __str__(self) -> str:
         value = self.value
@@ -74,7 +76,9 @@ class Token:
         return self.value
 
     def copy(self) -> "Token":
-        return Token(self.type, self.value, self.position, self.catcode)
+        return Token(
+            self.type, self.value, self.position, self.catcode, self.source_file
+        )
 
     def __repr__(self) -> str:
         return self.__str__()
