@@ -1,4 +1,5 @@
-from latex2json.utils.tex_utils import parse_key_val_string
+import os
+from latex2json.utils.tex_utils import parse_key_val_string, strip_latex_comments
 
 
 def test_parse_key_val_string():
@@ -32,3 +33,16 @@ def test_parse_key_val_string():
     # Test empty options
     assert parse_key_val_string("") == {}
     assert parse_key_val_string("key=") == {"key": ""}
+
+
+def test_strip_latex_comments():
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    sample_file = os.path.join(current_dir, "sample_comments.tex")
+    with open(sample_file, "r") as f:
+        content = f.read()
+    content = strip_latex_comments(content.strip())
+    # no line should be empty/whitespace-only within the context of this file
+    # where % ... are stripped entirely without trailing \n
+    assert all(
+        line.strip() for line in content.splitlines()
+    ), "Content should not have any empty lines"

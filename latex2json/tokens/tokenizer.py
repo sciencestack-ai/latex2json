@@ -240,11 +240,8 @@ class Tokenizer:
         while self.position < len(self.text):
             char_code = ord(self.text[self.position])
             catcode = self.get_catcode(char_code)
-            if catcode != Catcode.END_OF_LINE:  # Consume until End of Line
-                self.position += 1
-            else:
-                # Stop before consuming the End of Line character,
-                # which will be tokenized in the main get_next_token loop.
+            self.position += 1
+            if catcode == Catcode.END_OF_LINE:  # Consume until End of Line
                 break
 
 

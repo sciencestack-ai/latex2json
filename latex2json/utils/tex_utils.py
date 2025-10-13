@@ -457,14 +457,20 @@ def strip_latex_comments(text: str) -> str:
     A % starts a comment if it is preceded by an even number (including zero)
     of consecutive backslashes. An odd number indicates that the % is escaped.
 
+    Lines that become empty after comment removal (i.e., lines that only contained
+    a comment) are omitted from the output to prevent LaTeX compilation issues.
+
     Args:
         text: Input LaTeX text
 
     Returns:
-        Text with all comments removed.
+        Text with all comments removed and comment-only lines omitted.
     """
     lines = []
     for line in text.splitlines():
+        # Check if line was originally empty/whitespace-only before processing
+        originally_empty = not line.strip()
+
         result = []
         i = 0
         while i < len(line):
@@ -480,7 +486,12 @@ def strip_latex_comments(text: str) -> str:
             else:
                 result.append(line[i])
                 i += 1
-        lines.append("".join(result).rstrip())
+        processed_line = "".join(result).rstrip()
+
+        # Skip lines that became empty due to comment removal, but preserve
+        # originally empty lines to maintain LaTeX structure
+        if processed_line or originally_empty:
+            lines.append(processed_line)
     return "\n".join(lines)
 
 
