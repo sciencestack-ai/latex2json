@@ -13,7 +13,7 @@ def test_for_loop_handler():
 
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out)
-    sequence = out_str.split("\n")
+    sequence = out_str.replace("\n", "").split(" ")
     sequence = [s.strip() for s in sequence if s.strip()]
     assert sequence == ["%d" % i for i in range(1, 10)]
 
@@ -33,7 +33,7 @@ def test_nested_for_loop():
 
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out)
-    sequence = out_str.split("\n")
+    sequence = out_str.replace("\n", "").split(" ")
     sequence = [s.strip() for s in sequence if s.strip()]
 
     expected = []
