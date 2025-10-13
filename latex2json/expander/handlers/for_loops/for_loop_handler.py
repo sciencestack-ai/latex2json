@@ -41,7 +41,8 @@ def for_loop_handler(expander: ExpanderCore, token: Token):
         if not is_true:
             break
 
-        all_tokens.extend(expander.expand_tokens(body))
+        expanded = expander.expand_tokens(body)
+        all_tokens.extend(expanded)
         expander.state.add_to_counter(counter_name_str, 1)
 
     expander.push_tokens(all_tokens)

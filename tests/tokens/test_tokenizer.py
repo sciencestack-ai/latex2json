@@ -52,7 +52,6 @@ bar % comment
         Token(TokenType.CHARACTER, "r", 2, Catcode.LETTER),
         Token(TokenType.CHARACTER, " ", 3, Catcode.SPACE),
         # skip comments?
-        Token(TokenType.END_OF_LINE, "\n", line1_len),
         Token(TokenType.CHARACTER, "[", line1_len + 1, Catcode.OTHER),
         Token(TokenType.CHARACTER, "b", line1_len + 2, Catcode.LETTER),
         Token(TokenType.CHARACTER, "a", line1_len + 3, Catcode.LETTER),
