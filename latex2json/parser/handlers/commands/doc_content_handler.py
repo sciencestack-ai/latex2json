@@ -10,6 +10,9 @@ from latex2json.nodes import (
 )
 from latex2json.nodes.environment_nodes import DocumentNode
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.parser_core import ParserCore
 
 
@@ -110,8 +113,11 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_handler("keywords", make_metadata_handler(NodeTypes.KEYWORDS))
 
     # other
-    for other in ["date", "dedicatory", "commby", "urladdr", "subclass"]:
+    for other in ["date", "dedicatory", "commby", "urladdr", "subclass", "institute"]:
         parser.register_handler(other, make_metadata_handler(other))
+
+    # ignore ...running metadata
+    register_ignore_handlers_util(parser, {"authorrunning": 1, "titlerunning": 1})
 
     # appendix
     for appendix in ["appendix", "appendices"]:

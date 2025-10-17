@@ -162,6 +162,7 @@ formatting_patterns = {
     "newsymbol": "\\i",
     # other
     "tolerance": "=i",
+    "delimitershortfall": "=d",
     # mathversion
     "mathversion": "{",
     "@nocounterr": 0,
@@ -172,6 +173,10 @@ formatting_patterns = {
 }
 
 content_formatting_patterns = {
+    # matter
+    "frontmatter": 0,
+    "mainmatter": 0,
+    "backmatter": 0,
     # math
     "everymath": 1,
     # title

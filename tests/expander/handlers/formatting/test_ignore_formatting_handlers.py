@@ -69,6 +69,8 @@ def test_ignore_formatting_handlers():
     
     \newsymbol\upharpoonright 1316
 
+    \delimitershortfall=-2pt
+
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
