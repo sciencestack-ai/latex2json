@@ -8,7 +8,7 @@ def evaluate_ifdim(
 ) -> tuple[bool | None, str | None]:
     # Parse first dimension
     expander.skip_whitespace()
-    val1 = expander.parse_dimensions()
+    val1 = expander.parse_dimensions(parse_unknown=True)
     if val1 is None:
         return None, "\\ifdim expects a dimension"
 
@@ -24,7 +24,7 @@ def evaluate_ifdim(
 
     # Parse second dimension
     expander.skip_whitespace()
-    val2 = expander.parse_dimensions()
+    val2 = expander.parse_dimensions(parse_unknown=True)
     if val2 is None:
         return None, "\\ifdim expects a second dimension"
 

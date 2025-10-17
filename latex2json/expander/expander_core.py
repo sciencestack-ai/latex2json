@@ -1001,9 +1001,12 @@ class ExpanderCore:
             return None
         return self.get_register_value(out[0], out[1])
 
-    def parse_dimensions(self) -> Optional[int]:
+    def parse_dimensions(self, parse_unknown=False) -> Optional[int]:
         parsed = self._parse_dimensions()
         if parsed is None:
+            if parse_unknown:
+                self.parse_immediate_token()
+                return 0
             return None
         return parsed[0]
 
@@ -1365,7 +1368,7 @@ class ExpanderCore:
         self.skip_whitespace()
 
         # Parse command name
-        cmd = self.parse_immediate_token()
+        cmd = self.parse_immediate_token(expand=False)
         cmd = strip_whitespace_tokens(cmd)
         if not cmd:
             return None

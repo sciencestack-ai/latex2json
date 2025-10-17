@@ -31,19 +31,21 @@ def make_length_setter_handler(command_name: str):
             )
             return None
 
-        expander.push_tokens(block + [RELAX_TOKEN.copy()])
-        expander.skip_whitespace()
-        parsed = expander.parse_dimensions()
+        # NOTE: Dont add complexity of additional parsing since our parser does not care about the actual length value
 
-        tok = expander.peek()
-        if tok == RELAX_TOKEN:
-            expander.consume()
+        # expander.push_tokens(block + [RELAX_TOKEN.copy()])
+        # expander.skip_whitespace()
+        # tok = expander.peek()
+        # if tok == RELAX_TOKEN:
+        #     expander.consume()
 
-        if parsed is None:
-            expander.logger.info(f"\\{command_name} expects proper dimensions")
-            return None
+        # if parsed is None:
+        #     expander.logger.info(
+        #         f"\\{command_name} expects proper dimensions, found {expander.peek()}"
+        #     )
+        #     return None
 
-        return [length_name, parsed]
+        return [length_name, 0]
 
     return length_setter_handler
 

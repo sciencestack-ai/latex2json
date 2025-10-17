@@ -8,7 +8,11 @@ def font_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.warning("\\font expects a font command name")
+        expander.logger.info(
+            "\\font expects a font command name, found %s", expander.peek()
+        )
+        # consume the token
+        expander.parse_immediate_token()
         return None
 
     if not expander.parse_equals():
@@ -46,9 +50,11 @@ def font_dimen_handler(expander: ExpanderCore, token: Token):
     \fontdimen2\font=\@IEEEtrantmpdimenA
     """
     expander.skip_whitespace()
-    expander.parse_float()
+    # only 1 integer. Dont use parse_integer since it will try to expand the next control sequence
+    number = expander.consume()
     expander.skip_whitespace()
-    cmd = expander.parse_immediate_token()
+    cmd = expander.parse_command_name_token()
+
     if expander.parse_equals():
         expander.parse_dimensions(parse_unknown=True)
 

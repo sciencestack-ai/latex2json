@@ -35,7 +35,7 @@ def make_generic_command_handler(
             elif char == "f":
                 expander.parse_float()
             elif char == "d":
-                expander.parse_dimensions()
+                expander.parse_dimensions(parse_unknown=True)
             elif char == "i":
                 expander.parse_integer()
             elif char == "=":
