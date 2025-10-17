@@ -2,6 +2,7 @@ BUILTIN_DIMENSIONS = [
     "displaywidth",
     "displayheight",
     "maxdimen",
+    "sublargesize",
     # Page layout dimensions
     "textwidth",  # Width of text area
     "textheight",  # Height of text area

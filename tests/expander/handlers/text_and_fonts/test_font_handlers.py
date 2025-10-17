@@ -47,3 +47,15 @@ def test_ignored_font_handlers():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert out == []
+
+
+def test_font_dimen_handler():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+    \fontdimen2\font=\@IEEEtrantmpdimenA
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == ""

@@ -41,12 +41,28 @@ def newfont_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def font_dimen_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \fontdimen2\font=\@IEEEtrantmpdimenA
+    """
+    expander.skip_whitespace()
+    expander.parse_float()
+    expander.skip_whitespace()
+    cmd = expander.parse_immediate_token()
+    if expander.parse_equals():
+        expander.parse_dimensions(parse_unknown=True)
+
+    return []
+
+
 def register_font_handlers(expander: ExpanderCore):
     expander.register_handler(r"\font", font_handler, is_global=True)
     expander.register_handler(r"\newfont", newfont_handler, is_global=True)
+    expander.register_handler(r"\fontdimen", font_dimen_handler, is_global=True)
 
     ignore_patterns = {
         "newfam": "\\",  # e.g. \newfam\fontfam
+        "url@samestyle": 0,  # used for url fonts
         "fontfamily": "{",
         "textfont": "\\=\\",  # e.g. \textfont\fontfam=\xxxx
         "scriptfont": "\\=\\",
