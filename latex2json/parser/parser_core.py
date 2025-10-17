@@ -633,6 +633,10 @@ class ParserCore:
         return [CommandNode(cmd_name)]
 
     def _handle_command_w_args(self, token: CommandWithArgsToken) -> List[ASTNode]:
+        numbering = token.numbering
+        if numbering:
+            # handle cases where numbering is a control sequence e.g. \textbf{P} for e.g. equation \tag{\textbf{P}}
+            numbering = self.sanitize_string(numbering)
         if token.name in SECTIONS:
             args = token.args[0]
             opt_args = token.opt_args[0] if token.opt_args else []
@@ -647,7 +651,7 @@ class ParserCore:
                 token.value,
                 body=arg_nodes,
                 label=label_str,
-                numbering=token.numbering,
+                numbering=numbering,
             )
             self.push_env_stack(section_node)
             return [section_node]
@@ -658,7 +662,7 @@ class ParserCore:
             arg_nodes = self.process_tokens(args, scoped=True)
             opt_arg_nodes = self.process_tokens(opt_args, postprocess=True)
             caption_node = CaptionNode(
-                body=arg_nodes, opt_arg=opt_arg_nodes, numbering=token.numbering
+                body=arg_nodes, opt_arg=opt_arg_nodes, numbering=numbering
             )
             self.push_env_stack(caption_node)
             return [caption_node]
@@ -677,7 +681,7 @@ class ParserCore:
         elif token.name == "tag":
             # in the wild \tag?
             if isinstance(self.current_env, EquationNode):
-                self.current_env.numbering = token.numbering
+                self.current_env.numbering = numbering
             return []
         else:
             arg_nodes: List[List[ASTNode]] = []
@@ -691,7 +695,7 @@ class ParserCore:
                     token.name,
                     args=arg_nodes,
                     opt_args=opt_arg_nodes,
-                    numbering=token.numbering,
+                    numbering=numbering,
                 )
             ]
 
