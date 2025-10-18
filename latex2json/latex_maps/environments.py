@@ -229,6 +229,10 @@ LIST_ENVIRONMENTS = {
     "description": EnvironmentDefinition(
         "description", num_args=1, default_arg=[], has_direct_command=True
     ),
+    # * versions from enumitem package
+    "itemize*": EnvironmentDefinition("itemize", num_args=1, default_arg=[]),
+    "enumerate*": EnvironmentDefinition("enumerate", num_args=1, default_arg=[]),
+    "description*": EnvironmentDefinition("description", num_args=1, default_arg=[]),
 }
 
 # Mathematical environments
