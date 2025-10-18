@@ -5,6 +5,8 @@ from latex2json.tokens.utils import strip_whitespace_tokens
 def test_ignore_formatting_handlers():
     expander = Expander()
     text = r"""
+    \makeatletter
+    
     \/
     \subjclass[xx]{Secondary 01A80}
     \FloatBarrier
@@ -70,6 +72,9 @@ def test_ignore_formatting_handlers():
     \newsymbol\upharpoonright 1316
 
     \delimitershortfall=-2pt
+
+    \Hy@MakeCurrentHref{\@currenvir.\the\Hy@linkcounter}
+    \Hy@raisedlink{\hyper@anchorstart{\@currentHref}\hyper@anchorend}
 
     """
     out = expander.expand(text)

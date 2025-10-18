@@ -170,6 +170,15 @@ formatting_patterns = {
     "DocumentMetadata": "{",
     "refpage": 0,
     "afterpage": "{",
+    # kernel
+    "@currenvir": 0,
+    # hyperref
+    "Hy@MakeCurrentHref": "{",
+    "Hy@linkcounter": 0,
+    "Hy@raisedlink": "{",
+    "hyper@anchorstart": "{",
+    "hyper@anchorend": 0,
+    "@currentHref": 0,
 }
 
 content_formatting_patterns = {
