@@ -33,63 +33,6 @@ class ProcessingResult:
             self.temp_dir = None
 
 
-MERGE_TYPES = ["text", "ref", "citation"]
-
-
-def merge_inline_tokens_func(tokens: List[Dict]) -> List[Dict]:
-    merged: List[Dict] = []
-    buffer = ""
-
-    def is_merge_candidate(token: Dict) -> bool:
-        """Check if token is candidate for merging."""
-        # First check if token is a dict
-        if not isinstance(token, dict):
-            return False
-        return token["type"] in MERGE_TYPES or (
-            token["type"] == "equation" and token.get("display") != "block"
-        )
-
-    def get_candidate_value(token: Dict) -> str:
-        """Get string value for merging."""
-        if not isinstance(token, dict):
-            return str(token)
-        if token["type"] == "text":
-            return token["content"]
-        elif token["type"] == "equation" and token.get("display") != "block":
-            return f"${token['content']}$"
-        elif token["type"] == "ref":
-            content_str = ",".join(token["content"])
-            return f"\\ref{{{content_str}}}"
-        elif token["type"] == "citation":
-            content_str = ",".join(token["content"])
-            return f"\\cite{{{content_str}}}"
-        return str(token.get("content", ""))
-
-    def process_token(token: Dict) -> Dict:
-        """Process a token and its nested content recursively."""
-        if not token or not isinstance(token, dict):
-            return token
-
-        # Handle nested content
-        if "content" in token and isinstance(token["content"], list):
-            token["content"] = merge_inline_tokens_func(token["content"])
-        return token
-
-    for token in tokens:
-        if token and is_merge_candidate(token):
-            buffer += get_candidate_value(process_token(token))
-        else:
-            if buffer:
-                merged.append({"type": "text", "content": buffer})
-                buffer = ""
-            merged.append(process_token(token))
-
-    if buffer:
-        merged.append({"type": "text", "content": buffer})
-
-    return merged
-
-
 class TexProcessingError(Exception):
     """Base exception for TeX processing errors."""
 
@@ -144,7 +87,7 @@ class TexReader:
             _process, f"Failed to process TeX file {file_path}"
         )
 
-    def to_json(self, result: ProcessingResult, merge_inline_tokens=False) -> str:
+    def to_json(self, result: ProcessingResult) -> str:
         def _convert() -> str:
             # with warnings.catch_warnings():
             #     warnings.filterwarnings("ignore", module="pydantic")
@@ -155,8 +98,6 @@ class TexReader:
                 "tokens": result.tokens,
                 "color_map": result.color_map,
             }
-            if merge_inline_tokens:
-                data["tokens"] = merge_inline_tokens_func(data["tokens"])
             # ensure_ascii=False to prevent unnecessary escape characters
             return json.dumps(data, ensure_ascii=False)
 
@@ -257,7 +198,6 @@ if __name__ == "__main__":
     # tex_reader.save_to_json(output)
 
     # Example usage with folder
-    target_folder = "outputs"
     folders = [
         # "papers/new/arXiv-math0503066v2",
         # "papers/tested/arXiv-1509.05363v6",
@@ -280,24 +220,36 @@ if __name__ == "__main__":
         # "papers/tested/arXiv-2408.07934v1"
         # "papers/tested/arXiv-1712.01815v1"
         # "papers/new/arXiv-2103.07867v1.gz",
-        # "/Users/cj/Downloads/arXiv-math0610903v1.gz"
-        # "papers/new/arXiv-0911.5501v2"
-        "papers/faulty/math_0503319v1"
+        # "papers/new/euler-nordstroem"
+        # "papers/tested/arXiv-2301.10945v1"
+        # TODO
+        # "papers/faulty/math_0503351v1",
+        # "papers/faulty/math_0504203v3",
+        # "/Users/cj/Downloads/new.tex",
+        # "papers/tested/arXiv-1703.06870v3"
+        # "papers/tested/arXiv-1509.05363v6"
+        # "/Users/cj/Downloads/Full-Euler-Nordstroem"
+        # "papers/new/arXiv-2410.23255v2"
+        # "papers/new/arXiv-2509.20328v1"
+        # "papers/faulty/math_0501127v1"
+        # "papers/new/arXiv-2510.00179v1"
+        # "papers/faulty/math_0504455v1"
+        # "/Users/cj/Documents/python/latex_pipeline/tests/test_data"
+        # "/Users/cj/Documents/python/latex2json/tests/samples/diagram_sourcefiles"
+        # "papers/new/arXiv-1506.01497v3"
+        "papers/tested/arXiv-2010.11929v2"
     ]
-    merge_inline = False
-    stem_postfix = "_merged" if merge_inline else ""
-
     cleanup = True
 
     for folder in folders:
         folder_stem = folder.split("/")[-1]
-        save_path = target_folder + "/" + folder_stem + stem_postfix + ".json"
+        save_path = folder + "/latex2json.json"
         # output = tex_reader.process_compressed(
         #     folder, temp_dir="papers/new/arXiv-2103.07867v1", cleanup=cleanup
         # )
         output = tex_reader.process(folder)
         try:
-            json_output = tex_reader.to_json(output, merge_inline_tokens=merge_inline)
+            json_output = tex_reader.to_json(output)
             # tex_reader.save_to_json(output, save_path)
             with open(save_path, "w") as f:
                 json.dump(json.loads(json_output), f, indent=2)
