@@ -13,6 +13,6 @@ def test_tex_reader():
 
     # test working on subfiles
     output = tex_reader.process(samples_dir_path + "/subfiles")
-    json_output = tex_reader.to_json(output, merge_inline_tokens=False)
+    json_output = tex_reader.to_json(output)
 
     assert len(json_output) >= 1
