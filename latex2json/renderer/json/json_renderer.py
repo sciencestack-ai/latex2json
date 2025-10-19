@@ -284,7 +284,9 @@ class JSONRenderer:
                     )
                 continue
 
-            if token.get("type") == NodeTypes.EQUATION:
+            token_type = token.get("type", "")
+
+            if token_type == NodeTypes.EQUATION:
                 # strip off display attribute if inline
                 if token.get("display") == "inline":
                     del token["display"]
@@ -298,14 +300,11 @@ class JSONRenderer:
                         )
                         continue
             elif "content" in token and isinstance(token["content"], list):
-                is_tabular = token.get("type") == NodeTypes.TABULAR
-                # dont strip tabular since null cells are not supposed to be stripped
                 token["content"] = self._recursive_postprocess(
                     token["content"],
-                    strip_whitespace_tokens=strip_whitespace_tokens and not is_tabular,
+                    strip_whitespace_tokens=strip_whitespace_tokens,
                 )
 
-            token_type = token.get("type", "")
             if token_type == NodeTypes.ENVIRONMENT:
                 token_name = token.get("name", "")
                 if token_name == "quote":

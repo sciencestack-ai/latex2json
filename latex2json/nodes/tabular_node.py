@@ -68,9 +68,7 @@ class CellNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = "cell"
-        result["content"] = (
-            [child.to_json() for child in self.children] if self.children else None
-        )
+        result["content"] = [child.to_json() for child in self.children]
         if self.rowspan > 1:
             result["rowspan"] = self.rowspan
         if self.colspan > 1:
@@ -181,17 +179,17 @@ class TabularNode(EnvironmentNode):
         for row in self.row_nodes:
             row_json = []
             for cell in row.cells:
-                if cell.is_single_null_cell():
-                    row_json.append(None)
-                elif cell.is_plain_text_cell():
-                    # append single text str?
-                    text_node = cell.children[0]
-                    text_json = text_node.to_json()
-                    row_json.append(text_json["content"])
-                else:
-                    cell_json = cell.to_json()
-                    del cell_json["type"]
-                    row_json.append(cell_json)
+                # if cell.is_single_null_cell():
+                #     row_json.append(None)
+                # elif cell.is_plain_text_cell():
+                #     # append single text str?
+                #     text_node = cell.children[0]
+                #     text_json = text_node.to_json()
+                #     row_json.append(text_json["content"])
+                # else:
+                cell_json = cell.to_json()
+                del cell_json["type"]
+                row_json.append(cell_json)
             content.append(row_json)
         result["content"] = content
         return result
