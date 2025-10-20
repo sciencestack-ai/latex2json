@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 import shutil
 
+from latex2json.expander.expander import Expander
 from latex2json.tex_file_extractor import TexFileExtractor
 from latex2json.renderer.json import JSONRenderer
 from latex2json.utils.tex_versions import is_supported_tex_version
@@ -40,12 +41,40 @@ class TexProcessingError(Exception):
 
 
 class TexReader:
-    def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        n_processors: int = 1,
+        ignore_package_cls: bool = False,
+    ):
         self.logger = logger or logging.getLogger(__name__)
-        self.json_renderer = JSONRenderer(logger=self.logger, n_processors=n_processors)
+        self._ignore_package_cls = ignore_package_cls
+
+        # Create expander with initial settings
+        expander = Expander(logger=self.logger, ignore_package_cls=ignore_package_cls)
+
+        # Pass expander to renderer
+        self.json_renderer = JSONRenderer(
+            logger=self.logger,
+            n_processors=n_processors,
+            expander=expander,
+        )
 
     def clear(self):
-        self.json_renderer.clear()
+        # Create fresh expander with current settings
+        new_expander = Expander(
+            logger=self.logger, ignore_package_cls=self._ignore_package_cls
+        )
+        self.json_renderer.clear(expander=new_expander)
+
+    @property
+    def ignore_package_cls(self) -> bool:
+        return self._ignore_package_cls
+
+    @ignore_package_cls.setter
+    def ignore_package_cls(self, value: bool):
+        self._ignore_package_cls = value
+        self.json_renderer.expander.ignore_package_cls = value
 
     def _handle_file_operation(
         self, operation: Callable[..., T], error_msg: str, *args, **kwargs

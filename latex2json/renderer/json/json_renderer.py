@@ -1,5 +1,6 @@
 import logging
 from typing import Dict, List, Optional
+from latex2json.expander.expander import Expander
 from latex2json.nodes import ASTNode
 from latex2json.nodes.node_types import NodeTypes
 from latex2json.parser import ParserCore, ParserParallel
@@ -83,17 +84,31 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
 class JSONRenderer:
     parser: ParserCore
 
-    def __init__(self, logger: Optional[logging.Logger] = None, n_processors: int = 1):
+    def __init__(
+        self,
+        logger: Optional[logging.Logger] = None,
+        n_processors: int = 1,
+        expander: Optional[Expander] = None,
+    ):
         self.logger = logger or logging.getLogger(__name__)
         self.n_processors = n_processors
-        self._init_parser()
 
-    def _init_parser(self):
-        self.parser = ParserParallel(logger=self.logger, n_processors=self.n_processors)
+        self._init_parser(expander)
 
-    def clear(self):
-        # create new parser instance
-        self._init_parser()
+    def _init_parser(self, expander: Optional[Expander]):
+        if expander is None:
+            expander = Expander(logger=self.logger)
+
+        self.parser = ParserParallel(
+            logger=self.logger, n_processors=self.n_processors, expander=expander
+        )
+
+    @property
+    def expander(self) -> Expander:
+        return self.parser.expander
+
+    def clear(self, expander: Optional[Expander] = None):
+        self._init_parser(expander)
 
     def get_colors(self):
         return self.parser.get_colors()

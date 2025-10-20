@@ -19,10 +19,10 @@ class Expander(ExpanderCore):
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
         prevent_whitelisted_redefinitions: bool = True,
-        prevent_package_cls: bool = False,
+        ignore_package_cls: bool = False,
     ):
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
-        self.prevent_package_cls = prevent_package_cls
+        self.ignore_package_cls = ignore_package_cls
         super().__init__(tokenizer, logger)
 
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
@@ -43,7 +43,7 @@ class Expander(ExpanderCore):
     def load_package(
         self, package_name: str, read_file=True, extension: Optional[str] = ".sty"
     ):
-        if self.prevent_package_cls:
+        if self.ignore_package_cls:
             return None
         if package_name in self.white_listed_packages:
             return None
@@ -55,7 +55,7 @@ class Expander(ExpanderCore):
     def load_class(
         self, class_name: str, read_file=True, extension: Optional[str] = ".cls"
     ):
-        if self.prevent_package_cls:
+        if self.ignore_package_cls:
             return None
         if class_name in self.white_listed_classes:
             return None
