@@ -95,25 +95,18 @@ class TexReader:
     def process_file(self, file_path: Path | str) -> ProcessingResult:
         file_path = Path(file_path)
 
-        def _process() -> ProcessingResult:
-            self.clear()
-            self._verify_file_exists(file_path)
-            is_supported, error_msg = is_supported_tex_version(file_path)
-            if not is_supported:
-                raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
-            output = self.json_renderer.parse_file(file_path) or []
-            # tokens = self.parser.parse_file(file_path)
-            # output = self.token_builder.build(tokens)
-            color_map = self.json_renderer.get_colors()
-            # self.clear()
-            return ProcessingResult(
-                tokens=output,
-                color_map=color_map,
-                main_tex_path=file_path,
-            )
+        self.clear()
+        self._verify_file_exists(file_path)
+        is_supported, error_msg = is_supported_tex_version(file_path)
+        if not is_supported:
+            raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
+        output = self.json_renderer.parse_file(file_path) or []
+        color_map = self.json_renderer.get_colors()
 
-        return self._handle_file_operation(
-            _process, f"Failed to process TeX file {file_path}"
+        return ProcessingResult(
+            tokens=output,
+            color_map=color_map,
+            main_tex_path=file_path,
         )
 
     def to_json(self, result: ProcessingResult) -> str:
@@ -151,44 +144,32 @@ class TexReader:
         self, compressed_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
     ):
         if not os.path.exists(compressed_path):
-            error_msg = f"Compressed file not found: {compressed_path}"
-            self.logger.error(error_msg, exc_info=True)
-            raise FileNotFoundError(error_msg)
+            raise FileNotFoundError(f"Compressed file not found: {compressed_path}")
 
-        try:
-            with TexFileExtractor.from_compressed(
-                compressed_path, temp_dir=temp_dir, cleanup=cleanup
-            ) as (
-                main_tex,
-                temp_dir,
-            ):
-                self.logger.info(
-                    f"Found main TeX file in archive: {main_tex}, {compressed_path}"
-                )
-                file_path = os.path.join(temp_dir, main_tex)
-                output = self.process_file(file_path)
-                output.temp_dir = temp_dir
-                return output
-        except Exception as e:
-            error_msg = f"Failed to process compressed file {compressed_path}: {str(e)}"
-            self.logger.error(error_msg, exc_info=True)
-            raise RuntimeError(error_msg) from e
+        with TexFileExtractor.from_compressed(
+            compressed_path, temp_dir=temp_dir, cleanup=cleanup
+        ) as (
+            main_tex,
+            temp_dir,
+        ):
+            self.logger.info(
+                f"Found main TeX file in archive: {main_tex}, {compressed_path}"
+            )
+            file_path = os.path.join(temp_dir, main_tex)
+            output = self.process_file(file_path)
+            output.temp_dir = temp_dir
+            return output
 
     def process_folder(self, folder_path: str | Path) -> ProcessingResult:
         folder_path = Path(folder_path)
 
-        def _process() -> ProcessingResult:
-            self._verify_file_exists(folder_path, file_type="Folder")
-            main_tex, _ = TexFileExtractor.from_folder(str(folder_path))
-            self.logger.info(
-                f"Found main TeX file in folder: {main_tex}, {folder_path}"
-            )
-            file_path = folder_path / main_tex
-            return self.process_file(file_path)
-
-        return self._handle_file_operation(
-            _process, f"Failed to process TeX folder {folder_path}"
+        self._verify_file_exists(folder_path, file_type="Folder")
+        main_tex, _ = TexFileExtractor.from_folder(str(folder_path))
+        self.logger.info(
+            f"Found main TeX file in folder: {main_tex}, {folder_path}"
         )
+        file_path = folder_path / main_tex
+        return self.process_file(file_path)
 
     def process(
         self, input_path: str | Path, cleanup: bool = False
