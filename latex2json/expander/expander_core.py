@@ -1449,10 +1449,10 @@ class ExpanderCore:
             else:
                 tokens = self.parse_immediate_token()
             if tokens is None:
-                self.logger.warning(
+                self.logger.info(
                     f"{command_name} expected argument {i+1} but found nothing"
                 )
-                return None
+                return args
             elif tokens and is_end_group_token(tokens[0]):
                 self.logger.warning(
                     f"{command_name} expected argument {i+1}"

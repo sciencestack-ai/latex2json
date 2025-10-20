@@ -123,8 +123,11 @@ formatting_patterns = {
     # @onlypreamble is a special command that is used to ignore commands that are only allowed in the preamble
     "@onlypreamble": "{",
     # fancyhead/headers
+    "fancyhf": "[{",
     "fancyhead": "[{",
+    "fancyfoot": "[{",
     "fancyheadoffset": "[{",
+    "fancyfootoffset": "[{",
     "rhead": "[{",
     "chead": "[{",
     "lhead": "[{",
