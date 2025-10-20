@@ -179,6 +179,13 @@ formatting_patterns = {
     "hyper@anchorstart": "{",
     "hyper@anchorend": 0,
     "@currentHref": 0,
+    # end...
+    "endfoot": 0,
+    "endhead": 0,
+    "endlastfoot": 0,
+    "endlasthead": 0,
+    "endfirsthead": 0,
+    "endfirstfoot": 0,
 }
 
 content_formatting_patterns = {
