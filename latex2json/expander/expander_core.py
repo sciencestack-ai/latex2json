@@ -1406,7 +1406,7 @@ class ExpanderCore:
 
     @staticmethod
     def convert_tokens_to_str(tokens: List[Token]) -> str:
-        return "".join(t.to_str() for t in tokens)
+        return "".join(t.to_str() for t in tokens if t is not None)
 
     @staticmethod
     def check_tokens_equal(a: List[Token], b: List[Token]) -> bool:

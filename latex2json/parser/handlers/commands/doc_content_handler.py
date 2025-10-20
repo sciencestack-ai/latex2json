@@ -113,7 +113,15 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_handler("keywords", make_metadata_handler(NodeTypes.KEYWORDS))
 
     # other
-    for other in ["date", "dedicatory", "commby", "urladdr", "subclass", "institute"]:
+    for other in [
+        "date",
+        "dedicatory",
+        "commby",
+        "urladdr",
+        "subclass",
+        "institute",
+        "acknowledgments",
+    ]:
         parser.register_handler(other, make_metadata_handler(other))
 
     # ignore ...running metadata

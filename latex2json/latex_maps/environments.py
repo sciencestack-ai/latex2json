@@ -52,6 +52,12 @@ class EnvironmentDefinition:
         # other state e.g. hooks
         self.hooks = Hooks()
 
+        if has_direct_command:
+            if not self.begin_command:
+                self.begin_command = name
+            if not self.end_command:
+                self.end_command = "end" + name
+
     def copy(self) -> "EnvironmentDefinition":
         new_env = EnvironmentDefinition(
             name=self.name,
@@ -129,7 +135,9 @@ ALGORITHM_ENVIRONMENTS = {
 PICTURE_ENVIRONMENTS = {
     # picture/tikz
     "picture": EnvironmentDefinition("picture", env_type=EnvironmentType.VERBATIM),
-    "pspicture": EnvironmentDefinition("pspicture", env_type=EnvironmentType.VERBATIM),
+    "pspicture": EnvironmentDefinition(
+        "pspicture", env_type=EnvironmentType.VERBATIM, has_direct_command=True
+    ),
     "CD": EnvironmentDefinition("CD", env_type=EnvironmentType.VERBATIM),
     "beginpicture": EnvironmentDefinition(
         "picture",

@@ -182,6 +182,10 @@ formatting_patterns = {
 }
 
 content_formatting_patterns = {
+    # pstricks (old)
+    "newgray": "{{",
+    "psset": "{",
+    "SpecialCoor": 0,
     # matter
     "frontmatter": 0,
     "mainmatter": 0,
