@@ -56,6 +56,8 @@ def strip_whitespace_json_tokens(tokens: List[Dict]):
     stripped_tokens = []
     N = len(tokens)
     for i, token in enumerate(tokens):
+        if not token:
+            continue
         if is_text_token(token):
             content: str = token.get("content")
             if not content:
@@ -149,10 +151,9 @@ class JSONRenderer:
         if organize_hierachy:
             organized = self._recursive_organize(output)
             # Apply recursive whitespace stripping
-            organized = self._recursive_postprocess(organized)
-            return organized
+            output = self._recursive_postprocess(organized)
 
-        return output
+        return [t for t in output if t]
 
     def _manage_stack(
         self,
@@ -516,11 +517,9 @@ Appendix 2 content
 """
 
     text = r"""
-\def\geminipro{Geminipro}
-\textbf{\geminipro{} T2T}\\
-\textcolor{black!70}{\textsc{system}}\\
-\itshape
-Think step by step
+\pspicture
+\draw (0,0) -- (1,1);
+\endpspicture
 """.strip()
 
     json = renderer.parse(text)

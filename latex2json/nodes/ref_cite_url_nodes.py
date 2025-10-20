@@ -83,7 +83,7 @@ class URLNode(ASTNode):
     def detokenize(self):
         out = f"\\url"
         if self.title:
-            out += f"[{self.title}]"
+            out += f"{{{''.join(child.detokenize() for child in self.title)}}}"
         out += f"{{{self.url}}}"
         return out
 

@@ -46,7 +46,7 @@ class Parser(ParserCore):
         # return entries
         parser = self.create_standalone(logger=self.logger, expander=self.expander)
         parser.standalone_mode = False
-        nodes = parser.parse(text)
+        nodes = parser.parse(text, postprocess=True)
 
         bib_items: List[BibEntryNode] = []
         for node in nodes:
@@ -69,10 +69,11 @@ class Parser(ParserCore):
         bib_items = []
         for i, item in enumerate(non_duplicate_entries):
             if item.format == "bibitem":
-                content_str = self.convert_nodes_to_str(item.body)
-                # process the content_str
-                formatted_nodes = self.process_text(content_str)
-                item.set_body(formatted_nodes)
+                if item.should_postprocess:
+                    content_str = self.convert_nodes_to_str(item.body)
+                    # process the content_str
+                    formatted_nodes = self.process_text(content_str)
+                    item.set_body(formatted_nodes)
                 bib_items.append(item)
             else:
                 fields = item.fields
