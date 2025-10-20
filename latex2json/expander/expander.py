@@ -19,10 +19,10 @@ class Expander(ExpanderCore):
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
         prevent_whitelisted_redefinitions: bool = True,
-        prevent_package_macro_execution: bool = False,
+        prevent_package_cls: bool = False,
     ):
-        self.prevent_package_macro_execution = prevent_package_macro_execution
         self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
+        self.prevent_package_cls = prevent_package_cls
         super().__init__(tokenizer, logger)
 
         self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
@@ -40,22 +40,32 @@ class Expander(ExpanderCore):
         register_packages(self)
 
     # override
-    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
+    def load_package(
+        self, package_name: str, read_file=True, extension: Optional[str] = ".sty"
+    ):
+        if self.prevent_package_cls:
+            return None
         if package_name in self.white_listed_packages:
             return None
-        return super().load_package(package_name, extension, read_file)
+        return super().load_package(
+            package_name, read_file=read_file, extension=extension
+        )
 
     # override
-    def load_class(self, class_name: str, extension: str = ".cls", read_file=True):
+    def load_class(
+        self, class_name: str, read_file=True, extension: Optional[str] = ".cls"
+    ):
+        if self.prevent_package_cls:
+            return None
         if class_name in self.white_listed_classes:
             return None
-        return super().load_class(class_name, extension, read_file)
+        return super().load_class(class_name, read_file=read_file, extension=extension)
 
-    # override
-    def _exec_macro(self, tok: Token) -> List[Token] | None:
-        if self.state.in_package_or_class and self.prevent_package_macro_execution:
-            return [tok]
-        return super()._exec_macro(tok)
+    # # override
+    # def _exec_macro(self, tok: Token) -> List[Token] | None:
+    #     if self.state.in_package_or_class and self.prevent_package_macro_execution:
+    #         return [tok]
+    #     return super()._exec_macro(tok)
 
     # override
     def register_environment(

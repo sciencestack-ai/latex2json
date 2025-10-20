@@ -1,5 +1,5 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.inputs.package_handler import (
+from latex2json.expander.handlers.inputs.package_cls_handlers import (
     register_package_handlers,
 )
 from latex2json.expander.handlers.inputs.input_handler import (

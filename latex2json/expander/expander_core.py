@@ -699,14 +699,18 @@ class ExpanderCore:
 
         return None
 
-    def load_package(self, package_name: str, extension: str = ".sty", read_file=True):
+    def load_package(
+        self, package_name: str, read_file=True, extension: Optional[str] = ".sty"
+    ):
         return self._load_package_or_class(
-            package_name, extension, is_package=True, read_file=read_file
+            package_name, extension or ".sty", is_package=True, read_file=read_file
         )
 
-    def load_class(self, class_name: str, extension: str = ".cls", read_file=True):
+    def load_class(
+        self, class_name: str, read_file=True, extension: Optional[str] = ".cls"
+    ):
         return self._load_package_or_class(
-            class_name, extension, is_package=False, read_file=read_file
+            class_name, extension or ".cls", is_package=False, read_file=read_file
         )
 
     def peek(self, offset: int = 0) -> Optional[Token]:

@@ -45,7 +45,7 @@ def make_generic_command_handler(
             elif char == "{":
                 req_arg = parser.parse_brace_as_nodes()
                 if req_arg is None:  # Required argument not found
-                    parser.logger.warning(
+                    parser.logger.info(
                         f"Required argument not found for command {command_name}"
                     )
                     return []
