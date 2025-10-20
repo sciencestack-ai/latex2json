@@ -100,8 +100,9 @@ formatting_patterns = {
     "tracingpages": "=i",
     # language
     "setdefaultlanguage": 1,
-    # class
+    # class/MSC
     "subjclass": "[{",
+    "MSC": "{",
     # mathstack
     "stackMath": 0,
     # physics
