@@ -92,29 +92,25 @@ class BibDivParser:
                         entry_content[field_start:]
                     )
                     if value is not None:
-                        # Strip any remaining braces from the value
-                        value = re.sub(r"\{([^}]*)\}", r"\1", value)
                         value = value.strip()
-                        # Handle multiple instances of the same field
-                        if field_name in fields:
-                            fields[field_name] = f"{fields[field_name]} and {value}"
-                        else:
-                            fields[field_name] = value
                         pos = field_start + value_end
-                else:
-                    # Handle values until comma
-                    comma_pos = entry_content.find(",", field_start)
-                    if comma_pos == -1:
-                        comma_pos = len(entry_content)
-                    value = entry_content[field_start:comma_pos].strip()
+                    else:
+                        # Handle values until comma
+                        comma_pos = entry_content.find(",", field_start)
+                        if comma_pos == -1:
+                            comma_pos = len(entry_content)
+                        value = entry_content[field_start:comma_pos].strip()
+                        pos = comma_pos + 1
+
                     # Strip any remaining braces from the value
-                    value = re.sub(r"\{([^}]*)\}", r"\1", value)
+                    out, _ = extract_nested_content(value)
+                    if out:
+                        value = out.strip()
                     # Handle multiple instances of the same field
                     if field_name in fields:
                         fields[field_name] = f"{fields[field_name]} and {value}"
                     else:
                         fields[field_name] = value
-                    pos = comma_pos + 1
 
                 # Skip trailing whitespace
                 while pos < len(entry_content) and entry_content[pos].isspace():
