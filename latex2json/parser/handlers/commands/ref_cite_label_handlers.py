@@ -177,7 +177,7 @@ def register_ref_label_handlers(parser: ParserCore):
         parser.register_handler(command, citealias_handler)
 
     # urls
-    for url_command in ["url", "path"]:
+    for url_command in ["url", "Url", "path"]:
         parser.register_handler(url_command, make_url_handler(parse_title=False))
     parser.register_handler("href", make_url_handler(parse_title=True))
     parser.register_handler(

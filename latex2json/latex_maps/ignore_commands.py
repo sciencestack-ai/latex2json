@@ -258,6 +258,9 @@ content_formatting_patterns = {
     "renewbibmacro": "{{",
     # datetime
     "date": "{",
+    "day": 0,
+    "month": 0,
+    "year": 0,
     "today": 0,
     # counter
     "AddEnumerateCounter": 3,
