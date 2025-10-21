@@ -104,7 +104,7 @@ class EnvironmentDefinition:
 # Document structure environments
 DOCUMENT_ENVIRONMENTS = {
     "document": EnvironmentDefinition("document", has_direct_command=True),
-    "abstract": EnvironmentDefinition("abstract", has_direct_command=True),
+    "abstract": EnvironmentDefinition("abstract"),
     "thebibliography": EnvironmentDefinition(
         "thebibliography", num_args=1, has_direct_command=True
     ),
