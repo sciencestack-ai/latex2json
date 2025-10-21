@@ -57,6 +57,7 @@ formatting_patterns = {
     "pdftrailerid": "{",
     "pdfoutput": "=i",
     "pdfsuppresswarningpagegroup": "=i",
+    "pdfoptionpdfminorversion": "i",
     "pdfmapline": "{",
     "suppressfloats": "[",
     # Page-related formatting
@@ -215,6 +216,8 @@ formatting_patterns = {
 }
 
 content_formatting_patterns = {
+    # row
+    "rowfont": "{",
     # pstricks (old)
     "newgray": "{{",
     "psset": "{",

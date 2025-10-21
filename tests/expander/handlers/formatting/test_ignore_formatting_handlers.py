@@ -76,6 +76,7 @@ def test_ignore_formatting_handlers():
     \Hy@MakeCurrentHref{\@currenvir.\the\Hy@linkcounter}
     \Hy@raisedlink{\hyper@anchorstart{\@currentHref}\hyper@anchorend}
 
+    \pdfoptionpdfminorversion 6
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

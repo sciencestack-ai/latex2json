@@ -51,7 +51,7 @@ def set_register_value_handler(
 
     if value is None:
         if is_assignment:
-            expander.logger.warning(
+            expander.logger.info(
                 f"Register:{register_type} invalid = assignment, tok: {expander.peek()}"
             )
         return False

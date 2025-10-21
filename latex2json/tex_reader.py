@@ -165,9 +165,7 @@ class TexReader:
 
         self._verify_file_exists(folder_path, file_type="Folder")
         main_tex, _ = TexFileExtractor.from_folder(str(folder_path))
-        self.logger.info(
-            f"Found main TeX file in folder: {main_tex}, {folder_path}"
-        )
+        self.logger.info(f"Found main TeX file in folder: {main_tex}, {folder_path}")
         file_path = folder_path / main_tex
         return self.process_file(file_path)
 

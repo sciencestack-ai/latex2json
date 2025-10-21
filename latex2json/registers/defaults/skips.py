@@ -1,4 +1,5 @@
 BUILTIN_SKIPS = [
+    "spaceskip",
     "leftskip",
     "rightskip",
     "topskip",

@@ -119,7 +119,7 @@ def test_with_makecell():
 
     text = r"""
     \begin{tabular}{c}
-        \makecell{111 \\ 222} & 333 \\
+        \makecell{111 \\ 222} & 333 \tabularnewline
         444 & \shortstack{555 \\ 666}
     \end{tabular}
     """.strip()

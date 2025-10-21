@@ -216,6 +216,7 @@ TABULAR_ENVIRONMENTS = {
     "tabular": EnvironmentDefinition(
         "tabular", num_args=2, default_arg=[], has_direct_command=True
     ),
+    "tabu": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
     "tabular*": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
     "tabularx": EnvironmentDefinition("tabular", num_args=2),
     "tabularx*": EnvironmentDefinition("tabular", num_args=2),

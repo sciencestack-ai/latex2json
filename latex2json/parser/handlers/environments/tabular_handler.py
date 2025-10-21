@@ -2,10 +2,7 @@ from typing import Dict, List, Callable
 from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
 from latex2json.nodes.base_nodes import CommandNode, SpecialCharNode, TextNode
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
-from latex2json.nodes.utils import (
-    is_newline_command,
-    split_nodes_into_columns,
-)
+from latex2json.nodes.utils import split_nodes_into_columns
 from latex2json.parser.handlers.commands.tabular_cell_handlers import (
     merge_nodes_into_cellnode,
 )
@@ -13,6 +10,10 @@ from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
 from latex2json.nodes import ASTNode
 
 from latex2json.parser.parser_core import ParserCore
+
+
+def is_tabular_newline_command(node: ASTNode) -> bool:
+    return isinstance(node, CommandNode) and node.name in ["\\", "tabularnewline"]
 
 
 def split_nodes_into_columns_n_merge(nodes: List[ASTNode]) -> List[CellNode]:
@@ -43,7 +44,7 @@ def split_nodes_into_rows_with_braces(nodes: List[ASTNode]) -> List[List[ASTNode
                 brace_depth = max(0, brace_depth - 1)  # Prevent negative depth
                 continue
 
-        if brace_depth == 0 and is_newline_command(node):
+        if brace_depth == 0 and is_tabular_newline_command(node):
             groups.append(current_group)
             current_group = []
         else:
