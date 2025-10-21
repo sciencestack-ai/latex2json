@@ -111,3 +111,17 @@ def register_ignore_handlers_util(
             handler,
             is_global=True,
         )
+
+
+def make_math_command_handler(command: str, argspec: str) -> Handler:
+    handler = make_generic_command_handler(command, argspec, expand=True)
+
+    def math_command_handler(
+        expander: ExpanderCore, token: Token
+    ) -> Optional[List[Token]]:
+        tokens = handler(expander, token)
+        if tokens and isinstance(tokens[0], CommandWithArgsToken):
+            return tokens[0].to_tokens()
+        return tokens
+
+    return math_command_handler

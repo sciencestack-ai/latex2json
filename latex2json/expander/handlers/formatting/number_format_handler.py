@@ -2,7 +2,6 @@ import decimal
 import re
 from typing import List, Optional
 from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
-from latex2json.expander.handlers.handler_utils import make_generic_command_handler
 from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.registers.utils import int_to_roman
 from latex2json.tokens import Token
@@ -141,20 +140,6 @@ def make_convert_to_str_macro(text: str) -> Macro:
     return macro
 
 
-def make_math_command_handler(command: str, argspec: str) -> Handler:
-    handler = make_generic_command_handler(command, argspec, expand=True)
-
-    def math_command_handler(
-        expander: ExpanderCore, token: Token
-    ) -> Optional[List[Token]]:
-        tokens = handler(expander, token)
-        if tokens and isinstance(tokens[0], CommandWithArgsToken):
-            return tokens[0].to_tokens()
-        return tokens
-
-    return math_command_handler
-
-
 def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("number", number_handler, is_global=True)
     expander.register_handler("num", num_handler, is_global=True)
@@ -162,20 +147,6 @@ def register_number_format_handlers(expander: ExpanderCore):
     expander.register_handler("mathchoice", mathchoice_handler, is_global=True)
     expander.register_handler("qopname", qopname_handler, is_global=True)
     expander.register_handler("newmcodes@", newmcodes_handler, is_global=True)
-
-    # frac
-    math_commands = {
-        "frac": "{{",
-        "tilde": "{",
-        "mathcal": "{",
-        "vec": "{",
-        "hat": "{",
-        "bar": "{",
-    }
-    for command, argspec in math_commands.items():
-        expander.register_handler(
-            command, make_math_command_handler(command, argspec), is_global=True
-        )
 
     primitive_num_cmds = {
         "@ne": 1,
