@@ -77,6 +77,7 @@ def test_ignore_formatting_handlers():
     \Hy@raisedlink{\hyper@anchorstart{\@currentHref}\hyper@anchorend}
 
     \pdfoptionpdfminorversion 6
+    \addto\extrasenglish{...}
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

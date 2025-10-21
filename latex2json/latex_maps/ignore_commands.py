@@ -10,8 +10,8 @@ Argument Specification Format:
   [ : optional bracket argument
   { : required brace argument or immediate token
   ( : optional parenthesis argument
-  = : required equals sign
-  \ : required backslash
+  = : equals sign
+  \\ : command/control sequence
   f : parse float
   d : parse dimension
   i : parse integer
@@ -25,6 +25,10 @@ Examples:
 """
 
 formatting_patterns = {
+    # language/localization
+    "addto": "{{",  # e.g. \addto\extrasenglish{...}
+    "extrasenglish": 0,
+    "selectlanguage": "{",
     "pageheight": 1,
     "pagewidth": 1,
     "NeedsTeXFormat": 1,
