@@ -187,7 +187,7 @@ class BaseTableFigureNode(EnvironmentNode):
                         queue.append(token["content"])
             if caption_token and "numbering" in caption_token:
                 result["numbering"] = caption_token["numbering"]
-                del caption_token["numbering"]
+                # del caption_token["numbering"]
 
         return result
 
