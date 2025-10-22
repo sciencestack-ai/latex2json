@@ -223,6 +223,7 @@ formatting_patterns = {
 content_formatting_patterns = {
     # row
     "rowfont": "{",
+    "RowStyle": "{",
     # pstricks (old)
     "newgray": "{{",
     "psset": "{",

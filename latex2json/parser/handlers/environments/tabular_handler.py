@@ -1,6 +1,7 @@
 from typing import Dict, List, Callable
 from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
 from latex2json.nodes.base_nodes import CommandNode, SpecialCharNode, TextNode
+from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import split_nodes_into_columns
 from latex2json.parser.handlers.commands.tabular_cell_handlers import (
@@ -54,12 +55,7 @@ def split_nodes_into_rows_with_braces(nodes: List[ASTNode]) -> List[List[ASTNode
     return groups
 
 
-def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
-    # parse as generic environment first
-    env_node = parser.parse_environment(token)
-    if not env_node:
-        return []
-
+def _convert_env_to_tabular_node(env_node: EnvironmentNode) -> TabularNode:
     env_nodes: List[ASTNode] = env_node.body
     row_nodes: List[RowNode] = []
     if env_nodes:
@@ -76,7 +72,45 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     tabular_node = TabularNode(row_nodes)
     # re-assign labels from environment node
     tabular_node.labels = env_node.labels
+    return tabular_node
 
+
+def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[ASTNode]:
+    # parse as generic environment first
+    env_node = parser.parse_environment(token)
+    if not env_node:
+        return []
+
+    tabular_node = _convert_env_to_tabular_node(env_node)
+    return [tabular_node]
+
+
+def nice_tabular_handler(
+    parser: ParserCore, token: EnvironmentStartToken
+) -> List[ASTNode]:
+
+    # strip out {...}[...] preamble
+    parser.skip_whitespace()
+    parser.parse_brace_as_nodes()
+    parser.skip_whitespace()
+    parser.parse_bracket_as_nodes()
+
+    # parse as generic environment first
+    env_node = parser.parse_environment(token)
+    if not env_node:
+        return []
+
+    # strip out CodeBefore and Body and CodeAfter
+    body = env_node.body
+    filtered = []
+    for node in body:
+        # strip out CodeBefore and Body and CodeAfter
+        if isinstance(node, CommandNode):
+            if node.name in ["CodeBefore", "CodeAfter", "Body"]:
+                continue
+        filtered.append(node)
+    env_node.set_body(filtered)
+    tabular_node = _convert_env_to_tabular_node(env_node)
     return [tabular_node]
 
 
@@ -85,16 +119,24 @@ def register_tabular_handlers(parser: ParserCore):
         parser.register_env_handler(env_name, tabular_handler)
         parser.register_env_handler(env_name + "*", tabular_handler)
 
+    for env_name in ["NiceTabular", "NiceTabular*", "NiceTabularX"]:
+        parser.register_env_handler(env_name, nice_tabular_handler)
+
 
 if __name__ == "__main__":
     from latex2json.parser import Parser
 
     parser = Parser()
     text = r"""
-    \begin{tabular}{c}
-        \cline{1-1}\cline{3-3}
-{\centering \textbf{Harmonic Loss}\\\citep{baek2025harmonic}\\Theorem \ref{thm:harmonic}}
-    \end{tabular}
+    \begin{NiceTabular}{l}[...] 
+    \label{tab:example}
+    \CodeBefore
+    \Body
+
+    Last name & First name & Birth day \\
+
+    \CodeAfter
+    \end{NiceTabular}
     """.strip()
     # tokens = parser.expander.expand(text)
     out = parser.parse(text, postprocess=True)

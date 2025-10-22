@@ -206,3 +206,28 @@ def test_proper_cells_with_braces():
     equation = out[0]
     assert len(equation.children) == 1 and isinstance(equation.children[0], TabularNode)
     assert_out_tabular(equation.children)
+
+
+def test_nicetabular():
+    parser = Parser()
+
+    text = r"""
+    \begin{NiceTabular}{l}[...]
+    \label{tab:example}
+    \CodeBefore
+    \Body
+    \CodeAfter
+
+    Last name & First name & Birth day
+    \end{NiceTabular}
+    """.strip()
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+    assert tabular.labels == ["tab:example"]
+    assert len(tabular.row_nodes) == 1
+    row0_cells = tabular.row_nodes[0].cells
+    assert len(row0_cells) == 3
+    assert row0_cells[0].body == [TextNode("Last name")]
+    assert row0_cells[1].body == [TextNode("First name")]
+    assert row0_cells[2].body == [TextNode("Birth day")]
