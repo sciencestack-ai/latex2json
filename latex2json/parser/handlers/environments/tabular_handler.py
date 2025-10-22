@@ -85,6 +85,9 @@ def tabular_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[AS
     return [tabular_node]
 
 
+NICE_TABULAR_IGNORE_PATTERNS = ["CodeBefore", "CodeAfter", "Body", "rotate"]
+
+
 def nice_tabular_handler(
     parser: ParserCore, token: EnvironmentStartToken
 ) -> List[ASTNode]:
@@ -106,7 +109,7 @@ def nice_tabular_handler(
     for node in body:
         # strip out CodeBefore and Body and CodeAfter
         if isinstance(node, CommandNode):
-            if node.name in ["CodeBefore", "CodeAfter", "Body"]:
+            if node.name in NICE_TABULAR_IGNORE_PATTERNS:
                 continue
         filtered.append(node)
     env_node.set_body(filtered)
