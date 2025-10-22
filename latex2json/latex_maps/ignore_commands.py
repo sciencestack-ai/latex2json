@@ -128,6 +128,7 @@ formatting_patterns = {
     "tracingpages": "=i",
     # language
     "setdefaultlanguage": 1,
+    "foreignlanguage": "{",  # \foreignlanguage{language}{text}, but only strip out \foreignlanguage{language}, preserving {text}
     # class/MSC
     "subjclass": "[{",
     "MSC": "{",
