@@ -200,3 +200,31 @@ inner
     assert body_str.endswith("MY XXX")
 
     assert not expander.get_macro("xxx")  # no longer in scope!
+
+
+def test_newenviron_basic():
+    expander = Expander()
+
+    text = r"""
+\def\xxx{XXX}
+\NewEnviron{ack}{%
+  \xxx
+  \BODY
+  haha
+}
+
+\begin{ack}
+Middle body
+\end{ack}
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+
+    assert out[0] == EnvironmentStartToken("ack")
+    assert out[-1] == Token(TokenType.ENVIRONMENT_END, "ack")
+
+    body = out[1:-1]
+    body_str = expander.convert_tokens_to_str(body).strip()
+    assert body_str.startswith("XXX")
+    assert "Middle body" in body_str
+    assert body_str.endswith("haha")

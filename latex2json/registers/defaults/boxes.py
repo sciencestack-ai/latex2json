@@ -6,6 +6,7 @@ BASE_BOXES = [
 
 ADVANCED_BOX_SPECS = {
     "fbox": "{",  # \fbox{text}
+    "boxed": "{",  # \boxed{text}
     "parbox": "[[[{{",  # \parbox[pos][height][inner-pos]{width}{text}
     "makebox": "[[{",  # \makebox[width]{text}
     "framebox": "[[{",  # \framebox[width][pos]{text}

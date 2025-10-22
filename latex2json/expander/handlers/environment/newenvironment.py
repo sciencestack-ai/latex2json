@@ -6,6 +6,7 @@ from latex2json.expander.handlers.primitives.declarations.declaration_utils impo
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import split_tokens_by_predicate
 
 
 class NewEnvironmentMacro(Macro):
@@ -65,6 +66,45 @@ class NewEnvironmentMacro(Macro):
         return []
 
 
+def newenviron_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+    r"""
+    \NewEnviron{env_name}{definition}
+    """
+    env_name = expander.parse_brace_name()
+    expander.skip_whitespace()
+    definition = expander.parse_brace_as_tokens()
+    if env_name is None:
+        expander.logger.warning(f"\\NewEnviron expects an environment name")
+        return None
+    if definition is None:
+        expander.logger.warning(f"\\NewEnviron expects a definition")
+        return None
+    body_split = split_tokens_by_predicate(
+        definition,
+        lambda tok: tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "BODY",
+    )
+    begin_definition = []
+    end_definition = []
+    if body_split:
+        begin_definition = body_split[0]
+        if len(body_split) > 1:
+            end_definition = body_split[1]
+
+    env_def = EnvironmentDefinition(
+        name=env_name,
+        begin_definition=begin_definition,
+        end_definition=end_definition,
+        num_args=0,
+        default_arg=None,
+        has_direct_command=True,
+    )
+
+    expander.register_environment(
+        env_name, env_def, is_global=True, is_user_defined=True
+    )
+    return []
+
+
 def register_newenvironment(expander: ExpanderCore):
     expander.register_macro(
         "\\newenvironment",
@@ -77,19 +117,36 @@ def register_newenvironment(expander: ExpanderCore):
         is_global=True,
     )
 
+    expander.register_handler("NewEnviron", newenviron_handler, is_global=True)
+
 
 if __name__ == "__main__":
-    expander = ExpanderCore()
-    register_newenvironment(expander)
+    from latex2json.expander.expander import Expander
 
-    # Basic environment
-    expander.expand(r"\newenvironment{test}{Begin test}{End test}")
-    print(expander.expand(r"\begin{test}Content\end{test}"))
+    expander = Expander()
 
-    # Environment with arguments
-    expander.expand(r"\newenvironment{boxed}[1]{#1: \begin{box}}{\\end{box}}")
-    print(expander.expand(r"\begin{boxed}{Title}Content\end{boxed}"))
+    # # Basic environment
+    # expander.expand(r"\newenvironment{test}{Begin test}{End test}")
+    # print(expander.expand(r"\begin{test}Content\end{test}"))
 
-    # Environment with default argument
-    expander.expand(r"\newenvironment{note}[1][Note]{{\bf #1:}}{}")
-    print(expander.expand(r"\begin{note}Content\end{note}"))
+    # # Environment with arguments
+    # expander.expand(r"\newenvironment{boxed}[1]{#1: \begin{box}}{\\end{box}}")
+    # print(expander.expand(r"\begin{boxed}{Title}Content\end{boxed}"))
+
+    # # Environment with default argument
+    # expander.expand(r"\newenvironment{note}[1][Note]{{\bf #1:}}{}")
+    # print(expander.expand(r"\begin{note}Content\end{note}"))
+
+    text = r"""
+    \def\xxx{xxx}
+\NewEnviron{ack}{%
+  \xxx
+  \BODY
+  haha
+}
+
+\begin{ack}
+Yo
+\end{ack}
+"""
+    out = expander.expand(text)
