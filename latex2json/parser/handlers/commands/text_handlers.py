@@ -114,7 +114,7 @@ def make_text_handler(style: Optional[FontStyle] = None) -> Handler:
 def textcolor_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     color_name = parser.parse_color_name()
     if not color_name:
-        parser.logger.warning("\\textcolor expects a color name")
+        parser.logger.info("\\textcolor expects a color name")
         return []
 
     cmd_name = "%s{%s}" % (token.to_str(), color_name)

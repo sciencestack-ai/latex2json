@@ -30,6 +30,7 @@ def test_text_handlers():
     text = r"""
     \definecolor{red}{rgb}{1,0,0}
     \textcolor{red}{RED}
+    \textcolor[RGB]{0,1,0}{GREEN}
     \textbf{Bold text}
     \textit{Italic text}
     \texttt{Monospace text}
@@ -42,6 +43,7 @@ def test_text_handlers():
 
     expected_text_style_pairs = [
         ("RED", ["color=red"]),
+        ("GREEN", ["color=rgb(0,1,0)"]),
         ("Bold text", ["bold"]),
         ("Italic text", ["italic"]),
         ("Monospace text", ["monospace"]),

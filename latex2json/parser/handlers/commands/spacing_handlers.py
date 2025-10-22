@@ -72,6 +72,7 @@ def register_spacing_handlers(parser: ParserCore):
 
     for newline in [
         "newline",
+        "@centercr",
         "par",
         "pagebreak",
         "filbreak",

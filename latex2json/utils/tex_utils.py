@@ -59,6 +59,10 @@ def parse_key_val_string(keyval_str: str, include_braces=True) -> Dict[str, str]
     return result
 
 
+def _rgb_string(r: int, g: int, b: int) -> str:
+    return f"rgb({r},{g},{b})"
+
+
 def convert_color_to_css(model: str, spec: str) -> str:
     """Convert LaTeX color specifications to CSS values"""
 
@@ -67,13 +71,13 @@ def convert_color_to_css(model: str, spec: str) -> str:
         # Input: "0.2, 0.4, 0.8"
         values = [float(x.strip()) for x in spec.split(",")]
         rgb_values = [int(round(v * 255)) for v in values]
-        return f"rgb({rgb_values[0]}, {rgb_values[1]}, {rgb_values[2]})"
+        return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "RGB":
         # LaTeX: RGB values 0-255 → CSS: same
         # Input: "255, 100, 50"
         values = [int(x.strip()) for x in spec.split(",")]
-        return f"rgb({values[0]}, {values[1]}, {values[2]})"
+        return _rgb_string(values[0], values[1], values[2])
 
     elif model == "HTML":
         # LaTeX: hex without # → CSS: hex with #
@@ -92,14 +96,14 @@ def convert_color_to_css(model: str, spec: str) -> str:
         g = int(255 * (1 - m) * (1 - k))
         b = int(255 * (1 - y) * (1 - k))
 
-        return f"rgb({r}, {g}, {b})"
+        return _rgb_string(r, g, b)
 
     elif model == "gray" or model == "grey":
         # LaTeX: gray value 0-1 → CSS: same value for R, G, B
         # Input: "0.7"
         gray_value = float(spec.strip())
         rgb_value = int(round(gray_value * 255))
-        return f"rgb({rgb_value}, {rgb_value}, {rgb_value})"
+        return _rgb_string(rgb_value, rgb_value, rgb_value)
 
     elif model == "hsb":
         # LaTeX: HSB values → CSS: convert to RGB
@@ -112,7 +116,7 @@ def convert_color_to_css(model: str, spec: str) -> str:
         r, g, b = colorsys.hsv_to_rgb(h, s, b)
         rgb_values = [int(round(c * 255)) for c in (r, g, b)]
 
-        return f"rgb({rgb_values[0]}, {rgb_values[1]}, {rgb_values[2]})"
+        return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     else:
         # Unknown model - return a fallback

@@ -3,7 +3,7 @@ from latex2json.latex_maps.fonts import (
     TEXT_MODE_COMMANDS,
 )
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import BEGIN_BRACKET_TOKEN, END_BRACKET_TOKEN, Token
 from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
@@ -21,9 +21,11 @@ def text_handler(expander: ExpanderCore, token: Token):
 
 def textcolor_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
-    color = expander.parse_brace_name()
-    if not color:
-        expander.logger.warning("\\textcolor expects a color {...}")
+    model_code_tokens = expander.parse_bracket_as_tokens(expand=True)
+    expander.skip_whitespace()
+    color_tokens = expander.parse_brace_as_tokens(expand=True)
+    if not color_tokens:
+        expander.logger.info("\\textcolor expects a color {...}")
         return None
     expander.skip_whitespace()
 
@@ -31,9 +33,18 @@ def textcolor_handler(expander: ExpanderCore, token: Token):
     expander.state.push_mode(ProcessingMode.TEXT)
     out_tokens = None
     text_tokens = expander.parse_immediate_token(expand=True)
+
     if text_tokens:
-        color_brace_tokens = expander.convert_str_to_tokens("{" + color + "}")
-        out_tokens = [token] + color_brace_tokens + wrap_tokens_in_braces(text_tokens)
+        out_tokens = [token]
+        if model_code_tokens:
+            out_tokens += [
+                BEGIN_BRACKET_TOKEN.copy(),
+                *model_code_tokens,
+                END_BRACKET_TOKEN.copy(),
+            ]
+        out_tokens += wrap_tokens_in_braces(color_tokens) + wrap_tokens_in_braces(
+            text_tokens
+        )
     expander.state.pop_mode()
     return out_tokens
 

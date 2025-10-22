@@ -167,7 +167,7 @@ def test_cellcolor_and_styling():
     assert cell_str.replace(" ", "") == "111\n222"
 
     # inner cellcolor style is preserved!
-    assert cell1.styles == ["color=rgb(255, 0, 0)"]
+    assert cell1.styles == ["color=rgb(255,0,0)"]
 
 
 def test_proper_cells_with_braces():

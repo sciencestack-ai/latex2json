@@ -127,6 +127,9 @@ ALGORITHM_ENVIRONMENTS = {
     "algorithm": EnvironmentDefinition(
         "algorithm", num_args=1, default_arg=[], is_float_env=True
     ),
+    "algorithm*": EnvironmentDefinition(
+        "algorithm*", num_args=1, default_arg=[], is_float_env=True
+    ),
     "algorithmic": EnvironmentDefinition(
         "algorithmic", env_type=EnvironmentType.VERBATIM, num_args=1, default_arg=[]
     ),
