@@ -181,12 +181,14 @@ class CommandWithArgsToken(Token):
         args: List[List[Token]] = [],
         opt_args: List[List[Token]] = [],
         numbering: Optional[str] = None,
+        counter_name: Optional[str] = None,
     ):
         super().__init__(TokenType.COMMAND_WITH_ARGS, value=name)
         self.numbering = numbering
         self.name = name
         self.args = args
         self.opt_args = opt_args
+        self.counter_name = counter_name
 
     @property
     def num_req_args(self) -> int:
@@ -224,6 +226,7 @@ class CommandWithArgsToken(Token):
             args=deepcopy(self.args),
             opt_args=deepcopy(self.opt_args),
             numbering=self.numbering,
+            counter_name=self.counter_name,
         )
 
     def __eq__(self, other: Token) -> bool:
@@ -234,10 +237,13 @@ class CommandWithArgsToken(Token):
             and self.args == other.args
             and self.opt_args == other.opt_args
             and self.numbering == other.numbering
+            # and self.counter_name == other.counter_name
         )
 
     def __str__(self) -> str:
         out = f"{self.type.name:18} -> {self.name}"
+        if self.counter_name:
+            out += f" [counter:{self.counter_name}]"
         if self.numbering:
             out += f"({self.numbering})"
         if self.opt_args:

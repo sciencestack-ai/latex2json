@@ -35,6 +35,7 @@ def make_section_handler(
             args=[content],
             opt_args=expanded_opt_args,
             numbering=numbering,
+            counter_name=counter_name,
         )
         return [out_token]
 

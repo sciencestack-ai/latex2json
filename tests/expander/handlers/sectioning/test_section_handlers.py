@@ -15,6 +15,7 @@ def mock_section_token(
     content: str,
     opt_arg: Optional[str] = None,
     numbering: Optional[str] = None,
+    counter_name: Optional[str] = None,
 ):
 
     content_tokens = expander.convert_str_to_tokens(content)
@@ -24,6 +25,7 @@ def mock_section_token(
         args=[content_tokens],
         opt_args=[opt_arg_tokens] if opt_arg_tokens else [],
         numbering=numbering,
+        counter_name=counter_name,
     )
 
     return [section_token]

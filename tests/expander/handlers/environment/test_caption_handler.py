@@ -9,9 +9,15 @@ def mock_caption_token(
     caption_text: str,
     opt_arg: Optional[str] = None,
     numbering: Optional[str] = None,
+    counter_name: Optional[str] = None,
 ):
     out_tokens = mock_section_token(
-        expander, "caption", caption_text, opt_arg, numbering
+        expander,
+        "caption",
+        caption_text,
+        opt_arg,
+        numbering=numbering,
+        counter_name=counter_name,
     )
     return out_tokens
 

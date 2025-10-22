@@ -131,5 +131,5 @@ for env in (
     WHITELISTED_ENVIRONMENTS.append(env + "*")
 
 
-WHITELISTED_PACKAGES = ["subfiles", "fancyhdr", "natbib"]
+WHITELISTED_PACKAGES = ["subfiles", "fancyhdr", "natbib", "algorithmic"]
 WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()

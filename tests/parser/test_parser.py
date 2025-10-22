@@ -48,7 +48,9 @@ def test_labels_n_captions_n_figures():
     assert len(figure_body) == 2
     assert isinstance(figure_body[0], CaptionNode)
     caption_node = figure_body[0]
-    assert caption_node == CaptionNode(body=[TextNode("Figure 1")], numbering="1")
+    assert caption_node == CaptionNode(
+        body=[TextNode("Figure 1")], numbering="1", counter_name="figure"
+    )
 
     assert figure_body[1] == IncludeGraphicsNode("example.pdf")
 
@@ -84,6 +86,7 @@ def test_labels_n_captions_n_figures():
         body=[TextNode("Example Image")],
         numbering="2",
         opt_arg=[TextNode("Figure 2")],  # opt arg is env name + numbering
+        counter_name="figure",
     )
 
     assert captionof_node.labels == ["cap:fig2"]

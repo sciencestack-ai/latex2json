@@ -169,32 +169,44 @@ class BaseTableFigureNode(EnvironmentNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = self.env_name
-        if "numbering" not in result:
-            # transfer the numbering of caption node to the table/figure itself
-            caption_token = None
 
-            # BFS search for type='caption' to extract numbering
-            queue = [result["content"]]
-            while queue and not caption_token:
-                current_level = queue.pop(0)
-                for token in current_level:
-                    if not isinstance(token, dict):
-                        continue
-                    if token.get("type") == "caption":
-                        caption_token = token
-                        break
-                    if "content" in token and isinstance(token["content"], list):
-                        queue.append(token["content"])
-            if caption_token and "numbering" in caption_token:
-                result["numbering"] = caption_token["numbering"]
-                # del caption_token["numbering"]
+        if "numbering" not in result:
+            caption_node = self.get_caption_node()
+            if caption_node and caption_node.numbering:
+                result["numbering"] = caption_node.numbering
 
         return result
 
-    def get_caption_node(self) -> Optional[CaptionNode]:
+    def get_caption_node(self, top_level_only: bool = True) -> Optional[CaptionNode]:
+        """Get the first caption node.
+
+        Args:
+            top_level_only: If True, don't traverse into nested table/figure environments
+                           (e.g., subfigures) as they have their own captions.
+        """
+
+        def dfs(node: ASTNode) -> Optional[CaptionNode]:
+            if isinstance(node, CaptionNode):
+                return node
+
+            # Don't traverse into nested table/figure containers
+            if (
+                top_level_only
+                and isinstance(node, BaseTableFigureNode)
+                and node is not self
+            ):
+                return None
+
+            for child in node.children:
+                result = dfs(child)
+                if result:
+                    return result
+            return None
+
         for child in self.body:
-            if isinstance(child, CaptionNode):
-                return child
+            result = dfs(child)
+            if result:
+                return result
         return None
 
     def copy(self):

@@ -9,10 +9,12 @@ class CaptionNode(ASTNode):
         body: List[ASTNode],
         opt_arg: List[ASTNode] = [],
         numbering: Optional[str] = None,
+        counter_name: Optional[str] = None,
     ):
         super().__init__()
         self.opt_arg = opt_arg
         self.numbering = numbering
+        self.counter_name = counter_name
 
         self.set_children(body)
 
@@ -41,7 +43,10 @@ class CaptionNode(ASTNode):
     def __eq__(self, other: ASTNode):
         if not isinstance(other, CaptionNode):
             return False
-        same = self.numbering == other.numbering
+        same = (
+            self.numbering == other.numbering
+            and self.counter_name == other.counter_name
+        )
         if not same:
             return False
         return check_asts_equal(self.body, other.body) and check_asts_equal(
@@ -56,6 +61,8 @@ class CaptionNode(ASTNode):
         #     result["opt_arg"] = [child.to_json() for child in self.opt_arg]
         if self.numbering:
             result["numbering"] = self.numbering
+        if self.counter_name:
+            result["counter_name"] = self.counter_name
         return result
 
     def copy(self):
@@ -63,4 +70,5 @@ class CaptionNode(ASTNode):
             body=self.copy_nodes(self.body),
             opt_arg=self.copy_nodes(self.opt_arg),
             numbering=self.numbering,
+            counter_name=self.counter_name,
         )

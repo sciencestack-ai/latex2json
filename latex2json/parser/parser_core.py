@@ -662,7 +662,10 @@ class ParserCore:
             arg_nodes = self.process_tokens(args, scoped=True)
             opt_arg_nodes = self.process_tokens(opt_args, postprocess=True)
             caption_node = CaptionNode(
-                body=arg_nodes, opt_arg=opt_arg_nodes, numbering=numbering
+                body=arg_nodes,
+                opt_arg=opt_arg_nodes,
+                numbering=numbering,
+                counter_name=token.counter_name,
             )
             self.push_env_stack(caption_node)
             return [caption_node]
