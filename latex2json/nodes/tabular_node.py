@@ -63,7 +63,8 @@ class CellNode(ASTNode):
         return content
 
     def __str__(self):
-        return self.detokenize()
+        out = ", ".join(child.__str__() for child in self.children)
+        return "[" + out + "]"
 
     def to_json(self):
         result = super().to_json()
@@ -112,7 +113,8 @@ class RowNode(ASTNode):
         return " & ".join(cell.detokenize() for cell in self.cells)
 
     def __str__(self):
-        return self.detokenize()
+        out = ", ".join(cell.__str__() for cell in self.cells)
+        return "[" + out + "]"
 
     def to_json(self):
         result = super().to_json()

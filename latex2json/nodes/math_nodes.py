@@ -118,6 +118,7 @@ class EquationNode(ASTNode):
         for i, child in enumerate(childs):
             node = child
             styles = child.styles
+            labels = child.labels
             if isinstance(child, CommandNode):
                 cmd_str = child.detokenize()
                 node = TextNode(cmd_str)
@@ -134,6 +135,7 @@ class EquationNode(ASTNode):
             else:
                 node = child.copy()
             node.add_styles(styles)
+            node.labels = labels
             nodes.append(node)
             if should_add_space_after(i):
                 nodes.append(TextNode(" "))
