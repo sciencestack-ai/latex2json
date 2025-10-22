@@ -7,6 +7,7 @@ from latex2json.expander.packages.thmtools import register_thmtools
 from latex2json.expander.packages.tcolorbox import register_tcolorbox
 from latex2json.expander.packages.titling import register_titling
 from latex2json.expander.packages.siunitx import register_siunitx
+from latex2json.expander.packages.enumitem import register_enumitem
 
 
 def register_packages(expander: ExpanderCore):
@@ -18,3 +19,4 @@ def register_packages(expander: ExpanderCore):
     register_epsfig(expander)
     register_titling(expander)
     register_siunitx(expander)
+    register_enumitem(expander)

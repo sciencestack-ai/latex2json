@@ -2,6 +2,7 @@ from typing import List
 from latex2json.nodes import DisplayType, TextNode, VerbatimNode, IncludeGraphicsNode
 from latex2json.nodes.bibliography_nodes import BibEntryNode
 from latex2json.nodes.environment_nodes import TheoremNode
+from latex2json.nodes.list_item_node import ListNode
 from latex2json.nodes.math_nodes import EquationNode
 from latex2json.nodes.ref_cite_url_nodes import RefNode
 from latex2json.nodes.section_nodes import SectionNode
@@ -236,3 +237,23 @@ def test_with_bib():
     # check that the bib entries are parsed
     bib_nodes: List[BibEntryNode] = find_nodes_by_type(nodes, BibEntryNode)
     assert len(bib_nodes) >= 1
+
+
+def test_newlist():
+    text = r"""
+\newlist{inlinelist}{itemize*}{1}
+\setlist[inlinelist,1]{label=(\roman*)} % ignored
+\begin{inlinelist}
+    \item Item 1
+    \item Item 2
+\end{inlinelist}
+""".strip()
+    parser = Parser()
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    assert isinstance(out[0], ListNode)
+    list_node = out[0]
+    assert list_node.list_type == "itemize"
+    assert list_node.is_inline == True
+    assert len(list_node.list_items) == 2

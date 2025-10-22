@@ -78,6 +78,8 @@ def test_ignore_formatting_handlers():
 
     \pdfoptionpdfminorversion 6
     \addto\extrasenglish{...}
+
+    \looseness=-1
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

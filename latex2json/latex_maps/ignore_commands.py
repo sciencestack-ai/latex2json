@@ -34,6 +34,7 @@ formatting_patterns = {
     "NeedsTeXFormat": 1,
     "ProvidesClass": "{[",
     "ProvidesPackage": "{[",
+    "looseness": "=i",
     # Float-related formatting
     "floatstyle": 1,
     "restylefloat": 1,

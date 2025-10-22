@@ -17,7 +17,11 @@ def _make_counter_format_handler(
     def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         counter_name = parse_counter_name(expander)
         if not counter_name:
-            expander.logger.warning(rf"\{format_name}: Missing counter name argument")
+            # parse asterisk (from enumitem)
+            asterisk = expander.parse_asterisk()
+            if asterisk:
+                return None
+            expander.logger.info(rf"\{format_name}: Missing counter name argument")
             return None
 
         value = expander.state.get_counter_value(counter_name)

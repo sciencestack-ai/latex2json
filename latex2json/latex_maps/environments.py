@@ -228,21 +228,43 @@ TABULAR_ENVIRONMENTS = {
 
 # List environments
 LIST_ENVIRONMENTS = {
-    "list": EnvironmentDefinition("list", num_args=2, has_direct_command=True),
-    "trivlist": EnvironmentDefinition("trivlist", has_direct_command=True),
+    "list": EnvironmentDefinition(
+        "list", num_args=2, has_direct_command=True, env_type=EnvironmentType.LIST
+    ),
+    "trivlist": EnvironmentDefinition(
+        "trivlist", has_direct_command=True, env_type=EnvironmentType.LIST
+    ),
     "itemize": EnvironmentDefinition(
-        "itemize", num_args=1, default_arg=[], has_direct_command=True
+        "itemize",
+        num_args=1,
+        default_arg=[],
+        has_direct_command=True,
+        env_type=EnvironmentType.LIST,
     ),
     "enumerate": EnvironmentDefinition(
-        "enumerate", num_args=1, default_arg=[], has_direct_command=True
+        "enumerate",
+        num_args=1,
+        default_arg=[],
+        has_direct_command=True,
+        env_type=EnvironmentType.LIST,
     ),  # enumitem package has [] arg
     "description": EnvironmentDefinition(
-        "description", num_args=1, default_arg=[], has_direct_command=True
+        "description",
+        num_args=1,
+        default_arg=[],
+        has_direct_command=True,
+        env_type=EnvironmentType.LIST,
     ),
     # * versions from enumitem package. Retain * for downstream parser to check inline
-    "itemize*": EnvironmentDefinition("itemize*", num_args=1, default_arg=[]),
-    "enumerate*": EnvironmentDefinition("enumerate*", num_args=1, default_arg=[]),
-    "description*": EnvironmentDefinition("description*", num_args=1, default_arg=[]),
+    "itemize*": EnvironmentDefinition(
+        "itemize*", num_args=1, default_arg=[], env_type=EnvironmentType.LIST
+    ),
+    "enumerate*": EnvironmentDefinition(
+        "enumerate*", num_args=1, default_arg=[], env_type=EnvironmentType.LIST
+    ),
+    "description*": EnvironmentDefinition(
+        "description*", num_args=1, default_arg=[], env_type=EnvironmentType.LIST
+    ),
 }
 
 # Mathematical environments

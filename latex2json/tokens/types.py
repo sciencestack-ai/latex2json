@@ -34,6 +34,7 @@ class EnvironmentType(Enum):
     EQUATION_MATRIX_OR_ARRAY = "matrix_or_array"
     THEOREM = "theorem"
     VERBATIM = "verbatim"
+    LIST = "list"
 
 
 # --- Define the Token Class ---
