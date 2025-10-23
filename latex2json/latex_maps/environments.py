@@ -185,6 +185,8 @@ LAYOUT_ENVIRONMENTS = {
     "CJK*": EnvironmentDefinition("CJK*", num_args=2),
     # changepage
     "changemargin": EnvironmentDefinition("changemargin", num_args=2),
+    # parcolumns e.g. \begin{parcolumns}[rulebetween]{2}
+    "parcolumns": EnvironmentDefinition("parcolumns", num_args=2, default_arg=[]),
 }
 
 
