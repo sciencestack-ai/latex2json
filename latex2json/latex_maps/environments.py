@@ -230,6 +230,10 @@ TABULAR_ENVIRONMENTS = {
     "tabulary": EnvironmentDefinition("tabular", num_args=1),
     "longtable": EnvironmentDefinition("tabular", num_args=1),
     "longtable*": EnvironmentDefinition("tabular", num_args=1),
+    # NiceTabular args are {...}[...] - ensure to handle separately downstream
+    "NiceTabular": EnvironmentDefinition("NiceTabular"),
+    "NiceTabular*": EnvironmentDefinition("NiceTabular*"),
+    "NiceTabularX": EnvironmentDefinition("NiceTabularX"),
 }
 
 # List environments
