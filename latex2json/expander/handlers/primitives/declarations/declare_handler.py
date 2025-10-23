@@ -135,6 +135,29 @@ def declare_option_handler(
     return []
 
 
+def delcare_textfont_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[list[Token]]:
+    r"""Handler for \DeclareTextFontCommand
+    \DeclareTextFontCommand{\myfont}{\textbf}
+    """
+    expander.skip_whitespace()
+    cmd_tok = expander.parse_command_name_token()
+    expander.skip_whitespace()
+    definition = expander.parse_brace_as_tokens(expand=False)
+    if not cmd_tok:
+        expander.logger.warning("\\DeclareTextFontCommand expects {cmd}{definition}")
+        return None
+
+    def handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
+        expander.push_tokens(definition)
+        return []
+
+    expander.register_handler(cmd_tok, handler, is_global=True, is_user_defined=True)
+
+    return []
+
+
 def register_declare_commands(expander: ExpanderCore):
     expander.register_macro(
         "\\DeclareRobustCommand",
@@ -171,6 +194,16 @@ def register_declare_commands(expander: ExpanderCore):
         is_global=True,
     )
 
+    expander.register_macro(
+        "\\DeclareTextFontCommand",
+        Macro(
+            "\\DeclareTextFontCommand",
+            delcare_textfont_handler,
+            type=MacroType.DECLARATION,
+        ),
+        is_global=True,
+    )
+
     register_ignore_handlers_util(expander, ignored_declare_patterns)
 
 
@@ -180,17 +213,24 @@ if __name__ == "__main__":
     expander = Expander()
     register_declare_commands(expander)
 
-    # Test DeclareRobustCommand
-    expander.expand(r"\DeclareRobustCommand* {\rchi}{{\mathpalette\irchi\relax}}")
-    out1 = expander.expand(r"\rchi")
-    # print("DeclareRobustCommand test:", out)
+    # # Test DeclareRobustCommand
+    # expander.expand(r"\DeclareRobustCommand* {\rchi}{{\mathpalette\irchi\relax}}")
+    # out1 = expander.expand(r"\rchi")
+    # # print("DeclareRobustCommand test:", out)
 
-    # Test DeclareMathOperator
-    expander.expand(r"\DeclareMathOperator*{\sech}{sech}")
-    out2 = expander.expand(r"\sech")
-    # print("DeclareMathOperator test:", out)
+    # # Test DeclareMathOperator
+    # expander.expand(r"\DeclareMathOperator*{\sech}{sech}")
+    # out2 = expander.expand(r"\sech")
+    # # print("DeclareMathOperator test:", out)
 
-    # out3 = expander.expand(r"\DeclareMathAlphabet {\mathbf}{OT1}{cmr}{b}{n} POST")
+    # # out3 = expander.expand(r"\DeclareMathAlphabet {\mathbf}{OT1}{cmr}{b}{n} POST")
 
-    expander.expand(r"\DeclarePairedDelimiter\brc{[}{]}")
-    out4 = expander.expand(r"$1+1=\brc{2343}3$")
+    # expander.expand(r"\DeclarePairedDelimiter\brc{[}{]}")
+    # out4 = expander.expand(r"$1+1=\brc{2343}3$")
+
+    text = r"""
+    \DeclareTextFontCommand{\myfont}{\textbf}
+    \myfont{Hello}
+    """
+    out = expander.expand(text)
+    print(out)

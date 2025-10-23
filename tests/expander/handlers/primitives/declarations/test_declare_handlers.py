@@ -78,3 +78,13 @@ def test_declare_paired_delimiter_invalid():
     # Test missing delimiters
     expander.expand(r"\DeclarePairedDelimiter\testbr{(}") == []
     assert not expander.get_macro("testbr")
+
+
+def test_declare_textfont():
+    expander = Expander()
+    expander.expand(r"\DeclareTextFontCommand{\myfont}{\textbf}")
+    assert expander.get_macro("myfont")
+    assert expander.check_macro_is_user_defined("myfont")
+
+    tokens = expander.expand(r"\myfont{Hello}")
+    assert tokens == expander.expand(r"\textbf{Hello}")

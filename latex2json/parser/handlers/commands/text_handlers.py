@@ -13,7 +13,6 @@ from latex2json.latex_maps.fonts import (
     FontStyleType,
 )
 from latex2json.tokens.types import Token
-from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
 def make_legacy_text_handler(style: FontStyle) -> Handler:
