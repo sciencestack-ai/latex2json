@@ -37,3 +37,18 @@ def test_lst_inline_handler():
         ),
         *expander.convert_str_to_tokens(" POST"),
     ]
+    assert out == expected
+
+    # test with {...} as delimiter
+    text = r"""\lstinline[language=python]{TRICKY} POST"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    expected = [
+        CommandWithArgsToken(
+            "lstinline",
+            args=[expander.convert_str_to_tokens("TRICKY")],
+            opt_args=[expander.convert_str_to_tokens("language=python")],
+        ),
+        *expander.convert_str_to_tokens(" POST"),
+    ]
+    assert out == expected

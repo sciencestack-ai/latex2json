@@ -1,6 +1,7 @@
 from typing import List
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens import Token, CommandWithArgsToken
+from latex2json.tokens.types import BEGIN_BRACE_TOKEN, END_BRACE_TOKEN
 
 
 def verb_handler(expander: ExpanderCore, token: Token):
@@ -24,6 +25,9 @@ def lst_inline_handler(expander: ExpanderCore, token: Token):
     if not delim_token:
         expander.logger.warning("\\lstinline expects a delimiter token")
         return None
+    # note: lstinline also uses {...} as delimiter
+    if delim_token == BEGIN_BRACE_TOKEN:
+        delim_token = END_BRACE_TOKEN
     lst_inline_tokens = expander.parse_tokens_until(
         lambda tok: tok == delim_token, consume_predicate=True, verbatim=True
     )
