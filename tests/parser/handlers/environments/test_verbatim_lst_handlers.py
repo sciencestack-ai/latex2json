@@ -22,3 +22,12 @@ def test_lstlisting_handler():
     out = parser.parse(text)
     assert len(out) == 1 and isinstance(out[0], VerbatimNode)
     assert out[0] == VerbatimNode(body, title="language=Python")
+
+
+def test_minted_handler():
+    parser = Parser()
+
+    text = r"\begin{minted}[fontsize=\small, bgcolor=gray!10]{javascript}const x = 10;\end{minted}"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], VerbatimNode)
+    assert out[0] == VerbatimNode("const x = 10;", title="javascript")

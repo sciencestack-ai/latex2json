@@ -120,6 +120,9 @@ VERBATIM_ENVIRONMENTS = {
     "lstlisting": EnvironmentDefinition(
         "lstlisting", env_type=EnvironmentType.VERBATIM
     ),
+    "minted": EnvironmentDefinition(
+        "minted", env_type=EnvironmentType.VERBATIM, num_args=2, default_arg=[]
+    ),
     "comment": EnvironmentDefinition("comment", env_type=EnvironmentType.VERBATIM),
 }
 
