@@ -30,7 +30,7 @@ def csname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
 
     block = process_csname_block(expander)
     if block is None:
-        expander.logger.warning("\\csname expects a block")
+        expander.logger.warning("\\csname expects a block ending with \\endcsname")
         return None
 
     str_name = expander.convert_tokens_to_str(block)

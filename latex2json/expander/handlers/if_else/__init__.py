@@ -15,6 +15,7 @@ from latex2json.expander.handlers.if_else.if_format_handlers import (
     register_if_format_handlers,
 )
 from latex2json.expander.handlers.if_else.ifvoid import register_ifvoid
+from latex2json.expander.handlers.if_else.ifcsname import register_ifcsname
 
 
 def register_if_else(expander: ExpanderCore):
@@ -31,3 +32,4 @@ def register_if_else(expander: ExpanderCore):
     register_ifdefempty(expander)
     register_if_format_handlers(expander)
     register_ifvoid(expander)
+    register_ifcsname(expander)

@@ -112,6 +112,7 @@ formatting_patterns = {
     "flushtop": 0,
     # lists and items
     "lstset": "{",
+    "lstdefinestyle": "{{",
     "setlist": "[{",
     "setitemize": "[{",
     "setenumerate": "[{",
