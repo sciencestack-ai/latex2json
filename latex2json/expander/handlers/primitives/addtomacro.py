@@ -4,7 +4,7 @@ from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token
 
 
-def gaddtomacro_handler(expander: ExpanderCore, token: Token):
+def addtomacro_handler(expander: ExpanderCore, token: Token):
     r"""
     \g@addto@macro{<macro>}{...}
 
@@ -47,7 +47,8 @@ def gaddtomacro_handler(expander: ExpanderCore, token: Token):
 
 
 def register_addtomacro_handler(expander: ExpanderCore):
-    expander.register_handler("g@addto@macro", gaddtomacro_handler, is_global=True)
+    for cmd in ["g@addto@macro", "addto"]:
+        expander.register_handler(cmd, addtomacro_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     \makeatletter
 
     \def\foo{foo}
-    \g@addto@macro{\foo}{bar}
+    \addto{\foo}{bar}
 
     \foo
     haha

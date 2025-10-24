@@ -26,7 +26,6 @@ Examples:
 
 formatting_patterns = {
     # language/localization
-    "addto": "{{",  # e.g. \addto\extrasenglish{...}
     "extrasenglish": 0,
     "selectlanguage": "{",
     "pageheight": 1,
