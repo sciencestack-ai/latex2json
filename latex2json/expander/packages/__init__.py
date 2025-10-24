@@ -9,6 +9,7 @@ from latex2json.expander.packages.titling import register_titling
 from latex2json.expander.packages.siunitx import register_siunitx
 from latex2json.expander.packages.enumitem import register_enumitem
 from latex2json.expander.packages.parcolumns import register_parcolumns
+from latex2json.expander.packages.xcolor import register_xcolor
 
 
 def register_packages(expander: ExpanderCore):
@@ -22,3 +23,4 @@ def register_packages(expander: ExpanderCore):
     register_siunitx(expander)
     register_enumitem(expander)
     register_parcolumns(expander)
+    register_xcolor(expander)
