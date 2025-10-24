@@ -25,6 +25,7 @@ BUILTIN_SKIPS = [
     "splittopskip",  # Space at top of split page
     "baselineskip",  # Space between lines
     "lineskip",  # Minimum space between lines
+    "normallineskip",
     "lastskip",
     "normalbaselineskip",  # Normal baseline skip
     "lineskiplimit",  # Threshold for using lineskip

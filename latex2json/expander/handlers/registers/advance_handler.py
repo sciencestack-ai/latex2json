@@ -56,7 +56,7 @@ def make_advance_handler(operation: str = "add"):
             elif operation == "multiply":
                 new_value = cur_value * value
             elif operation == "divide":
-                new_value = cur_value / value
+                new_value = cur_value / value if value != 0 else 0
 
             new_value = int(new_value)
             expander.set_register(register_type, register_name, new_value)

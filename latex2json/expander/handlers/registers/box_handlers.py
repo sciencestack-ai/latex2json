@@ -254,8 +254,7 @@ def base_box_handler(expander: ExpanderCore, token: Token):
 def make_advanced_parse_box_handler(
     command: str, argspec: str
 ) -> Callable[[ExpanderCore, Token], Optional[Box]]:
-    # all content tokens are expanded at time of definition
-    handler = make_generic_command_handler(command, argspec, expand=True)
+    handler = make_generic_command_handler(command, argspec, expand=False)
 
     def content_box_handler(expander: ExpanderCore, token: Token) -> Optional[Box]:
         tokens = handler(expander, token)
@@ -265,6 +264,8 @@ def make_advanced_parse_box_handler(
                 # the last arg is the text content itself
                 last_arg = args[-1]
                 if isinstance(last_arg, list):
+                    # expand the last arg tokens
+                    last_arg = expander.expand_tokens(last_arg)
                     content_tokens = strip_whitespace_tokens(last_arg)
                     box = Box(type=command, content=content_tokens, args=args[:-1])
                     # if command == "mbox":

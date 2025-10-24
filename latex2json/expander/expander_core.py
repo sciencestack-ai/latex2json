@@ -1005,26 +1005,52 @@ class ExpanderCore:
             return None
         return self.get_register_value(out[0], out[1])
 
-    def parse_dimensions(self, parse_unknown=False) -> Optional[int]:
-        parsed = self._parse_dimensions()
+    def parse_dimensions(self, parse_unknown=True) -> Optional[int]:
+        """
+        Parse dimensions from the token stream.
+
+        Args:
+            parse_unknown: If True, parse unknown control sequences that could be
+                          unregistered or unhandled register macros in real-world LaTeX
+                          (e.g., @someskip, custom dimension registers)
+        """
+        parsed = self._parse_dimensions(parse_unknown=parse_unknown)
         if parsed is None:
-            if parse_unknown:
-                self.parse_immediate_token()
-                return 0
             return None
         return parsed[0]
 
-    def _parse_dimensions(self) -> Optional[Tuple[int, bool]]:
+    def _parse_dimensions(self, parse_unknown=True) -> Optional[Tuple[int, bool]]:
         """
         Cases: [optional multiplier float] dimen_register OR  dimension_float [space] dimension_unit
+
+        Args:
+            parse_unknown: If True, parse unknown control sequences that could be
+                          unregistered or unhandled register macros in real-world LaTeX
+                          (e.g., @someskip, custom dimension registers)
 
         Returns: (int, bool) where int is the parsed value and bool is whether relax
         """
         register_value = self.parse_register_value(expand=True)
         if register_value is not None:
             return register_value, False
+        self.skip_whitespace()
+
         parsed_float = self._parse_float(expand_registers=False)
         if not parsed_float:
+            if parse_unknown:
+                # Parse unknown control sequences that could be unregistered or
+                # unhandled register macros in real-world LaTeX (e.g., @someskip)
+                next_tok = self.peek()
+                if next_tok and self.is_control_sequence(next_tok):
+                    if next_tok == RELAX_TOKEN:
+                        self.consume()
+                        relax = True
+                        return 0, True
+
+                    elif not self.get_macro(next_tok):
+                        # Unknown control sequence - treat as 0 value register?
+                        self.consume()
+                        return 0, False
             return None
         digits, relax = parsed_float
 
