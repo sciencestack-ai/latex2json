@@ -66,7 +66,7 @@ class Tokenizer:
 
         return tokens
 
-    def _get_catcode_sequence(self, start: int, catcode: Catcode) -> str:
+    def _get_catcode_sequence(self, start: int, catcode: Catcode) -> Tuple[str, int]:
         """
         Returns a sequence of characters from the current position
         that have the specified catcode.
