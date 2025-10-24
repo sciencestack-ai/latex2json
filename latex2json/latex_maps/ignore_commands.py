@@ -53,6 +53,7 @@ formatting_patterns = {
     "ProcessOptions": 0,  # Actually takes no arguments
     "ExecuteBibliographyOptions": 1,
     # pdf options
+    "pdfstringdefDisableCommands": "{",
     "pdfinfo": "{",
     "pdfinfoomitdate": "{",
     "pdftrailerid": "{",
