@@ -174,7 +174,7 @@ class ExpanderCore:
         self.state.push_env_stack(env_name)
 
     def pop_env_stack(self, env_name: Optional[str] = None):
-        self.state.pop_env_stack(env_name)
+        return self.state.pop_env_stack(env_name)
 
     def _init_macros(self):
         self._init_state_macros()
