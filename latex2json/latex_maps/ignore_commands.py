@@ -31,8 +31,6 @@ formatting_patterns = {
     "pageheight": 1,
     "pagewidth": 1,
     "NeedsTeXFormat": 1,
-    "ProvidesClass": "{[",
-    "ProvidesPackage": "{[",
     "looseness": "=i",
     # Float-related formatting
     "floatstyle": 1,
@@ -52,8 +50,6 @@ formatting_patterns = {
     # Package processing
     "ExecuteOptions": 1,
     "ProcessOptions": 0,  # Actually takes no arguments
-    "PassOptionsToClass": 2,
-    "PassOptionsToPackage": 2,
     "ExecuteBibliographyOptions": 1,
     # pdf options
     "pdfinfo": "{",

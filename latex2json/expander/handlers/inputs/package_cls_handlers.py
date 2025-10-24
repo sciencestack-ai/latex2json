@@ -1,4 +1,5 @@
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
 from latex2json.tokens.types import Token
 
 
@@ -7,6 +8,9 @@ def usepackage_handler(expander: ExpanderCore, token: Token):
     options = expander.parse_bracket_as_tokens(expand=True)
     expander.skip_whitespace()
     packages = expander.parse_brace_name()
+    # opt date arg [...]
+    expander.skip_whitespace()
+    opt_date = expander.parse_bracket_as_tokens(expand=True)
     if not packages:
         expander.logger.warning("No package name provided")
         return None
@@ -74,6 +78,14 @@ def register_package_handlers(expander: ExpanderCore):
     # class
     expander.register_handler("documentclass", documentclass_handler, is_global=True)
     expander.register_handler("LoadClass", loadclass_handler, is_global=True)
+
+    ignore_patterns = {
+        "ProvidesClass": "{[",
+        "ProvidesPackage": "{[",
+        "PassOptionsToClass": 2,
+        "PassOptionsToPackage": 2,
+    }
+    register_ignore_handlers_util(expander, ignore_patterns, expand=True)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,7 @@ def register_if_format_handlers(expander: ExpanderCore):
         "if@newlist": False,
         "ifhmode": True,
         "ifvmode": False,
+        "ifpdf": True,  # set to True since LaTeX mostly compiles to pdf
     }
 
     for name, condition in LATEX_FORMATTING_IFS.items():
