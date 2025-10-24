@@ -10,16 +10,14 @@ BUILTIN_DIMENSIONS = [
     "paperheight",  # Total page height
     "linewidth",
     "columnwidth",  # Width of column (in multicolumn)
-    "columnsep",  # Space between columns
     "columnseprule",  # Width of rule between columns
     "marginparwidth",  # Width of margin notes
-    "marginparsep",  # Space between text and margin notes
+    "marginparpush",
     "oddsidemargin",  # Left margin on odd pages
     "evensidemargin",  # Left margin on even pages
     "topmargin",  # Top margin
     "headheight",  # Height of page headers
     "headwidth",
-    "headsep",  # Space between header and text
     "hoffset",  # Horizontal page offset
     "voffset",  # Vertical page offset
     "unitlength",  # Unit length for picture environment
@@ -30,29 +28,16 @@ BUILTIN_DIMENSIONS = [
     "rightmargin",  # Right margin in lists
     "listparindent",  # Paragraph indent within list items
     "itemindent",  # Additional indent for item bodies
-    "labelsep",  # Space between label and item text
     "labelwidth",  # Width allocated for item labels
     # Table formatting
     "arrayrulewidth",  # Thickness of table rules
     "heavyrulewidth",
-    "arraycolsep",  # Column separation in array environment
-    "tabcolsep",  # Column separation in tabular environment
-    "doublerulesep",  # Space between double rules
     "extrarowheight",  # Extra height added to table rows
     # Math formatting
     "jot",  # Extra space in eqnarray
     "mathsurround",  # Space around inline math
-    # Float formatting
-    "floatsep",  # Space between floats
-    "textfloatsep",  # Space between floats and text
-    "intextsep",  # Space around here floats
-    "dblfloatsep",  # Space between double-column floats
-    "dbltextfloatsep",  # Space between double floats and text
-    # Footnote formatting
-    "footnotesep",  # Space between footnote rule and text
     # Box dimensions (for measuring)
     "fboxrule",  # Thickness of frame box rules
-    "fboxsep",  # Space between frame and contents
     # Sectioning
     "bibindent",  # Indentation in bibliography
     # Page breaking

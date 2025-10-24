@@ -45,4 +45,30 @@ BUILTIN_SKIPS = [
     "@tempskipb",
     "skip@",
     "@topsep",
+    # Column and margin separations
+    "columnsep",  # Space between columns
+    "marginparsep",  # Space between text and margin notes
+    "headsep",  # Space between header and text
+    # List separations
+    "labelsep",  # Space between label and item text
+    # Table separations
+    "arraycolsep",  # Column separation in array environment
+    "tabcolsep",  # Column separation in tabular environment
+    "doublerulesep",  # Space between double rules
+    # Float separations
+    "floatsep",  # Space between floats
+    "textfloatsep",  # Space between floats and text
+    "intextsep",  # Space around here floats
+    "dblfloatsep",  # Space between double-column floats
+    "dbltextfloatsep",  # Space between double floats and text
+    # Footnote separations
+    "footnotesep",  # Space between footnote rule and text
+    # Box separations
+    "fboxsep",  # Space between frame and contents
+    "@fptop",
+    "@fpsep",
+    "@fpbot",
+    "@dblfptop",
+    "@dblfpsep",
+    "@dblfpbot",
 ]

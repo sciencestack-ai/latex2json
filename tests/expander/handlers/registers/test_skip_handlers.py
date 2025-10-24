@@ -40,3 +40,5 @@ def test_ignored_skip_commands():
     for fill in v_fills:
         out = expander.expand(fill)
         assert out == []
+
+    assert expander.expand(r"\skip\footins 8.1pt plus 4pt minus 2pt") == []

@@ -9,6 +9,12 @@ BUILTIN_COUNTS = [
     "floatingpenalty",
     "lastpenalty",
     "spacefactor",
+    "@lowpenalty",
+    "@medpenalty",
+    "@highpenalty",
+    "@beginparpenalty",
+    "@endparpenalty",
+    "@itempenalty",
     #
     "@tempcnta",
     "@tempcntb",
