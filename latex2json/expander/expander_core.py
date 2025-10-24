@@ -166,6 +166,16 @@ class ExpanderCore:
     def is_math_mode(self) -> bool:
         return self.state.is_math_mode
 
+    @property
+    def current_env(self) -> Optional[str]:
+        return self.state.current_env
+
+    def push_env_stack(self, env_name: str):
+        self.state.push_env_stack(env_name)
+
+    def pop_env_stack(self, env_name: Optional[str] = None):
+        self.state.pop_env_stack(env_name)
+
     def _init_macros(self):
         self._init_state_macros()
         self._init_counter_macros()
@@ -1534,8 +1544,6 @@ class ExpanderCore:
             if counter_name:
                 state.step_counter(counter_name)
 
-            state.push_env_stack(out_env_name)
-
             if is_math:
                 state.push_mode(ProcessingMode.MATH_DISPLAY)
 
@@ -1721,8 +1729,6 @@ class ExpanderCore:
 
             if is_math:
                 state.pop_mode()
-
-            state.pop_env_stack()
 
             return out_tokens + [end_token]
 

@@ -21,14 +21,14 @@ def test_float_handler():
     # test float env nested inside its own renewenvironment env (ensure no infinite recursion)
     text = r"""
 \makeatletter
-\renewenvironment{table}
-  {\@float{table}}
+\renewenvironment{myenv}
+  {\@float{myenv}}
   {\end@float}
 \makeatother
 
-\begin{table}TABLE\end{table}
+\begin{myenv}TABLE\end{myenv}
 """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
-    assert out[0] == EnvironmentStartToken("table")
-    assert out[-1] == Token(type=TokenType.ENVIRONMENT_END, value="table")
+    assert out[0] == EnvironmentStartToken("myenv")
+    assert out[-1] == Token(type=TokenType.ENVIRONMENT_END, value="myenv")

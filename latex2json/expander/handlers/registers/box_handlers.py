@@ -127,9 +127,7 @@ def setbox_handler(expander: ExpanderCore, token: Token):
         )
         return None
 
-    if not expander.parse_equals():
-        expander.logger.warning(f"\\setbox expects a =, but found {expander.peek()}")
-        return None
+    expander.parse_equals()
 
     expander.skip_whitespace()
     box = expander.parse_box()

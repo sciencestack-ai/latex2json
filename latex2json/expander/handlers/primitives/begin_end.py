@@ -13,7 +13,6 @@ from latex2json.tokens.types import (
 
 def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     prefix = "\\begin"
-    expander.push_scope()
 
     name = expander.parse_brace_name()
     if name is None:
@@ -21,6 +20,9 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
             f"{prefix} expects an environment name, but found {expander.peek()}"
         )
         return None
+
+    expander.push_scope()
+    expander.push_env_stack(name)
 
     env_def = expander.state.get_environment_definition(name)
 
@@ -32,6 +34,13 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
             expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
         else:
             log_str += " returning default env"
+            # strip out any unknown env optional arg if exists
+            expander.skip_whitespace()
+            bracket_tokens = expander.parse_bracket_as_tokens()
+            if bracket_tokens is not None:
+                log_str += (
+                    f" -> parsed [{expander.convert_tokens_to_str(bracket_tokens)}]"
+                )
         expander.logger.info(log_str)
     elif env_def.begin_handler:
         return env_def.begin_handler(expander, token)
@@ -82,6 +91,7 @@ def end_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
         )
 
     # pop scope at the end!
+    expander.pop_env_stack(name)
     expander.pop_scope()
 
     return out_tokens
