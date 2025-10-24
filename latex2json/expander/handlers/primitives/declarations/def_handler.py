@@ -204,9 +204,12 @@ def register_def(expander: ExpanderCore):
     expander.register_macro(
         "\\def", DefMacro("\\def", is_lazy=True, is_global=False), is_global=True
     )
-    expander.register_macro(
-        "\\edef", DefMacro("\\edef", is_lazy=False, is_global=False), is_global=True
-    )
+    for cmd in ["edef", "protected@edef"]:
+        expander.register_macro(
+            f"\\{cmd}",
+            DefMacro(f"\\{cmd}", is_lazy=False, is_global=False),
+            is_global=True,
+        )
     expander.register_macro(
         "\\gdef", DefMacro("\\gdef", is_lazy=True, is_global=True), is_global=True
     )

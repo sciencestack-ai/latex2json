@@ -29,14 +29,14 @@ def parse_counter_args(
     Returns tuple of (counter_name, value) or None if parsing fails."""
     counter_name = parse_counter_name(expander)
     if not counter_name:
-        expander.logger.warning(rf"\{command_name}: Missing counter name argument")
+        expander.logger.info(rf"\{command_name}: Missing counter name argument")
         return None
 
     # Get the value argument
     expander.skip_whitespace()
     value = expander.parse_brace_as_tokens(expand=True)
     if value is None:
-        expander.logger.warning(rf"\{command_name}: Missing or invalid value argument")
+        expander.logger.info(rf"\{command_name}: Missing or invalid value argument")
         return None
 
     value = expander.convert_tokens_to_str(value)
@@ -69,7 +69,7 @@ def stepcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     r"""Handle \stepcounter{counter_name} - increments counter by 1"""
     counter_name = parse_counter_name(expander)
     if not counter_name:
-        expander.logger.warning(rf"\{token.value}: Missing counter name argument")
+        expander.logger.info(rf"\{token.value}: Missing counter name argument")
         return None
 
     expander.state.step_counter(counter_name)
@@ -89,7 +89,7 @@ def value_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     r"""Handle \value{counter_name} - returns the current value of the counter"""
     counter_name = parse_counter_name(expander)
     if not counter_name:
-        expander.logger.warning(r"\value: Missing counter name argument")
+        expander.logger.info(r"\value: Missing counter name argument")
         return None
 
     return get_counter_value_as_tokens(expander, counter_name)

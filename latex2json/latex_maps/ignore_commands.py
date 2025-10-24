@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "@parboxrestore": 0,
     # language/localization
     "extrasenglish": 0,
     "selectlanguage": "{",

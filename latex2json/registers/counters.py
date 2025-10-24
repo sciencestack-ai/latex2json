@@ -111,6 +111,7 @@ class CounterManager:
 
         # other
         self.new_counter("@topnum")
+        self.new_counter("@mpfn")
 
     def reset_section_counters(self):
         self._init_section_counters()

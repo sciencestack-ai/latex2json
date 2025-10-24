@@ -61,10 +61,18 @@ def font_dimen_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def resetfont_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    cmd = expander.parse_immediate_token()
+    # simply ignore?
+    return []
+
+
 def register_font_handlers(expander: ExpanderCore):
     expander.register_handler(r"\font", font_handler, is_global=True)
     expander.register_handler(r"\newfont", newfont_handler, is_global=True)
     expander.register_handler(r"\fontdimen", font_dimen_handler, is_global=True)
+    expander.register_handler(r"\reset@font", resetfont_handler, is_global=True)
 
     ignore_patterns = {
         "newfam": "\\",  # e.g. \newfam\fontfam
