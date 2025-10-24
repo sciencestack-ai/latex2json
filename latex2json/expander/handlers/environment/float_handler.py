@@ -1,10 +1,12 @@
 from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.environment.environment_utils import (
+    create_environment_start_token,
+    create_environment_end_token,
+)
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import (
-    EnvironmentStartToken,
-    EnvironmentType,
     Token,
     TokenType,
 )
@@ -19,39 +21,32 @@ def is_end_float_token(token: Token) -> bool:
 
 
 def float_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-    r"""Handle float tokens."""
+    r"""Handle float tokens.
+
+    Returns token directly instead of using push_tokens [\begin] to avoid infinite recursion,
+    since our impl deviates from latex in that \begin is directly evaluated instead of \begin->@float tex behavior
+    """
     expander.skip_whitespace()
     env_name = expander.parse_brace_name()
     if not env_name:
         expander.logger.warning("\\@float: Missing environment name")
         return None
 
-    expander.state.push_env_stack(env_name)
+    expander.push_env_stack(env_name)
 
-    env_def = expander.get_environment_definition(env_name)
-
-    display_name = env_name
-    env_type = EnvironmentType.DEFAULT
-    if env_def:
-        display_name = env_def.display_name
-        env_type = env_def.env_type
-    begin_token = EnvironmentStartToken(
-        env_name,
-        display_name=display_name,
-        env_type=env_type,
-    )
+    begin_token = create_environment_start_token(expander, env_name)
 
     return [begin_token]
 
 
 def endfloat_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
     r"""Handle \end@float tokens."""
-    env_name = expander.state.pop_env_stack()
+    env_name = expander.pop_env_stack()
     if not env_name:
         expander.logger.warning("\\end@float: No float environment to end")
         return []
 
-    end_token = Token(TokenType.ENVIRONMENT_END, env_name)
+    end_token = create_environment_end_token(env_name)
 
     return [end_token]
 
