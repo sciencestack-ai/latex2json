@@ -63,13 +63,10 @@ def subfigure_cmd_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
     subfigure_node = SubFigureNode([])
     parser.push_env_stack(subfigure_node)
     parser.skip_whitespace()
-    caption = parser.parse_bracket_as_nodes()
-    caption_node = None
-    if caption:
-        caption_node = CaptionNode(caption)
+    caption = parser.parse_bracket_as_nodes() or []
     parser.skip_whitespace()
     body = parser.parse_brace_as_nodes() or []
-    body = [caption_node] + body if caption_node else body
+    body = [CaptionNode(caption)] + body
     subfigure_node.set_body(body)
     parser.pop_env_stack(subfigure_node)
     return [subfigure_node]
