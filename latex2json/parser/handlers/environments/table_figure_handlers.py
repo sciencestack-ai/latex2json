@@ -1,5 +1,6 @@
 from typing import List
 from latex2json.nodes.base_nodes import ASTNode
+from latex2json.nodes.caption_node import CaptionNode
 from latex2json.nodes.environment_nodes import (
     TableNode,
     FigureNode,
@@ -43,12 +44,34 @@ def subtable_handler(parser: ParserCore, token: EnvironmentStartToken) -> List[A
     return [subtable_node]
 
 
-def subfigure_handler(
+def subfigure_env_handler(
     parser: ParserCore, token: EnvironmentStartToken
 ) -> List[ASTNode]:
+    r"""\begin{subfigure}[]{}
+    Not to be confused with \subfigure[]{}
+    """
     env = parser.parse_environment(token)
     subfigure_node = SubFigureNode(env.body, env.numbering)
     subfigure_node.labels = env.labels
+    return [subfigure_node]
+
+
+def subfigure_cmd_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    r"""\subfigure[caption]{...}
+    Not to be confused with \begin{subfigure}
+    """
+    subfigure_node = SubFigureNode([])
+    parser.push_env_stack(subfigure_node)
+    parser.skip_whitespace()
+    caption = parser.parse_bracket_as_nodes()
+    caption_node = None
+    if caption:
+        caption_node = CaptionNode(caption)
+    parser.skip_whitespace()
+    body = parser.parse_brace_as_nodes() or []
+    body = [caption_node] + body if caption_node else body
+    subfigure_node.set_body(body)
+    parser.pop_env_stack(subfigure_node)
     return [subfigure_node]
 
 
@@ -65,5 +88,8 @@ def register_table_figure_handlers(parser: ParserCore):
     # subtable
     parser.register_env_handler("subtable", subtable_handler)
 
-    # subfigure
-    parser.register_env_handler("subfigure", subfigure_handler)
+    # subfigure env e.g. \begin{subfigure}
+    parser.register_env_handler("subfigure", subfigure_env_handler)
+
+    # subfigure cmd e.g. \subfigure[]{}
+    parser.register_handler("subfigure", subfigure_cmd_handler)

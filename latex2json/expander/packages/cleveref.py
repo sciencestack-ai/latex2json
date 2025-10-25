@@ -21,6 +21,7 @@ def register_cleveref(expander: ExpanderCore):
     ignore_patterns = {
         "crefname": 3,
         "Crefname": 3,
+        "crefformat": 2,
     }
 
     register_ignore_handlers_util(expander, ignore_patterns)
