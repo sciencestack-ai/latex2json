@@ -123,8 +123,6 @@ class ParserCore:
         )  # file_path -> {filename: prefix}
         self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
 
-        self.preserve_braces_as_text: bool = False
-
     def register_label(self, label: str):
         key = self.filename
         if not key:
@@ -461,14 +459,16 @@ class ParserCore:
                 if self.is_in_tabular():
                     # we need to mark this as a special char to delineate {...\\...} inside cells
                     return [SpecialCharNode("{")]
-                elif self.preserve_braces_as_text:
+                elif self.is_in_math_mode_stack():
+                    # preserve braces as text in math mode stack
                     return [TextNode(token.value)]
                 return []
             elif is_end_group_token(token):
                 self.pop_scope()
                 if self.is_in_tabular():
                     return [SpecialCharNode("}")]
-                elif self.preserve_braces_as_text:
+                elif self.is_in_math_mode_stack():
+                    # preserve braces as text in math mode stack
                     return [TextNode(token.value)]
                 return []
 
@@ -501,6 +501,12 @@ class ParserCore:
 
     def is_in_tabular(self) -> bool:
         return self.is_in_env("tabular")
+
+    def is_in_math_mode_stack(self) -> bool:
+        return any(
+            mode in [ProcessingMode.MATH_INLINE, ProcessingMode.MATH_DISPLAY]
+            for mode in self._mode_stack
+        )
 
     def push_env_stack(self, node: ASTNode):
         """Push a node onto the environment stack."""
@@ -602,9 +608,10 @@ class ParserCore:
 
     def _check_macro_valid(self, macro: Macro | MacroPattern) -> bool:
         valid = True
-        if macro.text_mode_only and self.is_math_mode:
+        in_math_stack = self.is_in_math_mode_stack()
+        if macro.text_mode_only and in_math_stack:
             valid = False
-        elif macro.math_mode_only and not self.is_math_mode:
+        elif macro.math_mode_only and not in_math_stack:
             valid = False
         return valid
 

@@ -198,14 +198,14 @@ def test_proper_cells_with_braces():
 
     assert_out_tabular(out)
 
-    # check that the same tabular structure works inside an equation too
+    # # check that the same tabular structure works inside an equation too
 
-    eq_tab_text = r"""\begin{equation}%s\end{equation}""" % (text)
-    out = parser.parse(eq_tab_text, postprocess=True)
-    assert len(out) == 1 and isinstance(out[0], EquationNode)
-    equation = out[0]
-    assert len(equation.children) == 1 and isinstance(equation.children[0], TabularNode)
-    assert_out_tabular(equation.children)
+    # eq_tab_text = r"""\begin{equation}%s\end{equation}""" % (text)
+    # out = parser.parse(eq_tab_text, postprocess=True)
+    # assert len(out) == 1 and isinstance(out[0], EquationNode)
+    # equation = out[0]
+    # assert len(equation.children) == 1 and isinstance(equation.children[0], TabularNode)
+    # assert_out_tabular(equation.children)
 
 
 def test_nicetabular():

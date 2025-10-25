@@ -80,11 +80,7 @@ def _parse_textcommand_to_nodes(
     if parser.is_math_mode:
         parser.push_mode(ProcessingMode.TEXT)
         parser.skip_whitespace()
-        preserve_braces_as_text = parser.preserve_braces_as_text
-        # force preserve braces as '{}' literal text to keep the braces verbatim for KaTeX
-        parser.preserve_braces_as_text = True
         nodes = parser.parse_brace_as_nodes()
-        parser.preserve_braces_as_text = preserve_braces_as_text
         parser.pop_mode()
         if not nodes:
             return []

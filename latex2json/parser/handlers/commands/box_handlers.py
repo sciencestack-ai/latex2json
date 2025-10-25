@@ -25,14 +25,11 @@ def make_box_handler(cmd: str, argspec: str) -> Handler:
 
     def text_mode_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
         is_math_mode = parser.is_math_mode
-        preserve_braces_as_text = parser.preserve_braces_as_text
         if is_math_mode:
-            parser.preserve_braces_as_text = True
             parser.push_mode(ProcessingMode.TEXT)
         nodes = base_handler(parser, token)
         if is_math_mode:
             parser.pop_mode()
-            parser.preserve_braces_as_text = preserve_braces_as_text
         return nodes
 
     def box_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
