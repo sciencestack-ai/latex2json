@@ -103,6 +103,7 @@ formatting_patterns = {
     "vfill": 0,
     "vfil": 0,
     "sloppy": 0,
+    "balance": 0,
     "flushbottom": 0,
     "flushleft": 0,
     "flushright": 0,

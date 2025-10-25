@@ -96,6 +96,7 @@ CITE_COMMANDS = [
     "citefullauthor",
     "autocite",
     "parencite",
+    "onlinecite",
 ]
 
 
