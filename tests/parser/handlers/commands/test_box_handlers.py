@@ -91,3 +91,10 @@ def test_box_commands_in_mathmode():
     assert eq.children[0] == TextNode(r"\raisebox{1in}{abc }")
     assert eq.children[1] == CiteNode("ref1")
     assert eq.children[2] == TextNode(r"\raisebox{1in}{$123$}")
+
+    # test that braces are preserved for boxes in math mode
+    text = r"$$\hbox{\mathbf{c}_{t}}$$"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    eq = out[0]
+    assert eq.equation_to_str() == r"\hbox{\mathbf{c}_{t}}"

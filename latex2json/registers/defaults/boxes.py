@@ -31,6 +31,7 @@ ADVANCED_BOX_SPECS = {
 KATEX_SUPPORTED_BOXES = [
     "hbox",
     "fbox",
+    "boxed",
     "raisebox",
     "colorbox",
     "fcolorbox",
