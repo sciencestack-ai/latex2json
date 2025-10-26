@@ -117,7 +117,7 @@ formatting_patterns = {
     "setdescription": "[{",
     # toolset/palette
     "mathtoolsset": "[{",
-    "newtagform": "{[{",
+    "newtagform": "{[{{",
     "usetagform": "{",
     # \kern, which is technically spacing but more like a length between characters. so ignore
     "kern": "d",
