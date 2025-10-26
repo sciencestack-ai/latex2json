@@ -136,6 +136,9 @@ class ExpanderCore:
     Drives parsing, manages state, executes commands, and performs expansion.
     """
 
+    # Valid LaTeX file extensions
+    VALID_LATEX_EXTENSIONS = {".tex", ".sty", ".cls", ".ltx", ".dtx"}
+
     def __init__(
         self,
         tokenizer: Optional[Tokenizer] = None,
@@ -626,19 +629,31 @@ class ExpanderCore:
 
     def push_file(self, file_path: str, extension: str = ".tex"):
         file_path = self.get_cwd_path(file_path)
-        ext = os.path.splitext(file_path)[1]
-        if not ext:
-            file_path += extension
-        else:
-            # check if package or class
-            ext = ext.lower()
-            if ext == ".sty":
-                self.load_package(file_path, extension=ext)
-                return
-            elif ext == ".cls":
-                self.load_class(file_path, extension=ext)
-                return
+        ext = os.path.splitext(file_path)[1].lower()
 
+        # If no extension or invalid extension, try to resolve the file
+        if not ext or ext not in self.VALID_LATEX_EXTENSIONS:
+            file_path_with_ext = file_path + extension
+            if os.path.exists(file_path_with_ext):
+                file_path = file_path_with_ext
+                ext = extension.lower()
+            elif os.path.exists(file_path):
+                # Original path exists (maybe it's a file without extension)
+                ext = ""
+            else:
+                # Neither exists, use the one with extension and let read_file handle the error
+                file_path = file_path_with_ext
+                ext = extension.lower()
+
+        # Handle package or class files
+        if ext == ".sty":
+            self.load_package(file_path, extension=ext)
+            return
+        elif ext == ".cls":
+            self.load_class(file_path, extension=ext)
+            return
+
+        # Load regular file
         input_text = self.read_file(file_path)
         if input_text is None:
             return

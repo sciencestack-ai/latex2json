@@ -60,3 +60,23 @@ def test_input_handler():
     out = expander.expand(text)
     assert expander.get_macro("preendinput")
     assert not expander.get_macro("postendinput")
+
+
+def test_input_file_with_dot_in_name():
+    """Test that files with dots in the name (e.g., 2.Introduction) are handled correctly."""
+    expander = Expander()
+
+    # Test file without extension - should find 2.Introduction.tex
+    assert not expander.get_macro("dotfilecmd")
+    text = r"\input{%s/2.Introduction}" % test_data_path
+    expander.expand(text)
+
+    # Should have loaded the file and defined the macro
+    assert expander.get_macro("dotfilecmd")
+
+    # also test that it works with explicit .tex extension
+    expander.delete_macro("dotfilecmd")
+    assert not expander.get_macro("dotfilecmd")
+    text = r"\input{%s/2.Introduction.tex}" % test_data_path
+    expander.expand(text)
+    assert expander.get_macro("dotfilecmd")
