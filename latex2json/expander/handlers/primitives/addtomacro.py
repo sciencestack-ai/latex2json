@@ -32,16 +32,14 @@ def addtomacro_handler(expander: ExpanderCore, token: Token):
             return []
 
         macro = Macro(cmd_token, handler, definition=brace)
+        expander.register_macro(
+            cmd_token,
+            macro,
+            is_global=True,
+            is_user_defined=True,
+        )
     else:
-        # new_macro = existing_macro.copy()
         macro.definition.extend(brace)
-
-    expander.register_macro(
-        cmd_token,
-        macro,
-        is_global=True,
-        is_user_defined=True,
-    )
 
     return []
 

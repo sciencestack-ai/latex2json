@@ -3,6 +3,7 @@ from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.utils import (
     substitute_token_args,
     segment_tokens_by_begin_end_and_braces,
+    find_token_sequence,
 )
 from tests.test_utils import assert_token_sequence
 
@@ -98,6 +99,77 @@ def test_substitute_token_args():
         assert_token_sequence(substituted, expected)
 
     test2()
+
+
+def test_find_token_sequence():
+    # Test exact match found
+    haystack = [
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "d", catcode=Catcode.LETTER),
+    ]
+    needle = [
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+    ]
+    assert find_token_sequence(haystack, needle) == 1
+
+    # Test not found
+    needle_not_found = [
+        Token(TokenType.CHARACTER, "x", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "y", catcode=Catcode.LETTER),
+    ]
+    assert find_token_sequence(haystack, needle_not_found) == -1
+
+    # Test empty needle
+    assert find_token_sequence(haystack, []) == 0
+
+    # Test needle longer than haystack
+    long_needle = [
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "d", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "e", catcode=Catcode.LETTER),
+    ]
+    assert find_token_sequence(haystack, long_needle) == -1
+
+    # Test exact match at beginning
+    needle_start = [
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "b", catcode=Catcode.LETTER),
+    ]
+    assert find_token_sequence(haystack, needle_start) == 0
+
+    # Test exact match at end
+    needle_end = [
+        Token(TokenType.CHARACTER, "c", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "d", catcode=Catcode.LETTER),
+    ]
+    assert find_token_sequence(haystack, needle_end) == 2
+
+    # Test with control sequences
+    haystack_cs = [
+        Token(TokenType.CONTROL_SEQUENCE, "foo"),
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CONTROL_SEQUENCE, "bar"),
+    ]
+    needle_cs = [
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CONTROL_SEQUENCE, "bar"),
+    ]
+    assert find_token_sequence(haystack_cs, needle_cs) == 1
+
+    # Test catcode matters
+    haystack_catcode = [
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER),
+        Token(TokenType.CHARACTER, "a", catcode=Catcode.OTHER),
+    ]
+    needle_letter = [Token(TokenType.CHARACTER, "a", catcode=Catcode.LETTER)]
+    needle_other = [Token(TokenType.CHARACTER, "a", catcode=Catcode.OTHER)]
+    assert find_token_sequence(haystack_catcode, needle_letter) == 0
+    assert find_token_sequence(haystack_catcode, needle_other) == 1
 
 
 def test_segment_tokens_by_begin_end_and_braces():

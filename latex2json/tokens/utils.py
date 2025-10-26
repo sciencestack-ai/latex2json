@@ -169,6 +169,31 @@ def substitute_token_args(
     return out
 
 
+def find_token_sequence(haystack: List[Token], needle: List[Token]) -> int:
+    """
+    Find the first occurrence of needle token sequence in haystack token sequence.
+
+    Args:
+        haystack: The token list to search in
+        needle: The token sequence to search for
+
+    Returns:
+        The index of the first occurrence of needle in haystack, or -1 if not found
+    """
+    if not needle:
+        return 0
+    if not haystack or len(needle) > len(haystack):
+        return -1
+
+    needle_len = len(needle)
+    for i in range(len(haystack) - needle_len + 1):
+        # Check if all tokens match starting at position i
+        if all(haystack[i + j] == needle[j] for j in range(needle_len)):
+            return i
+
+    return -1
+
+
 def split_tokens_by_predicate(
     tokens: List[Token],
     is_separator: Callable[[Token], bool],

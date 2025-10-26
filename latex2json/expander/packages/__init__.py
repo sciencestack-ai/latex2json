@@ -10,6 +10,8 @@ from latex2json.expander.packages.siunitx import register_siunitx
 from latex2json.expander.packages.enumitem import register_enumitem
 from latex2json.expander.packages.parcolumns import register_parcolumns
 from latex2json.expander.packages.xcolor import register_xcolor
+from latex2json.expander.packages.etoolbox import register_etoolbox_handler
+from latex2json.expander.packages.xpatch import register_xpatch_handler
 
 
 def register_packages(expander: ExpanderCore):
@@ -24,3 +26,5 @@ def register_packages(expander: ExpanderCore):
     register_enumitem(expander)
     register_parcolumns(expander)
     register_xcolor(expander)
+    register_etoolbox_handler(expander)
+    register_xpatch_handler(expander)

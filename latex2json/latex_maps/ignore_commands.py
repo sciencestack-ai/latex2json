@@ -117,6 +117,8 @@ formatting_patterns = {
     "setdescription": "[{",
     # toolset/palette
     "mathtoolsset": "[{",
+    "newtagform": "{[{",
+    "usetagform": "{",
     # \kern, which is technically spacing but more like a length between characters. so ignore
     "kern": "d",
     # setup
@@ -242,6 +244,8 @@ content_formatting_patterns = {
     "listfiles": 0,
     # TOCs
     "tableofcontents": 0,
+    "@tocline": 5,
+    "@tocpagenum": 1,
     # other contents
     "addtocontents": "{{",
     "addcontentsline": "{{{",
