@@ -3,7 +3,7 @@ from latex2json.tokens.types import Token, TokenType
 from latex2json.nodes.base_nodes import CommandNode, TextNode
 from latex2json.parser.parser_core import Handler, ParserCore
 
-from latex2json.latex_maps._latex2unicode_map import latex2unicode
+from latex2json.latex_maps.latex2unicode import latex2unicode
 
 
 def make_latex2unicode_handler(unicode_value: str | int) -> Handler:

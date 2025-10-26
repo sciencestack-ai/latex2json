@@ -11,7 +11,8 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "sep": 44,  # ,
     # "\\@": "",
     "checkmark": 10003,  # ✓
-    "dots": 8230,  # …
+    "dots": 8230,  # ...
+    "dotfill": "...",  # ...
     "textless": 60,  # <
     "textgreater": 62,  # >
     "textbackslash": 92,
