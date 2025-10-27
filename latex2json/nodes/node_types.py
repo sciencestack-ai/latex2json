@@ -62,11 +62,8 @@ class NodeTypes(StrEnum):
     BIBITEM = "bibitem"
 
     # Metadata
-    AUTHOR = "author"
-    EMAIL = "email"
-    AFFILIATION = "affiliation"
-    KEYWORDS = "keywords"
-    ADDRESS = "address"
+    MAKETITLE = "maketitle"
+    # and other metadata types... e.g. author, email, affiliation, keywords, address
 
     # Other
     GROUP = "group"

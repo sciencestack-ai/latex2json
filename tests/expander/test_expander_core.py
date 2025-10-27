@@ -408,7 +408,9 @@ def test_parse_dimensions():
 
 
 def test_parse_skip():
-    expander = ExpanderCore()
+    expander = Expander()
+
+    expander.expand(r"\makeatletter")
 
     # base component only
     expander.set_text("10pt")
@@ -428,6 +430,11 @@ def test_parse_skip():
     assert not expander.eof()
 
     assert expander.parse_keyword(" minus 1pt")
+    assert expander.eof()
+
+    expander.set_text(r"5pt plus 2pt \@minus 1pt")
+    out = expander.parse_skip()
+    assert out == dimension_to_scaled_points(5 + 2 - 1, "pt")
     assert expander.eof()
 
 
