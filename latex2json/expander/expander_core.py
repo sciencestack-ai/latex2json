@@ -8,22 +8,13 @@ from latex2json.registers.defaults.boxes import BASE_BOXES
 from latex2json.utils.encoding import read_file
 from latex2json.registers.types import Box
 from latex2json.tokens.catcodes import MATHMODE_CATCODES
-from latex2json.tokens.types import (
-    BEGIN_ENV_TOKEN,
-    END_ENV_TOKEN,
-    CommandWithArgsToken,
-    EnvironmentEndToken,
-    EnvironmentStartToken,
-    EnvironmentType,
-)
+from latex2json.tokens.types import BEGIN_ENV_TOKEN, END_ENV_TOKEN, CommandWithArgsToken
 from latex2json.tokens.utils import (
     convert_str_to_tokens,
     is_begin_parenthesis_token,
     is_end_parenthesis_token,
     is_mathshift_token,
-    is_newline_token,
     is_whitespace_token,
-    segment_tokens_by_begin_end_and_braces,
     strip_whitespace_tokens,
     substitute_token_args,
     wrap_tokens_in_braces,
@@ -63,13 +54,6 @@ RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 TokenPredicate = Callable[[Token], bool]
 
 
-def is_nonumber_token(tok: Token) -> bool:
-    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value in [
-        "nonumber",
-        "notag",
-    ]
-
-
 @dataclass
 class EnvStackEntry:
     """Entry in the environment stack tracking nested environments."""
@@ -78,28 +62,6 @@ class EnvStackEntry:
     opening_token: (
         Token  # The token that opened this environment (\begin, \@float, etc.)
     )
-
-
-@dataclass
-class TagExtractionResult:
-    notag: bool  # explicit \notag or \nonumber
-    tag: Optional[str]
-    tokens: List[Token]
-
-
-def extract_tag_from_tokens(tokens: List[Token]) -> TagExtractionResult:
-    notag: bool = False
-    numbering: Optional[str] = None
-    newblock: List[Token] = []
-    for tok in tokens:
-        if is_nonumber_token(tok):
-            notag = True
-        elif isinstance(tok, CommandWithArgsToken) and tok.value == "tag":
-            notag = False
-            numbering = tok.numbering
-        else:
-            newblock.append(tok)
-    return TagExtractionResult(notag=notag, tag=numbering, tokens=newblock)
 
 
 class EmptyMacro(Macro):
@@ -1617,213 +1579,29 @@ class ExpanderCore:
         """Register a new environment with begin/end handlers."""
         self.state.set_environment_definition(env_name, env_def)
 
-        # there is a difference between input env_name and out_env_name. E.g. wrapfigure -> figure
-        out_env_name = env_def.name
-
-        is_math = env_def.env_type in [
-            EnvironmentType.EQUATION,
-            EnvironmentType.EQUATION_ALIGN,
-            # EnvironmentType.EQUATION_MATRIX_OR_ARRAY, # not needed since these are nested inside equation/align
-        ]
-        is_align = env_def.env_type == EnvironmentType.EQUATION_ALIGN
-        is_verbatim = env_def.env_type == EnvironmentType.VERBATIM
-
         counter_name = env_def.counter_name
         if counter_name:
             self.create_new_counter(counter_name)
 
         def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
-            state = expander.state
-            if counter_name:
-                state.step_counter(counter_name)
-
-            if is_math:
-                state.push_mode(ProcessingMode.MATH_DISPLAY)
-
-            direct_command = None
-            if token.value != "begin":
-                direct_command = token.value
-
-            args = expander.get_parsed_args(
-                env_def.num_args,
-                env_def.default_arg,
-                force_braces_for_req_args=True,
-                command_name=direct_command or f"\\begin{{{env_name}}}",
+            # Use shared environment processing logic
+            from latex2json.expander.handlers.environment.environment_utils import (
+                process_environment_begin,
             )
 
-            subbed = expander.substitute_token_args(
-                env_def.begin_definition, args or []
+            return process_environment_begin(
+                expander, token, env_name, env_def, expand_begin_definition=True
             )
-            expander.push_tokens(subbed)
-
-            # evaluate the counter post begin definition expansion
-            # e.g. some newenvironment definitions place \refstepcounter in the begin definition
-            numbering = None
-            if counter_name:
-                numbering = expander.get_counter_display(counter_name)
-
-            default_skip = 1 if env_def.default_arg is not None else 0
-            # only pass non-optional i.e. non-default args?
-            token_args = (args or [])[default_skip:]
-            begin_token = EnvironmentStartToken(
-                out_env_name,
-                display_name=env_def.display_name,
-                numbering=numbering,
-                env_type=env_def.env_type,
-                args=token_args,
-                direct_command=direct_command,
-            )
-            begin_token.position = token.position
-
-            out_tokens: List[Token] = [begin_token]
-            for hook in env_def.hooks.begin:
-                out_tokens.extend(hook())
-
-            if is_verbatim or is_align or is_math:
-                # if verbatim, we parse until we find the matching end environment token
-                def is_end_env_token(token: Token) -> bool:
-                    r"""check for \end"""
-                    is_ctrl_seq = token.type == TokenType.CONTROL_SEQUENCE
-                    if not is_ctrl_seq:
-                        return False
-
-                    # direct end_command e.g. \endpicture
-                    if env_def.end_command and token.value == env_def.end_command:
-                        return True
-
-                    # regular \end{...}
-                    if token.value == "end":
-                        # parse {...} after \end to get the env name
-
-                        # tokens_to_return is \end (and whitespace) up to {...}
-                        tokens_to_return = expander.parse_tokens_until(
-                            is_begin_group_token, verbatim=True
-                        )
-                        # check {...} is the env name
-                        parsed_env_name = expander.parse_brace_name()
-                        if not parsed_env_name:
-                            expander.push_tokens(tokens_to_return)
-                            return False
-                        is_end_env_name = parsed_env_name == env_name
-
-                        # push {...} of \end{...} back to stream (since we're not supposed to parse it in this predicate function)
-                        tokens_to_return += expander.convert_str_to_tokens(
-                            "{" + parsed_env_name + "}"
-                        )
-                        expander.push_tokens(tokens_to_return)
-                        return is_end_env_name
-                    return False
-
-                if is_verbatim:
-                    # parse raw, verbatim
-                    body_block = expander.parse_tokens_until(
-                        is_end_env_token, verbatim=True
-                    )
-                    out_tokens.extend(body_block)
-                elif is_align:
-                    # is_align
-                    # align environments have a special case where we need to parse the body block for \\, and number those accordingly
-                    body_block = expander.expand_until(
-                        stop_token_logic=is_end_env_token, consume_stop_token=False
-                    )
-                    # first, segment into \begin...\end blocks.
-                    # This is so that \\ nested inside inner \begin e.g. \begin{matrix} ... \\ ... \end{matrix} inside \begin{align} are not prematurely split
-                    segments = segment_tokens_by_begin_end_and_braces(body_block)
-                    split_body_block: List[List[Token]] = [[]]
-
-                    # split into \\ or \begin...\end
-                    for segment in segments:
-                        if not segment.tokens:
-                            continue
-                        if segment.is_group:
-                            split_body_block[-1].extend(segment.tokens)
-                        else:
-                            for token in segment.tokens:
-                                if is_newline_token(token):
-                                    split_body_block.append([])
-                                else:
-                                    split_body_block[-1].append(token)
-
-                    is_numbered = env_name.isalpha()  # False if there is *
-
-                    equation_tokens = []
-                    for block in split_body_block:
-                        is_auto_numbered = is_numbered
-                        numbering = None
-
-                        # check for \nonumber
-                        eq_result = extract_tag_from_tokens(block)
-                        if eq_result.notag:
-                            is_auto_numbered = False
-                        if eq_result.tag:
-                            numbering = eq_result.tag
-                            is_auto_numbered = False
-                        newblock = strip_whitespace_tokens(eq_result.tokens)
-
-                        if is_auto_numbered:
-                            state.step_counter("equation")
-                            numbering = expander.get_counter_display("equation")
-                        # add an env start token of Equation
-                        equation_tokens.append(
-                            EnvironmentStartToken(
-                                "equation",
-                                numbering=numbering,
-                                env_type=EnvironmentType.EQUATION,
-                            )
-                        )
-                        equation_tokens.extend(newblock)
-                        # add an env end token of Equation
-                        equation_tokens.append(EnvironmentEndToken("equation"))
-
-                    out_tokens.extend(equation_tokens)
-                else:
-                    # typical math block
-                    # parse out math env block to see if \nonumber \notag is present
-                    body_block = expander.expand_until(
-                        stop_token_logic=is_end_env_token, consume_stop_token=False
-                    )
-                    newblock = []
-                    is_auto_numbered = True
-                    eq_result = extract_tag_from_tokens(body_block)
-                    if eq_result.notag:
-                        numbering = None
-                        is_auto_numbered = False
-                    if eq_result.tag:
-                        numbering = eq_result.tag
-                        is_auto_numbered = False
-                    body_block = eq_result.tokens
-
-                    if not is_auto_numbered:
-                        # undo step_counter with -1
-                        if (
-                            counter_name
-                        ):  # should always be true if numbering is not None to begin with
-                            state.add_to_counter(counter_name, -1)
-                    begin_token.numbering = numbering
-
-                    out_tokens.extend(body_block)
-
-            return out_tokens
 
         def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
-            state = expander.state
+            # Use shared environment end processing logic
+            from latex2json.expander.handlers.environment.environment_utils import (
+                process_environment_end,
+            )
 
-            direct_command = None
-            if token.value != "end":
-                direct_command = token.value
-
-            end_token = EnvironmentEndToken(out_env_name, direct_command=direct_command)
-
-            subbed = expander.substitute_token_args(env_def.end_definition, [])
-            out_tokens = expander.expand_tokens(subbed)
-
-            for hook in env_def.hooks.end:
-                out_tokens.extend(hook())
-
-            if is_math:
-                state.pop_mode()
-
-            return out_tokens + [end_token]
+            return process_environment_end(
+                expander, token, env_name, env_def, expand_end_definition=True
+            )
 
         # attach the handlers to the envdef instance
         env_def.begin_handler = begin_handler
@@ -1834,11 +1612,13 @@ class ExpanderCore:
                 env_name,
                 Macro(env_name, begin_handler, env_def.begin_definition),
                 is_global=is_global,
+                is_user_defined=is_user_defined,
             )
             self.register_macro(
                 "end" + env_name,
                 Macro("end" + env_name, end_handler, env_def.end_definition),
                 is_global=is_global,
+                is_user_defined=is_user_defined,
             )
 
         if env_def.begin_command:
@@ -1846,6 +1626,7 @@ class ExpanderCore:
                 env_def.begin_command,
                 Macro(env_def.begin_command, begin_handler, env_def.begin_definition),
                 is_global=is_global,
+                is_user_defined=is_user_defined,
             )
 
         if env_def.end_command:
@@ -1853,6 +1634,7 @@ class ExpanderCore:
                 env_def.end_command,
                 Macro(env_def.end_command, end_handler, env_def.end_definition),
                 is_global=is_global,
+                is_user_defined=is_user_defined,
             )
 
     def parse_braced_blocks(

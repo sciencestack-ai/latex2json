@@ -8,7 +8,7 @@ def test_float_handler():
     # test these are converted to envstart + env end tokens
     text = r"""
 \makeatletter
-\@float{figure}[htb][ss]
+\@float{figure}[htb]
     \caption{FIGURE}
 \end@float
 \makeatother
@@ -18,6 +18,42 @@ def test_float_handler():
     assert out[0] == EnvironmentStartToken("figure")
     assert out[-1] == Token(type=TokenType.ENVIRONMENT_END, value="figure")
 
+    # Verify that @float properly parses arguments using wrapfigure (3 args)
+    text2 = r"""
+\makeatletter
+\@float{wrapfigure}[10]{r}{0.5\textwidth}
+CONTENT HERE
+\end@float
+\makeatother
+""".strip()
+    out2 = expander.expand(text2)
+    out2 = strip_whitespace_tokens(out2)
+
+    # The environment should start with wrapfigure token
+    env_start = out2[0]
+    assert isinstance(env_start, EnvironmentStartToken)
+    assert env_start.name == "figure"  # wrapfigure maps to "figure"
+
+    # Verify args were parsed and consumed - content should not contain the literal arguments
+    # Find CHARACTER tokens to reconstruct content
+    content_chars = []
+    for tok in out2:
+        if tok.type == TokenType.CHARACTER:
+            content_chars.append(tok.value)
+
+    # The content should be "CONTENTHERE" (whitespace stripped), not include "r" or "0.5" etc
+    content_str = "".join(content_chars)
+    assert "CONTENT" in content_str, f"Content should be present"
+    assert (
+        "0.5" not in content_str
+    ), f"Args like '0.5' should be consumed, got: {content_str}"
+    assert content_str.replace(" ", "").startswith(
+        "CONTENTHERE"
+    ), f"Args should be consumed, got: {content_str}"
+
+
+def test_newenvironment_float():
+    expander = Expander()
     # test float env nested inside its own renewenvironment env (ensure no infinite recursion)
     text = r"""
 \makeatletter
@@ -86,7 +122,9 @@ def test_nested_float_and_dblfloat():
         elif tok.type == TokenType.ENVIRONMENT_END and tok.value == "table":
             table_tokens.append((i, "end"))
 
-    assert len(table_tokens) == 4, f"Should have 2 table starts and 2 table ends, got {len(table_tokens)}"
+    assert (
+        len(table_tokens) == 4
+    ), f"Should have 2 table starts and 2 table ends, got {len(table_tokens)}"
 
     # Verify proper nesting: start, start, end, end
     assert table_tokens[0][1] == "start", "First should be outer table start"
@@ -95,8 +133,12 @@ def test_nested_float_and_dblfloat():
     assert table_tokens[3][1] == "end", "Fourth should be outer table end"
 
     # Verify ordering
-    assert table_tokens[0][0] < table_tokens[1][0] < table_tokens[2][0] < table_tokens[3][0], \
-        "Proper nesting order"
+    assert (
+        table_tokens[0][0]
+        < table_tokens[1][0]
+        < table_tokens[2][0]
+        < table_tokens[3][0]
+    ), "Proper nesting order"
 
 
 def test_multiple_dblfloats():
@@ -117,14 +159,24 @@ def test_multiple_dblfloats():
     out = strip_whitespace_tokens(out)
 
     # Find all environment tokens
-    env_tokens = [tok for tok in out if isinstance(tok, EnvironmentStartToken)
-                  or tok.type == TokenType.ENVIRONMENT_END]
+    env_tokens = [
+        tok
+        for tok in out
+        if isinstance(tok, EnvironmentStartToken)
+        or tok.type == TokenType.ENVIRONMENT_END
+    ]
 
     assert len(env_tokens) == 4  # 2 starts + 2 ends
     assert env_tokens[0] == EnvironmentStartToken("table")
-    assert env_tokens[1].value == "table" and env_tokens[1].type == TokenType.ENVIRONMENT_END
+    assert (
+        env_tokens[1].value == "table"
+        and env_tokens[1].type == TokenType.ENVIRONMENT_END
+    )
     assert env_tokens[2] == EnvironmentStartToken("figure")
-    assert env_tokens[3].value == "figure" and env_tokens[3].type == TokenType.ENVIRONMENT_END
+    assert (
+        env_tokens[3].value == "figure"
+        and env_tokens[3].type == TokenType.ENVIRONMENT_END
+    )
 
 
 def test_mismatched_float_dblfloat_delimiters():
