@@ -65,6 +65,9 @@ def make_at_frontmatter_key_handler(key: str) -> Handler:
         if not tokens:
             return []
 
+        # expander.push_tokens(tokens)
+        # return []
+
         # Expand stored tokens to resolve any macros
         expanded = expander.expand_tokens(tokens)
 
@@ -83,17 +86,19 @@ def at_maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
     r"""
     Default \@maketitle implementation.
     Emits all frontmatter by calling \@title, \@author, etc.
+    Returns a single CommandWithArgsToken wrapping all frontmatter for isolated processing.
     Users can redefine this with \renewcommand{\@maketitle}{...}
     """
     out_tokens: List[Token] = []
 
-    # Emit frontmatter in standard order
+    # Collect all frontmatter CommandWithArgsTokens
     for key in expander.state.frontmatter:
         exp = expander.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, "@" + key)])
         if exp:
             out_tokens.extend(exp)
-            out_tokens.append(Token(TokenType.CONTROL_SEQUENCE, "newline"))
-    return out_tokens
+
+    # Wrap everything in a maketitle CommandWithArgsToken for isolated processing
+    return [CommandWithArgsToken("maketitle", args=[out_tokens])]
 
 
 def maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
@@ -139,15 +144,31 @@ if __name__ == "__main__":
     expander = Expander()
 
     text = r"""
-    \title{Original Title}
-    \author{Original Author}
-
     \makeatletter
-    \renewcommand{\@title}{REPLACED TITLE}
-    \renewcommand{\@author}{REPLACED AUTHOR}
-    \makeatother
+\def\@maketitle{
+    \begin{tabular}[t]{c}\@author
+    \end{tabular}
+}
+\def\maketitle{
+    \@maketitle
+}
 
-    \maketitle
+\title{Caffe: Convolutional Architecture}
+
+\def\alignauthor{
+    \end{tabular}
+  \begin{tabular}[t]{c}
+}
+
+\author{
+    \alignauthor Yangqing Jia$^*$ \\
+}
+
+\maketitle
+
+\begin{abstract}
+Caffe Abstract
+\end{abstract}
 """
 
     tokens = expander.expand(text)

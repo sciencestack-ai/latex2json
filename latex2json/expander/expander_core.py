@@ -439,6 +439,19 @@ class ExpanderCore:
                     self.state.frontmatter[key] = macro.definition.copy()
                     return
 
+            # Wrap @maketitle redefinitions to return CommandWithArgsToken
+            elif tok_str == "\\@maketitle":
+                original_definition = macro.definition.copy()
+
+                def wrapped_handler(exp: "ExpanderCore", tok: Token) -> List[Token]:
+                    # Expand the user's definition tokens
+                    expanded = exp.expand_tokens(original_definition)
+                    # Wrap in CommandWithArgsToken for semantic processing
+
+                    return [CommandWithArgsToken("maketitle", args=[expanded])]
+
+                macro.handler = wrapped_handler
+
         self.state.set_macro(
             tok_str, macro, is_global=is_global, is_active_char=is_active_char
         )
@@ -1684,16 +1697,33 @@ if __name__ == "__main__":
 
     # base component only
     text = r"""
-    \title{Original Title}
-    \author{Original Author}
+\makeatletter
+\def\@maketitle{
+    \begin{tabular}[t]{c}\@author
+    \end{tabular}
+}
+\def\maketitle{
+    \@maketitle
+}
 
-    \makeatletter
-    \renewcommand{\@title}{REPLACED TITLE}
-    \renewcommand{\@author}{REPLACED AUTHOR}
-    \makeatother
+\title{Caffe: Convolutional Architecture}
 
-    \maketitle
+\def\alignauthor{
+    \end{tabular}
+  \begin{tabular}[t]{c}
+}
+
+\author{
+    \alignauthor Yangqing Jia \\
+}
+
+\maketitle
+
+\begin{abstract}
+Caffe Abstract
+\end{abstract}
     """.strip()
     out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
     out_str = expander.convert_tokens_to_str(out).strip()
     print(out_str)
