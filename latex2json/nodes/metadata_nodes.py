@@ -25,8 +25,7 @@ class MetadataNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = self.name
-        if self.children:
-            result["content"] = [child.to_json() for child in self.children]
+        result["content"] = [child.to_json() for child in self.children]
         return result
 
     def copy(self):
@@ -59,8 +58,7 @@ class MaketitleNode(ASTNode):
     def to_json(self):
         result = super().to_json()
         result["type"] = NodeTypes.MAKETITLE
-        if self.children:
-            result["content"] = [child.to_json() for child in self.children]
+        result["content"] = [child.to_json() for child in self.children]
         return result
 
     def copy(self):
