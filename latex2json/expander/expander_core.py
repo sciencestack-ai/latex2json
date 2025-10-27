@@ -430,6 +430,15 @@ class ExpanderCore:
             return  # Invalid token type, cannot register
         tok_str, is_active_char = normalized
         macro.is_user_defined = is_user_defined
+
+        # Check if this macro needs protection (frontmatter commands)
+        if is_user_defined:
+            if tok_str in self.state.protected_frontmatter_commands:
+                key = tok_str.lstrip("\\@")
+                if key in self.state.frontmatter:
+                    self.state.frontmatter[key] = macro.definition.copy()
+                    return
+
         self.state.set_macro(
             tok_str, macro, is_global=is_global, is_active_char=is_active_char
         )
@@ -1675,10 +1684,16 @@ if __name__ == "__main__":
 
     # base component only
     text = r"""
-    $$ 2 + 2 \tag{1.1} $$
+    \title{Original Title}
+    \author{Original Author}
+
+    \makeatletter
+    \renewcommand{\@title}{REPLACED TITLE}
+    \renewcommand{\@author}{REPLACED AUTHOR}
+    \makeatother
+
+    \maketitle
     """.strip()
     out = expander.expand(text)
-    out = strip_whitespace_tokens(out)
-    # out_str = expander.convert_tokens_to_str(out).strip()
-
-    # print(out_str)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)

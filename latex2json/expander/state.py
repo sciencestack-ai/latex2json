@@ -107,9 +107,12 @@ class ExpanderState:
         self.frontmatter: Dict[str, List[Token]] = {
             "title": [],
             "author": [],
-            "address": [],
             "date": [],
             "thanks": [],
+        }
+
+        self.protected_frontmatter_commands: set[str] = {
+            "\\@" + key for key in self.frontmatter.keys()
         }
 
         # appendix
@@ -233,13 +236,13 @@ class ExpanderState:
     def set_macro(
         self,
         name: str,
-        definition: Macro,
+        macro: Macro,
         is_global: bool = False,
         is_active_char=False,
     ):
         self.current.set_macro(
             name,
-            definition,
+            macro,
             is_global or self.pending_global,
             is_active_char=is_active_char,
         )

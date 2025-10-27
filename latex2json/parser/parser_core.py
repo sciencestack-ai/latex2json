@@ -4,6 +4,7 @@ import re
 from collections import deque
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
+from latex2json.nodes.metadata_nodes import MetadataNode
 from latex2json.utils.encoding import read_file
 from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.environments import EnvironmentDefinition
@@ -676,6 +677,11 @@ class ParserCore:
             )
             self.push_env_stack(caption_node)
             return [caption_node]
+        elif token.name in self.expander.state.frontmatter:
+            if not token.args:
+                return []
+            arg_nodes = self.process_tokens(token.args[0], scoped=True)
+            return [MetadataNode(token.name, arg_nodes)]
         elif token.name == "verb":
             verb_tokens = token.args[0]
             verb_text = self.convert_tokens_to_str(verb_tokens)
