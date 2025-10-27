@@ -63,7 +63,7 @@ class Token:
         if self.type == TokenType.CONTROL_SEQUENCE:
             return f"Pos {self.position:3}: {self.type.name:18} -> \\{value!r}"
         elif self.type == TokenType.CHARACTER:
-            return f"Pos {self.position:3}: {self.type.name:18} -> {value!r} (Catcode {self.catcode.name if self.catcode else 'None'})"  # Print enum name
+            return f"{value!r}"
         elif self.type == TokenType.PARAMETER:
             return f"Token(PARAM='{value}')"
         else:

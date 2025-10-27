@@ -1,106 +1,139 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import Handler
-from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import wrap_tokens_in_braces
-
-
-def get_frontmatter_key_to_tokens(
-    expander: ExpanderCore, key: str
-) -> Optional[List[Token]]:
-    # at_key = "@" + key
-    # if not expander.get_macro(at_key):
-    #     return None
-    # out_tokens: List[Token] = [Token(TokenType.CONTROL_SEQUENCE, at_key)]
-    # exp = expander.expand_tokens(out_tokens)
-    # return [
-    #     Token(TokenType.CONTROL_SEQUENCE, key),
-    #     *wrap_tokens_in_braces(exp),
-    # ]
-
-    if key not in expander.state.frontmatter:
-        return None
-    tokens = expander.state.frontmatter[key]
-    if not tokens:
-        return None
-
-    out_tokens: List[Token] = []
-    tokens_exp = expander.expand_tokens(tokens)
-    # e.g. output \author{...} for parser later to handle
-    out_tokens.append(Token(TokenType.CONTROL_SEQUENCE, key))
-    out_tokens.extend(wrap_tokens_in_braces(tokens_exp))
-    return out_tokens
-
-
-def at_maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
-    # return all frontmatter tokens?
-    out_tokens: List[Token] = []
-    for key in expander.state.frontmatter.keys():
-        # if key == "thanks":
-        #     continue
-        tokens = get_frontmatter_key_to_tokens(expander, key)
-        if tokens:
-            out_tokens.extend(tokens)
-    return out_tokens
-
-
-def maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
-    expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "@maketitle")])
-    return []
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import (
+    WHITESPACE_TOKEN,
+    Token,
+    TokenType,
+    CommandWithArgsToken,
+)
+from latex2json.tokens.utils import (
+    is_begin_group_token,
+    strip_whitespace_tokens,
+    wrap_tokens_in_braces,
+)
 
 
 def make_frontmatter_key_handler(key: str) -> Handler:
+    r"""
+    Handler for \title, \author, etc.
+    These are storage-only commands - they update state.frontmatter but emit nothing.
+    This allows users to redefine them if needed while preserving storage.
+    """
+
+    at_key = "@" + key
+
     def handler(expander: ExpanderCore, token: Token) -> List[Token]:
         expander.skip_whitespace()
-        expander.parse_bracket_as_tokens()
+        bracket = expander.parse_bracket_as_tokens()  # Optional short title
         expander.skip_whitespace()
-        tokens = expander.parse_immediate_token(expand=False)
-        if not tokens:
-            return []
+        tokens = expander.parse_immediate_token(expand=False) or []
 
-        # out_tokens: List[Token] = [
-        #     Token(TokenType.CONTROL_SEQUENCE, "gdef"),
-        #     Token(TokenType.CONTROL_SEQUENCE, "@" + key),
-        #     *wrap_tokens_in_braces(tokens),
-        # ]
-        # expander.push_tokens(out_tokens)
-
-        if key not in expander.state.frontmatter:
-            expander.state.frontmatter[key] = []
         if key == "author":
-            # additive
-            # if exists, add \and between them
-            if expander.state.frontmatter[key]:
-                expander.state.frontmatter[key].append(
-                    Token(TokenType.CONTROL_SEQUENCE, "and")
+            # append
+            existing_author_tokens = expander.state.frontmatter.get(key, [])
+            if existing_author_tokens and tokens:
+                existing_author_tokens.extend(
+                    [
+                        WHITESPACE_TOKEN.copy(),
+                        Token(TokenType.CONTROL_SEQUENCE, "and"),
+                        WHITESPACE_TOKEN.copy(),
+                    ]
                 )
-            expander.state.frontmatter[key].extend(tokens)
-        else:
-            expander.state.frontmatter[key] = tokens
+            tokens = existing_author_tokens + tokens
+
+        expander.state.frontmatter[key] = tokens
+
+        # Emit nothing - metadata is stored, not rendered yet
         return []
 
     return handler
 
 
 def make_at_frontmatter_key_handler(key: str) -> Handler:
+    r"""
+    Handler for \@title, \@author, etc.
+    These are the SOURCE OF TRUTH - they always emit from state.frontmatter.
+    Even if user redefines these with \def, we intercept to preserve semantic info.
+    Returns CommandWithArgsToken for semantic preservation through the pipeline.
+    """
+
     def handler(expander: ExpanderCore, token: Token) -> List[Token]:
-        return get_frontmatter_key_to_tokens(expander, key)
+        # Always read from state.frontmatter
+        tokens = expander.state.frontmatter.get(key, [])
+        if not tokens:
+            return []
+
+        # expander.push_tokens(tokens)
+        # return []
+
+        # Expand stored tokens to resolve any macros
+        expanded = expander.expand_tokens(tokens)
+
+        # Return semantic CommandWithArgsToken
+        # This preserves the semantic meaning even inside redefined \@maketitle
+        cmd_token = CommandWithArgsToken(
+            name=key,
+            args=[expanded],
+        )
+        return [cmd_token]
 
     return handler
 
 
+def at_maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
+    r"""
+    Default \@maketitle implementation.
+    Emits all frontmatter by calling \@title, \@author, etc.
+    Returns a single CommandWithArgsToken wrapping all frontmatter for isolated processing.
+    Users can redefine this with \renewcommand{\@maketitle}{...}
+    """
+    out_tokens: List[Token] = []
+
+    # Collect all frontmatter CommandWithArgsTokens
+    for key in expander.state.frontmatter:
+        exp = expander.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, "@" + key)])
+        if exp:
+            out_tokens.extend(exp)
+
+    # Wrap everything in a maketitle CommandWithArgsToken for isolated processing
+    return [CommandWithArgsToken("maketitle", args=[out_tokens])]
+
+
+def maketitle_handler(expander: ExpanderCore, token: Token) -> List[Token]:
+    r"""
+    Handler for \maketitle.
+    Delegates to \@maketitle (which user may have redefined).
+    """
+    # Push \@maketitle to stream - allows user redefinitions to work
+    expander.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "@maketitle")])
+    return []
+
+
 def register_maketitle_handlers(expander: ExpanderCore):
-    # maketitle
+    r"""
+    Register handlers for frontmatter/metadata system.
+
+    Design:
+    - \title, \author, etc. are storage-only (can be redefined by users)
+    - \@title, \@author, etc. are protected accessors (always read from state.frontmatter)
+    - \maketitle delegates to \@maketitle
+    - \@maketitle calls \@title, \@author, etc. to emit semantic tokens
+    """
+    # Register \maketitle and \@maketitle
     expander.register_handler("maketitle", maketitle_handler, is_global=True)
     expander.register_handler("@maketitle", at_maketitle_handler, is_global=True)
 
-    # frontmatter/metadata keys
-    for cmd in expander.state.frontmatter.keys():
+    frontmatter_keys = expander.state.frontmatter.keys()
+
+    # Register user-visible metadata collectors: \title, \author, etc.
+    for key in frontmatter_keys:
         expander.register_handler(
-            cmd, make_frontmatter_key_handler(cmd), is_global=True
+            key, make_frontmatter_key_handler(key), is_global=True
         )
         expander.register_handler(
-            f"@{cmd}", make_frontmatter_key_handler(cmd), is_global=True
+            "@" + key, make_at_frontmatter_key_handler(key), is_global=True
         )
 
 
@@ -112,14 +145,33 @@ if __name__ == "__main__":
 
     text = r"""
     \makeatletter
-    \author{Yu Deng \thanks{THANKS}}
-    \author{X MAN}
-    \title{First title}
-    \def\xxx{XXX}
+\def\@maketitle{
+    \begin{tabular}[t]{c}\@author
+    \end{tabular}
+}
+\def\maketitle{
+    \@maketitle
+}
 
-    \maketitle
+\title{Caffe: Convolutional Architecture}
+
+\def\alignauthor{
+    \end{tabular}
+  \begin{tabular}[t]{c}
+}
+
+\author{
+    \alignauthor Yangqing Jia$^*$ \\
+}
+
+\maketitle
+
+\begin{abstract}
+Caffe Abstract
+\end{abstract}
 """
 
     tokens = expander.expand(text)
-    out_str = expander.convert_tokens_to_str(tokens).strip()
-    print(out_str)
+    strip_whitespace_tokens(tokens)
+    # out_str = expander.convert_tokens_to_str(tokens).strip()
+    # print(out_str)

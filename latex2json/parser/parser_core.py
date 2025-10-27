@@ -4,7 +4,8 @@ import re
 from collections import deque
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
-from latex2json.utils.encoding import read_file
+from latex2json.nodes.metadata_nodes import MetadataNode, MaketitleNode
+from latex2json.tokens.types import EnvironmentEndToken
 from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.sections import SECTIONS
@@ -52,7 +53,6 @@ from latex2json.tokens.utils import (
     is_end_parenthesis_token,
     is_whitespace_token,
 )
-from latex2json.utils.tex_versions import is_supported_tex_version
 
 # Type alias for stop token predicate
 TokenPredicate = Callable[[Token], bool]
@@ -429,6 +429,10 @@ class ParserCore:
                 return nodes if nodes else []
             env_node = self.parse_environment(token)
             return [env_node]
+        elif isinstance(token, EnvironmentEndToken):
+            # in the wild \end{...}
+            self.pop_env_stack(token.value)
+            return []
 
         if is_whitespace_token(token):
             return [TextNode(token.value)]
@@ -513,18 +517,29 @@ class ParserCore:
         self._env_node_stack.append(node)
 
     def pop_env_stack(
-        self, env_node_onwards: Optional[ASTNode] = None
+        self, env_node_onwards: Optional[ASTNode | str] = None
     ) -> Optional[ASTNode]:
         """Pop a node from the environment stack."""
         if not self._env_node_stack:
             return None
-        if env_node_onwards:
-            # Find target node index and truncate stack if found
-            if env_node_onwards in self._env_node_stack:
-                idx = self._env_node_stack.index(env_node_onwards)
-                self._env_node_stack = self._env_node_stack[:idx]
-
-                return env_node_onwards
+        if isinstance(env_node_onwards, str) and env_node_onwards:
+            # Find target node index from the end and truncate stack if found
+            for i in range(len(self._env_node_stack) - 1, -1, -1):
+                node = self._env_node_stack[i]
+                if (
+                    isinstance(node, EnvironmentNode)
+                    and node.env_name == env_node_onwards
+                ):
+                    self._env_node_stack = self._env_node_stack[:i]
+                    return node
+            return None
+        elif isinstance(env_node_onwards, ASTNode):
+            # Find target node index from the end and truncate stack if found
+            for i in range(len(self._env_node_stack) - 1, -1, -1):
+                if self._env_node_stack[i] is env_node_onwards:
+                    self._env_node_stack = self._env_node_stack[:i]
+                    return env_node_onwards
+            return None
         return self._env_node_stack.pop()
 
     def sanitize_string(self, text: str) -> str:
@@ -676,6 +691,17 @@ class ParserCore:
             )
             self.push_env_stack(caption_node)
             return [caption_node]
+        elif token.name in self.expander.state.frontmatter:
+            if not token.args:
+                return []
+            arg_nodes = self.process_tokens(token.args[0])
+            return [MetadataNode(token.name, arg_nodes)]
+        elif token.name == "maketitle":
+            # Process entire maketitle block standalone to prevent environment boundary issues
+            if not token.args:
+                return []
+            arg_nodes = self.process_tokens_standalone(token.args[0])
+            return [MaketitleNode(arg_nodes)]
         elif token.name == "verb":
             verb_tokens = token.args[0]
             verb_text = self.convert_tokens_to_str(verb_tokens)

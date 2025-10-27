@@ -430,6 +430,28 @@ class ExpanderCore:
             return  # Invalid token type, cannot register
         tok_str, is_active_char = normalized
         macro.is_user_defined = is_user_defined
+
+        # Check if this macro needs protection (frontmatter commands)
+        if is_user_defined:
+            if tok_str in self.state.protected_frontmatter_commands:
+                key = tok_str.lstrip("\\@")
+                if key in self.state.frontmatter:
+                    self.state.frontmatter[key] = macro.definition.copy()
+                    return
+
+            # Wrap @maketitle redefinitions to return CommandWithArgsToken
+            elif tok_str == "\\@maketitle":
+                original_definition = macro.definition.copy()
+
+                def wrapped_handler(exp: "ExpanderCore", tok: Token) -> List[Token]:
+                    # Expand the user's definition tokens
+                    expanded = exp.expand_tokens(original_definition)
+                    # Wrap in CommandWithArgsToken for semantic processing
+
+                    return [CommandWithArgsToken("maketitle", args=[expanded])]
+
+                macro.handler = wrapped_handler
+
         self.state.set_macro(
             tok_str, macro, is_global=is_global, is_active_char=is_active_char
         )
@@ -1675,10 +1697,33 @@ if __name__ == "__main__":
 
     # base component only
     text = r"""
-    $$ 2 + 2 \tag{1.1} $$
+\makeatletter
+\def\@maketitle{
+    \begin{tabular}[t]{c}\@author
+    \end{tabular}
+}
+\def\maketitle{
+    \@maketitle
+}
+
+\title{Caffe: Convolutional Architecture}
+
+\def\alignauthor{
+    \end{tabular}
+  \begin{tabular}[t]{c}
+}
+
+\author{
+    \alignauthor Yangqing Jia \\
+}
+
+\maketitle
+
+\begin{abstract}
+Caffe Abstract
+\end{abstract}
     """.strip()
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
-    # out_str = expander.convert_tokens_to_str(out).strip()
-
-    # print(out_str)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)
