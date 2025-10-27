@@ -149,18 +149,18 @@ def test_begin_end_current_env_stacks():
 
     expander.expand(r"\makeatletter")
     expander.expand(r"\begin{figure}")
-    assert expander.state.get_env_stack() == ["figure"]
+    assert expander.get_env_stack() == ["figure"]
     expander.expand(r"\begin{table}")
-    assert expander.state.get_env_stack() == ["figure", "table"]
+    assert expander.get_env_stack() == ["figure", "table"]
 
     # also test with @float
     expander.expand(r"\@float{table}")
-    assert expander.state.get_env_stack() == ["figure", "table", "table"]
+    assert expander.get_env_stack() == ["figure", "table", "table"]
     expander.expand(r"\end@float")
-    assert expander.state.get_env_stack() == ["figure", "table"]
+    assert expander.get_env_stack() == ["figure", "table"]
 
     # test drop \end
     expander.expand(r"\end{figure}")
-    assert expander.state.get_env_stack() == []
+    assert expander.get_env_stack() == []
     # expander.expand(r"\end{figure}")
     # assert expander.state.get_env_stack() == []

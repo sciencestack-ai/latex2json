@@ -159,6 +159,9 @@ class ExpanderCore:
         self.loaded_packages: Set[str] = set()
         self.loaded_classes: Set[str] = set()
 
+        # Environment stack for tracking nested environments
+        self._env_stack: List[str] = []
+
         self._init_macros()
 
     @property
@@ -171,13 +174,30 @@ class ExpanderCore:
 
     @property
     def current_env(self) -> Optional[str]:
-        return self.state.current_env
+        return self._env_stack[-1] if self._env_stack else None
+
+    def get_env_stack(self) -> List[str]:
+        return self._env_stack.copy()
 
     def push_env_stack(self, env_name: str):
-        self.state.push_env_stack(env_name)
+        self._env_stack.append(env_name)
 
     def pop_env_stack(self, env_name: Optional[str] = None):
-        return self.state.pop_env_stack(env_name)
+        if not self._env_stack:
+            return None
+
+        if env_name is None:
+            return self._env_stack.pop()
+
+        # Loop through backwards to find the env_name and pop everything from that point onwards
+        for i in range(len(self._env_stack) - 1, -1, -1):
+            if self._env_stack[i] == env_name:
+                # Pop all environments from this point to the end
+                popped = self._env_stack[i:]
+                self._env_stack = self._env_stack[:i]
+                return popped[-1] if popped else None
+
+        return None
 
     def _init_macros(self):
         self._init_state_macros()
@@ -1522,7 +1542,7 @@ class ExpanderCore:
         return self.state.get_environment_definition(env_name)
 
     def get_parent_float_env(self) -> Optional[EnvironmentDefinition]:
-        env_stack = self.state.get_env_stack()
+        env_stack = self.get_env_stack()
         for env in reversed(env_stack):
             env_def = self.get_environment_definition(env)
             if env_def and env_def.is_float_env:

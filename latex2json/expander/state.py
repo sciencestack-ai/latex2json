@@ -92,7 +92,6 @@ class ExpanderState:
         self.environment_registry: Dict[str, EnvironmentDefinition] = {}
         self.font_registry: Dict[str, List[Token]] = {}
         self.color_registry: Dict[str, str] = {}  # e.g. "red" -> "rgb(1,0,0)"
-        self._env_stack: List[str] = []
 
         # storage
         self._catcode_text_mode_values: List[Tuple[int, Catcode]] = []
@@ -208,39 +207,6 @@ class ExpanderState:
         if not self._stack:
             raise RuntimeError("ExpanderState stack is empty!")
         return self._stack[-1]
-
-    @property
-    def current_env(self) -> Optional[str]:
-        """Get the current environment stack."""
-        return self._env_stack[-1] if self._env_stack else None
-
-    def get_env_stack(self) -> List[str]:
-        return self._env_stack.copy()
-
-    def push_env_stack(self, env_name: str):
-        """Pushes a new environment stack onto the stack, starting a new scope."""
-        self._env_stack.append(env_name)
-
-    def pop_env_stack(self, env_name: Optional[str] = None):
-        """Pops the current environment stack from the stack, ending the current scope."""
-        if not self._env_stack:
-            return None
-
-        if env_name is None:
-            return self._env_stack.pop()
-
-        # Loop through backwards to find the env_name and pop everything from that point onwards
-        for i in range(len(self._env_stack) - 1, -1, -1):
-            if self._env_stack[i] == env_name:
-                # Pop all environments from this point to the end
-                popped = self._env_stack[i:]
-                self._env_stack = self._env_stack[:i]
-                return popped[-1] if popped else None
-
-        return None
-
-    def get_env_stack(self):
-        return self._env_stack.copy()
 
     def push_scope(self):
         """Pushes a new state layer onto the stack, starting a new scope."""

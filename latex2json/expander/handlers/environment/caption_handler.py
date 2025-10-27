@@ -83,4 +83,4 @@ if __name__ == "__main__":
         if out:
             if out[0].value == "caption":
                 print(out)
-                print("CUR ENV", expander.state.current_env)
+                print("CUR ENV", expander.current_env)
