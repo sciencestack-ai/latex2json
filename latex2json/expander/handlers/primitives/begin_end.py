@@ -26,7 +26,7 @@ def begin_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
         return None
 
     expander.push_scope()
-    expander.push_env_stack(name)
+    expander.push_env_stack(name, opening_token=token)
 
     env_def = expander.state.get_environment_definition(name)
 

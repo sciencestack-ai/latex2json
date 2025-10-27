@@ -71,6 +71,16 @@ def is_nonumber_token(tok: Token) -> bool:
 
 
 @dataclass
+class EnvStackEntry:
+    """Entry in the environment stack tracking nested environments."""
+
+    env_name: str  # The environment name (e.g., "figure", "table")
+    opening_token: (
+        Token  # The token that opened this environment (\begin, \@float, etc.)
+    )
+
+
+@dataclass
 class TagExtractionResult:
     notag: bool  # explicit \notag or \nonumber
     tag: Optional[str]
@@ -160,7 +170,7 @@ class ExpanderCore:
         self.loaded_classes: Set[str] = set()
 
         # Environment stack for tracking nested environments
-        self._env_stack: List[str] = []
+        self._env_stack: List[EnvStackEntry] = []
 
         self._init_macros()
 
@@ -174,28 +184,76 @@ class ExpanderCore:
 
     @property
     def current_env(self) -> Optional[str]:
-        return self._env_stack[-1] if self._env_stack else None
+        return self._env_stack[-1].env_name if self._env_stack else None
 
     def get_env_stack(self) -> List[str]:
-        return self._env_stack.copy()
+        """Returns a list of environment names currently on the stack."""
+        return [entry.env_name for entry in self._env_stack]
 
-    def push_env_stack(self, env_name: str):
-        self._env_stack.append(env_name)
+    def push_env_stack(self, env_name: str, opening_token: Token):
+        """Push an environment onto the stack with its opening token."""
+        entry = EnvStackEntry(env_name=env_name, opening_token=opening_token)
+        self._env_stack.append(entry)
 
-    def pop_env_stack(self, env_name: Optional[str] = None):
+    def find_env_entry(
+        self, opening_cmd: str, most_recent: bool = True
+    ) -> Optional[EnvStackEntry]:
+        """
+        Find the most recent env entry with matching opening command.
+
+        Args:
+            opening_cmd: The opening command value to search for (e.g., "begin", "@float", "@dblfloat")
+            reverse: If True, search from most recent (default). If False, search from oldest.
+
+        Returns:
+            The matching EnvStackEntry, or None if not found
+        """
+        stack_iter = reversed(self._env_stack) if most_recent else iter(self._env_stack)
+        for entry in stack_iter:
+            if entry.opening_token.value == opening_cmd:
+                return entry
+        return None
+
+    def pop_env_stack(
+        self, target: Optional[Union[str, EnvStackEntry]] = None
+    ) -> Optional[str]:
+        """
+        Pop an environment from the stack.
+
+        Args:
+            target: Can be:
+                - None: pop the topmost entry
+                - str: pop by env_name (backward search)
+                - EnvStackEntry: pop that exact entry (by identity)
+
+        Returns:
+            The popped environment name, or None if stack is empty
+        """
         if not self._env_stack:
             return None
 
-        if env_name is None:
-            return self._env_stack.pop()
+        if target is None:
+            entry = self._env_stack.pop()
+            return entry.env_name
 
-        # Loop through backwards to find the env_name and pop everything from that point onwards
-        for i in range(len(self._env_stack) - 1, -1, -1):
-            if self._env_stack[i] == env_name:
-                # Pop all environments from this point to the end
-                popped = self._env_stack[i:]
-                self._env_stack = self._env_stack[:i]
-                return popped[-1] if popped else None
+        if isinstance(target, str):
+            # Find by env_name (existing behavior)
+            for i in range(len(self._env_stack) - 1, -1, -1):
+                if self._env_stack[i].env_name == target:
+                    # Pop all environments from this point to the end
+                    popped = self._env_stack[i:]
+                    self._env_stack = self._env_stack[:i]
+                    return popped[-1].env_name if popped else None
+
+        elif isinstance(target, EnvStackEntry):
+            # Find by object identity
+            try:
+                idx = self._env_stack.index(target)
+                popped = self._env_stack[idx:]
+                self._env_stack = self._env_stack[:idx]
+                return popped[-1].env_name if popped else None
+            except ValueError:
+                return None
 
         return None
 
