@@ -33,49 +33,6 @@ class MetadataNode(ASTNode):
         return MetadataNode(self.name, self.copy_nodes(self.children))
 
 
-class AuthorNode(MetadataNode):
-    def __init__(self, body: List[ASTNode]):
-        super().__init__("author", body)
-
-
-class AuthorsNode(ASTNode):
-    def __init__(self, authors: List[AuthorNode] = []):
-        super().__init__()
-        self.set_children(authors)
-
-    def __eq__(self, other: ASTNode):
-        if not isinstance(other, AuthorsNode):
-            return False
-        return all(a == b for a, b in zip(self.children, other.children))
-
-    def detokenize(self) -> str:
-        """Convert the authors node back to LaTeX source code."""
-        out_str = ""
-        N = len(self.children)
-        for i, author in enumerate(self.children):
-            for c in author.children:
-                out_str += c.detokenize()
-            if i < N - 1:
-                out_str += "\n\\and\n"
-        return f"\\author{{{out_str}}}"
-
-    def __str__(self):
-        return self.detokenize()
-
-    def to_json(self):
-        result = super().to_json()
-        result["type"] = NodeTypes.AUTHOR
-        content = []
-        for author in self.children:
-            author_childs = [child.to_json() for child in author.children]
-            content.append(author_childs)
-        result["content"] = content
-        return result
-
-    def copy(self):
-        return AuthorsNode(self.copy_nodes(self.children))
-
-
 class MaketitleNode(ASTNode):
     """Node representing the output of \\maketitle command.
 
@@ -101,7 +58,7 @@ class MaketitleNode(ASTNode):
 
     def to_json(self):
         result = super().to_json()
-        result["type"] = "maketitle"
+        result["type"] = NodeTypes.MAKETITLE
         if self.children:
             result["content"] = [child.to_json() for child in self.children]
         return result

@@ -3,9 +3,6 @@ import pytest
 from latex2json.nodes import (
     TextNode,
     MetadataNode,
-    AuthorNode,
-    AuthorsNode,
-    URLNode,
     EnvironmentNode,
 )
 from latex2json.nodes.tabular_node import TabularNode
@@ -138,18 +135,24 @@ Caffe Abstract
 
     # The user's custom @maketitle is: \begin{tabular}[t]{c}\@author\end{tabular}
     # So we expect a TabularNode child containing MetadataNode(author)
-    tabular_in_maketitle = [child for child in maketitle.children if isinstance(child, TabularNode)]
-    assert len(tabular_in_maketitle) >= 1, "MaketitleNode should contain tabular from custom @maketitle"
+    tabular_in_maketitle = [
+        child for child in maketitle.children if isinstance(child, TabularNode)
+    ]
+    assert (
+        len(tabular_in_maketitle) >= 1
+    ), "MaketitleNode should contain tabular from custom @maketitle"
 
     # Find author metadata somewhere in the maketitle tree (could be nested in tabular)
     def find_metadata_recursive(node, name):
         if isinstance(node, MetadataNode) and node.name == name:
             return True
-        if hasattr(node, 'children'):
+        if hasattr(node, "children"):
             return any(find_metadata_recursive(child, name) for child in node.children)
         return False
 
-    assert find_metadata_recursive(maketitle, "author"), "MaketitleNode should contain author metadata"
+    assert find_metadata_recursive(
+        maketitle, "author"
+    ), "MaketitleNode should contain author metadata"
 
     # Verify abstract is separate and NOT absorbed into maketitle
     abstract_text = abstract_nodes[0].detokenize().strip()
