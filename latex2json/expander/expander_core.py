@@ -102,6 +102,10 @@ def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
     return False
 
 
+def is_token_command_name(tok: Token, command_name: str) -> bool:
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == command_name
+
+
 class ExpanderCore:
     """
     The main engine for processing the document.
@@ -1238,7 +1242,15 @@ class ExpanderCore:
 
         # Parse optional plus component
         self.skip_whitespace()
-        if self.parse_keyword("plus") or self.parse_keyword("@plus"):
+        tok = self.peek()
+        is_at_plus_token = tok and is_token_command_name(tok, "@plus")
+        if (
+            is_at_plus_token
+            or self.parse_keyword("plus")
+            or self.parse_keyword("@plus")
+        ):
+            if is_at_plus_token:
+                self.consume()
             self.skip_whitespace()
             plus_result = self._parse_dimensions()
             if plus_result:
@@ -1256,7 +1268,14 @@ class ExpanderCore:
             self.consume()
             return base_scaled_points, True
 
-        if self.parse_keyword("minus") or self.parse_keyword("@minus"):
+        is_at_minus_token = tok and is_token_command_name(tok, "@minus")
+        if (
+            is_at_minus_token
+            or self.parse_keyword("minus")
+            or self.parse_keyword("@minus")
+        ):
+            if is_at_minus_token:
+                self.consume()
             self.skip_whitespace()
             minus_result = self._parse_dimensions()
             if minus_result:
