@@ -18,11 +18,12 @@ def test_newdocumentcommand_basic():
 
     # Command with two mandatory arguments
     text = r"""
-    \NewDocumentCommand{\greetTwo}{m m}{Hello #1 and #2!}
+    \NewDocumentCommand {\greetTwo} {m m}{Hello #1 and #2!}
     """.strip()
     expander.expand(text)
     assert_token_sequence(
-        expander.expand(r"\greetTwo{Alice}{Bob}"), expander.expand("Hello Alice and Bob!")
+        expander.expand(r"\greetTwo{Alice}{Bob}"),
+        expander.expand("Hello Alice and Bob!"),
     )
 
 
@@ -30,7 +31,7 @@ def test_newdocumentcommand_with_star():
     """Test star argument (s) with IfBooleanTF."""
     expander = Expander()
 
-    text = r"\NewDocumentCommand{\test}{s m}{\IfBooleanTF{#1}{Star}{No star}: #2}"
+    text = r"\NewDocumentCommand{\test}{s m}{\IfBooleanTF{#1} {Star}{No star}: #2}"
     expander.expand(text)
     assert expander.get_macro("\\test")
 
@@ -118,7 +119,9 @@ def test_ifboolean_t_and_f():
     expander = Expander()
 
     # Test IfBooleanT
-    text = r"\NewDocumentCommand{\testT}{s m}{\IfBooleanT{#1}{Star detected!} Arg: #2}"
+    text = (
+        r"\NewDocumentCommand{\testT} {s m} {\IfBooleanT {#1}{Star detected!} Arg: #2}"
+    )
     expander.expand(text)
 
     result = expander.expand(r"\testT{world}")
@@ -148,15 +151,11 @@ def test_renewdocumentcommand():
 
     # Define a command
     expander.expand(r"\NewDocumentCommand{\test}{m}{First: #1}")
-    assert_token_sequence(
-        expander.expand(r"\test{hi}"), expander.expand("First: hi")
-    )
+    assert_token_sequence(expander.expand(r"\test{hi}"), expander.expand("First: hi"))
 
     # Redefine it
     expander.expand(r"\RenewDocumentCommand{\test}{m}{Second: #1}")
-    assert_token_sequence(
-        expander.expand(r"\test{hi}"), expander.expand("Second: hi")
-    )
+    assert_token_sequence(expander.expand(r"\test{hi}"), expander.expand("Second: hi"))
 
 
 def test_newdocumentcommand_multiple_args():

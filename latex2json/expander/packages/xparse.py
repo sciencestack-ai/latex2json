@@ -18,12 +18,17 @@ from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import is_begin_bracket_token, is_begin_group_token, is_whitespace_token
+from latex2json.tokens.utils import (
+    is_begin_bracket_token,
+    is_begin_group_token,
+    is_whitespace_token,
+)
 
 
 @dataclass
 class ArgSpec:
     """Represents a single argument specification."""
+
     spec_type: str  # 's', 'm', 'o', 'O', 'd', 'g', 'G', 'v', etc.
     default_value: Optional[List[Token]] = None
     delimiters: Optional[tuple[str, str]] = None  # For delimited arguments like d()
@@ -67,22 +72,22 @@ def parse_argument_specification(expander: ExpanderCore) -> Optional[List[ArgSpe
         spec_char = tok.value
 
         # Star argument (optional)
-        if spec_char == 's':
-            specs.append(ArgSpec(spec_type='s'))
+        if spec_char == "s":
+            specs.append(ArgSpec(spec_type="s"))
             i += 1
 
         # Mandatory argument
-        elif spec_char == 'm':
-            specs.append(ArgSpec(spec_type='m'))
+        elif spec_char == "m":
+            specs.append(ArgSpec(spec_type="m"))
             i += 1
 
         # Optional argument without default
-        elif spec_char == 'o':
-            specs.append(ArgSpec(spec_type='o'))
+        elif spec_char == "o":
+            specs.append(ArgSpec(spec_type="o"))
             i += 1
 
         # Optional argument with default O{default}
-        elif spec_char == 'O':
+        elif spec_char == "O":
             i += 1
             # Next should be a brace group with default value
             if i < len(arg_spec_tokens) and is_begin_group_token(arg_spec_tokens[i]):
@@ -95,25 +100,30 @@ def parse_argument_specification(expander: ExpanderCore) -> Optional[List[ArgSpe
                         depth += 1
                         if depth > 1:
                             default_tokens.append(arg_spec_tokens[i])
-                    elif arg_spec_tokens[i].value == '}' and arg_spec_tokens[i].type == TokenType.CHARACTER:
+                    elif (
+                        arg_spec_tokens[i].value == "}"
+                        and arg_spec_tokens[i].type == TokenType.CHARACTER
+                    ):
                         depth -= 1
                         if depth > 0:
                             default_tokens.append(arg_spec_tokens[i])
                     else:
                         default_tokens.append(arg_spec_tokens[i])
                     i += 1
-                specs.append(ArgSpec(spec_type='O', default_value=default_tokens))
+                specs.append(ArgSpec(spec_type="O", default_value=default_tokens))
             else:
-                expander.logger.warning("O argument spec requires default value in braces")
+                expander.logger.warning(
+                    "O argument spec requires default value in braces"
+                )
                 return None
 
         # Optional braced argument
-        elif spec_char == 'g':
-            specs.append(ArgSpec(spec_type='g'))
+        elif spec_char == "g":
+            specs.append(ArgSpec(spec_type="g"))
             i += 1
 
         # Optional braced argument with default G{default}
-        elif spec_char == 'G':
+        elif spec_char == "G":
             i += 1
             if i < len(arg_spec_tokens) and is_begin_group_token(arg_spec_tokens[i]):
                 depth = 1
@@ -124,33 +134,42 @@ def parse_argument_specification(expander: ExpanderCore) -> Optional[List[ArgSpe
                         depth += 1
                         if depth > 1:
                             default_tokens.append(arg_spec_tokens[i])
-                    elif arg_spec_tokens[i].value == '}' and arg_spec_tokens[i].type == TokenType.CHARACTER:
+                    elif (
+                        arg_spec_tokens[i].value == "}"
+                        and arg_spec_tokens[i].type == TokenType.CHARACTER
+                    ):
                         depth -= 1
                         if depth > 0:
                             default_tokens.append(arg_spec_tokens[i])
                     else:
                         default_tokens.append(arg_spec_tokens[i])
                     i += 1
-                specs.append(ArgSpec(spec_type='G', default_value=default_tokens))
+                specs.append(ArgSpec(spec_type="G", default_value=default_tokens))
             else:
-                expander.logger.warning("G argument spec requires default value in braces")
+                expander.logger.warning(
+                    "G argument spec requires default value in braces"
+                )
                 return None
 
         # Delimited optional argument d()
-        elif spec_char == 'd':
+        elif spec_char == "d":
             i += 1
             if i + 1 < len(arg_spec_tokens):
                 open_delim = arg_spec_tokens[i].value
                 close_delim = arg_spec_tokens[i + 1].value
-                specs.append(ArgSpec(spec_type='d', delimiters=(open_delim, close_delim)))
+                specs.append(
+                    ArgSpec(spec_type="d", delimiters=(open_delim, close_delim))
+                )
                 i += 2
             else:
-                expander.logger.warning("d argument spec requires two delimiter characters")
+                expander.logger.warning(
+                    "d argument spec requires two delimiter characters"
+                )
                 return None
 
         # Verbatim argument
-        elif spec_char == 'v':
-            specs.append(ArgSpec(spec_type='v'))
+        elif spec_char == "v":
+            specs.append(ArgSpec(spec_type="v"))
             i += 1
 
         else:
@@ -162,8 +181,7 @@ def parse_argument_specification(expander: ExpanderCore) -> Optional[List[ArgSpe
 
 
 def parse_xparse_arguments(
-    expander: ExpanderCore,
-    arg_specs: List[ArgSpec]
+    expander: ExpanderCore, arg_specs: List[ArgSpec]
 ) -> Optional[List[Optional[List[Token]]]]:
     """
     Parse arguments according to xparse specification.
@@ -176,17 +194,17 @@ def parse_xparse_arguments(
     parsed_args: List[Optional[List[Token]]] = []
 
     for spec in arg_specs:
-        if spec.spec_type == 's':
+        if spec.spec_type == "s":
             # Star argument - check for *
             expander.skip_whitespace()
             has_star = expander.parse_asterisk()
             # Store as special boolean marker
             if has_star:
-                parsed_args.append([Token(TokenType.CHARACTER, 'TrueBooleanValue')])
+                parsed_args.append([Token(TokenType.CHARACTER, "TrueBooleanValue")])
             else:
-                parsed_args.append([Token(TokenType.CHARACTER, 'FalseBooleanValue')])
+                parsed_args.append([Token(TokenType.CHARACTER, "FalseBooleanValue")])
 
-        elif spec.spec_type == 'm':
+        elif spec.spec_type == "m":
             # Mandatory argument
             expander.skip_whitespace()
             arg = expander.parse_immediate_token()
@@ -195,7 +213,7 @@ def parse_xparse_arguments(
                 return None
             parsed_args.append(arg)
 
-        elif spec.spec_type == 'o':
+        elif spec.spec_type == "o":
             # Optional argument in []
             expander.skip_whitespace()
             tok = expander.peek()
@@ -204,9 +222,9 @@ def parse_xparse_arguments(
                 parsed_args.append(arg)
             else:
                 # Missing optional argument - use special marker
-                parsed_args.append([Token(TokenType.CHARACTER, '-NoValue-')])
+                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
 
-        elif spec.spec_type == 'O':
+        elif spec.spec_type == "O":
             # Optional argument with default
             expander.skip_whitespace()
             tok = expander.peek()
@@ -217,7 +235,7 @@ def parse_xparse_arguments(
                 # Use default value
                 parsed_args.append(spec.default_value if spec.default_value else [])
 
-        elif spec.spec_type == 'g':
+        elif spec.spec_type == "g":
             # Optional braced argument
             expander.skip_whitespace()
             tok = expander.peek()
@@ -225,9 +243,9 @@ def parse_xparse_arguments(
                 arg = expander.parse_brace_as_tokens()
                 parsed_args.append(arg)
             else:
-                parsed_args.append([Token(TokenType.CHARACTER, '-NoValue-')])
+                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
 
-        elif spec.spec_type == 'G':
+        elif spec.spec_type == "G":
             # Optional braced argument with default
             expander.skip_whitespace()
             tok = expander.peek()
@@ -237,7 +255,7 @@ def parse_xparse_arguments(
             else:
                 parsed_args.append(spec.default_value if spec.default_value else [])
 
-        elif spec.spec_type == 'd':
+        elif spec.spec_type == "d":
             # Delimited optional argument
             expander.skip_whitespace()
             open_delim, close_delim = spec.delimiters
@@ -248,9 +266,9 @@ def parse_xparse_arguments(
                 expander.consume()  # consume close delimiter
                 parsed_args.append(arg)
             else:
-                parsed_args.append([Token(TokenType.CHARACTER, '-NoValue-')])
+                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
 
-        elif spec.spec_type == 'v':
+        elif spec.spec_type == "v":
             # Verbatim argument - read until next delimiter
             expander.skip_whitespace()
             arg = expander.parse_immediate_token()
@@ -351,54 +369,61 @@ def register_ifboolean_commands(expander: ExpanderCore):
 
     These check if an argument is the special boolean value from a star argument.
     """
-    def ifboolean_tf_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+
+    def ifboolean_tf_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
         # Parse the argument to test (should be #1, #2, etc.)
-        arg_to_test = expander.parse_immediate_token()
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
         if not arg_to_test:
             return None
 
         # Parse true branch
-        true_branch = expander.parse_immediate_token()
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
         if not true_branch:
             return None
 
         # Parse false branch
-        false_branch = expander.parse_immediate_token()
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
         if not false_branch:
             return None
 
         # Check if argument is TrueBooleanValue
-        if len(arg_to_test) == 1 and arg_to_test[0].value == 'TrueBooleanValue':
+        if len(arg_to_test) == 1 and arg_to_test[0].value == "TrueBooleanValue":
             expander.push_tokens(true_branch)
         else:
             expander.push_tokens(false_branch)
 
         return []
 
-    def ifboolean_t_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-        arg_to_test = expander.parse_immediate_token()
+    def ifboolean_t_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
         if not arg_to_test:
             return None
 
-        true_branch = expander.parse_immediate_token()
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
         if not true_branch:
             return None
 
-        if len(arg_to_test) == 1 and arg_to_test[0].value == 'TrueBooleanValue':
+        if len(arg_to_test) == 1 and arg_to_test[0].value == "TrueBooleanValue":
             expander.push_tokens(true_branch)
 
         return []
 
-    def ifboolean_f_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-        arg_to_test = expander.parse_immediate_token()
+    def ifboolean_f_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
         if not arg_to_test:
             return None
 
-        false_branch = expander.parse_immediate_token()
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
         if not false_branch:
             return None
 
-        if len(arg_to_test) == 1 and arg_to_test[0].value != 'TrueBooleanValue':
+        if len(arg_to_test) == 1 and arg_to_test[0].value != "TrueBooleanValue":
             expander.push_tokens(false_branch)
 
         return []
@@ -442,12 +467,14 @@ if __name__ == "__main__":
     register_xparse(expander)
 
     # Test basic command with star and optional argument
-    expander.expand(r"""
+    expander.expand(
+        r"""
     \NewDocumentCommand{\test}{ s O{default} m }{%
       \IfBooleanTF{#1}{Star}{No star}:
       #2 and #3%
     }
-    """)
+    """
+    )
 
     # Test with star
     print("With star:")
