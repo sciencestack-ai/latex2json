@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "addpenalty": "{",
     "@parboxrestore": 0,
     # language/localization
     "extrasenglish": 0,
@@ -246,6 +247,7 @@ content_formatting_patterns = {
     "tableofcontents": 0,
     "@tocline": 5,
     "@tocpagenum": 1,
+    "@dottedtocline": 3,
     # other contents
     "addtocontents": "{{",
     "addcontentsline": "{{{",

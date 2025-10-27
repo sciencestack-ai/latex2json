@@ -557,3 +557,29 @@ $\div$ % becomes \mathop{\mathrm{div}}\limits
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert r"\mathop{\mathrm{div}}\limits" in out_str
+
+
+def test_realworld_penalty_dimension_commands():
+    text = r"""
+    \makeatletter
+
+    \def\@pnumwidth{1.55em}
+
+    \def\l@section#1#2{
+        \addpenalty{\@secpenalty} % good place for page break
+        \@tempdima 1.5em             % width of box holding section number
+        \begingroup
+            \parindent  \z@ \rightskip \@pnumwidth
+            \parfillskip -\@pnumwidth
+            \leavevmode                % TeX command to enter horizontal mode.
+            \advance\leftskip\@tempdima %% added 5 Feb 88 to conform to
+            \hskip -\leftskip           %% 25 Jan 88 change to \numberline
+            %#1\nobreak\hfil \nobreak\hbox to\@pnumwidth{\hss #2}\par
+    \endgroup}
+
+    \l@section{Section 1}{1.55em}
+"""
+    expander = Expander()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == ""

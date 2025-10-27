@@ -80,6 +80,12 @@ def test_ignore_formatting_handlers():
     \addto\extrasenglish{...}
 
     \looseness=-1
+
+    \addpenalty 1
+    \addpenalty\@secpenalty
+    \addpenalty{\@secpenalty}
+    
+    \@dottedtocline{3}{3.8em}{3.2em}
     """
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)

@@ -9,6 +9,7 @@ BUILTIN_SKIPS = [
     "footskip",
     # Paragraph skips
     "parskip",
+    "parfillskip",
     # Standard skip amounts
     "smallskipamount",
     "medskipamount",

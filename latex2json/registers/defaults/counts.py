@@ -3,6 +3,7 @@ BUILTIN_COUNTS = [
     "clubpenalty",
     "widowpenalty",
     "hyphenpenalty",
+    "@secpenalty",
     "discretionarypenalty",
     "interfootnotelinepenalty",
     "interlinepenalty",
