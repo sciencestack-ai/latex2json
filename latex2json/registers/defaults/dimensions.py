@@ -42,6 +42,7 @@ BUILTIN_DIMENSIONS = [
     "bibindent",  # Indentation in bibliography
     # Page breaking
     "maxdepth",  # Maximum depth of page
+    "@maxdepth",
     "splitmaxdepth",
     "prevdepth",
     # Emergency stretching

@@ -5,8 +5,20 @@ from latex2json.latex_maps.environments import (
     FIGURE_ENVIRONMENTS,
 )
 
+MAKETITLE_COMMANDS = [
+    "maketitle",
+    "@maketitle",
+    "@author",
+    "author",
+    "@title",
+    "title",
+    "@thanks",
+    "thanks",
+]
+
 # These commands should not be overrwritten by newcommand/newenvironment
 WHITELISTED_COMMANDS = [
+    *MAKETITLE_COMMANDS,
     # expand
     "noexpand",
     "expandafter",
@@ -23,13 +35,6 @@ WHITELISTED_COMMANDS = [
     "subparagraph",
     "newline",
     "newtheorem",
-    "maketitle",
-    "@author",
-    "@title",
-    "@maketitle",
-    "title",
-    "author",
-    "thanks",
     "date",
     "and",
     "part",
