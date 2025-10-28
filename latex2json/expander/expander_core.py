@@ -47,6 +47,7 @@ from latex2json.tokens.utils import (
     is_end_group_token,
     is_param_token,
 )
+from latex2json.utils.tex_utils import strip_latex_comments
 from latex2json.utils.tex_versions import is_supported_tex_version
 
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
@@ -575,14 +576,14 @@ class ExpanderCore:
         self.set_catcode(ord("@"), Catcode.OTHER)
         return []
 
-    def expand_ltx(self, text: str) -> List[Token]:
+    def expand_ltx(self, text: str, source_file: Optional[str] = None) -> List[Token]:
         """
         Expand LaTeX internal code that may contain @ symbols.
         """
 
         old_catcode = self.get_catcode(ord("@"))
         self.makeatletter()
-        result = self.expand_text(text)
+        result = self.expand_text(text, source_file=source_file)
         self.set_catcode(ord("@"), old_catcode)
         return result
 
@@ -745,7 +746,7 @@ class ExpanderCore:
         # ensure to put \n at the end of the file to delimit/split, in case file ends with %
         self.push_text(input_text + "\n", source_file=file_path)
 
-    def expand_file(self, file_path: str):
+    def expand_file(self, file_path: str, is_package_or_class: bool = False):
         file_path = self.get_cwd_path(file_path)
         if not self.if_file_exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
@@ -754,8 +755,17 @@ class ExpanderCore:
         input_text = self.read_file(file_path)
         if input_text is None:
             return None
-        tokens = self.expand_text(input_text, source_file=file_path)
-        return tokens
+
+        # strip comments to avoid parsing errors since some files may contain
+        # comments that can affect the input stream. To investigate at a future date
+        input_text = strip_latex_comments(input_text).strip()
+        if not input_text:
+            return None
+
+        if is_package_or_class:
+            return self.expand_ltx(input_text, source_file=file_path)
+
+        return self.expand_text(input_text, source_file=file_path)
 
     def read_file(self, file_path: str) -> Optional[str]:
         if not os.path.exists(file_path):
@@ -796,14 +806,7 @@ class ExpanderCore:
             was_in_package_or_class = self.state.in_package_or_class
             self.state.in_package_or_class = True
             # self.push_scope()
-            # Set @ to LETTER catcode for package/class loading (like \makeatletter)
-            old_at_catcode = self.get_catcode(ord("@"))
-            self.makeatletter()
-            try:
-                tokens = self.expand_file(package_path)
-            finally:
-                # Always restore original catcode
-                self.set_catcode(ord("@"), old_at_catcode)
+            tokens = self.expand_file(package_path, is_package_or_class=True)
             # self.pop_scope()
 
             self.state.in_package_or_class = was_in_package_or_class
