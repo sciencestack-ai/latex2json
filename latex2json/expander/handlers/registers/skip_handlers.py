@@ -42,8 +42,8 @@ ignored_skip_pattern_N_blocks = {
     "negmedspace": 0,  # Negative medium space
     "negthickspace": 0,  # Negative thick space
     # @plus and @minus should be handled separately in parse_skip, but add here if in the wild
-    "@plus": 0,
-    "@minus": 0,
+    "@plus": "d",  # e.g. @plus 1pt
+    "@minus": "d",
 }
 
 

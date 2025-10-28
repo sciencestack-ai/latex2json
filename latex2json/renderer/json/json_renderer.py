@@ -14,6 +14,8 @@ INLINE_TYPES = [
     NodeTypes.COMMAND,
 ]
 
+ACCEPTED_COMMAND_NAMES = ["and"]  # \and for delimiting author blocks
+
 
 def is_token_inline(token: Dict) -> bool:
     if not isinstance(token, dict):
@@ -333,7 +335,9 @@ class JSONRenderer:
 
         for token in tokens:
             if isinstance(token, dict) and token.get("type") == NodeTypes.COMMAND:
-                self.logger.warning(f"Found unknown command: {token.get('command')}")
+                command_name: str = token.get("command", "").lower()
+                if command_name not in ACCEPTED_COMMAND_NAMES:
+                    self.logger.warning(f"Found unknown command: {command_name}")
 
         return tokens
 

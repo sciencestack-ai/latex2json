@@ -6,14 +6,16 @@ from latex2json.latex_maps.environments import (
 )
 
 MAKETITLE_COMMANDS = [
-    "maketitle",
+    # only disable redefinition of @maketitle to ignore layout and preserve metadata
     "@maketitle",
-    "@author",
-    "author",
-    "@title",
-    "title",
-    "@thanks",
-    "thanks",
+    # allow redefinition of maketitle and author, title, thanks
+    # "maketitle",
+    # "@author",
+    # "author",
+    # "@title",
+    # "title",
+    # "@thanks",
+    # "thanks",
 ]
 
 # These commands should not be overrwritten by newcommand/newenvironment

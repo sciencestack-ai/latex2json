@@ -9,10 +9,17 @@ from latex2json.nodes.tabular_node import TabularNode
 from latex2json.nodes.metadata_nodes import MaketitleNode
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
+from latex2json.expander.expander import Expander
 
 
-def test_doc_content_handler():
-    parser = Parser()
+@pytest.fixture
+def parser():
+    """Create a parser with prevent_whitelisted_redefinitions=False for all tests."""
+    expander = Expander(prevent_whitelisted_redefinitions=False)
+    return Parser(expander=expander)
+
+
+def test_doc_content_handler(parser: Parser):
     text = r"""
     \title{My Title}
     \author{John Doe \url{https://example.com}}
@@ -61,8 +68,7 @@ def test_doc_content_handler():
     ]
 
 
-def test_appendices():
-    parser = Parser()
+def test_appendices(parser: Parser):
     text = r"""
     \begin{appendices}
     APPENDIX A
@@ -73,7 +79,7 @@ def test_appendices():
     assert out == [MetadataNode("appendix", [TextNode("APPENDIX A")])]
 
 
-def test_maketitle_with_alignauthor_edge_case():
+def test_maketitle_with_alignauthor_edge_case(parser: Parser):
     """Test maketitle with \\alignauthor that contains \\end{tabular}\\begin{tabular}.
 
     This is an edge case where the author content contains sequential tabular
@@ -81,7 +87,6 @@ def test_maketitle_with_alignauthor_edge_case():
     environment boundaries, resulting in the abstract being absorbed into the
     first tabular environment.
     """
-    parser = Parser()
     text = r"""
 \makeatletter
 \def\@maketitle{

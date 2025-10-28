@@ -188,6 +188,7 @@ LAYOUT_ENVIRONMENTS = {
     # parcolumns e.g. \begin{parcolumns}[rulebetween]{2}
     "parcolumns": EnvironmentDefinition("parcolumns", num_args=2, default_arg=[]),
     "copyrightbox": EnvironmentDefinition("copyrightbox", num_args=1, default_arg=[]),
+    "noticebox": EnvironmentDefinition("noticebox", num_args=1, default_arg=[]),
 }
 
 

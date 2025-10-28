@@ -63,6 +63,7 @@ class NodeTypes(StrEnum):
 
     # Metadata
     MAKETITLE = "maketitle"
+    AUTHOR = "author"
     # and other metadata types... e.g. author, email, affiliation, keywords, address
 
     # Other

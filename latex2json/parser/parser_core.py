@@ -5,6 +5,7 @@ from collections import deque
 from typing import Dict, List, Optional, Callable
 from latex2json.expander.expander import Expander
 from latex2json.nodes.metadata_nodes import MetadataNode, MaketitleNode
+from latex2json.nodes.node_types import NodeTypes
 from latex2json.tokens.types import EnvironmentEndToken
 from latex2json.expander.state import ProcessingMode
 from latex2json.latex_maps.environments import EnvironmentDefinition
@@ -695,7 +696,8 @@ class ParserCore:
             if not token.args:
                 return []
             arg_nodes = self.process_tokens(token.args[0])
-            return [MetadataNode(token.name, arg_nodes)]
+            node_type = NodeTypes.AUTHOR if token.name == "author" else token.name
+            return [MetadataNode(node_type, arg_nodes)]
         elif token.name == "maketitle":
             # Process entire maketitle block standalone to prevent environment boundary issues
             if not token.args:

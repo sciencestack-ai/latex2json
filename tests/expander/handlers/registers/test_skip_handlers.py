@@ -23,6 +23,7 @@ def test_hvskip_handlers():
 def test_ignored_skip_commands():
     expander = Expander()
 
+    expander.expand(r"\makeatletter")
     # # Test basic skips
     # skips = [r"\smallskip", r"\medskip", r"\bigskip"]
     # for skip in skips:
@@ -42,3 +43,6 @@ def test_ignored_skip_commands():
         assert out == []
 
     assert expander.expand(r"\skip\footins 8.1pt plus 4pt minus 2pt") == []
+
+    # in the wild @plus and @minus commands
+    assert strip_whitespace_tokens(expander.expand(r"\@plus 4pt \@minus 2pt")) == []
