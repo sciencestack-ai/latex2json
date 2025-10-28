@@ -150,6 +150,15 @@ class JSONRenderer:
                 continue
             output.append(out_dict)
 
+        # strip out all tokens before the first document
+        first_document_idx = -1
+        for i, token in enumerate(output):
+            if isinstance(token, dict) and token["type"] == NodeTypes.DOCUMENT:
+                first_document_idx = i
+                break
+        if first_document_idx != -1:
+            output = output[first_document_idx:]
+
         if organize_hierachy:
             organized = self._recursive_organize(output)
             # Apply recursive whitespace stripping
@@ -521,9 +530,14 @@ Appendix 2 content
 """
 
     text = r"""
-\pspicture
-\draw (0,0) -- (1,1);
-\endpspicture
+\makeatletter
+
+\author{
+ABC MAN
+\email{aaa@gmail.com}
+}
+
+\maketitle
 """.strip()
 
     json = renderer.parse(text)

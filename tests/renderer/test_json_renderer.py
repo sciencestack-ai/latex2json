@@ -85,12 +85,9 @@ def test_output_excludes_tokens_after_document_env():
     renderer = JSONRenderer()
     json = renderer.parse(text)
 
-    # only PRE DOC + document token output included, no AFTER END DOC
-    assert len(json) == 2
-    assert json[0]["type"] == NodeTypes.TEXT
-    assert json[0]["content"].strip() == "PRE DOC"
-    assert json[1]["type"] == NodeTypes.DOCUMENT
-    # assert json[1]["name"] == NodeTypes.DOCUMENT
+    # Exclude PRE DOC and AFTER END DOC
+    assert len(json) == 1
+    assert json[0]["type"] == NodeTypes.DOCUMENT
 
     # BUT test nested documents
     text = r"""
