@@ -10,7 +10,12 @@ The xparse package provides powerful argument parsing with specifications like:
 - g: optional argument in {}
 - G{default}: optional braced argument with default
 - v: verbatim argument
+- e{tokens}: embellishment arguments (e.g., e{_^} for subscript/superscript)
 - etc.
+
+Supported conditionals:
+- \IfBooleanTF, \IfBooleanT, \IfBooleanF: check star arguments
+- \IfValueTF, \IfValueT, \IfValueF: check if optional arguments have values
 """
 
 from dataclasses import dataclass
@@ -29,15 +34,18 @@ from latex2json.tokens.utils import (
 class ArgSpec:
     """Represents a single argument specification."""
 
-    spec_type: str  # 's', 'm', 'o', 'O', 'd', 'g', 'G', 'v', etc.
+    spec_type: str  # 's', 'm', 'o', 'O', 'd', 'g', 'G', 'v', 'e', etc.
     default_value: Optional[List[Token]] = None
     delimiters: Optional[tuple[str, str]] = None  # For delimited arguments like d()
+    embellishments: Optional[List[str]] = None  # For e{_^} style embellishments
 
     def __repr__(self):
         if self.default_value:
             return f"{self.spec_type}{{default}}"
         elif self.delimiters:
             return f"{self.spec_type}{self.delimiters[0]}{self.delimiters[1]}"
+        elif self.embellishments:
+            return f"{self.spec_type}{{{','.join(self.embellishments)}}}"
         return self.spec_type
 
 
@@ -172,6 +180,27 @@ def parse_argument_specification(expander: ExpanderCore) -> Optional[List[ArgSpe
             specs.append(ArgSpec(spec_type="v"))
             i += 1
 
+        # Embellishment argument e{_^}
+        elif spec_char == "e":
+            i += 1
+            if i < len(arg_spec_tokens) and is_begin_group_token(arg_spec_tokens[i]):
+                # Parse the embellishment characters
+                i += 1
+                embellishment_chars = []
+                while i < len(arg_spec_tokens) and arg_spec_tokens[i].value != "}":
+                    char = arg_spec_tokens[i].value
+                    if char not in [" ", "\t", "\n"]:  # Skip whitespace
+                        embellishment_chars.append(char)
+                    i += 1
+                if i < len(arg_spec_tokens):
+                    i += 1  # Skip closing brace
+                specs.append(ArgSpec(spec_type="e", embellishments=embellishment_chars))
+            else:
+                expander.logger.warning(
+                    "e argument spec requires embellishment characters in braces"
+                )
+                return None
+
         else:
             # Unknown spec, skip
             expander.logger.warning(f"Unknown argument spec: {spec_char}")
@@ -276,6 +305,40 @@ def parse_xparse_arguments(
                 parsed_args.append(arg)
             else:
                 parsed_args.append([])
+
+        elif spec.spec_type == "e":
+            # Embellishment arguments - parse all embellishments that appear
+            # e{_^} means #1 = subscript (_), #2 = superscript (^)
+            # They can appear in any order in the input
+
+            # First, collect all embellishments that are present
+            found_embellishments = {}
+
+            while True:
+                expander.skip_whitespace()
+                tok = expander.peek()
+                if tok and tok.value in spec.embellishments:
+                    embellishment_char = tok.value
+                    expander.consume()  # consume the embellishment character
+                    # Parse the argument following the embellishment
+                    arg = expander.parse_immediate_token()
+                    if arg:
+                        found_embellishments[embellishment_char] = arg
+                    else:
+                        found_embellishments[embellishment_char] = [
+                            Token(TokenType.CHARACTER, "-NoValue-")
+                        ]
+                else:
+                    # No more embellishments found
+                    break
+
+            # Now assign each embellishment to its corresponding argument slot
+            # based on the order in the spec
+            for embellishment_char in spec.embellishments:
+                if embellishment_char in found_embellishments:
+                    parsed_args.append(found_embellishments[embellishment_char])
+                else:
+                    parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
 
         else:
             # Unknown spec type
@@ -433,6 +496,79 @@ def register_ifboolean_commands(expander: ExpanderCore):
     expander.register_handler("\\IfBooleanF", ifboolean_f_handler, is_global=True)
 
 
+def register_ifvalue_commands(expander: ExpanderCore):
+    r"""
+    Register \IfValueTF, \IfValueT, \IfValueF commands.
+
+    These check if an argument has a value (i.e., is not -NoValue-).
+    """
+
+    def ifvalue_tf_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        # Parse the argument to test (should be #1, #2, etc.)
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+
+        # Parse true branch
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not true_branch:
+            return None
+
+        # Parse false branch
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not false_branch:
+            return None
+
+        # Check if argument is NOT -NoValue-
+        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        if has_value:
+            expander.push_tokens(true_branch)
+        else:
+            expander.push_tokens(false_branch)
+
+        return []
+
+    def ifvalue_t_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not true_branch:
+            return None
+
+        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        if has_value:
+            expander.push_tokens(true_branch)
+
+        return []
+
+    def ifvalue_f_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not false_branch:
+            return None
+
+        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        if not has_value:
+            expander.push_tokens(false_branch)
+
+        return []
+
+    expander.register_handler("\\IfValueTF", ifvalue_tf_handler, is_global=True)
+    expander.register_handler("\\IfValueT", ifvalue_t_handler, is_global=True)
+    expander.register_handler("\\IfValueF", ifvalue_f_handler, is_global=True)
+
+
 def register_xparse(expander: ExpanderCore):
     """Register xparse commands."""
     expander.register_macro(
@@ -458,6 +594,9 @@ def register_xparse(expander: ExpanderCore):
 
     # Register IfBoolean conditionals
     register_ifboolean_commands(expander)
+
+    # Register IfValue conditionals
+    register_ifvalue_commands(expander)
 
 
 if __name__ == "__main__":

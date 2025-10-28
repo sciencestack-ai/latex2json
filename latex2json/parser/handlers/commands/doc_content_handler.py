@@ -76,10 +76,6 @@ def register_doc_content_handlers(parser: ParserCore):
             metadata, make_metadata_handler(metadata, has_short_bracket=True)
         )
 
-    # ignore oldschool name + curaddr + addr
-    for cmd in ["name", "curaddr", "addr"]:
-        parser.register_handler(cmd, lambda parser, token: [])
-
     # appendix cmd
     for appendix in ["appendix", "appendices"]:
         parser.register_handler(
@@ -90,8 +86,17 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_env_handler("appendix", appendices_env_handler)
     parser.register_env_handler("appendices", appendices_env_handler)
 
-    # ignore ...running metadata
-    register_ignore_handlers_util(parser, {"authorrunning": 1, "titlerunning": 1})
+    ignore_patterns = {
+        # ignore ...running metadata
+        "authorrunning": 1,
+        "titlerunning": 1,
+        # ignore oldschool name + curaddr + addr...
+        "name": 0,
+        "curaddr": 0,
+        "addr": 0,
+        "inst": 1,
+    }
+    register_ignore_handlers_util(parser, ignore_patterns)
 
 
 if __name__ == "__main__":

@@ -226,3 +226,170 @@ def test_providedocumentcommand():
     assert_token_sequence(
         expander.expand(r"\test{hi}"), expander.expand("Provided: hi")
     )
+
+
+def test_embellishment_no_subscript_or_superscript():
+    """Test e{_^} with no subscript or superscript."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\grad}{e{_^}}{%
+          \nabla
+          \IfValueT{#1}{_{#1}}%
+          \IfValueT{#2}{^{#2}}%
+        }
+        """
+    )
+
+    result = expander.expand(r"\grad")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+
+    # Should only have nabla, no subscript or superscript
+    assert "nabla" in result_str
+    assert "_" not in result_str
+    assert "^" not in result_str
+
+
+def test_embellishment_subscript_only():
+    """Test e{_^} with subscript only."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\grad}{e{_^}}{%
+          \nabla
+          \IfValueT{#1}{_{#1}}%
+          \IfValueT{#2}{^{#2}}%
+        }
+        """
+    )
+
+    result = expander.expand(r"\grad_x")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+
+    # Should have nabla and subscript
+    assert "nabla" in result_str
+    assert "_{x}" in result_str
+    assert "^" not in result_str
+
+
+def test_embellishment_superscript_only():
+    """Test e{_^} with superscript only."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\grad}{e{_^}}{%
+          \nabla
+          \IfValueT{#1}{_{#1}}%
+          \IfValueT{#2}{^{#2}}%
+        }
+        """
+    )
+
+    result = expander.expand(r"\grad^2")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+
+    # Should have nabla and superscript
+    assert "nabla" in result_str
+    assert "_" not in result_str
+    assert "^{2}" in result_str
+
+
+def test_embellishment_both_subscript_and_superscript():
+    """Test e{_^} with both subscript and superscript."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\grad}{e{_^}}{%
+          \nabla
+          \IfValueT{#1}{_{#1}}%
+          \IfValueT{#2}{^{#2}}%
+        }
+        """
+    )
+
+    result = expander.expand(r"\grad_x^2")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+
+    # Should have nabla, subscript, and superscript
+    assert "nabla" in result_str
+    assert "_{x}" in result_str
+    assert "^{2}" in result_str
+
+
+def test_embellishment_complex_arguments():
+    """Test e{_^} with complex braced arguments."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\grad}{e{_^}}{%
+          \nabla
+          \IfValueT{#1}{_{#1}}%
+          \IfValueT{#2}{^{#2}}%
+        }
+        """
+    )
+
+    result = expander.expand(r"\grad_{i,j}^{2}")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+
+    # Should have nabla with complex subscript and superscript
+    assert "nabla" in result_str
+    assert "_{i,j}" in result_str or "_{{i,j}}" in result_str
+    assert "^{2}" in result_str
+
+
+def test_ifvalue_with_novalue():
+    """Test IfValue conditionals with -NoValue- marker."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\test}{o m}{%
+          \IfValueTF{#1}{HAS:#1}{NO}:%
+          #2%
+        }
+        """
+    )
+
+    # Without optional argument
+    result1 = expander.expand(r"\test{world}")
+    result1_str = "".join(tok.value for tok in result1 if tok.value.strip())
+    assert "NO:world" in result1_str
+
+    # With optional argument
+    result2 = expander.expand(r"\test[hello]{world}")
+    result2_str = "".join(tok.value for tok in result2 if tok.value.strip())
+    assert "HAS:hello:world" in result2_str
+
+
+def test_embellishment_order_in_spec():
+    """Test that e{_^} assigns #1 to _ and #2 to ^, regardless of input order."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\test}{e{_^}}{%
+          \IfValueT{#1}{SUB:#1}%
+          \IfValueT{#2}{SUP:#2}%
+        }
+        """
+    )
+
+    # Standard order: _ then ^
+    result1 = expander.expand(r"\test_{b}^{a}")
+    result1_str = "".join(tok.value for tok in result1 if tok.value.strip())
+    assert "SUB:b" in result1_str or "SUB:{b}" in result1_str
+    assert "SUP:a" in result1_str or "SUP:{a}" in result1_str
+
+    # Reversed order: ^ then _ (should still work)
+    result2 = expander.expand(r"\test^{a}_{b}")
+    result2_str = "".join(tok.value for tok in result2 if tok.value.strip())
+    # #1 should be subscript (b), #2 should be superscript (a)
+    # even though ^ appears first in the input
+    assert "SUB:b" in result2_str or "SUB:{b}" in result2_str
+    assert "SUP:a" in result2_str or "SUP:{a}" in result2_str
