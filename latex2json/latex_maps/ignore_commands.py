@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "bibpunct": 6,
     "newcolumntype": "{[{",
     "addpenalty": "{",
     "@parboxrestore": 0,
@@ -292,6 +293,7 @@ content_formatting_patterns = {
     # glossary
     "makeglossary": 0,
     "printglossary": 0,
+    "newglossaryentry": "{{",
 }
 
 separator_patterns = {
