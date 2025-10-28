@@ -50,7 +50,12 @@ def setcounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
         return None
 
     counter_name, value = result
-    expander.state.set_counter(counter_name, int(value))
+    try:
+        value = int(value)
+    except ValueError:
+        expander.logger.info(rf"\{token.value}: Invalid setcounter value argument")
+        return None
+    expander.state.set_counter(counter_name, value)
     return []
 
 
@@ -61,7 +66,12 @@ def addtocounter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
         return None
 
     counter_name, value = result
-    expander.state.add_to_counter(counter_name, int(value))
+    try:
+        value = int(value)
+    except ValueError:
+        expander.logger.info(rf"\{token.value}: Invalid addtocounter value argument")
+        return None
+    expander.state.add_to_counter(counter_name, value)
     return []
 
 
