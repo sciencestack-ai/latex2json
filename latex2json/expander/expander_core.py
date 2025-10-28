@@ -1455,8 +1455,8 @@ class ExpanderCore:
 
             if current_token is None:
                 # Error: Reached the end of the input stream before finding a matching closing brace.
-                self.logger.warning(
-                    "Unmatched braces: Reached end of stream within a definition."
+                self.logger.info(
+                    "Expander - Unmatched braces: Reached end of stream within a definition."
                 )
                 # Depending on your error handling strategy, you might raise an exception here
                 # or return the partially collected tokens.

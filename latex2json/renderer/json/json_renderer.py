@@ -344,8 +344,8 @@ class JSONRenderer:
 
         for token in tokens:
             if isinstance(token, dict) and token.get("type") == NodeTypes.COMMAND:
-                command_name: str = token.get("command", "").lower()
-                if command_name not in ACCEPTED_COMMAND_NAMES:
+                command_name: str = token.get("command", "")
+                if command_name.lower() not in ACCEPTED_COMMAND_NAMES:
                     self.logger.warning(f"Found unknown command: {command_name}")
 
         return tokens

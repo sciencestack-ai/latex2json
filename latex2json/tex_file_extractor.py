@@ -58,6 +58,7 @@ class TexFileExtractor:
             FileNotFoundError: If no main TeX file is found
         """
         all_tex_files: List[Tuple[str, str]] = []
+        main_tex_files: List[Tuple[str, str]] = []
         for root, _, files in os.walk(folder_path):
             for file in files:
                 if file.endswith(".tex"):
@@ -67,14 +68,23 @@ class TexFileExtractor:
                     try:
                         content = read_file(full_path)
                         if TexFileExtractor.is_main_tex_file(content):
-                            # Return both the relative path and the containing folder
-                            return base_path, root
+                            main_tex_files.append((base_path, root))
                     except Exception as e:
                         print(f"Error reading {full_path}: {str(e)}")
                         continue
         if len(all_tex_files) == 1:
             # just return the one
             return all_tex_files[0]
+        N_main_tex_files = len(main_tex_files)
+        if N_main_tex_files == 1:
+            return main_tex_files[0]
+        elif N_main_tex_files > 1:
+            # Prioritize main.tex if it exists
+            for base_path, root in main_tex_files:
+                if os.path.basename(base_path) == "main.tex":
+                    return (base_path, root)
+            # Otherwise return the first one
+            return main_tex_files[0]
 
         raise FileNotFoundError(
             "No main TeX file found (no documentclass or begin{document} found)"
