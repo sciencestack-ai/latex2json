@@ -189,6 +189,9 @@ LAYOUT_ENVIRONMENTS = {
     "parcolumns": EnvironmentDefinition("parcolumns", num_args=2, default_arg=[]),
     "copyrightbox": EnvironmentDefinition("copyrightbox", num_args=1, default_arg=[]),
     "noticebox": EnvironmentDefinition("noticebox", num_args=1, default_arg=[]),
+    "threeparttable": EnvironmentDefinition(
+        "threeparttable", num_args=1, default_arg=[]
+    ),
 }
 
 
