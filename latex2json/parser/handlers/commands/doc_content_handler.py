@@ -76,8 +76,9 @@ def register_doc_content_handlers(parser: ParserCore):
             metadata, make_metadata_handler(metadata, has_short_bracket=True)
         )
 
-    # address
-    parser.register_handler("curraddr", lambda parser, token: [])
+    # ignore oldschool name + curaddr + addr
+    for cmd in ["name", "curaddr", "addr"]:
+        parser.register_handler(cmd, lambda parser, token: [])
 
     # appendix cmd
     for appendix in ["appendix", "appendices"]:

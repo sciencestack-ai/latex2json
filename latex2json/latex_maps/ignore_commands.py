@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "newcolumntype": "{[{",
     "addpenalty": "{",
     "@parboxrestore": 0,
     # language/localization

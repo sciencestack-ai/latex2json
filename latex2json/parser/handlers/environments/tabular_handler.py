@@ -4,6 +4,9 @@ from latex2json.nodes.base_nodes import CommandNode, SpecialCharNode, TextNode
 from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
 from latex2json.nodes.utils import split_nodes_into_columns
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.handlers.commands.tabular_cell_handlers import (
     merge_nodes_into_cellnode,
 )
@@ -124,6 +127,15 @@ def register_tabular_handlers(parser: ParserCore):
 
     for env_name in ["NiceTabular", "NiceTabular*", "NiceTabularX"]:
         parser.register_env_handler(env_name, nice_tabular_handler)
+
+    # table stuff to ignore?
+    ignored_env_pattern_N_blocks = {
+        "columncolor": 1,  # Column colors
+        "rowcolor": 1,  # Row colors
+        "rowcolors": 3,
+    }
+
+    register_ignore_handlers_util(parser, ignored_env_pattern_N_blocks)
 
 
 if __name__ == "__main__":

@@ -73,15 +73,6 @@ def register_base_environment_handlers(expander: ExpanderCore):
         expander.register_environment(env_name, env_def_instance)
     expander.register_handler("floatname", floatname_handler, is_global=True)
 
-    # table stuff to ignore?
-    ignored_env_pattern_N_blocks = {
-        "newcolumntype": "{[{",
-        "columncolor": 1,  # Column colors
-        "rowcolor": 1,  # Row colors
-    }
-
-    register_ignore_handlers_util(expander, ignored_env_pattern_N_blocks)
-
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
@@ -101,10 +92,6 @@ if __name__ == "__main__":
     #     1+1
     #     \end{equation*}
     # """
-    text = r"""
-    \newcolumntype{R}[1]{>{\raggedleft\arraybackslash}p{#1}}
-    """.strip()
-    out = expander.expand(text)
     # print(expander.state.get_counter_as_format("equation", hierarchy=True))
     # expander.expand(r"\newenvironment{test}[1]{BEGIN #1 123}{END}")
     # out = expander.expand(r"\begin{test}{ABC}CONTENT\end{test}")
