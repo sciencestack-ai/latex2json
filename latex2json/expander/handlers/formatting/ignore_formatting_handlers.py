@@ -22,7 +22,8 @@ def vrule_hrule_handler(expander: ExpanderCore, token: Token):
 
 
 def newline_handler(expander: ExpanderCore, token: Token):
-    # parse out any e.g. \\[0.5em]
+    # parse out any e.g. \\*[0.5em]
+    expander.parse_keyword("*")
     space_cnt = expander.skip_whitespace_not_eol()
     if not expander.parse_bracket_as_tokens():
         # i.e. no \\ ... [0.5em]

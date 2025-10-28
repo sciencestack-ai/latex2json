@@ -249,9 +249,14 @@ if __name__ == "__main__":
     ]
     cleanup = True
 
+    # tex_reader.ignore_package_cls = True
+
     for folder in folders:
         folder_stem = folder.split("/")[-1]
-        save_path = folder + "/latex2json.json"
+        if os.path.isdir(folder):
+            save_path = folder + "/latex2json.json"
+        else:
+            save_path = os.path.splitext(folder)[0] + ".json"
         # output = tex_reader.process_compressed(
         #     folder, temp_dir="papers/new/arXiv-2103.07867v1", cleanup=cleanup
         # )

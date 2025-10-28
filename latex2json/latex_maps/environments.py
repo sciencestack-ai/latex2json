@@ -111,6 +111,8 @@ DOCUMENT_ENVIRONMENTS = {
     "appendix": EnvironmentDefinition("appendix"),
     "appendices": EnvironmentDefinition("appendices"),
     "quote": EnvironmentDefinition("quote", has_direct_command=True),
+    "keyword": EnvironmentDefinition("keyword"),
+    "acknowledgments": EnvironmentDefinition("acknowledgments"),
 }
 
 VERBATIM_ENVIRONMENTS = {
