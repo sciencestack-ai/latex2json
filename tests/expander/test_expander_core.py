@@ -248,7 +248,7 @@ def test_parse_keyword_and_sequences():
     assert expander.eof()
 
     # test parse_keyword_sequence
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     expander.set_text(r"\@nil, \@nil\@@")
     assert expander.parse_keyword_sequence([r"\@nil", ",", r"\@nil", r"\@@"])
     assert expander.eof()
@@ -685,7 +685,7 @@ def test_math_macros():
 def test_counter_macros():
     expander = ExpanderCore()
     assert expander.expand(r"\thesection") == expander.expand("0")
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     assert expander.expand(r"\c@section") == expander.expand("0")
 
 
@@ -695,7 +695,7 @@ def test_scope_and_catcodes():
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
     expander.push_scope()
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     assert expander.get_catcode(ord("@")) == Catcode.LETTER
     expander.pop_scope()
     assert expander.get_catcode(ord("@")) == Catcode.OTHER

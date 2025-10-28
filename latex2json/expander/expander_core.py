@@ -567,6 +567,25 @@ class ExpanderCore:
         self.set_text(text)
         return self.process()
 
+    def makeatletter(self) -> List[Token]:
+        self.set_catcode(ord("@"), Catcode.LETTER)
+        return []
+
+    def makeatother(self) -> List[Token]:
+        self.set_catcode(ord("@"), Catcode.OTHER)
+        return []
+
+    def expand_ltx(self, text: str) -> List[Token]:
+        """
+        Expand LaTeX internal code that may contain @ symbols.
+        """
+
+        old_catcode = self.get_catcode(ord("@"))
+        self.makeatletter()
+        result = self.expand_text(text)
+        self.set_catcode(ord("@"), old_catcode)
+        return result
+
     @staticmethod
     def _generate_stop_token():
         # this control sequence is invalid in latex, so we can use it as an arbitrary stop token
@@ -777,11 +796,14 @@ class ExpanderCore:
             was_in_package_or_class = self.state.in_package_or_class
             self.state.in_package_or_class = True
             # self.push_scope()
-            # mock makeatletter and makeatother
+            # Set @ to LETTER catcode for package/class loading (like \makeatletter)
             old_at_catcode = self.get_catcode(ord("@"))
-            self.set_catcode(ord("@"), Catcode.LETTER)
-            tokens = self.expand_file(package_path)
-            self.set_catcode(ord("@"), old_at_catcode)
+            self.makeatletter()
+            try:
+                tokens = self.expand_file(package_path)
+            finally:
+                # Always restore original catcode
+                self.set_catcode(ord("@"), old_at_catcode)
             # self.pop_scope()
 
             self.state.in_package_or_class = was_in_package_or_class

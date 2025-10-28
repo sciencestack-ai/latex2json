@@ -32,7 +32,7 @@ def test_bgroup_egroup():
 
     # test catcode change (local inside scope)
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     assert expander.get_catcode(ord("@")) == Catcode.LETTER
 
     out = expander.expand("\\egroup")  # -> evals to }
@@ -46,7 +46,7 @@ def test_bgroup_egroup():
     assert_token_sequence(out, [])
 
     # test catcode change (local inside scope)
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     assert expander.get_catcode(ord("@")) == Catcode.LETTER
 
     out = expander.expand(r"\endgroup")

@@ -7,14 +7,14 @@ from latex2json.tokens.types import Token
 def make_at_letter_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[List[Token]]:
-    expander.set_catcode(ord("@"), Catcode.LETTER)
+    expander.makeatletter()
     return []
 
 
 def make_at_other_handler(
     expander: ExpanderCore, token: Token
 ) -> Optional[List[Token]]:
-    expander.set_catcode(ord("@"), Catcode.OTHER)
+    expander.makeatother()
     return []
 
 

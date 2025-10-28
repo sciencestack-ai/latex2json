@@ -24,8 +24,6 @@ def register_xcolor(expander: ExpanderCore):
 
     # ensure \def is registered
     ltx_text = r"""
-\makeatletter
-
 \def\default@color{black}          % The "normal" text color
 \let\current@color\default@color   % Initialize current color to default
 
@@ -59,10 +57,8 @@ def register_xcolor(expander: ExpanderCore):
   \edef\current@color{#1}% store color spec
   \set@color             % activate it
 }
-
-\makeatother
 """
-    expander.expand(ltx_text)
+    expander.expand_ltx(ltx_text)
 
 
 if __name__ == "__main__":

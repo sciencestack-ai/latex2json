@@ -5,10 +5,8 @@ def register_at_x_of_x_handlers(expander: ExpanderCore):
     # ensure \def primitives have been registered before this!
 
     ltx_text = r"""
-    \makeatletter
 \long\def\@firstofone#1{#1}
 \long\def\@firstoftwo#1#2{#1}
 \long\def\@secondoftwo#1#2{#2}
-\makeatother
 """
-    expander.expand(ltx_text)
+    expander.expand_ltx(ltx_text)
