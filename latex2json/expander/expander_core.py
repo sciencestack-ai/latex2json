@@ -1225,15 +1225,30 @@ class ExpanderCore:
             dims = self.parse_dimensions()
             self.skip_whitespace()
 
-        is_math = self.is_math_mode
-        # box is always in text mode
-        if is_math:
-            self.state.push_mode(ProcessingMode.TEXT)
-        content = self.parse_brace_as_tokens(expand=True)
-        if is_math:
-            self.state.pop_mode()
+        # Parse brace content, recognizing both {/} and \bgroup/\egroup
+        def is_begin_group_or_bgroup(tok: Token) -> bool:
+            return is_begin_group_token(tok) or (
+                tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "bgroup"
+            )
+
+        def is_end_group_or_egroup(tok: Token) -> bool:
+            return is_end_group_token(tok) or (
+                tok.type == TokenType.CONTROL_SEQUENCE and tok.value == "egroup"
+            )
+
+        content = self.parse_begin_end_as_tokens(
+            is_begin_group_or_bgroup, is_end_group_or_egroup
+        )
+        if content:
+            is_math = self.is_math_mode
+            # box is always in text mode
+            if is_math:
+                self.state.push_mode(ProcessingMode.TEXT)
+            content = self.expand_tokens(content)
+            if is_math:
+                self.state.pop_mode()
         if content is None:
-            self.logger.warning(f"Could not find {...} after \\{box_type}")
+            self.logger.warning(f"Could not find {{...}} after \\{box_type}")
             return None
 
         return Box(type=box_type, content=content)

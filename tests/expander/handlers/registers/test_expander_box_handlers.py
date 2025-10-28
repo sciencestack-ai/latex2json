@@ -180,3 +180,67 @@ def test_savebox():
     box = expander.get_register_value(RegisterType.BOX, "mybox")
     assert isinstance(box, Box)
     assert box.content == []
+
+
+def test_setbox_with_bgroup_egroup():
+    r"""Test \setbox with \bgroup and \egroup"""
+    expander = Expander()
+
+    # Test setbox with \bgroup...\egroup
+    expander.expand(r"\setbox1=\vbox\bgroup content\egroup")
+    box = expander.get_register_value(RegisterType.BOX, 1)
+    assert isinstance(box, Box)
+    assert box.type == "vbox"
+
+    # Get the content as string
+    content_tokens = box.content
+    content_str = expander.convert_tokens_to_str(content_tokens).strip()
+    assert content_str == "content"
+
+
+def test_setbox_named_box_with_bgroup():
+    r"""Test \setbox with named box using \bgroup"""
+    expander = Expander()
+
+    # Create a named box
+    expander.expand(r"\newbox\keybox")
+    expander.expand(r"\setbox\keybox=\vbox\bgroup\hsize=\textwidth content\egroup")
+
+    # Named boxes are stored without backslash prefix
+    box = expander.get_register_value(RegisterType.BOX, "keybox")
+    assert isinstance(box, Box)
+    assert box.type == "vbox"
+
+
+def test_mixed_bgroup_and_braces():
+    r"""Test that both syntaxes work equivalently"""
+    expander = Expander()
+
+    # Create two boxes with same content, different syntax
+    expander.expand(r"\setbox10=\vbox{test content}")
+    expander.expand(r"\setbox11=\vbox\bgroup test content\egroup")
+
+    box1 = expander.get_register_value(RegisterType.BOX, 10)
+    box2 = expander.get_register_value(RegisterType.BOX, 11)
+
+    assert isinstance(box1, Box)
+    assert isinstance(box2, Box)
+    assert box1.type == box2.type
+
+    content1 = expander.convert_tokens_to_str(box1.content).strip()
+    content2 = expander.convert_tokens_to_str(box2.content).strip()
+    assert content1 == content2 == "test content"
+
+
+def test_nested_bgroup():
+    r"""Test nested \bgroup/\egroup"""
+    expander = Expander()
+
+    expander.expand(r"\setbox20=\vbox\bgroup outer \bgroup inner\egroup\egroup")
+    box = expander.get_register_value(RegisterType.BOX, 20)
+    assert isinstance(box, Box)
+
+    content_str = expander.convert_tokens_to_str(box.content).strip()
+    # The inner group should be preserved
+    assert "outer" in content_str
+    assert "inner" in content_str
