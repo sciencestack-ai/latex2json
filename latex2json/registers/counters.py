@@ -5,6 +5,8 @@ from dataclasses import dataclass
 from latex2json.registers.types import RegisterType, CounterFormat
 from latex2json.registers.registers import TexRegisters
 
+INTERNAL_COUNTERS = ["@topnum", "@mpfn", "c@fnote", "c@tnote", "c@cnote", "c@footnote"]
+
 
 @dataclass
 class CounterInfo:
@@ -110,8 +112,8 @@ class CounterManager:
         self.new_counter("enumiv")  # enumerate level 4
 
         # other
-        self.new_counter("@topnum")
-        self.new_counter("@mpfn")
+        for counter in INTERNAL_COUNTERS:
+            self.new_counter(counter)
 
     def reset_section_counters(self):
         self._init_section_counters()

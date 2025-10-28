@@ -5,25 +5,36 @@ from latex2json.tokens.types import BACK_TICK_TOKEN, Token, TokenType
 
 
 def parse_char_value(expander: ExpanderCore) -> Optional[str]:
+    """Parse a character value, supporting both `\\X syntax and direct integer"""
     expander.skip_whitespace()
+
+    # Check for backtick syntax: `\\X or `X
     if expander.peek() == BACK_TICK_TOKEN:
         expander.consume()
-    else:
+        expander.skip_whitespace()
+        tok = expander.consume()
+        if tok is None:
+            expander.logger.warning("Expected character after backtick, but found None")
+            return None
+        char = tok.value
+
+        if len(char) > 1:
+            char = char[0]
+            expander.logger.info(f"\\catcode only takes one character, using {char}")
+
+        return char
+
+    # Otherwise, try to parse as integer (character code)
+    char_code = expander.parse_integer()
+    if char_code is None:
+        expander.logger.warning("Expected character code or `\\X syntax")
         return None
 
-    expander.skip_whitespace()
-    # check for controlsequence
-    tok = expander.consume()
-    if tok is None:
-        expander.logger.warning(f"\\catcode expected control sequence, but found None")
+    if char_code < 0 or char_code > 255:
+        expander.logger.warning(f"Character code {char_code} out of range (0-255)")
         return None
-    char = tok.value
 
-    if len(char) > 1:
-        char = char[0]
-        expander.logger.warning(f"\\catcode only takes one character, using {char}")
-
-    return char
+    return chr(char_code)
 
 
 class CatcodeHandler:
