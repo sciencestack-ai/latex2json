@@ -3,7 +3,9 @@ from typing import Callable, List, Optional
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.types import (
     BEGIN_BRACE_TOKEN,
+    BEGIN_BRACKET_TOKEN,
     END_BRACE_TOKEN,
+    END_BRACKET_TOKEN,
     WHITESPACE_TOKEN,
     EnvironmentStartToken,
     Token,
@@ -133,6 +135,16 @@ def wrap_tokens_in_braces(tokens: List[Token]) -> List[Token]:
         BEGIN_BRACE_TOKEN.copy(),
         *tokens,
         END_BRACE_TOKEN.copy(),
+    ]
+
+
+def wrap_tokens_in_brackets(tokens: List[Token]) -> List[Token]:
+    if tokens and tokens[0] == BEGIN_BRACKET_TOKEN and tokens[-1] == END_BRACKET_TOKEN:
+        return tokens
+    return [
+        BEGIN_BRACKET_TOKEN.copy(),
+        *tokens,
+        END_BRACKET_TOKEN.copy(),
     ]
 
 
