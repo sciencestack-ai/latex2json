@@ -268,7 +268,7 @@ def test_parse_keyword_and_sequences():
 
 
 # test helper functions
-def test_parse_int_float_arguments():
+def test_parse_float():
     expander = ExpanderCore()
 
     expander.set_text("123 456")
@@ -299,6 +299,14 @@ def test_parse_int_float_arguments():
 
     expander.set_text(r"0.23\empty44")
     assert expander.parse_float() == 0.2344
+
+    expander.set_text(", page")
+    assert expander.parse_float() is None
+    assert expander.peek() == Token(TokenType.CHARACTER, ",", catcode=Catcode.OTHER)
+
+
+def test_parse_integer():
+    expander = ExpanderCore()
 
     # test with \relax\empty
     expander.set_text(r"123\relax4")
@@ -405,6 +413,12 @@ def test_parse_dimensions():
     expander.set_register(RegisterType.DIMEN, 100, dimen_100_value)
     expander.set_text(r"2\dimen100")  # should be 2x dimen_100_value
     assert expander.parse_dimensions() == 2 * dimen_100_value
+
+    # test that it does not parse non-dimension tokens
+    expander.set_text(", page")
+    assert expander.parse_dimensions() is None
+    assert expander.peek() == Token(TokenType.CHARACTER, ",", catcode=Catcode.OTHER)
+    assert not expander.eof()
 
 
 def test_parse_skip():

@@ -67,8 +67,7 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-    \includegraphics[page=1]{example.pdf}
-    \includepdf[pages=1]{example.pdf}
+    \includegraphics[width=0.45\linewidth, page=3]{figures.pdf}
     """.strip()
     out = parser.parse(text)
     # print(out)

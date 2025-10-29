@@ -1040,6 +1040,8 @@ class ExpanderCore:
 
         parsed_float = parse_number_str_to_float(sequence.strip())
         if parsed_float is None:
+            # pushback the sequence tokens on failed parse
+            self.push_tokens(self.convert_str_to_tokens(sequence))
             return None
         return int(parsed_float)
 
@@ -1065,7 +1067,12 @@ class ExpanderCore:
         )
         if not sequence:
             return None
-        return parse_number_str_to_float(sequence.strip()), relax
+        parsed_float = parse_number_str_to_float(sequence.strip())
+        if parsed_float is None:
+            # pushback the sequence tokens on failed parse
+            self.push_tokens(self.convert_str_to_tokens(sequence))
+            return None
+        return parsed_float, relax
 
     def _is_next_token_register(self) -> bool:
         tok = self.peek()
@@ -1191,6 +1198,10 @@ class ExpanderCore:
                     or (tok.value == " " and cur_str.strip() == "")
                 )
 
+        pts = dimension_to_scaled_points(digits, unit)
+        if pts is None and unit:
+            # pushback the sequence tokens on failed parse
+            self.push_tokens(self.convert_str_to_tokens(unit))
         return dimension_to_scaled_points(digits, unit), relax
 
     def parse_box(self) -> Optional[Box]:

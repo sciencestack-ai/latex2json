@@ -16,12 +16,12 @@ def test_includegraphics_handler():
     assert out[0] == IncludeGraphicsNode("example.pdf")
 
     # page
-    text = r"\includegraphics[page=1]{example.pdf}"
+    text = r"\includegraphics[width=0.45\linewidth, page=3]{example.pdf}"
 
     out = parser.parse(text)
     out = strip_whitespace_nodes(out)
     assert len(out) == 1
-    assert out[0] == IncludeGraphicsNode("example.pdf", page=1)
+    assert out[0] == IncludeGraphicsNode("example.pdf", page=3)
 
 
 def test_includepdf_handler():
