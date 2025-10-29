@@ -1,5 +1,7 @@
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.environment.environment_utils import is_end_env_token
+from latex2json.expander.macro_registry import Macro
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import EnvironmentType
@@ -63,10 +65,8 @@ def declaretheorem_handler(expander: ExpanderCore, token: Token):
 
 
 def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition:
-    restatable_env_def = EnvironmentDefinition(name="restatable")
-
-    def is_restatable_end_token(token: Token) -> bool:
-        return is_end_env_token(token, expander, "restatable", restatable_env_def)
+    env_name = "restatable" + ("*" if has_asterisk else "")
+    restatable_env_def = EnvironmentDefinition(name=env_name)
 
     def restatable_env_handler(expander: ExpanderCore, token: Token):
         r"""
@@ -75,20 +75,31 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
         e.g. \begin{restatable}[Theorem]{theorem}{MainResult}
 
         Then later, we can use \MainResult or \MainResult* to reference the theorem title.
+
+        LIMITATION: In real LaTeX, \MainResult* or \begin{restatable*} should reference
+        the final numbering of the theorem as it appears in the document (i.e., the number
+        from the last occurrence), not produce an unnumbered theorem. However, since our
+        expander handles all numbering in the expansion phase (before we know what the
+        final number will be), we currently implement the starred version as unnumbered
+        (\begin{theorem*}). This is a known limitation of the single-pass architecture.
         """
+
+        def is_restatable_end_token(token: Token) -> bool:
+            return is_end_env_token(token, expander, env_name, restatable_env_def)
+
         expander.skip_whitespace()
         theorem_title = expander.parse_bracket_as_tokens() or []
         expander.skip_whitespace()
-        theorem_env_type = expander.parse_bracket_as_tokens(
+        theorem_env_type = expander.parse_brace_as_tokens(
             expand=True
         )  # e.g. theorem, definition, etc
         expander.skip_whitespace()
-        key = expander.parse_brace_name()
+        cmd_key = expander.parse_brace_name()
         if not theorem_env_type:
-            expander.logger.warning(f"\\restatable expects a theorem environment type")
+            expander.logger.warning(f"\\{env_name} expects a theorem environment type")
             return None
-        if not key:
-            expander.logger.warning(f"\\restatable expects a key")
+        if not cmd_key:
+            expander.logger.warning(f"\\{env_name} expects a key")
             return None
 
         # parse the env theorem body block, consume_predicate = consume \end token
@@ -98,18 +109,37 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
         # consume {restatable} after \end. E.g. \end{restatable}
         expander.parse_brace_name()
 
-        # push back theorem as regular env # e.g. \begin{theorem_env_type}[theorem_title] theorem_body \end{theorem_env_type}
-        theorem_env_output = [
-            Token(TokenType.CONTROL_SEQUENCE, "begin"),
-            *wrap_tokens_in_braces(theorem_env_type),
-            *wrap_tokens_in_brackets(theorem_title),
-            *theorem_body,
-            Token(TokenType.CONTROL_SEQUENCE, "end"),
-            *wrap_tokens_in_braces(theorem_env_type),
-        ]
-        # push back theorem env output
-        expander.push_tokens(theorem_env_output)
+        def make_theorem_env_output(has_asterisk: bool = False) -> List[Token]:
+            theorem_env_name = theorem_env_type.copy()
+            if has_asterisk:
+                theorem_env_name.append(
+                    Token(TokenType.CHARACTER, "*", catcode=Catcode.OTHER)
+                )
+            return [
+                Token(TokenType.CONTROL_SEQUENCE, "begin"),
+                *wrap_tokens_in_braces(theorem_env_name),
+                *wrap_tokens_in_brackets(theorem_title),
+                *theorem_body,
+                Token(TokenType.CONTROL_SEQUENCE, "end"),
+                *wrap_tokens_in_braces(theorem_env_name),
+                Token(TokenType.END_OF_LINE, "\n"),
+            ]
 
+        # push back theorem as regular env # e.g. \begin{theorem_env_type}[theorem_title] theorem_body \end{theorem_env_type}
+        expander.push_tokens(make_theorem_env_output(has_asterisk=has_asterisk))
+
+        # additionally, register a macro for the key e.g. \MainResult
+        def cmd_key_handler(expander: ExpanderCore, token: Token):
+            has_asterisk = expander.parse_asterisk()
+            expander.push_tokens(make_theorem_env_output(has_asterisk=has_asterisk))
+            return []
+
+        expander.register_macro(
+            cmd_key,
+            Macro(cmd_key, cmd_key_handler, []),
+            is_global=True,
+            is_user_defined=True,
+        )
         return []
 
     restatable_env_def.begin_handler = restatable_env_handler
@@ -149,13 +179,15 @@ if __name__ == "__main__":
 
     text = r"""
     \def\xxx{XXX}
-\begin{restatable}[Sample Property]{theorem}{MainResult}
-\label{thm:main} Theorem: \xxx
-\end{restatable}
+\begin{restatable*}[Sample Property]{theorem}{MainResult}
+\label{thm:main} Theorem: \xxx % XXX. real world latex numbering: 2 referencing the latest in the entire document
+\end{restatable*}
 
 \def\xxx{YYY}
 
-%\MainResult*
+\MainResult  % \xxx expander to YYY. numbering: 1
+\MainResult  % \xxx expander to YYY. numbering: 2
+\MainResult* % \xxx expander to YYY. real world latex numbering: 2 referencing the latest in the entire document
 """
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()

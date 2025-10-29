@@ -1675,29 +1675,34 @@ class ExpanderCore:
         if counter_name:
             self.create_new_counter(counter_name)
 
-        def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
-            # Use shared environment processing logic
-            from latex2json.expander.handlers.environment.environment_utils import (
-                process_environment_begin,
-            )
+        # Only create default handlers if custom handlers are not already set
+        if env_def.begin_handler is None:
+            def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                # Use shared environment processing logic
+                from latex2json.expander.handlers.environment.environment_utils import (
+                    process_environment_begin,
+                )
 
-            return process_environment_begin(
-                expander, token, env_name, env_def, expand_begin_definition=True
-            )
+                return process_environment_begin(
+                    expander, token, env_name, env_def, expand_begin_definition=True
+                )
 
-        def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
-            # Use shared environment end processing logic
-            from latex2json.expander.handlers.environment.environment_utils import (
-                process_environment_end,
-            )
+            # attach the handler to the envdef instance
+            env_def.begin_handler = begin_handler
 
-            return process_environment_end(
-                expander, token, env_name, env_def, expand_end_definition=True
-            )
+        if env_def.end_handler is None:
+            def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                # Use shared environment end processing logic
+                from latex2json.expander.handlers.environment.environment_utils import (
+                    process_environment_end,
+                )
 
-        # attach the handlers to the envdef instance
-        env_def.begin_handler = begin_handler
-        env_def.end_handler = end_handler
+                return process_environment_end(
+                    expander, token, env_name, env_def, expand_end_definition=True
+                )
+
+            # attach the handler to the envdef instance
+            env_def.end_handler = end_handler
 
         if env_def.has_direct_command and env_name.isalpha():
             self.register_macro(
