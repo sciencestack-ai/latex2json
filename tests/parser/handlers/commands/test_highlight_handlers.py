@@ -72,26 +72,6 @@ def test_sethlcolor_with_rgb():
     assert_output_matches_expected(out, expected_text_style_pairs)
 
 
-def test_hl_scope_behavior():
-    """Test that highlight color respects scope"""
-    text = r"""
-    \hl{default yellow}
-    {\sethlcolor{blue} \hl{blue highlight}}
-    \hl{back to yellow}
-    """.strip()
-
-    parser = Parser()
-    out = parser.parse(text)
-
-    expected_text_style_pairs = [
-        ("default yellow", ["highlight=yellow"]),
-        ("blue highlight", ["highlight=blue"]),
-        ("back to yellow", ["highlight=yellow"]),
-    ]
-
-    assert_output_matches_expected(out, expected_text_style_pairs)
-
-
 def test_hl_nested_with_other_styles():
     r"""Test \hl nested with other text styles"""
     text = r"""

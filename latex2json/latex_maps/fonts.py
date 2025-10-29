@@ -14,7 +14,6 @@ class FontStyleType(Enum):
     TRANSFORM = auto()
     POSITION = auto()
     COLOR = auto()
-    HIGHLIGHT = auto()
 
 
 @dataclass
@@ -173,7 +172,6 @@ class FontAttributes:
     transform: FontStyle = field(default_factory=lambda: FontTransform.NONE)
     position: FontStyle = field(default_factory=lambda: FontPosition.NORMAL)
     color: Optional[str] = None  # This one is fine as it's immutable
-    highlight_color: Optional[str] = None
 
     def copy(self):
         return FontAttributes(
@@ -185,5 +183,4 @@ class FontAttributes:
             transform=self.transform,
             position=self.position,
             color=self.color,
-            highlight_color=self.highlight_color,
         )
