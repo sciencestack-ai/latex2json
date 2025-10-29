@@ -154,3 +154,103 @@ def test_declaretheorem_complex_example():
     assert r"\begin{defn}" in out_str
     assert "This is a theorem" in out_str
     assert "This is a definition" in out_str
+
+
+def test_restatable_basic():
+    """Test basic restatable: registers macro and expands correctly with proper numbering."""
+    expander = Expander()
+    expander.expand(r"\declaretheorem[name=Theorem]{theorem}")
+
+    # Test basic restatable
+    text = r"""
+\begin{restatable}[Main Property]{theorem}{MainResult}
+Content here
+\end{restatable}
+""".strip()
+    out = expander.expand(text)
+
+    # Check that original expansion produces numbered theorem
+    assert out[0] == mock_env_token(
+        expander, "theorem", "", numbering="1",
+        display_name="Theorem", env_type=EnvironmentType.THEOREM
+    )[0]
+    assert "Content here" in expander.convert_tokens_to_str(out)
+
+    # Test that \MainResult macro was registered and can be called
+    result = expander.expand(r"\MainResult")
+    # Should produce numbered theorem (numbering continues: 2)
+    assert result[0] == mock_env_token(
+        expander, "theorem", "", numbering="2",
+        display_name="Theorem", env_type=EnvironmentType.THEOREM
+    )[0]
+    assert "Content here" in expander.convert_tokens_to_str(result)
+
+
+def test_restatable_starred():
+    r"""Test restatable*: starred version reuses current numbering without incrementing.
+
+    LIMITATION: In real LaTeX, \MainResult* should reference the final numbering from
+    the last occurrence in the document. Our implementation shows the current counter
+    state at the time of call, which is a limitation of single-pass architecture.
+    """
+    expander = Expander()
+    expander.expand(r"\declaretheorem[name=Theorem]{theorem}")
+
+    # Create a restatable* (starred environment doesn't increment counter)
+    text = r"""
+\begin{restatable*}[Key]{theorem}{KeyResult}
+Important result
+\end{restatable*}
+""".strip()
+    out = expander.expand(text)
+
+    # Should produce numbered theorem with "1" (capped at 1 to avoid "Theorem 0")
+    assert out[0] == mock_env_token(
+        expander, "theorem", "",
+        numbering="1",  # Capped at 1 minimum
+        display_name="Theorem", env_type=EnvironmentType.THEOREM
+    )[0]
+
+    # Now increment counter with a regular theorem
+    expander.expand(r"\begin{theorem}Regular theorem\end{theorem}")
+
+    # Test that \KeyResult* doesn't increment counter (shows current: 1)
+    result_star = expander.expand(r"\KeyResult*")
+    assert result_star[0] == mock_env_token(
+        expander, "theorem", "",
+        numbering="1",  # Shows current counter state (1 after one theorem)
+        display_name="Theorem", env_type=EnvironmentType.THEOREM
+    )[0]
+
+    # Test that \KeyResult without asterisk increments counter (shows 2)
+    result_no_star = expander.expand(r"\KeyResult")
+    assert result_no_star[0] == mock_env_token(
+        expander, "theorem", "",
+        numbering="2",  # Counter incremented
+        display_name="Theorem", env_type=EnvironmentType.THEOREM
+    )[0]
+
+
+def test_restatable_macro_captures_tokens():
+    """Test that restatable captures tokens literally, preserving unexpanded macros."""
+    expander = Expander()
+    expander.expand(r"\declaretheorem[name=Theorem]{theorem}")
+    expander.expand(r"\def\xxx{XXX}")
+
+    # Create restatable that uses the macro
+    text = r"""
+\begin{restatable}{theorem}{SampleThm}
+Text with \xxx
+\end{restatable}
+""".strip()
+    expander.expand(text)
+
+    # Redefine the macro
+    expander.expand(r"\def\xxx{YYY}")
+
+    # Call the restatable - tokens are preserved as captured
+    result = expander.expand(r"\SampleThm")
+    result_str = expander.convert_tokens_to_str(result)
+
+    # The macro tokens are preserved literally (not expanded at capture or call time)
+    assert r"\xxx" in result_str

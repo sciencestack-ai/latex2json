@@ -1,7 +1,10 @@
 import dataclasses
 from enum import Enum
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List, Optional, TYPE_CHECKING
 from latex2json.tokens.types import EnvironmentType, Token
+
+if TYPE_CHECKING:
+    from latex2json.expander.expander_core import ExpanderCore
 
 
 @dataclasses.dataclass
@@ -15,8 +18,8 @@ class Hooks:
 @dataclasses.dataclass
 class EnvironmentDefinition:
     name: str
-    begin_handler: Optional[Callable] = None
-    end_handler: Optional[Callable] = None
+    begin_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
+    end_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
     display_name: Optional[str] = None
 
     def __init__(

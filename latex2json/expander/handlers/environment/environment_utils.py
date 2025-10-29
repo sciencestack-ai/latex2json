@@ -21,6 +21,9 @@ from latex2json.tokens.utils import (
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.state import ProcessingMode
 
+if TYPE_CHECKING:
+    from latex2json.expander.expander_core import ExpanderCore
+
 
 def is_nonumber_token(tok: Token) -> bool:
     return tok.type == TokenType.CONTROL_SEQUENCE and tok.value in [
@@ -49,6 +52,54 @@ def extract_tag_from_tokens(tokens: List[Token]) -> TagExtractionResult:
         else:
             newblock.append(tok)
     return TagExtractionResult(notag=notag, tag=numbering, tokens=newblock)
+
+
+def is_end_env_token(
+    token: Token,
+    expander: "ExpanderCore",
+    env_name: str,
+    env_def: EnvironmentDefinition,
+) -> bool:
+    r"""Check if a token is the end token for a specific environment.
+
+    This function checks for both direct end commands (e.g., \\endpicture) and
+    regular \\end{env_name} patterns.
+
+    Args:
+        token: The token to check
+        expander: The expander instance
+        env_name: The environment name to match against
+        env_def: The environment definition
+
+    Returns:
+        True if the token is the end token for the specified environment
+    """
+    is_ctrl_seq = token.type == TokenType.CONTROL_SEQUENCE
+    if not is_ctrl_seq:
+        return False
+
+    # direct end_command e.g. \\endpicture
+    if env_def.end_command and token.value == env_def.end_command:
+        return True
+
+    # regular \\end{...}
+    if token.value == "end":
+        # parse {...} after \\end to get the env name
+        tokens_to_return = expander.parse_tokens_until(
+            is_begin_group_token, verbatim=True
+        )
+        # check {...} is the env name
+        parsed_env_name = expander.parse_brace_name()
+        if not parsed_env_name:
+            expander.push_tokens(tokens_to_return)
+            return False
+        is_end_env_name = parsed_env_name == env_name
+
+        # push {...} of \\end{...} back to stream
+        tokens_to_return += expander.convert_str_to_tokens("{" + parsed_env_name + "}")
+        expander.push_tokens(tokens_to_return)
+        return is_end_env_name
+    return False
 
 
 def create_environment_start_token(
@@ -196,46 +247,18 @@ def process_environment_begin(
 
     # Special handling for verbatim/align/math environments
     if is_verbatim or is_align or is_math:
-        # Define predicate to find matching \\end
-        def is_end_env_token(token: Token) -> bool:
-            r"""check for \\end"""
-            is_ctrl_seq = token.type == TokenType.CONTROL_SEQUENCE
-            if not is_ctrl_seq:
-                return False
-
-            # direct end_command e.g. \\endpicture
-            if env_def.end_command and token.value == env_def.end_command:
-                return True
-
-            # regular \\end{...}
-            if token.value == "end":
-                # parse {...} after \\end to get the env name
-                tokens_to_return = expander.parse_tokens_until(
-                    is_begin_group_token, verbatim=True
-                )
-                # check {...} is the env name
-                parsed_env_name = expander.parse_brace_name()
-                if not parsed_env_name:
-                    expander.push_tokens(tokens_to_return)
-                    return False
-                is_end_env_name = parsed_env_name == env_name
-
-                # push {...} of \\end{...} back to stream
-                tokens_to_return += expander.convert_str_to_tokens(
-                    "{" + parsed_env_name + "}"
-                )
-                expander.push_tokens(tokens_to_return)
-                return is_end_env_name
-            return False
+        # Create closure for the end token predicate
+        def end_token_predicate(token: Token) -> bool:
+            return is_end_env_token(token, expander, env_name, env_def)
 
         if is_verbatim:
             # parse raw, verbatim
-            body_block = expander.parse_tokens_until(is_end_env_token, verbatim=True)
+            body_block = expander.parse_tokens_until(end_token_predicate, verbatim=True)
             out_tokens.extend(body_block)
         elif is_align:
             # align environments: parse body block for \\\\ and number accordingly
             body_block = expander.expand_until(
-                stop_token_logic=is_end_env_token, consume_stop_token=False
+                stop_token_logic=end_token_predicate, consume_stop_token=False
             )
             # segment into \\begin...\\end blocks
             segments = segment_tokens_by_begin_end_and_braces(body_block)
@@ -289,7 +312,7 @@ def process_environment_begin(
         else:
             # typical math block
             body_block = expander.expand_until(
-                stop_token_logic=is_end_env_token, consume_stop_token=False
+                stop_token_logic=end_token_predicate, consume_stop_token=False
             )
             newblock = []
             is_auto_numbered = True

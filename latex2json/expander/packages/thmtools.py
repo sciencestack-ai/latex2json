@@ -1,9 +1,17 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import Token
+from latex2json.expander.handlers.environment.environment_utils import (
+    create_environment_end_token,
+    create_environment_start_token,
+    is_end_env_token,
+)
+from latex2json.expander.macro_registry import Macro
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import Token, TokenType
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.tokens.types import EnvironmentType
 from typing import Dict, Optional, List
 
+from latex2json.tokens.utils import wrap_tokens_in_braces, wrap_tokens_in_brackets
 from latex2json.utils.tex_utils import parse_key_val_string
 
 
@@ -60,29 +68,136 @@ def declaretheorem_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition:
+    env_name = "restatable" + ("*" if has_asterisk else "")
+    restatable_env_def = EnvironmentDefinition(name=env_name)
+
+    def restatable_env_handler(expander: ExpanderCore, token: Token):
+        r"""
+        \begin{restatable}[theorem title]{theorem}{csname key}
+
+        e.g. \begin{restatable}[Theorem]{theorem}{MainResult}
+
+        Then later, we can use \MainResult or \MainResult* to reference the theorem title.
+
+        LIMITATION: In real LaTeX, \MainResult* or \begin{restatable*} should reference
+        the final numbering of the theorem as it appears in the document (i.e., the number
+        from the last occurrence), not produce an unnumbered theorem. However, since our
+        expander handles all numbering in the expansion phase (before we know what the
+        final number will be), we currently implement the starred version as simply the latest numbering at that state.
+        This is a known limitation of the single-pass architecture.
+        """
+
+        def is_restatable_end_token(token: Token) -> bool:
+            return is_end_env_token(token, expander, env_name, restatable_env_def)
+
+        expander.skip_whitespace()
+        theorem_title = expander.parse_bracket_as_tokens() or []
+        expander.skip_whitespace()
+        theorem_env_name = expander.parse_brace_name()  # e.g. theorem, definition, etc
+        expander.skip_whitespace()
+        cmd_key = expander.parse_brace_name()
+        if not theorem_env_name:
+            expander.logger.warning(f"\\{env_name} expects a theorem environment type")
+            return None
+        if not cmd_key:
+            expander.logger.warning(f"\\{env_name} expects a key")
+            return None
+
+        # parse the env theorem body block, consume_predicate = consume \end token
+        theorem_body = expander.parse_tokens_until(
+            is_restatable_end_token, verbatim=False, consume_predicate=True
+        )
+        # consume {restatable} after \end. E.g. \end{restatable}
+        expander.parse_brace_name()
+
+        def make_theorem_env_output(has_asterisk: bool = False) -> List[Token]:
+            if not has_asterisk:
+                expander.state.step_counter(theorem_env_name)
+                env_start_token = create_environment_start_token(
+                    expander, theorem_env_name
+                )
+            else:
+                # LIMITATION: we currently implement the starred version as simply the latest numbering at that state.
+                # This is a known limitation of the single-pass architecture.
+                # Set counter to 1 temporarily if 0
+                is_zero = not expander.state.get_counter_value(theorem_env_name)
+                if is_zero:  # i.e. 0 or None
+                    expander.state.set_counter(theorem_env_name, 1)
+                env_start_token = create_environment_start_token(
+                    expander, theorem_env_name
+                )
+                if is_zero:
+                    # setback
+                    expander.state.set_counter(theorem_env_name, 0)
+            return [
+                env_start_token,
+                *wrap_tokens_in_brackets(theorem_title),
+                *theorem_body,
+                create_environment_end_token(env_start_token.name),
+                Token(TokenType.END_OF_LINE, "\n"),
+            ]
+
+        # additionally, register a macro for the key e.g. \MainResult
+        def cmd_key_handler(expander: ExpanderCore, token: Token):
+            has_asterisk = expander.parse_asterisk()
+            return make_theorem_env_output(has_asterisk=has_asterisk)
+
+        expander.register_macro(
+            cmd_key,
+            Macro(cmd_key, cmd_key_handler, []),
+            is_global=True,
+            is_user_defined=True,
+        )
+        return make_theorem_env_output(has_asterisk=has_asterisk)
+
+    restatable_env_def.begin_handler = restatable_env_handler
+
+    return restatable_env_def
+
+
 def register_thmtools(expander: ExpanderCore):
     expander.register_handler("declaretheorem", declaretheorem_handler, is_global=True)
+
+    expander.register_environment(
+        "restatable", make_restatable_env_def(has_asterisk=False), is_global=True
+    )
+    expander.register_environment(
+        "restatable*", make_restatable_env_def(has_asterisk=True), is_global=True
+    )
 
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
 
     expander = Expander()
-    register_thmtools(expander)
+
+    #     text = r"""
+    # \declaretheorem[name=Theorem,Refname={Theorem,Theorems}]{thm}
+    # \declaretheorem[name=Definition,Refname={Definition,Definitions},sibling=thm]{defn}
+
+    # \begin{thm} % numbering: 1
+    #     This is a theorem
+    # \end{thm}
+
+    # \begin{defn} % numbering: 2
+    #     This is a definition
+    # \end{defn}
+
+    # """.strip()
 
     text = r"""
-\declaretheorem[name=Theorem,Refname={Theorem,Theorems}]{thm}
-\declaretheorem[name=Definition,Refname={Definition,Definitions},sibling=thm]{defn}
+    \def\xxx{XXX}
+\begin{restatable*}[Sample Property]{theorem}{MainResult}
+\label{thm:main} Theorem: \xxx % XXX. real world latex numbering: 2 referencing the latest in the entire document
+\end{restatable*}
 
-\begin{thm} % numbering: 1
-    This is a theorem
-\end{thm}
+\def\xxx{YYY}
 
-\begin{defn} % numbering: 2
-    This is a definition
-\end{defn}
-
-""".strip()
+\MainResult  % \xxx expander to YYY. numbering: 1
+\MainResult  % \xxx expander to YYY. numbering: 2
+\MainResult* % \xxx expander to YYY. real world latex numbering: 2 referencing the latest in the entire document
+"""
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     print(out_str)
