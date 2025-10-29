@@ -1,5 +1,9 @@
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.environment.environment_utils import is_end_env_token
+from latex2json.expander.handlers.environment.environment_utils import (
+    create_environment_end_token,
+    create_environment_start_token,
+    is_end_env_token,
+)
 from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
@@ -80,8 +84,8 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
         the final numbering of the theorem as it appears in the document (i.e., the number
         from the last occurrence), not produce an unnumbered theorem. However, since our
         expander handles all numbering in the expansion phase (before we know what the
-        final number will be), we currently implement the starred version as unnumbered
-        (\begin{theorem*}). This is a known limitation of the single-pass architecture.
+        final number will be), we currently implement the starred version as simply the latest numbering at that state.
+        This is a known limitation of the single-pass architecture.
         """
 
         def is_restatable_end_token(token: Token) -> bool:
@@ -90,12 +94,10 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
         expander.skip_whitespace()
         theorem_title = expander.parse_bracket_as_tokens() or []
         expander.skip_whitespace()
-        theorem_env_type = expander.parse_brace_as_tokens(
-            expand=True
-        )  # e.g. theorem, definition, etc
+        theorem_env_name = expander.parse_brace_name()  # e.g. theorem, definition, etc
         expander.skip_whitespace()
         cmd_key = expander.parse_brace_name()
-        if not theorem_env_type:
+        if not theorem_env_name:
             expander.logger.warning(f"\\{env_name} expects a theorem environment type")
             return None
         if not cmd_key:
@@ -110,29 +112,36 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
         expander.parse_brace_name()
 
         def make_theorem_env_output(has_asterisk: bool = False) -> List[Token]:
-            theorem_env_name = theorem_env_type.copy()
-            if has_asterisk:
-                theorem_env_name.append(
-                    Token(TokenType.CHARACTER, "*", catcode=Catcode.OTHER)
+            if not has_asterisk:
+                expander.state.step_counter(theorem_env_name)
+                env_start_token = create_environment_start_token(
+                    expander, theorem_env_name
                 )
+            else:
+                # LIMITATION: we currently implement the starred version as simply the latest numbering at that state.
+                # This is a known limitation of the single-pass architecture.
+                # Set counter to 1 temporarily if 0
+                is_zero = not expander.state.get_counter_value(theorem_env_name)
+                if is_zero:  # i.e. 0 or None
+                    expander.state.set_counter(theorem_env_name, 1)
+                env_start_token = create_environment_start_token(
+                    expander, theorem_env_name
+                )
+                if is_zero:
+                    # setback
+                    expander.state.set_counter(theorem_env_name, 0)
             return [
-                Token(TokenType.CONTROL_SEQUENCE, "begin"),
-                *wrap_tokens_in_braces(theorem_env_name),
+                env_start_token,
                 *wrap_tokens_in_brackets(theorem_title),
                 *theorem_body,
-                Token(TokenType.CONTROL_SEQUENCE, "end"),
-                *wrap_tokens_in_braces(theorem_env_name),
+                create_environment_end_token(env_start_token.name),
                 Token(TokenType.END_OF_LINE, "\n"),
             ]
-
-        # push back theorem as regular env # e.g. \begin{theorem_env_type}[theorem_title] theorem_body \end{theorem_env_type}
-        expander.push_tokens(make_theorem_env_output(has_asterisk=has_asterisk))
 
         # additionally, register a macro for the key e.g. \MainResult
         def cmd_key_handler(expander: ExpanderCore, token: Token):
             has_asterisk = expander.parse_asterisk()
-            expander.push_tokens(make_theorem_env_output(has_asterisk=has_asterisk))
-            return []
+            return make_theorem_env_output(has_asterisk=has_asterisk)
 
         expander.register_macro(
             cmd_key,
@@ -140,7 +149,7 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
             is_global=True,
             is_user_defined=True,
         )
-        return []
+        return make_theorem_env_output(has_asterisk=has_asterisk)
 
     restatable_env_def.begin_handler = restatable_env_handler
 
