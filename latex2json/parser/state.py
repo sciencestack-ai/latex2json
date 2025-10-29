@@ -67,6 +67,8 @@ class ParserStateLayer:
             styles.append(font.position.value)
         if font.color != DEFAULT_FONT.color:
             styles.append(f"color={font.color}")
+        if font.highlight_color != DEFAULT_FONT.highlight_color:
+            styles.append(f"highlight={font.highlight_color}")
 
         return styles
 
@@ -185,6 +187,15 @@ class ParserState:
                 font.color = DEFAULT_FONT.color
             else:
                 font.color = style.value
+        elif style.type == FontStyleType.HIGHLIGHT:
+            # Highlight color is handled similarly to color
+            if font.highlight_color == style.value:
+                font.highlight_color = DEFAULT_FONT.highlight_color
+            else:
+                font.highlight_color = style.value
 
     def reset_font_color(self):
         self.current.font.color = DEFAULT_FONT.color
+
+    def reset_highlight_color(self):
+        self.current.font.highlight_color = DEFAULT_FONT.highlight_color

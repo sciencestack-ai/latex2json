@@ -16,6 +16,9 @@ from latex2json.parser.handlers.commands.ref_cite_label_handlers import (
     register_ref_label_handlers,
 )
 from latex2json.parser.handlers.commands.text_handlers import register_text_handlers
+from latex2json.parser.handlers.commands.highlight_handlers import (
+    register_highlight_handlers,
+)
 from latex2json.parser.handlers.commands.spacing_handlers import (
     register_spacing_handlers,
 )
@@ -33,6 +36,7 @@ def register_command_handlers(parser: ParserCore):
     register_latex2unicode_handler(parser)
     register_diacritics_handler(parser)
     register_text_handlers(parser)
+    register_highlight_handlers(parser)
     register_ref_label_handlers(parser)
     register_tabular_cell_handlers(parser)
     register_footnote_bookmark_handlers(parser)

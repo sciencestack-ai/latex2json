@@ -102,7 +102,7 @@ def create_environment_end_token(
 
 
 def process_environment_begin(
-    expander: "ExpanderCore",
+    expander: ExpanderCore,
     token: Token,
     env_name: str,
     env_def: EnvironmentDefinition,
@@ -314,7 +314,7 @@ def process_environment_begin(
 
 
 def process_environment_end(
-    expander: "ExpanderCore",
+    expander: ExpanderCore,
     token: Token,
     env_name: str,
     env_def: EnvironmentDefinition,
