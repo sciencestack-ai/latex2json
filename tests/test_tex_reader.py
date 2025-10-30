@@ -16,3 +16,16 @@ def test_tex_reader():
     json_output = tex_reader.to_json(output)
 
     assert len(json_output) >= 1
+
+
+def test_flt_file():
+    """Test processing a .flt file"""
+    tex_reader = TexReader()
+
+    # test working with .flt file
+    output = tex_reader.process(samples_dir_path + "/simple.flt")
+    json_output = tex_reader.to_json(output)
+
+    assert len(json_output) >= 1
+    assert output.tokens is not None
+    assert len(output.tokens) > 0

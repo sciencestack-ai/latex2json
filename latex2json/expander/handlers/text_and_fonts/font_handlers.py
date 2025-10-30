@@ -75,6 +75,7 @@ def register_font_handlers(expander: ExpanderCore):
     expander.register_handler(r"\reset@font", resetfont_handler, is_global=True)
 
     ignore_patterns = {
+        "normalem": 0,  # ignore since we dont currently distinguish em
         "newfam": "\\",  # e.g. \newfam\fontfam
         "url@samestyle": 0,  # used for url fonts
         "fontfamily": "{",

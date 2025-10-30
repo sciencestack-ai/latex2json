@@ -18,6 +18,9 @@ DOCUMENTCLASS_PATTERN = re.compile(
 BEGIN_DOCUMENT_PATTERN = re.compile(r"\\begin\s*\{document\}|\\document\b", re.DOTALL)
 
 
+SUPPORTED_TEX_EXTENSIONS = (".tex", ".flt")
+
+
 class TexFileExtractor:
     """A class to handle reading and processing TeX files from various sources."""
 
@@ -61,7 +64,7 @@ class TexFileExtractor:
         main_tex_files: List[Tuple[str, str]] = []
         for root, _, files in os.walk(folder_path):
             for file in files:
-                if file.endswith(".tex"):
+                if file.endswith(SUPPORTED_TEX_EXTENSIONS):
                     full_path = os.path.join(root, file)
                     base_path = os.path.relpath(full_path, folder_path)
                     all_tex_files.append((base_path, root))
@@ -199,7 +202,7 @@ class TexFileExtractor:
                         if base_filename.lower().endswith(".gz")
                         else base_filename + "_extracted"
                     )
-                    if not output_filename.lower().endswith(".tex"):
+                    if not output_filename.lower().endswith(SUPPORTED_TEX_EXTENSIONS):
                         output_filename += ".tex"  # Assume .tex if no extension
                     temp_file_path = os.path.join(temp_dir, output_filename)
 
