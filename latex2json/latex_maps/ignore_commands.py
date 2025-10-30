@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "CJKnospace": 0,
     "bibpunct": 6,
     "newcolumntype": "{[{",
     "addpenalty": "{",

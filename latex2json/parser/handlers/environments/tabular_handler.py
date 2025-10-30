@@ -133,6 +133,7 @@ def register_tabular_handlers(parser: ParserCore):
         "columncolor": 1,  # Column colors
         "rowcolor": 1,  # Row colors
         "rowcolors": 3,
+        "bigstrut": "[",
     }
 
     register_ignore_handlers_util(parser, ignored_env_pattern_N_blocks)

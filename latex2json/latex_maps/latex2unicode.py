@@ -4,6 +4,8 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "lq": "'",
+    "rq": "'",
     "LaTeX": "LaTeX",
     "TeX": "TeX",
     "dag": 8224,  # †

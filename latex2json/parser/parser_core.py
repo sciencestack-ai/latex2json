@@ -951,7 +951,7 @@ class ParserCore:
             return self.convert_nodes_to_str(nodes)
         return None
 
-    def parse_braced_blocks(self, n_blocks: int) -> Optional[List[ASTNode]]:
+    def parse_braced_blocks(self, n_blocks: int) -> Optional[List[List[ASTNode]]]:
         blocks: List[List[ASTNode]] = []
         for _ in range(n_blocks):
             self.skip_whitespace()

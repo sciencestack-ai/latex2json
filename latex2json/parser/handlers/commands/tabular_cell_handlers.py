@@ -117,6 +117,26 @@ def cellcolor_handler(parser: ParserCore, token: Token):
     return [cellnode]
 
 
+def diagbox_handler(parser: ParserCore, token: Token):
+    r"""
+    Creates diagonal box cell in tabular
+    \diagbox[height=1cm, width=3cm]{Predictor}{$r$}{Sampler}
+
+    Just mock and split as .../.../..."""
+    parser.skip_whitespace()
+    parser.parse_bracket_as_nodes()
+    parser.skip_whitespace()
+    blocks = parser.parse_braced_blocks(3)
+    if blocks:
+        out_blocks = []
+        for i, block in enumerate(blocks):
+            out_blocks.extend(block)
+            if i < len(blocks) - 1:
+                out_blocks.append(TextNode(" / "))
+        return out_blocks
+    return []
+
+
 def register_tabular_cell_handlers(parser: ParserCore):
     # makecell/shortstack
     parser.register_handler("makecell", makecell_handler)
@@ -127,6 +147,8 @@ def register_tabular_cell_handlers(parser: ParserCore):
 
     # cellcolor
     parser.register_handler("cellcolor", cellcolor_handler)
+    # diagbox
+    parser.register_handler("diagbox", diagbox_handler)
 
 
 if __name__ == "__main__":
@@ -134,19 +156,17 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-    \newcommand{\baseline}[1]{\cellcolor{lightgray}{#1}}
-    \newcommand{\mjf}{$\mathcal{J}\&\mathcal{F}$\xspace}
-    \def\x{$\times$}
-
-    \begin{tabular}{cccccccc}
-    \multicolumn{2}{c}{} & \multicolumn{4}{c}{{\footnotesize \mjf}} &  &\multicolumn{1}{c}{{\footnotesize mIoU}} \\
-    \cmidrule(lr){3-6}\cmidrule(lr){8-8}
-    Object Pointers & GRU & MOSE dev & SA-V val & LVOSv2 val & 9 zero-shot & speed & SA-23 \\
-    \midrule
-     & &  \textbf{73.1} & 64.5 & 67.0 & \textbf{70.9} & \textbf{1.00\x} &59.9 \\
-     & \checkmark & 72.3 & 65.3 & 68.9 & 70.5 & 0.97\x & \textbf{60.0} \\
-     \baseline{\checkmark} &  \baseline{} & 73.0 & \textbf{68.3} & \textbf{71.6} & 70.7  & \textbf{1.00\x} & 59.7 \\
-    \end{tabular}
+		\begin{tabular}{c|c|c|c|c|c|c|c|c}
+			\Xhline{3\arrayrulewidth} \bigstrut
+			  & \multicolumn{4}{c|}{Variance Exploding SDE (SMLD)} & \multicolumn{4}{c}{Variance Preserving SDE (DDPM)}\\
+			 \Xhline{1\arrayrulewidth}\bigstrut
+			\diagbox[height=1cm, width=3cm]{Predictor}{FID$\downarrow$}{Sampler} & P1000 & \cellcolor{h}P2000 & \cellcolor{h}C2000 & \cellcolor{h}PC1000 & P1000 & \cellcolor{h}P2000 & \cellcolor{h}C2000 & \cellcolor{h}PC1000  \\
+			\Xhline{1\arrayrulewidth}\bigstrut
+            ancestral sampling & 4.98\scalebox{0.7}{ $\pm$ .06}	& \cellcolor{h}4.88\scalebox{0.7}{ $\pm$ .06} &\cellcolor{h} & \cellcolor{h}\textbf{3.62\scalebox{0.7}{ $\pm$ .03}} & 3.24\scalebox{0.7}{ $\pm$ .02}	& \cellcolor{h}3.24\scalebox{0.7}{ $\pm$ .02} &\cellcolor{h} & \cellcolor{h}\textbf{3.21\scalebox{0.7}{ $\pm$ .02}}\\
+        	reverse diffusion & 4.79\scalebox{0.7}{ $\pm$ .07} & \cellcolor{h}4.74\scalebox{0.7}{ $\pm$ .08} & \cellcolor{h} & \cellcolor{h}\textbf{3.60\scalebox{0.7}{ $\pm$ .02}} & 3.21\scalebox{0.7}{ $\pm$ .02} & \cellcolor{h}3.19\scalebox{0.7}{ $\pm$ .02} & \cellcolor{h} &\cellcolor{h}\textbf{3.18\scalebox{0.7}{ $\pm$ .01}}\\
+            probability flow &	15.41\scalebox{0.7}{ $\pm$ .15} &\cellcolor{h}10.54\scalebox{0.7}{ $\pm$ .08}&\cellcolor{h} \multirow{-3}{*}{20.43\scalebox{0.7}{ $\pm$ .07}} & \cellcolor{h}\textbf{3.51\scalebox{0.7}{ $\pm$ .04}} & 3.59\scalebox{0.7}{ $\pm$ .04} & \cellcolor{h}3.23\scalebox{0.7}{ $\pm$ .03} & \cellcolor{h}\multirow{-3}{*}{19.06\scalebox{0.7}{ $\pm$ .06}} & \cellcolor{h}\textbf{3.06\scalebox{0.7}{ $\pm$ .03}}\\
+			\Xhline{3\arrayrulewidth}
+		\end{tabular}
     """.strip()
 
     #     text = r"""
