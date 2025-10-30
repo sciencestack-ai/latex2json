@@ -170,19 +170,33 @@ Content here
     out = expander.expand(text)
 
     # Check that original expansion produces numbered theorem
-    assert out[0] == mock_env_token(
-        expander, "theorem", "", numbering="1",
-        display_name="Theorem", env_type=EnvironmentType.THEOREM
-    )[0]
+    assert (
+        out[0]
+        == mock_env_token(
+            expander,
+            "theorem",
+            "",
+            numbering="1",
+            display_name="Theorem",
+            env_type=EnvironmentType.THEOREM,
+        )[0]
+    )
     assert "Content here" in expander.convert_tokens_to_str(out)
 
     # Test that \MainResult macro was registered and can be called
     result = expander.expand(r"\MainResult")
     # Should produce numbered theorem (numbering continues: 2)
-    assert result[0] == mock_env_token(
-        expander, "theorem", "", numbering="2",
-        display_name="Theorem", env_type=EnvironmentType.THEOREM
-    )[0]
+    assert (
+        result[0]
+        == mock_env_token(
+            expander,
+            "theorem",
+            "",
+            numbering="2",
+            display_name="Theorem",
+            env_type=EnvironmentType.THEOREM,
+        )[0]
+    )
     assert "Content here" in expander.convert_tokens_to_str(result)
 
 
@@ -205,34 +219,52 @@ Important result
     out = expander.expand(text)
 
     # Should produce numbered theorem with "1" (capped at 1 to avoid "Theorem 0")
-    assert out[0] == mock_env_token(
-        expander, "theorem", "",
-        numbering="1",  # Capped at 1 minimum
-        display_name="Theorem", env_type=EnvironmentType.THEOREM
-    )[0]
+    assert (
+        out[0]
+        == mock_env_token(
+            expander,
+            "theorem",
+            "",
+            numbering="1",  # Capped at 1 minimum
+            display_name="Theorem",
+            env_type=EnvironmentType.THEOREM,
+        )[0]
+    )
 
     # Now increment counter with a regular theorem
     expander.expand(r"\begin{theorem}Regular theorem\end{theorem}")
 
     # Test that \KeyResult* doesn't increment counter (shows current: 1)
     result_star = expander.expand(r"\KeyResult*")
-    assert result_star[0] == mock_env_token(
-        expander, "theorem", "",
-        numbering="1",  # Shows current counter state (1 after one theorem)
-        display_name="Theorem", env_type=EnvironmentType.THEOREM
-    )[0]
+    assert (
+        result_star[0]
+        == mock_env_token(
+            expander,
+            "theorem",
+            "",
+            numbering="1",  # Shows current counter state (1 after one theorem)
+            display_name="Theorem",
+            env_type=EnvironmentType.THEOREM,
+        )[0]
+    )
 
     # Test that \KeyResult without asterisk increments counter (shows 2)
     result_no_star = expander.expand(r"\KeyResult")
-    assert result_no_star[0] == mock_env_token(
-        expander, "theorem", "",
-        numbering="2",  # Counter incremented
-        display_name="Theorem", env_type=EnvironmentType.THEOREM
-    )[0]
+    assert (
+        result_no_star[0]
+        == mock_env_token(
+            expander,
+            "theorem",
+            "",
+            numbering="2",  # Counter incremented
+            display_name="Theorem",
+            env_type=EnvironmentType.THEOREM,
+        )[0]
+    )
 
 
 def test_restatable_macro_captures_tokens():
-    """Test that restatable captures tokens literally, preserving unexpanded macros."""
+    """Test that restatable preserves tokens and only expands when called."""
     expander = Expander()
     expander.expand(r"\declaretheorem[name=Theorem]{theorem}")
     expander.expand(r"\def\xxx{XXX}")
@@ -240,12 +272,14 @@ def test_restatable_macro_captures_tokens():
     # Create restatable that uses the macro
     text = r"""
 \begin{restatable}{theorem}{SampleThm}
-Text with \xxx
+Text with \xxx % XXX
 \end{restatable}
 """.strip()
-    expander.expand(text)
+    result = expander.expand(text)
+    result_str = expander.convert_tokens_to_str(result)
+    assert r"Text with XXX" in result_str
 
-    # Redefine the macro
+    # Redefine the macro: XXX -> YYY
     expander.expand(r"\def\xxx{YYY}")
 
     # Call the restatable - tokens are preserved as captured
@@ -253,4 +287,4 @@ Text with \xxx
     result_str = expander.convert_tokens_to_str(result)
 
     # The macro tokens are preserved literally (not expanded at capture or call time)
-    assert r"\xxx" in result_str
+    assert r"Text with YYY " in result_str

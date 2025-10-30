@@ -133,7 +133,7 @@ def make_restatable_env_def(has_asterisk: bool = False) -> EnvironmentDefinition
             return [
                 env_start_token,
                 *wrap_tokens_in_brackets(theorem_title),
-                *theorem_body,
+                *expander.expand_tokens(theorem_body),
                 create_environment_end_token(env_start_token.name),
                 Token(TokenType.END_OF_LINE, "\n"),
             ]
