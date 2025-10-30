@@ -1,4 +1,7 @@
 BUILTIN_COUNTS = [
+    # badness technically not count, but whatever
+    "hbadness",
+    "vbadness",
     "penalty",
     "clubpenalty",
     "widowpenalty",

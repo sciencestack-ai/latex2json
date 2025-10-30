@@ -1,8 +1,72 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token
 from latex2json.tokens.utils import find_token_sequence
+
+
+class ToggleManager:
+    """Manages toggle state for etoolbox toggle commands."""
+
+    def __init__(self):
+        self.toggles: Dict[str, bool] = {}
+
+    def create_toggle(self, expander: ExpanderCore, token: Token):
+        r"""Handler for \\newtoggle{name}"""
+        expander.skip_whitespace()
+        name = expander.parse_brace_name()
+        if not name:
+            expander.logger.warning("\\newtoggle expects a name")
+            return []
+        self.toggles[name] = False
+        return []
+
+    def set_toggle_true(self, expander: ExpanderCore, token: Token):
+        r"""Handler for \\toggletrue{name}"""
+        expander.skip_whitespace()
+        name = expander.parse_brace_name()
+        if not name:
+            return []
+        if name in self.toggles:
+            self.toggles[name] = True
+        else:
+            expander.logger.warning(f"Toggle '{name}' not defined")
+        return []
+
+    def set_toggle_false(self, expander: ExpanderCore, token: Token):
+        r"""Handler for \\togglefalse{name}"""
+        expander.skip_whitespace()
+        name = expander.parse_brace_name()
+        if not name:
+            return []
+        if name in self.toggles:
+            self.toggles[name] = False
+        else:
+            expander.logger.warning(f"Toggle '{name}' not defined")
+        return []
+
+    def if_toggle(self, expander: ExpanderCore, token: Token):
+        r"""Handler for \\iftoggle{name}{true-branch}{false-branch}"""
+        expander.skip_whitespace()
+        name = expander.parse_brace_name()
+        if not name:
+            expander.logger.warning("\\iftoggle expects a toggle name")
+            return []
+
+        expander.skip_whitespace()
+        true_branch = expander.parse_brace_as_tokens(expand=False)
+        expander.skip_whitespace()
+        false_branch = expander.parse_brace_as_tokens(expand=False)
+
+        # Get toggle state (default to False if not defined)
+        is_true = self.toggles.get(name, False)
+
+        # Push the appropriate branch
+        branch = true_branch if is_true else false_branch
+        if branch:
+            expander.push_tokens(branch)
+
+        return []
 
 
 def patchcmd_macro_handler(expander: ExpanderCore, token: Token):
@@ -60,7 +124,6 @@ def pretocmd_handler(expander: ExpanderCore, token: Token):
         return []
 
     # prepend to the definition
-    # prepend to the definition
     macro.definition[:] = prepend + macro.definition
 
     return []
@@ -93,9 +156,21 @@ def apptocmd_handler(expander: ExpanderCore, token: Token):
 
 
 def register_etoolbox_handler(expander: ExpanderCore):
+    # Patch commands
     expander.register_handler("patchcmd", patchcmd_macro_handler, is_global=True)
     expander.register_handler("pretocmd", pretocmd_handler, is_global=True)
     expander.register_handler("apptocmd", apptocmd_handler, is_global=True)
+
+    # Toggle commands
+    toggle_manager = ToggleManager()
+    expander.register_handler("newtoggle", toggle_manager.create_toggle, is_global=True)
+    expander.register_handler(
+        "toggletrue", toggle_manager.set_toggle_true, is_global=True
+    )
+    expander.register_handler(
+        "togglefalse", toggle_manager.set_toggle_false, is_global=True
+    )
+    expander.register_handler("iftoggle", toggle_manager.if_toggle, is_global=True)
 
 
 if __name__ == "__main__":
@@ -103,6 +178,7 @@ if __name__ == "__main__":
 
     expander = Expander()
 
+    # Test patch commands
     text = r"""
     \makeatletter
 
@@ -119,4 +195,22 @@ if __name__ == "__main__":
 """
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
+    print("Patch commands test:")
     print(out_str)
+    print()
+
+    # Test toggle commands
+    toggle_text = r"""
+    \newtoggle{mytest}
+    \iftoggle{mytest}{TRUE BRANCH}{FALSE BRANCH}
+
+    \toggletrue{mytest}
+    \iftoggle{mytest}{TRUE BRANCH}{FALSE BRANCH}
+
+    \togglefalse{mytest}
+    \iftoggle{mytest}{TRUE BRANCH}{FALSE BRANCH}
+    """
+    toggle_out = expander.expand(toggle_text)
+    toggle_str = expander.convert_tokens_to_str(toggle_out).strip()
+    print("Toggle commands test:")
+    print(toggle_str)

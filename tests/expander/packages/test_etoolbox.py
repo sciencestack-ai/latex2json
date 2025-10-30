@@ -27,3 +27,57 @@ def test_etoolbox_patchcmds():
         "prepend f MIDDLE O o",
         "prepend f MIDDLE O o append",
     ]
+
+
+def test_etoolbox_toggles():
+    expander = Expander()
+
+    text = r"""
+    \newtoggle{mytest}
+    \iftoggle{mytest}{TRUE}{FALSE}
+
+    \toggletrue{mytest}
+    \iftoggle{mytest}{TRUE}{FALSE}
+
+    \togglefalse{mytest}
+    \iftoggle{mytest}{TRUE}{FALSE}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["FALSE", "TRUE", "FALSE"]
+
+
+def test_etoolbox_toggles_nested():
+    expander = Expander()
+
+    text = r"""
+    \newtoggle{outer}
+    \newtoggle{inner}
+
+    \toggletrue{outer}
+    \togglefalse{inner}
+
+    \iftoggle{outer}{
+        OUTER-TRUE
+        \iftoggle{inner}{INNER-TRUE}{INNER-FALSE}
+    }{
+        OUTER-FALSE
+    }
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["OUTER-TRUE", "INNER-FALSE"]
+
+
+def test_etoolbox_toggles_undefined():
+    expander = Expander()
+
+    # Test undefined toggle defaults to False
+    text = r"""
+    \iftoggle{undefined}{TRUE}{FALSE}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "FALSE"
