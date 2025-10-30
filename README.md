@@ -290,6 +290,16 @@ You may view some of the JSON outputs in [arxiv latex2json samples](https://driv
 - Does not preserve latex->PDF visual formatting
 - Does not properly support font and symbol declarations (e.g., \newfont, \newsymbol, etc.)
 
+### Numbering Limitations
+
+Due to the single-pass architecture of the expander/parser, several numbering-related features have known limitations:
+
+1. **Restatable Environments (`\begin{restatable}`)**: In real LaTeX, starred references like `\MainResult*` should display the final numbering from the last occurrence in the document. Our implementation shows the current counter state at the time of call, which may not reflect the final numbering after all restatements.
+
+2. **ContinuedFloat**: The `\ContinuedFloat` command (from the caption package) is not properly handled. Continued floats are currently ignored, and new figure captions receive new numbering instead of continuing the previous float's numbering.
+
+3. **Conditional Equation Numbering (`mathtools` `showonlyrefs`)**: The `\mathtoolsset{showonlyrefs}` option is not supported. All equations will be numbered regardless of whether they are referenced in the document, rather than only numbering referenced equations.
+
 ## Contributions
 
 Contributions to improve LaTeX2JSON are welcome! Here are some areas where help is needed:
