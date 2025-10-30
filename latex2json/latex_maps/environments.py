@@ -115,6 +115,7 @@ DOCUMENT_ENVIRONMENTS = {
     "appendices": EnvironmentDefinition("appendices"),
     "quote": EnvironmentDefinition("quote", has_direct_command=True),
     "keyword": EnvironmentDefinition("keyword"),
+    "keywords": EnvironmentDefinition("keywords"),
     "acknowledgments": EnvironmentDefinition("acknowledgments"),
 }
 
