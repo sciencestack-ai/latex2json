@@ -66,6 +66,26 @@ def documentclass_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def make_if_package_cls_handler(command_name: str):
+    r"""
+    \@ifclasswith{<class>}{<option>}{<true-code>}{<false-code>}
+    """
+
+    def if_package_cls_handler(expander: ExpanderCore, token: Token):
+        expander.skip_whitespace()
+        blocks = expander.parse_braced_blocks(4)
+        if len(blocks) != 4:
+            expander.logger.warning(f"\\{command_name.lstrip('\\')} expects 4 blocks")
+            return None
+
+        true_block = blocks[2]
+        false_block = blocks[3]
+        # just assume the false block?
+        return expander.expand_tokens(false_block)
+
+    return if_package_cls_handler
+
+
 def register_package_handlers(expander: ExpanderCore):
     # packages
     for cmd_name in ["usepackage", "RequirePackage"]:
@@ -79,6 +99,13 @@ def register_package_handlers(expander: ExpanderCore):
     expander.register_handler("documentclass", documentclass_handler, is_global=True)
     expander.register_handler("LoadClass", loadclass_handler, is_global=True)
 
+    # @ifclasswith
+    for command_name in ["@ifclasswith", "@ifpackagewith"]:
+        expander.register_handler(
+            command_name, make_if_package_cls_handler(command_name), is_global=True
+        )
+
+    # ignore
     ignore_patterns = {
         "ProvidesClass": "{[",
         "ProvidesPackage": "{[",

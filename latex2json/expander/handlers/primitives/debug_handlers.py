@@ -152,14 +152,18 @@ def register_debug_handlers(expander: ExpanderCore):
     expander.register_handler("\\@latex@error", latexerror_handler, is_global=True)
 
     debug_ignore_patterns = {
-        "ClassWarningNoLine": "{{",
-        "ClassWarning": "{{",
+        "ClassDebug": "{{",
         "ClassInfo": "{{",
+        "ClassWarning": "{{",
+        "ClassWarningNoLine": "{{",
         "ClassError": "{{{",
         "ClassNotice": "{{",
-        "ClassDebug": "{{",
-        "PackageError": "{{{",
+        "PackageDebug": "{{",
+        "PackageInfo": "{{",
         "PackageWarning": "{{",
+        "PackageWarningNoLine": "{{",
+        "PackageError": "{{{",
+        "PackageNotice": "{{",
         "@warning": "{",
     }
 

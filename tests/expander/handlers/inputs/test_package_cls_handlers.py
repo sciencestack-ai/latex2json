@@ -49,3 +49,19 @@ def test_package_handlers():
 
     assert expander.get_macro("bar")
     assert not expander.get_macro("foo")
+
+
+def test_if_package_cls_handlers():
+    expander = Expander()
+
+    expander.makeatletter()
+    text = r"""
+    \@ifclasswith{article}{11pt}{
+        TRUE
+    }{
+    FALSE
+    }
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "FALSE"
