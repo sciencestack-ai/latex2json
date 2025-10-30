@@ -2,6 +2,9 @@ from typing import List, Optional
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 
@@ -169,6 +172,8 @@ def register_ref_label_handlers(parser: ParserCore):
     # cite
     for command in CITE_COMMANDS:
         parser.register_handler(command, cite_handler)
+    # nocite (basically parse and ignore)
+    register_ignore_handlers_util(parser, {"nocite": 1})
 
     # defcitealias
     parser.register_handler("defcitealias", defcitealias_handler)
