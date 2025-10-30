@@ -58,6 +58,25 @@ def enddblfloat_handler(expander: ExpanderCore, token: Token) -> Optional[List[T
     return _end_float_common(expander, "@dblfloat", "\\end@dblfloat")
 
 
+def continued_float_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[List[Token]]:
+    r"""Handle \\ContinuedFloat command.
+
+    LIMITATION: In real LaTeX, \\ContinuedFloat causes the next caption to continue
+    the numbering from the previous float (e.g., Figure 1 followed by Figure 1 (continued)).
+    Our implementation currently ignores this command, so continued floats receive new
+    numbering instead of continuing the previous float's numbering. This is a limitation
+    of the single-pass architecture where we cannot easily track and restore previous
+    float counter states.
+    """
+    # hack: decrement current float so that next float will be numbered the same
+    parent_float_env = expander.get_parent_float_env()
+    # if parent_float_env and parent_float_env.counter_name:
+    #     expander.state.add_to_counter(parent_float_env.counter_name, -1)
+    return []
+
+
 def register_float_handler(expander: ExpanderCore):
     r"""Register float and dblfloat handlers with the expander."""
     expander.register_handler(
@@ -73,6 +92,10 @@ def register_float_handler(expander: ExpanderCore):
         is_global=True,
     )
     expander.register_handler("\\end@dblfloat", enddblfloat_handler, is_global=True)
+
+    expander.register_handler(
+        "\\ContinuedFloat", continued_float_handler, is_global=True
+    )
 
 
 if __name__ == "__main__":
