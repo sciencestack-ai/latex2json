@@ -75,7 +75,8 @@ def make_if_package_cls_handler(command_name: str):
         expander.skip_whitespace()
         blocks = expander.parse_braced_blocks(4)
         if len(blocks) != 4:
-            expander.logger.warning(f"\\{command_name.lstrip('\\')} expects 4 blocks")
+            cmd_name = command_name.lstrip("\\")
+            expander.logger.warning(f"\\{cmd_name} expects 4 blocks")
             return None
 
         true_block = blocks[2]
