@@ -92,9 +92,10 @@ def meaning_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token
     else:
         # in tex there is a mapping of immediate tokens to their meaning
         # e.g. '{' -> begin-group character, catcode 12 is the character, etc
-        meaning_str = CATCODE_MEANINGS[tok.catcode]
-        meaning_str += " " + tok.value
-        out_tokens = expander.convert_str_to_tokens(meaning_str)
+        if tok.catcode in CATCODE_MEANINGS:
+            meaning_str = CATCODE_MEANINGS[tok.catcode]
+            meaning_str += " " + tok.value
+            out_tokens = expander.convert_str_to_tokens(meaning_str)
 
     # expander.logger.debug(f"\\meaning: {out_tokens}")
     return out_tokens

@@ -977,6 +977,33 @@ class ParserCore:
             scoped=False,
         )
 
+    def parse_immediate_node(
+        self, scoped: bool = False, skip_whitespace: bool = False
+    ) -> Optional[List[ASTNode]]:
+        """Parse either a braced group or a single token as nodes.
+
+        Args:
+            scoped: If True, process tokens in a new scope
+            skip_whitespace: If True, skip whitespace before parsing
+
+        Returns:
+            List of ASTNodes, or None if no token available
+        """
+        if skip_whitespace:
+            self.skip_whitespace()
+
+        tok = self.peek()
+        if not tok:
+            return None
+
+        if is_begin_group_token(tok):
+            return self.parse_brace_as_nodes(scoped=scoped)
+        else:
+            consumed = self.consume()
+            if consumed:
+                return self._handler(consumed)
+            return None
+
     def parse_color_name(self) -> Optional[str]:
         r"""\s*[model]\s*{color_name}"""
         self.skip_whitespace()

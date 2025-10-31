@@ -405,6 +405,8 @@ class ExpanderCore:
         return tok_or_name, False
 
     def get_macro(self, tok_or_name: str | Token) -> Optional[Macro]:
+        if not tok_or_name:
+            return None
         normalized = self.normalize_macro_name(tok_or_name)
         if normalized is None:
             return None
@@ -1677,6 +1679,7 @@ class ExpanderCore:
 
         # Only create default handlers if custom handlers are not already set
         if env_def.begin_handler is None:
+
             def begin_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
                 # Use shared environment processing logic
                 from latex2json.expander.handlers.environment.environment_utils import (
@@ -1691,6 +1694,7 @@ class ExpanderCore:
             env_def.begin_handler = begin_handler
 
         if env_def.end_handler is None:
+
             def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
                 # Use shared environment end processing logic
                 from latex2json.expander.handlers.environment.environment_utils import (

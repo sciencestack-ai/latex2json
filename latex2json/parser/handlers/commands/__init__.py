@@ -29,6 +29,7 @@ from latex2json.parser.handlers.commands.diacritics_handler import (
     register_diacritics_handler,
 )
 from latex2json.parser.handlers.commands.box_handlers import register_box_handlers
+from latex2json.parser.handlers.commands.frac_handlers import register_frac_handlers
 
 
 def register_command_handlers(parser: ParserCore):
@@ -44,3 +45,4 @@ def register_command_handlers(parser: ParserCore):
     register_doc_content_handlers(parser)
     register_spacing_handlers(parser)
     register_box_handlers(parser)
+    register_frac_handlers(parser)
