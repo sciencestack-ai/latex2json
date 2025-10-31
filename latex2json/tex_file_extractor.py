@@ -206,22 +206,20 @@ class TexFileExtractor:
                         output_filename += ".tex"  # Assume .tex if no extension
                     temp_file_path = os.path.join(temp_dir, output_filename)
 
+                    # open .gz as single temp_file_path
                     with gzip.open(compressed_path, "rb") as f_in, open(
                         temp_file_path, "wb"
                     ) as f_out:
                         shutil.copyfileobj(f_in, f_out)
 
+                    # read and check if it's a valid main TeX file
+                    content_str = read_file(temp_file_path)
+                    if not TexFileExtractor.is_main_tex_file(content_str):
+                        raise FileNotFoundError(
+                            f"Decompressed file {output_filename} is not a valid main TeX file."
+                        )
                     main_tex = output_filename
-                    main_folder_abs = temp_dir
                     processed = True
-                    # content_str = read_file(temp_file_path)
-                    # if TexFileExtractor.is_main_tex_file(content_str):
-                    #     # For single files, the main_tex is the filename relative to temp_dir,
-                    #     # and the main_folder is temp_dir itself.
-                    # else:
-                    #     raise FileNotFoundError(
-                    #         f"Decompressed file {output_filename} from {compressed_path} is not a valid main TeX file."
-                    #     )
 
                 except gzip.BadGzipFile as gz_err:
                     # This specifically catches errors if it's a .gz file but not valid gzip format
