@@ -38,7 +38,11 @@ def includepdf_handler(parser: ParserCore, token: Token):
 
     pages = None
     if pages_str:
-        pages_match = re.search(r"pages=(?:{([0-9-,]+)}|([0-9-,]+))", pages_str)
+        # Match pages parameter with various formats:
+        # pages=1, pages={1}, pages=1-5, pages=1-last, pages={1-3,5-last}
+        pages_match = re.search(
+            r"pages=(?:{([0-9\-,a-zA-Z]+)}|([0-9\-,a-zA-Z]+))", pages_str
+        )
         # Use first non-None group (either braced or unbraced match)
         pages = (
             next((g for g in pages_match.groups() if g is not None), None)

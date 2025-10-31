@@ -45,6 +45,18 @@ def test_includepdf_handler():
     assert len(out) == 1
     assert out[0] == IncludePdfNode("example.pdf", pages="1-3,5")
 
+    # page range with 'last' keyword
+    text = r"\includepdf[pages=1-last]{example.pdf}"
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert out[0] == IncludePdfNode("example.pdf", pages="1-last")
+
+    # page range with 'last' keyword in braces
+    text = r"\includepdf[pages={1-3,5-last}]{example.pdf}"
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert out[0] == IncludePdfNode("example.pdf", pages="1-3,5-last")
+
 
 def test_ignore_graphicspath_handler():
     parser = Parser()
