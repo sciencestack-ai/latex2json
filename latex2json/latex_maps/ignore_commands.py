@@ -224,6 +224,8 @@ formatting_patterns = {
     "endlasthead": 0,
     "endfirsthead": 0,
     "endfirstfoot": 0,
+    # stackengine
+    "@STRT": 0,
 }
 
 content_formatting_patterns = {
