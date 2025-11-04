@@ -1455,6 +1455,7 @@ class ExpanderCore:
         begin_predicate: TokenPredicate,
         end_predicate: TokenPredicate,
         check_first_token: bool = True,
+        verbatim: bool = False,
     ) -> Optional[List[Token]]:
         """
         Parses a sequence of tokens enclosed in braces '{...}' and returns them as a List[Token].
@@ -1496,32 +1497,38 @@ class ExpanderCore:
             elif end_predicate(current_token):
                 brace_depth -= 1
 
-            current_token = self.parse_token()
+            current_token = self.parse_token(verbatim=verbatim)
 
             if brace_depth > 0:
                 out_tokens.append(current_token)
 
         return out_tokens
 
-    def parse_brace_as_tokens(self, expand=False) -> Optional[List[Token]]:
+    def parse_brace_as_tokens(
+        self, expand=False, verbatim=False
+    ) -> Optional[List[Token]]:
         tokens = self.parse_begin_end_as_tokens(
-            is_begin_group_token, is_end_group_token
+            is_begin_group_token, is_end_group_token, verbatim=verbatim
         )
         if expand and tokens:
             tokens = self.expand_tokens(tokens)
         return tokens
 
-    def parse_bracket_as_tokens(self, expand=False) -> Optional[List[Token]]:
+    def parse_bracket_as_tokens(
+        self, expand=False, verbatim=False
+    ) -> Optional[List[Token]]:
         tokens = self.parse_begin_end_as_tokens(
-            is_begin_bracket_token, is_end_bracket_token
+            is_begin_bracket_token, is_end_bracket_token, verbatim=verbatim
         )
         if expand and tokens:
             tokens = self.expand_tokens(tokens)
         return tokens
 
-    def parse_parenthesis_as_tokens(self, expand=False) -> Optional[List[Token]]:
+    def parse_parenthesis_as_tokens(
+        self, expand=False, verbatim=False
+    ) -> Optional[List[Token]]:
         tokens = self.parse_begin_end_as_tokens(
-            is_begin_parenthesis_token, is_end_parenthesis_token
+            is_begin_parenthesis_token, is_end_parenthesis_token, verbatim=verbatim
         )
         if expand and tokens:
             tokens = self.expand_tokens(tokens)
