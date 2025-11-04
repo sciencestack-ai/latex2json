@@ -98,6 +98,10 @@ def test_ignore_formatting_handlers():
     out = expander.expand(r"\hrule width 23pt")
     assert out == []
 
+    # also works without spaces
+    out = expander.expand(r"\vrule height2pt depth-1.6pt")
+    assert out == []
+
 
 def test_newline_handler():
     expander = Expander()

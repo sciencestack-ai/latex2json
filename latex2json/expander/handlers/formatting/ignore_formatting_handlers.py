@@ -11,7 +11,7 @@ def vrule_hrule_handler(expander: ExpanderCore, token: Token):
         expander.skip_whitespace()
         found_dimension = False
         for dim in dimensions:
-            if dim not in seen_keywords and expander.parse_keyword(f"{dim} "):
+            if dim not in seen_keywords and expander.parse_keyword(dim):
                 expander.parse_dimensions(parse_unknown=True)
                 seen_keywords.add(dim)
                 found_dimension = True
