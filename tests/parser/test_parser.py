@@ -28,6 +28,18 @@ def test_quotes():
     expected = "'single quote' " + '"double quote"'
     assert out[0].text == expected
 
+    text = r"""\text{``$\times$$k$'' means}"""
+    out = parser.parse(text)
+    assert len(out) == 4
+    assert isinstance(out[0], TextNode)
+    assert out[0].text == '"'
+    assert isinstance(out[1], EquationNode)
+    assert out[1].equation_to_str() == r"\times"
+    assert isinstance(out[2], EquationNode)
+    assert out[2].equation_to_str() == "k"
+    assert isinstance(out[3], TextNode)
+    assert out[3].text == '" means'
+
 
 def test_labels_n_captions_n_figures():
     parser = Parser()

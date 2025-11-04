@@ -870,6 +870,18 @@ class ExpanderCore:
                 self.push_scope()
             elif is_end_group_token(tok):
                 self.pop_scope()
+            elif tok.type == TokenType.MATH_SHIFT_INLINE:
+                next_tok = self.peek()
+                # check consecutive $$, and ensure not in existing inline mode
+                if (
+                    next_tok
+                    and next_tok.type == TokenType.MATH_SHIFT_INLINE
+                    and not self.state.mode == ProcessingMode.MATH_INLINE
+                ):
+                    self.consume()
+                    self.state.toggle_mode(ProcessingMode.MATH_DISPLAY)
+                    return [Token(TokenType.MATH_SHIFT_DISPLAY, "$$")]
+                self.state.toggle_mode(ProcessingMode.MATH_INLINE)
         return [tok]
 
     def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
@@ -892,6 +904,7 @@ class ExpanderCore:
         return None
 
     def parse_token(self, verbatim=False) -> Optional[Token]:
+        """Don't push mode here, since that should only be handled in expansion (and not parse phase)"""
         if verbatim:
             return self.consume()
 
@@ -905,22 +918,6 @@ class ExpanderCore:
             param = self.parse_parameter_token()
             if param:
                 return param
-        elif tok.type == TokenType.MATH_SHIFT_INLINE:
-            self.consume()  # consume it and check next tok to see if it is also inline math
-            next_tok = self.peek()
-            # check consecutive $$, and ensure it is not in existing inline mode to deal with
-            # $$eq1$$ vs $eq1$$eq2$
-            if (
-                next_tok
-                and next_tok.type == TokenType.MATH_SHIFT_INLINE
-                and not self.state.mode == ProcessingMode.MATH_INLINE
-            ):
-                self.consume()
-                self.state.toggle_mode(ProcessingMode.MATH_DISPLAY)
-                return Token(TokenType.MATH_SHIFT_DISPLAY, "$$")
-            else:
-                self.state.toggle_mode(ProcessingMode.MATH_INLINE)
-            return tok
         return self.consume()
 
     def parse_tokens_until(
