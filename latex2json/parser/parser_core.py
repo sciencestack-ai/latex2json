@@ -2,7 +2,7 @@ import logging
 import os
 import re
 from collections import deque
-from typing import Dict, List, Optional, Callable
+from typing import Dict, List, Optional, Callable, Set
 from latex2json.expander.expander import Expander
 from latex2json.nodes.metadata_nodes import MetadataNode, MaketitleNode
 from latex2json.nodes.node_types import NodeTypes
@@ -123,6 +123,8 @@ class ParserCore:
             {}
         )  # file_path -> {filename: prefix}
         self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
+
+        self.graphics_paths: Set[str] = set()
 
     def register_label(self, label: str):
         key = self.filename
