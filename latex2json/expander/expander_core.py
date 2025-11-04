@@ -870,13 +870,6 @@ class ExpanderCore:
                 self.push_scope()
             elif is_end_group_token(tok):
                 self.pop_scope()
-            elif is_mathshift_token(tok):
-                mode_type = (
-                    ProcessingMode.MATH_INLINE
-                    if tok.type == TokenType.MATH_SHIFT_INLINE
-                    else ProcessingMode.MATH_DISPLAY
-                )
-                self.state.toggle_mode(mode_type)
         return [tok]
 
     def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
@@ -923,7 +916,10 @@ class ExpanderCore:
                 and not self.state.mode == ProcessingMode.MATH_INLINE
             ):
                 self.consume()
+                self.state.toggle_mode(ProcessingMode.MATH_DISPLAY)
                 return Token(TokenType.MATH_SHIFT_DISPLAY, "$$")
+            else:
+                self.state.toggle_mode(ProcessingMode.MATH_INLINE)
             return tok
         return self.consume()
 
