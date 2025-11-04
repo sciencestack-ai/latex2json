@@ -92,6 +92,37 @@ def test_makeatletter_makeatother():
     assert expander.get_catcode(ord("@")) == Catcode.OTHER
 
 
+def test_counters_appendix():
+
+    # check that section counter dependencies i.e. newtheorem[section] are reset and preserved on \appendix
+    text = r"""
+\newtheorem{theorem}{Theorem}[section]
+
+\section{Intro}
+
+\appendix
+\section{Appendix 1}
+\begin{theorem}
+Theorem 1
+\end{theorem}
+
+\section{Appendix 2}
+\begin{theorem}
+Theorem 2
+\end{theorem}
+""".strip()
+    expander = Expander()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+
+    theorem_tokens = [
+        t for t in out if isinstance(t, EnvironmentStartToken) and "theorem" in t.name
+    ]
+    assert len(theorem_tokens) == 2
+    assert theorem_tokens[0].numbering == "A.1"
+    assert theorem_tokens[1].numbering == "B.1"
+
+
 def test_edef_with_counters():
     expander = Expander()
 

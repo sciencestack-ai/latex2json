@@ -7,6 +7,16 @@ from latex2json.registers.registers import TexRegisters
 
 INTERNAL_COUNTERS = ["@topnum", "@mpfn", "c@fnote", "c@tnote", "c@cnote", "c@footnote"]
 
+# Sectioning hierarchy
+SECTIONS = [
+    "chapter",
+    "section",
+    "subsection",
+    "subsubsection",
+    "paragraph",
+    "subparagraph",
+]
+
 
 @dataclass
 class CounterInfo:
@@ -73,21 +83,17 @@ class CounterManager:
     def _init_section_counters(self):
         self.new_counter("part", style=CounterFormat.ROMAN_UPPER, check_exists=False)
 
-        # Sectioning hierarchy
-        SECTIONS = [
-            "chapter",
-            "section",
-            "subsection",
-            "subsubsection",
-            "paragraph",
-            "subparagraph",
-        ]
-
         for i, section in enumerate(SECTIONS):
             if i > 0:
                 self.new_counter(section, parent=SECTIONS[i - 1], check_exists=False)
             else:
                 self.new_counter(section, check_exists=False)
+
+    def reset_section_counters(self):
+        # don't use _init_section_counters since it will also reset existing dependencies to these section counters
+        self.set_counter("part", 0)
+        for section in SECTIONS:
+            self.set_counter(section, 0)
 
     def _init_builtin_counters(self):
         """Initialize common LaTeX counters"""
@@ -114,9 +120,6 @@ class CounterManager:
         # other
         for counter in INTERNAL_COUNTERS:
             self.new_counter(counter)
-
-    def reset_section_counters(self):
-        self._init_section_counters()
 
     def get_counters(self, internal_name=True):
         out = []
