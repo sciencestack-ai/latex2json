@@ -60,6 +60,9 @@ def includegraphics_handler(parser: ParserCore, token: Token):
         return None
     path_str = parser.convert_nodes_to_str(path)
 
+    # Strip quotes from path if present (LaTeX allows quoted filenames)
+    path_str = path_str.strip().replace('"', "").replace("'", "")
+
     # Resolve path using graphics_paths if needed
     resolved_path = resolve_graphics_path(parser, path_str)
 
@@ -80,6 +83,9 @@ def includepdf_handler(parser: ParserCore, token: Token):
         parser.logger.warning(f"\\includepdf: Missing path")
         return None
     path_str = parser.convert_nodes_to_str(path)
+
+    # Strip quotes from path if present (LaTeX allows quoted filenames)
+    path_str = path_str.strip().replace('"', "").replace("'", "")
 
     pages = None
     if pages_str:

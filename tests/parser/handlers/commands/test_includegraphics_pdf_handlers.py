@@ -27,6 +27,13 @@ def test_includegraphics_handler():
     assert len(out) == 1
     assert out[0] == IncludeGraphicsNode("example.pdf", page=3)
 
+    # quoted filename
+    text = r'\includegraphics[width=0.5\textwidth]{"lstmn".jpg}'
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    assert out[0] == IncludeGraphicsNode("lstmn.jpg")
+
 
 def test_includepdf_handler():
     parser = Parser()
