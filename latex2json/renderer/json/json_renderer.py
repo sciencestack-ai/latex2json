@@ -34,6 +34,18 @@ def is_text_token(token: Dict) -> bool:
     return token.get("type") == NodeTypes.TEXT
 
 
+def is_katex_compatible_token(token: Dict) -> bool:
+    if not isinstance(token, dict):
+        return False
+    return token.get("type") in [
+        NodeTypes.TEXT,
+        NodeTypes.COMMAND,
+        NodeTypes.EQUATION_ARRAY,
+        NodeTypes.EQUATION,
+        NodeTypes.ROW,
+    ]
+
+
 def strip_whitespace_json_tokens(tokens: List[Dict]):
     if not tokens:
         return tokens
@@ -292,6 +304,29 @@ class JSONRenderer:
 
         return result
 
+    def _sanitize_equation_token(self, token: Dict) -> Dict:
+        if not isinstance(token, dict):
+            return token
+        if token.get("type") != NodeTypes.EQUATION:
+            return token
+        # strip off display attribute if inline
+        if token.get("display") == "inline":
+            del token["display"]
+        content = token.get("content")
+        if content and isinstance(content, list):
+            # check if all content is "text"
+            if all(is_text_token(item) for item in content):
+                # if so, merge into a single string
+                token["content"] = "".join(item.get("content", "") for item in content)
+            else:
+                # check if single non-text or command token, return that directly instead
+                # e.g. single reference token inside equation e.g. $\ref{eq:1}$ -> \ref{eq:1}
+                if len(content) == 1:
+                    item = content[0]
+                    if not is_katex_compatible_token(item):
+                        return item
+        return token
+
     def _recursive_postprocess(
         self, tokens: List[Dict], strip_whitespace_tokens=True
     ) -> List[Dict]:
@@ -314,18 +349,8 @@ class JSONRenderer:
             token_type = token.get("type", "")
 
             if token_type == NodeTypes.EQUATION:
-                # strip off display attribute if inline
-                if token.get("display") == "inline":
-                    del token["display"]
-                content = token.get("content")
-                if content and isinstance(content, list):
-                    # check if all content is "text"
-                    if all(is_text_token(item) for item in content):
-                        # if so, merge into a single string
-                        token["content"] = "".join(
-                            item.get("content", "") for item in content
-                        )
-                        continue
+                tokens[i] = self._sanitize_equation_token(token)
+                continue
             elif "content" in token and isinstance(token["content"], list):
                 token["content"] = self._recursive_postprocess(
                     token["content"],
@@ -530,14 +555,7 @@ Appendix 2 content
 """
 
     text = r"""
-\makeatletter
-
-\author{
-ABC MAN
-\email{aaa@gmail.com}
-}
-
-\maketitle
+$\ref{eq:1}$
 """.strip()
 
     json = renderer.parse(text)

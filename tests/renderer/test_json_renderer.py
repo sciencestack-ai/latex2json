@@ -184,3 +184,14 @@ def test_json_output_of_begin_end_sections():
     ]
 
     assert json == expected
+
+
+def test_sanitize_equation_token():
+    renderer = JSONRenderer()
+
+    text = r"""
+    $\ref{eq:1}$
+    """.strip()
+    json = renderer.parse(text)
+    assert len(json) == 1
+    assert json[0] == {"type": NodeTypes.REF, "content": ["eq:1"]}
