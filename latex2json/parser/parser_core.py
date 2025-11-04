@@ -876,8 +876,7 @@ class ParserCore:
             if not begin_predicate(first_token):
                 return None
             begin_token = self.consume()
-            if include_begin_end_tokens:
-                out_tokens.append(begin_token)
+            out_tokens.append(begin_token)
 
         brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
 
