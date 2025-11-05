@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "makesavenoteenv": 1,
     "setminted": 1,
     "CJKnospace": 0,
     "bibpunct": 6,
