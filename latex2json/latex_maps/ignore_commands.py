@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "setminted": 1,
     "CJKnospace": 0,
     "bibpunct": 6,
     "newcolumntype": "{[{",
@@ -328,4 +329,14 @@ separator_patterns = {
     "endfirsthead": 0,
 }
 
-IGNORE_PATTERNS = separator_patterns | formatting_patterns | content_formatting_patterns
+font_awesome_patterns = {
+    "faGithub": 0,
+    "faGithubAlt": 0,
+}
+
+IGNORE_PATTERNS = (
+    separator_patterns
+    | formatting_patterns
+    | content_formatting_patterns
+    | font_awesome_patterns
+)

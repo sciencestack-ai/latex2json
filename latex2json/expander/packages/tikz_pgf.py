@@ -57,6 +57,7 @@ def register_tikz_pgf_handlers(expander: ExpanderCore):
         "usepgfplotslibrary": 1,
         "pgfplotsset": 1,
         "pgfdeclareshape": 2,
+        "pgfdeclareplotmark": 2,
     }
 
     register_ignore_handlers_util(expander, ignore_patterns)

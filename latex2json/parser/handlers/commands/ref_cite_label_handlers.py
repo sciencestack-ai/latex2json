@@ -83,7 +83,16 @@ def cite_handler(parser: ParserCore, token: Token):
     return [CiteNode(cite_str, title=title)]
 
 
-REF_COMMANDS = ["ref", "autoref", "eqref", "pageref", "cref", "Cref", "nameref"]
+REF_COMMANDS = [
+    "ref",
+    "autoref",
+    "eqref",
+    "pageref",
+    "cref",
+    "Cref",
+    "nameref",
+    "subref",
+]
 
 CITE_COMMANDS = [
     "cite",
