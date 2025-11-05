@@ -118,3 +118,39 @@ def find_nodes_by_type(nodes: List[ASTNode], node_type: Type[ASTNode]) -> List[A
         elif node.children:
             matching_nodes.extend(find_nodes_by_type(node.children, node_type))
     return matching_nodes
+
+
+def split_text_on_braces(text: str) -> tuple[List[str], int]:
+    """Split text on { and } characters, removing them and tracking brace depth change.
+
+    Args:
+        text: The text to split
+
+    Returns:
+        A tuple of (text_parts, net_brace_change) where:
+        - text_parts: List of text segments with braces removed
+        - net_brace_change: Net change in brace depth (open_braces - close_braces)
+    """
+    text_parts = []
+    remaining_text = ""
+    open_count = 0
+    close_count = 0
+
+    for char in text:
+        if char == "{":
+            if remaining_text:
+                text_parts.append(remaining_text)
+                remaining_text = ""
+            open_count += 1
+        elif char == "}":
+            if remaining_text:
+                text_parts.append(remaining_text)
+                remaining_text = ""
+            close_count += 1
+        else:
+            remaining_text += char
+
+    if remaining_text:
+        text_parts.append(remaining_text)
+
+    return text_parts, open_count - close_count

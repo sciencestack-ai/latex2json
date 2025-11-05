@@ -176,7 +176,7 @@ def test_proper_cells_with_braces():
     text = r"""
     \begin{tabular}{c}
         { \bf one single \\ cell } & second cell \\ 
-        second row, cell 1 & second row, cell 2 
+        second row, cell 1 & $\textcolor{red}{\mathbf{A}}$
     \end{tabular}
     """.strip()
 
@@ -195,6 +195,13 @@ def test_proper_cells_with_braces():
         assert cell1_text.styles == ["bold"]
         # { \bf one single \\ cell } -> one single\ncell
         assert cell1_text.text.replace(" ", "") == "onesingle\ncell"
+
+        # but also check that the {} inside last equation cell is preserved
+        last_cell = tabular.row_nodes[1].cells[1]
+        assert len(last_cell.body) == 1 and isinstance(last_cell.body[0], EquationNode)
+        equation = last_cell.body[0]
+        assert equation.env_name == "equation"
+        assert equation.equation_to_str() == r"\textcolor{red}{\mathbf{A}}"
 
     assert_out_tabular(out)
 

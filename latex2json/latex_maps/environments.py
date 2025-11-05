@@ -199,6 +199,7 @@ LAYOUT_ENVIRONMENTS = {
     "threeparttable": EnvironmentDefinition(
         "threeparttable", num_args=1, default_arg=[]
     ),
+    "tablenotes": EnvironmentDefinition("tablenotes"),
 }
 
 

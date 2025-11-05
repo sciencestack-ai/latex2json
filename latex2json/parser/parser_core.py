@@ -463,18 +463,13 @@ class ParserCore:
         if not self.is_math_mode:
             if is_begin_group_token(token):
                 self.push_scope()
-                if self.is_in_tabular():
-                    # we need to mark this as a special char to delineate {...\\...} inside cells
-                    return [SpecialCharNode("{")]
-                elif self.is_in_math_mode_stack():
+                if self.is_in_tabular() or self.is_in_math_mode_stack():
                     # preserve braces as text in math mode stack
                     return [TextNode(token.value)]
                 return []
             elif is_end_group_token(token):
                 self.pop_scope()
-                if self.is_in_tabular():
-                    return [SpecialCharNode("}")]
-                elif self.is_in_math_mode_stack():
+                if self.is_in_tabular() or self.is_in_math_mode_stack():
                     # preserve braces as text in math mode stack
                     return [TextNode(token.value)]
                 return []

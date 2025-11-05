@@ -1,16 +1,20 @@
-from typing import Dict, List, Callable
+from typing import List
 from latex2json.latex_maps.environments import TABULAR_ENVIRONMENTS
-from latex2json.nodes.base_nodes import CommandNode, SpecialCharNode, TextNode
+from latex2json.nodes.base_nodes import CommandNode, TextNode
 from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.nodes.tabular_node import CellNode, RowNode, TabularNode
-from latex2json.nodes.utils import split_nodes_into_columns
+from latex2json.nodes.utils import (
+    split_nodes_into_columns,
+    split_text_on_braces,
+    strip_whitespace_nodes,
+)
 from latex2json.parser.handlers.commands.command_handler_utils import (
     register_ignore_handlers_util,
 )
 from latex2json.parser.handlers.commands.tabular_cell_handlers import (
     merge_nodes_into_cellnode,
 )
-from latex2json.tokens import Catcode, EnvironmentStartToken, Token, TokenType
+from latex2json.tokens import EnvironmentStartToken
 from latex2json.nodes import ASTNode
 
 from latex2json.parser.parser_core import ParserCore
@@ -27,7 +31,7 @@ def split_nodes_into_columns_n_merge(nodes: List[ASTNode]) -> List[CellNode]:
 
 
 def split_nodes_into_rows_with_braces(nodes: List[ASTNode]) -> List[List[ASTNode]]:
-    r"""Split nodes into rows based on \\\\ but only when not inside special char braces {} groups.
+    r"""Split nodes into rows based on \\\\ but only when not inside {} groups.
 
     Example:
         Input: [node1, {, node2, \\, node3, }, \\, node4]
@@ -40,12 +44,13 @@ def split_nodes_into_rows_with_braces(nodes: List[ASTNode]) -> List[List[ASTNode
     brace_depth = 0
 
     for node in nodes:
-        if isinstance(node, SpecialCharNode):
-            if node.value == "{":
-                brace_depth += 1
-                continue
-            elif node.value == "}":
-                brace_depth = max(0, brace_depth - 1)  # Prevent negative depth
+        if isinstance(node, TextNode):
+            text = node.text
+            if "{" in text or "}" in text:
+                text_parts, brace_change = split_text_on_braces(text)
+                for part in text_parts:
+                    current_group.append(TextNode(part))
+                brace_depth = max(0, brace_depth + brace_change)
                 continue
 
         if brace_depth == 0 and is_tabular_newline_command(node):
@@ -144,15 +149,13 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-    \begin{NiceTabular}{l}[...] 
-    \label{tab:example}
-    \CodeBefore
-    \Body
+    \definecolor{brickred}{HTML}{b92622}
+\newcommand{\brickred}[1]{\textcolor{brickred}{#1}}
 
-    Last name & First name & Birth day \\
-
-    \CodeAfter
-    \end{NiceTabular}
+\begin{tabular}{rlll}
+$\left( \mathbf{QK^\top} \odot \brickred{\mathcal{A}}\odot \mathbf{M}\right)\mathbf{V}$   
+\end{tabular}
     """.strip()
     # tokens = parser.expander.expand(text)
     out = parser.parse(text, postprocess=True)
+    out = strip_whitespace_nodes(out)
