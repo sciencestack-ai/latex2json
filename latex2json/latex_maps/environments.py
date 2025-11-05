@@ -1,7 +1,8 @@
 import dataclasses
 from enum import Enum
 from typing import Any, Callable, List, Optional, TYPE_CHECKING
-from latex2json.tokens.types import EnvironmentType, Token
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import EnvironmentType, Token, TokenType
 
 if TYPE_CHECKING:
     from latex2json.expander.expander_core import ExpanderCore
@@ -379,6 +380,9 @@ MATH_ENVIRONMENTS = {
     ),  # double vert bars || ||
     "smallmatrix": EnvironmentDefinition(
         "smallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "pssmallmatrix": EnvironmentDefinition(
+        "pssmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),

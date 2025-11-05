@@ -133,6 +133,19 @@ def proof_cmd_handler(parser: ParserCore, token: Token):
     return [node]
 
 
+def psmallmatrix_handler(parser: ParserCore, token: EnvironmentStartToken):
+    out = matrix_or_array_handler(parser, token)
+    if out and isinstance(out[0], EquationArrayNode):
+        eq_node = out[0]
+        # convert to smallmatrix (katex does not support pssmallmatrix)
+        eq_node.env_name = "smallmatrix"
+        # pad with \left( out \right)
+        left = parser.process_text(r"\left(")
+        right = parser.process_text(r"\right)")
+        out = left + out + right
+    return out
+
+
 def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("ensuremath", ensuremath_handler)
 
@@ -142,14 +155,16 @@ def register_math_env_handlers(parser: ParserCore):
     parser.register_handler("proof", proof_cmd_handler)
 
     for env_name, env_def in MATH_ENVIRONMENTS.items():
-        # fetch env_def from parser/expander directly, in case it has been redefined
         if env_def.env_type == EnvironmentType.EQUATION_ALIGN:
             parser.register_env_handler(env_name, equation_align_handler)
             parser.register_env_handler(env_name + "*", equation_align_handler)
 
         elif env_def.env_type == EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
-            parser.register_env_handler(env_name, matrix_or_array_handler)
-            parser.register_env_handler(env_name + "*", matrix_or_array_handler)
+            if env_name == "pssmallmatrix":
+                parser.register_env_handler(env_name, psmallmatrix_handler)
+            else:
+                parser.register_env_handler(env_name, matrix_or_array_handler)
+                parser.register_env_handler(env_name + "*", matrix_or_array_handler)
 
         elif env_name == "math":
             # inline!
@@ -161,25 +176,32 @@ if __name__ == "__main__":
     from latex2json.parser import Parser
 
     parser = Parser()
-    text = r"""
-    \begin{align} 
-    a & b \label{eq:1} \\
-    \begin{matrix}  % number 8
-    a & b \\
-        c & d
-    \end{matrix} 
-    \\ 
-    \begin{array}{2} % number 9
-    a & b \\
-        c & d
-    \end{array} 44 \ref{eq:1} & 55 
-    \end{align}
+    # text = r"""
+    # \begin{align}
+    # a & b \label{eq:1} \\
+    # \begin{matrix}  % number 8
+    # a & b \\
+    #     c & d
+    # \end{matrix}
+    # \\
+    # \begin{array}{2} % number 9
+    # a & b \\
+    #     c & d
+    # \end{array} 44 \ref{eq:1} & 55
+    # \end{align}
 
-    \begin{equation}
-    \begin{pmatrix}
-    1 & 2 \ref{eq:1} & \text{mat}
-    \end{pmatrix}
-    \end{equation}
-    """.strip()
+    # \begin{equation}
+    # \begin{pmatrix}
+    # 1 & 2 \ref{eq:1} & \text{mat}
+    # \end{pmatrix}
+    # \end{equation}
+    # """.strip()
+
+    text = r"""
+$ \begin{pssmallmatrix}
+1 & 2 \\
+3 & 4
+\end{pssmallmatrix} $
+"""
 
     out = parser.parse(text, postprocess=True)

@@ -10,7 +10,7 @@ from latex2json.nodes import (
 )
 
 
-from latex2json.nodes.base_nodes import ASTNode, DisplayType
+from latex2json.nodes.base_nodes import ASTNode, CommandNode, DisplayType
 from latex2json.nodes.utils import strip_whitespace_nodes
 from latex2json.parser.parser import Parser
 
@@ -116,4 +116,32 @@ def test_math_env_handlers():
     assert childs[2].cells == [
         CellNode([array_node, TextNode(" 44 "), RefNode(["eq:1"])]),
         CellNode([TextNode("55")]),
+    ]
+
+
+def test_pssmallmatrix_handler():
+    parser = Parser()
+
+    # pssmallmatrix should be converted to smallmatrix and padded with \left( and \right)
+    text = r"""
+    $ \begin{pssmallmatrix}
+    1 & 2 \\
+    3 & 4
+    \end{pssmallmatrix} $
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], EquationNode)
+    eq = out[0]
+    assert eq.children == [
+        CommandNode("left"),
+        TextNode("("),
+        EquationArrayNode(
+            env_name="smallmatrix",
+            row_nodes=[
+                RowNode(cells=[CellNode([TextNode("1")]), CellNode([TextNode("2")])]),
+                RowNode(cells=[CellNode([TextNode("3")]), CellNode([TextNode("4")])]),
+            ],
+        ),
+        CommandNode("right"),
+        TextNode(")"),
     ]
