@@ -28,6 +28,15 @@ def is_token_inline(token: Dict) -> bool:
     return False
 
 
+def is_math_token(token: Dict) -> bool:
+    if not isinstance(token, dict):
+        return False
+    return token.get("type") in [
+        NodeTypes.EQUATION,
+        NodeTypes.EQUATION_ARRAY,
+    ]
+
+
 def is_text_token(token: Dict) -> bool:
     if not isinstance(token, dict):
         return False
@@ -352,9 +361,11 @@ class JSONRenderer:
                 tokens[i] = self._sanitize_equation_token(token)
                 continue
             elif "content" in token and isinstance(token["content"], list):
+                # don't strip whitespace from math tokens e.g. preserve empty align cells
                 token["content"] = self._recursive_postprocess(
                     token["content"],
-                    strip_whitespace_tokens=strip_whitespace_tokens,
+                    strip_whitespace_tokens=strip_whitespace_tokens
+                    and not is_math_token(token),
                 )
 
             if token_type == NodeTypes.ENVIRONMENT:
@@ -555,10 +566,14 @@ Appendix 2 content
 """
 
     text = r"""
-$\ref{eq:1}$
+\begin{align}
+P &= 33 \\ 
+  &= 44
+\end{align}
 """.strip()
 
     json = renderer.parse(text)
+    parser = renderer.parser
     print(json)
 
     # json = renderer.parse_file(

@@ -272,7 +272,7 @@ content_formatting_patterns = {
     "modulolinenumbers": "[",
     "resetlinenumber": 0,
     # bib
-    "printbibliography": 0,
+    "printbibliography": "[",
     "renewbibmacro": "{{",
     # datetime
     "date": "{",

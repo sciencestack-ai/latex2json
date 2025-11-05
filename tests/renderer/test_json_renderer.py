@@ -195,3 +195,35 @@ def test_sanitize_equation_token():
     json = renderer.parse(text)
     assert len(json) == 1
     assert json[0] == {"type": NodeTypes.REF, "content": ["eq:1"]}
+
+
+def test_preserve_empty_align_cells():
+    renderer = JSONRenderer()
+    text = r"""
+    \begin{align}
+    P &= 33 \\ 
+      &= 44
+    \end{align}
+    """.strip()
+    json = renderer.parse(text)
+    assert len(json) == 1
+    assert json[0] == {
+        "type": NodeTypes.EQUATION_ARRAY,
+        "name": "align",
+        "content": [
+            {
+                "type": NodeTypes.ROW,
+                "numbering": "1",
+                "content": [
+                    [{"type": NodeTypes.TEXT, "content": "P"}],
+                    [{"type": NodeTypes.TEXT, "content": "= 33"}],
+                ],
+            },
+            {
+                "type": NodeTypes.ROW,
+                "numbering": "2",
+                # empty cell is preserved
+                "content": [[], [{"type": NodeTypes.TEXT, "content": "= 44"}]],
+            },
+        ],
+    }
