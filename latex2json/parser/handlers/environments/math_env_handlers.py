@@ -137,7 +137,7 @@ def psmallmatrix_handler(parser: ParserCore, token: EnvironmentStartToken):
     out = matrix_or_array_handler(parser, token)
     if out and isinstance(out[0], EquationArrayNode):
         eq_node = out[0]
-        # convert to smallmatrix (katex does not support pssmallmatrix)
+        # convert to smallmatrix (katex does not support psmallmatrix)
         eq_node.env_name = "smallmatrix"
         # pad with \left( out \right)
         left = parser.process_text(r"\left(")
@@ -160,7 +160,7 @@ def register_math_env_handlers(parser: ParserCore):
             parser.register_env_handler(env_name + "*", equation_align_handler)
 
         elif env_def.env_type == EnvironmentType.EQUATION_MATRIX_OR_ARRAY:
-            if env_name == "pssmallmatrix":
+            if env_name == "psmallmatrix":
                 parser.register_env_handler(env_name, psmallmatrix_handler)
             else:
                 parser.register_env_handler(env_name, matrix_or_array_handler)
@@ -198,10 +198,10 @@ if __name__ == "__main__":
     # """.strip()
 
     text = r"""
-$ \begin{pssmallmatrix}
+$ \begin{psmallmatrix}
 1 & 2 \\
 3 & 4
-\end{pssmallmatrix} $
+\end{psmallmatrix} $
 """
 
     out = parser.parse(text, postprocess=True)

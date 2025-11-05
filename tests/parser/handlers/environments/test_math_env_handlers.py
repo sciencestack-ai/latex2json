@@ -119,15 +119,15 @@ def test_math_env_handlers():
     ]
 
 
-def test_pssmallmatrix_handler():
+def test_psmallmatrix_handler():
     parser = Parser()
 
-    # pssmallmatrix should be converted to smallmatrix and padded with \left( and \right)
+    # psmallmatrix should be converted to smallmatrix and padded with \left( and \right)
     text = r"""
-    $ \begin{pssmallmatrix}
+    $ \begin{psmallmatrix}
     1 & 2 \\
     3 & 4
-    \end{pssmallmatrix} $
+    \end{psmallmatrix} $
     """.strip()
     out = parser.parse(text)
     assert len(out) == 1 and isinstance(out[0], EquationNode)

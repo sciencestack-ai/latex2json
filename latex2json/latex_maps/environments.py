@@ -381,8 +381,8 @@ MATH_ENVIRONMENTS = {
     "smallmatrix": EnvironmentDefinition(
         "smallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
-    "pssmallmatrix": EnvironmentDefinition(
-        "pssmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    "psmallmatrix": EnvironmentDefinition(
+        "psmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # align environments
     "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
