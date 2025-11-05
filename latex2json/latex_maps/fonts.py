@@ -54,6 +54,7 @@ class FontFamily:
 class FontDecoration:
     NONE = FontStyle(FontStyleType.DECORATION, "none")
     UNDERLINE = FontStyle(FontStyleType.DECORATION, "underline")
+    DOUBLE_UNDERLINE = FontStyle(FontStyleType.DECORATION, "double-underline")
     OVERLINE = FontStyle(FontStyleType.DECORATION, "overline")
     LINE_THROUGH = FontStyle(FontStyleType.DECORATION, "line-through")
 
@@ -96,6 +97,7 @@ LATEX_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "underbar": FontDecoration.UNDERLINE,
     "uline": FontDecoration.UNDERLINE,
     "underline": FontDecoration.UNDERLINE,
+    "uuline": FontDecoration.DOUBLE_UNDERLINE,
     "overline": FontDecoration.OVERLINE,
     "textoverline": FontDecoration.OVERLINE,
     "textstrikeout": FontDecoration.LINE_THROUGH,
