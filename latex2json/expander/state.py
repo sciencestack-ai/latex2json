@@ -9,7 +9,7 @@ from latex2json.registers import RegisterType, TexRegisters
 from latex2json.registers.types import CounterFormat
 from latex2json.tokens.catcodes import Catcode, MATHMODE_CATCODES
 from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.registers.counters import CounterInfo, CounterManager
+from latex2json.registers.counters import SECTIONS, CounterInfo, CounterManager
 from latex2json.tokens.types import Token
 
 
@@ -152,6 +152,9 @@ class ExpanderState:
                 counter.style = CounterFormat.ALPHA_UPPER
             else:
                 counter.style = CounterFormat.ARABIC
+
+        # addiitonally, clear the macro for TOP_SECTION counter
+        self.delete_macro("the" + TOP_SECTION, is_global=True)
 
     def set_in_subequations(self, in_subequations: bool):
         if in_subequations == self.in_subequations:
