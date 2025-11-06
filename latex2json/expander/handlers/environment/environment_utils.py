@@ -424,7 +424,7 @@ def begin_environment_handler(
     env_def = expander.state.get_environment_definition(name)
 
     if not env_def:
-        log_str = f"Environment '{name}' not found -> "
+        log_str = f"Begin Environment '{name}' not found -> "
         if expander.get_macro(name):
             log_str += f"Found \\{name} instead"
             # convert to macro
@@ -439,10 +439,7 @@ def begin_environment_handler(
                     f" -> parsed [{expander.convert_tokens_to_str(bracket_tokens)}]"
                 )
         expander.logger.info(log_str)
-        begin_token = create_environment_start_token(expander, name)
-        return [begin_token]
-
-    if check_env_handler and env_def.begin_handler:
+    elif check_env_handler and env_def.begin_handler:
         # Call the registered begin_handler (which may expand begin_definition)
         return env_def.begin_handler(expander, token)
     elif not check_env_handler:
@@ -455,8 +452,8 @@ def begin_environment_handler(
         expander.logger.info(
             f"{token.value}{{{name}}} has no begin handler, returning default env"
         )
-        begin_token = create_environment_start_token(expander, name)
-        return [begin_token]
+    begin_token = create_environment_start_token(expander, name)
+    return [begin_token]
 
 
 def end_environment_handler(
@@ -483,9 +480,20 @@ def end_environment_handler(
     out_tokens = [create_environment_end_token(name)]
 
     if not env_def:
-        expander.logger.info(
-            f"{token.value}{{{name}}} not found, returning default environment end token"
-        )
+        log_str = f"End Environment '{name}' not found -> "
+        end_name = "end" + name
+        if expander.get_macro(end_name):
+            log_str += f"Found \\{end_name} instead"
+            # convert to macro
+            # Expand here since we want to expand the end_name macro, and insert before final environment end token
+            next_tokens = expander.expand_tokens(
+                [Token(TokenType.CONTROL_SEQUENCE, end_name)]
+            )
+            if next_tokens:
+                out_tokens = next_tokens + out_tokens
+        else:
+            log_str += " returning default end token"
+        expander.logger.info(log_str)
     elif env_def.end_handler:
         out_tokens = env_def.end_handler(expander, token)
     else:

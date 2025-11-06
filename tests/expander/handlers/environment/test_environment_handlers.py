@@ -3,6 +3,7 @@ from latex2json.expander.expander import Expander
 from latex2json.expander.state import ProcessingMode
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
+    EnvironmentEndToken,
     EnvironmentStartToken,
     Token,
     TokenType,
@@ -12,6 +13,7 @@ from latex2json.tokens.types import (
     END_BRACKET_TOKEN,
     EnvironmentType,
 )
+from latex2json.tokens.utils import strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 from typing import List, Optional
 
@@ -462,3 +464,35 @@ def test_subequations_and_align():
     # check that \\ inside {...} are not split prematurely
     out_str = expander.convert_tokens_to_str(out)
     assert r"\substack{ 11 \\ 22 }" in out_str
+
+
+def test_fallback_commands_if_env_not_found():
+    expander = Expander()
+
+    text = r"""
+\def\acknowledgementx{
+\trivlist \item[]
+}
+\def\endacknowledgementx{\endtrivlist}
+
+
+\begin{acknowledgementx} % fallback to acknowledgementx command
+We thank XXX
+\end{acknowledgementx} % fallback to endacknowledgementx command
+    """.strip()
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    # check begin end are still wrapped in acknowledgementx env
+    assert out[0] == EnvironmentStartToken("acknowledgementx")
+    assert out[-1] == EnvironmentEndToken("acknowledgementx")
+
+    body = out[1:-1]
+    body = strip_whitespace_tokens(body)
+    # check body is wrapped in trivlist env
+    assert body[0] == EnvironmentStartToken("trivlist", env_type=EnvironmentType.LIST)
+    assert body[-1] == EnvironmentEndToken("trivlist")
+
+    inner_body = body[1:-1]
+    inner_body = strip_whitespace_tokens(inner_body)
+    inner_body_str = expander.convert_tokens_to_str(inner_body).strip()
+    assert "We thank XXX" in inner_body_str
