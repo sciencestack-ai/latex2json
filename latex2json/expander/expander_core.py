@@ -331,16 +331,14 @@ class ExpanderCore:
             counter_info = expander.state.get_counter_info(counter_name)
             if counter_info and counter_info.parent:
                 parent_counter_name = counter_info.parent.name
-                parent_value = expander.expand_tokens(
-                    [Token(TokenType.CONTROL_SEQUENCE, "the" + parent_counter_name)]
+                parent_value = expander.get_counter_display(
+                    parent_counter_name, strict=True
                 )
                 if parent_value:
-                    parent_value_str = expander.convert_tokens_to_str(parent_value)
-                    if parent_value_str:
-                        value = parent_value_str + "." + value
-                        if counter_info.skip_parent_zeros:
-                            while value.startswith("0."):
-                                value = value[2:]
+                    value = parent_value + "." + value
+                    if counter_info.skip_parent_zeros:
+                        while value.startswith("0."):
+                            value = value[2:]
             return expander.convert_str_to_tokens(f"{value}")
 
         self.register_handler(
@@ -361,8 +359,8 @@ class ExpanderCore:
     def has_counter(self, counter_name: str) -> bool:
         return self.state.has_counter(counter_name)
 
-    def get_counter_display(self, counter_name: str) -> Optional[str]:
-        if counter_name == "equation" and self.state.in_subequations:
+    def get_counter_display(self, counter_name: str, strict=False) -> Optional[str]:
+        if not strict and counter_name == "equation" and self.state.in_subequations:
             counter_name = "subequation"
         # check for \thecountername first, since it mimics latex.
         # people sometimes redefine it e.g. \renewcommand{\theequation}{\thesection.\arabic{equation}}
@@ -373,7 +371,7 @@ class ExpanderCore:
             if out_tokens:
                 return self.convert_tokens_to_str(out_tokens)
         # check the parent to get its counter display
-        return self.state.get_counter_display(counter_name)
+        return self.state.get_counter_display(counter_name, strict=strict)
 
     # fonts
     def create_new_font(self, font_name: str, font_definition: List[Token]):
