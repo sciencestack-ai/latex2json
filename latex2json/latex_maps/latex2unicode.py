@@ -4,11 +4,14 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "pounds": 163,  # £
+    "euro": 8364,  # €
     "lq": "'",
     "rq": "'",
     "LaTeX": "LaTeX",
     "TeX": "TeX",
     "dag": 8224,  # †
+    "ddag": 8225,  # ‡
     "qedhere": 9633,  # "□"
     "qedsymbol": 9633,
     "copyright": 169,  # ©

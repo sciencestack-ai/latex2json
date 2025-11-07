@@ -87,6 +87,7 @@ def register_doc_content_handlers(parser: ParserCore):
     parser.register_env_handler("appendices", appendices_env_handler)
 
     ignore_patterns = {
+        "theabstract": 0,  # some papers define \theabstract inside \abstract
         # ignore ...running metadata
         "authorrunning": 1,
         "titlerunning": 1,
