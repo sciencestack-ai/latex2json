@@ -103,21 +103,17 @@ def patchcmd_macro_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-def pretocmd_handler(expander: ExpanderCore, token: Token):
+def preto_handler(expander: ExpanderCore, token: Token):
     r"""
-    \pretocmd{<macro>}{<prepend>}{<success>}{<failure>}
+    \preto{<macro>}{<prepend>}
     """
     expander.skip_whitespace()
     cmd_token = expander.parse_command_name_token()
     expander.skip_whitespace()
-    blocks = expander.parse_braced_blocks(3, expand=False, check_immediate_tokens=True)
-    if len(blocks) != 3:
-        expander.logger.warning("\\pretocmd expects 4 blocks")
-        return None
+    prepend = expander.parse_brace_as_tokens()
 
-    prepend = blocks[0]
-    # success = blocks[1]
-    # failure = blocks[2]
+    if not prepend:
+        return []
 
     macro = expander.get_macro(cmd_token)
     if not macro:
@@ -129,21 +125,31 @@ def pretocmd_handler(expander: ExpanderCore, token: Token):
     return []
 
 
-def apptocmd_handler(expander: ExpanderCore, token: Token):
+def pretocmd_handler(expander: ExpanderCore, token: Token):
     r"""
-    \apptocmd{<macro>}{<append>}{<success>}{<failure>}
+    \pretocmd{<macro>}{<prepend>}{<success>}{<failure>}
+    """
+    preto_handler(expander, token)
+    expander.skip_whitespace()
+    # parse additional success/failure blocks
+    blocks = expander.parse_braced_blocks(2, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 2:
+        expander.logger.warning("\\pretocmd expects 4 blocks")
+        return None
+    return []
+
+
+def appto_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \appto{<macro>}{<append>}
     """
     expander.skip_whitespace()
     cmd_token = expander.parse_command_name_token()
     expander.skip_whitespace()
-    blocks = expander.parse_braced_blocks(3, expand=False, check_immediate_tokens=True)
-    if len(blocks) != 3:
-        expander.logger.warning("\\apptocmd expects 4 blocks")
-        return None
+    append = expander.parse_brace_as_tokens()
 
-    append = blocks[0]
-    # success = blocks[1]
-    # failure = blocks[2]
+    if not append:
+        return []
 
     macro = expander.get_macro(cmd_token)
     if not macro:
@@ -155,10 +161,26 @@ def apptocmd_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def apptocmd_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \apptocmd{<macro>}{<append>}{<success>}{<failure>}
+    """
+    appto_handler(expander, token)
+    expander.skip_whitespace()
+    # parse additional success/failure blocks
+    blocks = expander.parse_braced_blocks(2, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 2:
+        expander.logger.warning("\\apptocmd expects 4 blocks")
+        return None
+    return []
+
+
 def register_etoolbox_handler(expander: ExpanderCore):
     # Patch commands
     expander.register_handler("patchcmd", patchcmd_macro_handler, is_global=True)
+    expander.register_handler("preto", preto_handler, is_global=True)
     expander.register_handler("pretocmd", pretocmd_handler, is_global=True)
+    expander.register_handler("appto", appto_handler, is_global=True)
     expander.register_handler("apptocmd", apptocmd_handler, is_global=True)
 
     # Toggle commands

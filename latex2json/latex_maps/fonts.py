@@ -95,6 +95,7 @@ LATEX_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "texthuge": FontSize.HUGE,
     # Decoration
     "underbar": FontDecoration.UNDERLINE,
+    "ul": FontDecoration.UNDERLINE,
     "uline": FontDecoration.UNDERLINE,
     "underline": FontDecoration.UNDERLINE,
     "uuline": FontDecoration.DOUBLE_UNDERLINE,
