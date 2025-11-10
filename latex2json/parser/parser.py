@@ -56,7 +56,9 @@ class Parser(ParserCore):
                 bib_items.extend(node.bib_items)
         return bib_items
 
-    def dedup_bibitem_entries(self, entries: List[BibEntryNode]) -> List[BibEntryNode]:
+    def process_bibitem_entries(
+        self, entries: List[BibEntryNode]
+    ) -> List[BibEntryNode]:
         cite_keys = set()
         non_duplicate_entries: List[BibEntryNode] = []
         for entry in entries:
@@ -66,20 +68,25 @@ class Parser(ParserCore):
             non_duplicate_entries.append(entry)
 
         # process each bibitem with parser to ensure all latex commands are expanded
+        # use standalone parser to separate the processing of the bibitem content/boundaries from the main parser
+        standalone_parser = self.create_standalone(
+            logger=self.logger, expander=self.expander
+        )
+
         bib_items = []
         for i, item in enumerate(non_duplicate_entries):
             if item.format == "bibitem":
                 if item.should_postprocess:
-                    content_str = self.convert_nodes_to_str(item.body)
+                    content_str = standalone_parser.convert_nodes_to_str(item.body)
                     # process the content_str
-                    formatted_nodes = self.process_text(content_str)
+                    formatted_nodes = standalone_parser.process_text(content_str)
                     item.set_body(formatted_nodes)
                 bib_items.append(item)
             else:
                 fields = item.fields
                 for k, v in fields.items():
-                    formatted_nodes = self.process_text(v)
-                    fields[k] = self.convert_nodes_to_str(formatted_nodes)
+                    formatted_nodes = standalone_parser.process_text(v)
+                    fields[k] = standalone_parser.convert_nodes_to_str(formatted_nodes)
                 entry = BibEntryNode.from_bibtex(
                     entry_type=item.entry_type,
                     citation_key=item.citation_key,
@@ -120,7 +127,7 @@ class Parser(ParserCore):
                 )
 
         # check and remove duplicate cite_keys
-        return self.dedup_bibitem_entries(all_entries)
+        return self.process_bibitem_entries(all_entries)
 
 
 if __name__ == "__main__":

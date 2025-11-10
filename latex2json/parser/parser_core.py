@@ -287,7 +287,7 @@ class ParserCore:
 
     def process_text(self, text: str) -> List[ASTNode]:
         tokens = self.expander.expand_text(text)
-        return self.process_tokens_standalone(tokens)
+        return self.process_tokens(tokens)
 
     def process_tokens_standalone(self, tokens: List[Token]) -> List[ASTNode]:
         parser = self.create_standalone(logger=self.logger, expander=self.expander)

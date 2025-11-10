@@ -135,9 +135,13 @@ class ParserParallel(Parser):
 
         # contain inside regular docnode
         doc_nodes = []
+        # use standalone parser to separate the processing of the document content/boundaries from the main parser
+        standalone_parser = self.create_standalone(
+            logger=self.logger, expander=self.expander
+        )
         for nodes in results[1:-1]:
             doc_nodes.extend(nodes)
-        doc_node = self.process_text(r"\begin{document}\end{document}")[0]
+        doc_node = standalone_parser.process_text(r"\begin{document}\end{document}")[0]
         doc_node.set_children(doc_nodes)
 
         out = results[0] + [doc_node] + results[-1]
