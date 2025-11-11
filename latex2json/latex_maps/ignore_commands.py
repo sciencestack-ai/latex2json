@@ -251,7 +251,10 @@ content_formatting_patterns = {
     # files
     "listfiles": 0,
     # TOCs
+    "localtableofcontents": 0,
     "tableofcontents": 0,
+    "etocsettocstyle": 2,
+    "etocsetstyle": 5,
     "@tocline": 5,
     "@tocpagenum": 1,
     "@dottedtocline": 3,
