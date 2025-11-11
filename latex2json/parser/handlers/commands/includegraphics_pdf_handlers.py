@@ -144,9 +144,80 @@ def graphicspath_handler(parser: ParserCore, token: Token):
     return []
 
 
+def includestandalone_handler(parser: ParserCore, token: Token):
+    """
+    Handle \\includestandalone[mode=...]{filename}
+
+    Modes:
+    - 'tex' (default): Parse the .tex source file and return its nodes
+    - 'image': Use the compiled image file (return IncludeGraphicsNode)
+    - 'image|tex': Use image if available, otherwise parse tex source
+    """
+    parser.skip_whitespace()
+    options_nodes = parser.parse_bracket_as_nodes()
+    options_str = parser.convert_nodes_to_str(options_nodes) if options_nodes else None
+
+    parser.skip_whitespace()
+    path = parser.parse_brace_as_nodes()
+    if path is None:
+        parser.logger.warning(f"\\includestandalone: Missing path")
+        return None
+    path_str = parser.convert_nodes_to_str(path)
+
+    # Strip quotes from path
+    path_str = path_str.strip().replace('"', "").replace("'", "")
+
+    # Parse mode option (default is 'tex')
+    mode = "tex"
+    if options_str:
+        mode_match = re.search(r"mode\s*=\s*([a-z|]+)", options_str)
+        if mode_match:
+            mode = mode_match.group(1)
+
+    # Handle different modes
+    if mode == "image":
+        # Use compiled image file
+        resolved_path = resolve_graphics_path(parser, path_str)
+        return [IncludeGraphicsNode(resolved_path)]
+
+    elif mode == "image|tex":
+        # Try image first, fall back to tex
+        resolved_path = resolve_graphics_path(parser, path_str)
+        abs_path = parser.get_cwd_path(resolved_path)
+
+        # Check if image exists (with common extensions)
+        image_exists = False
+        if os.path.isfile(abs_path):
+            image_exists = True
+        else:
+            for ext in [".pdf", ".png", ".jpg", ".jpeg"]:
+                if os.path.isfile(abs_path + ext):
+                    image_exists = True
+                    break
+
+        if image_exists:
+            return [IncludeGraphicsNode(resolved_path)]
+        # Fall through to tex mode
+
+    # mode == "tex" or fallback from "image|tex"
+    # Create standalone parser for isolated processing
+    parser2 = parser.create_standalone(logger=parser.logger)
+
+    # Add .tex extension if not present
+    if not path_str.endswith(".tex"):
+        path_str = path_str + ".tex"
+
+    # Get full filepath and parse
+    file_path = os.path.abspath(parser.get_cwd_path(path_str))
+    nodes = parser2.parse_file(file_path)
+
+    return nodes if nodes else []
+
+
 def register_includegraphics_pdf_handlers(parser: ParserCore):
     parser.register_handler("includegraphics", includegraphics_handler)
     parser.register_handler("includepdf", includepdf_handler)
+    parser.register_handler("includestandalone", includestandalone_handler)
 
     parser.register_handler("graphicspath", graphicspath_handler)
 

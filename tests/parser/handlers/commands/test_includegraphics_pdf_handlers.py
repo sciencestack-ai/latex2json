@@ -104,3 +104,23 @@ def test_graphicspath_with_includegraphics():
 
     assert graphics_node is not None
     assert graphics_node.path == "images/image1.png"
+
+
+def test_includestandalone_handler():
+    parser = Parser()
+
+    # mode=image - should return IncludeGraphicsNode
+    text = r"\includestandalone[mode=image]{subfigure}"
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    assert isinstance(out[0], IncludeGraphicsNode)
+    assert out[0].path == "subfigure"
+
+    # mode=image with spaces in option
+    text = r"\includestandalone[mode = image]{figure}"
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    assert isinstance(out[0], IncludeGraphicsNode)
+    assert out[0].path == "figure"
