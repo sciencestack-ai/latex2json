@@ -339,8 +339,7 @@ class ExpanderCore:
                     if counter_info.skip_parent_zeros:
                         while value.startswith("0."):
                             value = value[2:]
-            while value.startswith("0."):
-                value = value[2:]
+
             return expander.convert_str_to_tokens(f"{value}")
 
         self.register_handler(
@@ -368,12 +367,21 @@ class ExpanderCore:
         # people sometimes redefine it e.g. \renewcommand{\theequation}{\thesection.\arabic{equation}}
         name = "the" + counter_name
         the_macro = self.get_macro(name)
+
+        counter_display_str = None
         if the_macro:
             out_tokens = self.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, name)])
             if out_tokens:
-                return self.convert_tokens_to_str(out_tokens)
-        # check the parent to get its counter display
-        return self.state.get_counter_display(counter_name, strict=strict)
+                counter_display_str = self.convert_tokens_to_str(out_tokens)
+        if not counter_display_str:
+            counter_display_str = self.state.get_counter_display(
+                counter_name, strict=strict
+            )
+        if counter_display_str:
+            # filter out leading 0... e.g. 0.0.1 -> 1
+            while counter_display_str.startswith("0."):
+                counter_display_str = counter_display_str[2:]
+        return counter_display_str
 
     # fonts
     def create_new_font(self, font_name: str, font_definition: List[Token]):
