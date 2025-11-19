@@ -1359,6 +1359,8 @@ class ExpanderCore:
                 for c in word:
                     tok = self.consume()
                     consumed_tokens.append(tok)
+                    if c == " " and is_whitespace_token(tok):
+                        continue
                     if (
                         tok is None
                         or tok.value != c

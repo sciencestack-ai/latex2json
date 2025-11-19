@@ -69,11 +69,14 @@ def get_parsed_args_from_usage_pattern(
                 continue
 
             # did not match, return immediately
+            raise ValueError(
+                f"expected {segment.keyword_sequence} but found {expander.peek()}"
+            )
             return parsed_args
 
         else:
             # segment is param e.g. #1 #2
-            expander.skip_whitespace()
+            # expander.skip_whitespace()
             next_keyword_sequence = None
             if i + 1 < N:
                 # check if next segment is a keyword sequence
@@ -88,7 +91,7 @@ def get_parsed_args_from_usage_pattern(
                         continue
 
             # parameter matching
-            tokens = expander.parse_immediate_token()
+            tokens = expander.parse_immediate_token(skip_whitespace=True)
             if tokens is None:
                 expander.logger.warning(f"expected an argument but found nothing")
                 return parsed_args
@@ -108,7 +111,7 @@ def get_parsed_args_from_usage_pattern(
                     i += 1
                     break
                 tok = expander.consume()
-                if tok is None:
+                if tok is None or tok.type == TokenType.END_OF_LINE:
                     break
                 tokens.append(tok)
 
@@ -147,9 +150,13 @@ class DefMacro(Macro):
             out.definition = expander.expand_tokens(out.definition)
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-            parsed_args = get_parsed_args_from_usage_pattern(
-                expander, out.usage_pattern
-            )
+            try:
+                parsed_args = get_parsed_args_from_usage_pattern(
+                    expander, out.usage_pattern
+                )
+            except ValueError as e:
+                expander.logger.warning(f"\\def parse args error: {out.cmd}: {e}")
+                return []
             subbed = expander.substitute_token_args(out.definition, parsed_args)
             expander.push_tokens(subbed)
             return []
@@ -239,23 +246,20 @@ if __name__ == "__main__":
     # # expected = expander.expand("BAR HI BAR")
     # print(out)
 
-    # text = r"""
-    # \def\foo{FOO}
-    # \def\bar{\foo}
-    # \def\foo{BAR}
-    # """.strip()
+    text = r"""
+    \makeatletter
 
-    # expander.expand(text)
+\def\@parsename#1 #2\end@parsename{%
+   1) #1 2) #2
+  %\@parsename#2\end@parsename
+}
+\@parsename{22}\end@parsename
+sdssd
+
+\section{SDSD}
+    """.strip()
+
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)
     # print(expander.expand(r"\bar"))
-
-    expander.set_text(r"[[HI:{123}\cmd]")
-    usage_pattern = [
-        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
-        Token(TokenType.CHARACTER, "[", catcode=Catcode.OTHER),
-        Token(TokenType.PARAMETER, "1"),
-        Token(TokenType.CHARACTER, ":", catcode=Catcode.OTHER),
-        Token(TokenType.PARAMETER, "2"),
-        Token(TokenType.CHARACTER, "]", catcode=Catcode.OTHER),
-    ]
-    out = get_parsed_args_from_usage_pattern(expander, usage_pattern)
-    print(out)

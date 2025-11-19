@@ -541,3 +541,69 @@ def test_weird_nested_noexpand_case():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "abcdef"
+
+
+def test_parse_whitespace_eol():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+
+    \def\@parsename#1 #2\end@parsename{%
+   1) #1 2) #2
+  %\@parsename#2\end@parsename
+}
+
+% whitespace and eol matches the usage pattern
+\@parsename1
+2\end@parsename
+""".strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"1) 1 2) 2"
+
+
+def test_imperfect_args_returns_nothing():
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+
+    \def\@parsename#1 #2\end@parsename{%
+   1) #1 2) #2
+  %\@parsename#2\end@parsename
+}
+
+% like in latex, it consumes up to sdssd and returns nothing
+\@parsename{22}\end@parsename
+sdssd
+
+% thus only leaves \section{SDSD}
+\section{SDSD}
+""".strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    # only left with \section{SDSD}
+    assert out_str == r"\section{SDSD}"
+
+
+# def test_parsename_delimited_recursive():
+#     """Test delimited parameters with recursive macro calls like \\@parsename"""
+#     expander = Expander()
+
+#     text = r"""
+#     \makeatletter
+#     \def\@parsename#1 #2\end@parsename{%
+#        1) #1 2) #2 \newline
+#       \@parsename#2\end@parsename
+#     }
+#     \@parsename{AAA} {B CC}\end@parsename
+#     """.strip()
+
+#     out = expander.expand(text)
+#     out_str = expander.convert_tokens_to_str(out).strip()
+#     # Expected output from LaTeX:
+#     # 1) AAA 2) B CC
+#     # 1) B 2) CC
+#     assert "1) AAA 2) B CC" in out_str
+#     assert "1) B 2) CC" in out_str
