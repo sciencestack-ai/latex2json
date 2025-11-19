@@ -93,7 +93,7 @@ def get_parsed_args_from_usage_pattern(
             # parameter matching
             tokens = expander.parse_immediate_token(skip_whitespace=True)
             if tokens is None:
-                expander.logger.warning(f"expected an argument but found nothing")
+                raise ValueError(f"expected an argument but found nothing")
                 return parsed_args
 
             param_tok = segment.tokens[0]  # must be a parameter token
@@ -248,15 +248,11 @@ if __name__ == "__main__":
 
     text = r"""
     \makeatletter
-
-\def\@parsename#1 #2\end@parsename{%
-   1) #1 2) #2
-  %\@parsename#2\end@parsename
-}
-\@parsename{22}\end@parsename
-sdssd
-
-\section{SDSD}
+    \def\@parsename#1 #2\end@parsename{%
+       1) #1 2) #2 \newline
+      \@parsename#2\end@parsename
+    }
+    \@parsename{AAA} {B CC}\end@parsename
     """.strip()
 
     out = expander.expand(text)

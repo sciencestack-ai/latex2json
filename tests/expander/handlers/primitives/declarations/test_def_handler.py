@@ -587,23 +587,23 @@ sdssd
     assert out_str == r"\section{SDSD}"
 
 
-# def test_parsename_delimited_recursive():
-#     """Test delimited parameters with recursive macro calls like \\@parsename"""
-#     expander = Expander()
+def test_def_delimited_recursive():
+    r"""Test delimited parameters with recursive macro calls like \@parsename"""
+    expander = Expander()
 
-#     text = r"""
-#     \makeatletter
-#     \def\@parsename#1 #2\end@parsename{%
-#        1) #1 2) #2 \newline
-#       \@parsename#2\end@parsename
-#     }
-#     \@parsename{AAA} {B CC}\end@parsename
-#     """.strip()
+    text = r"""
+    \makeatletter
+    \def\@parsename#1 #2\end@parsename{%
+       1) #1 2) #2 
+      \@parsename#2\end@parsename
+    }
+    \@parsename{AAA} {B CC}\end@parsename
+    """.strip()
 
-#     out = expander.expand(text)
-#     out_str = expander.convert_tokens_to_str(out).strip()
-#     # Expected output from LaTeX:
-#     # 1) AAA 2) B CC
-#     # 1) B 2) CC
-#     assert "1) AAA 2) B CC" in out_str
-#     assert "1) B 2) CC" in out_str
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    # Expected output from LaTeX:
+    # 1) AAA 2) B CC
+    # 1) B 2) CC
+    assert out_str.startswith("1) AAA 2) B CC ")
+    assert out_str.endswith(" 1) B 2) CC")
