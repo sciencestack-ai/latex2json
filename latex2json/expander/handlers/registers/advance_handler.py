@@ -12,13 +12,11 @@ def make_advance_handler(operation: str = "add"):
         expander.skip_whitespace()
 
         parsed = expander.parse_register()
-        if not parsed:
-            expander.logger.warning(
-                f"\\advance expects a register, but found {expander.peek()}"
-            )
-            return None
-
-        register_type, register_name = parsed
+        # if not parsed:
+        #     expander.logger.warning(
+        #         f"\\advance expects a register, but found {expander.peek()}"
+        #     )
+        #     return None
 
         # Skip whitespace before "by"
         expander.skip_whitespace()
@@ -37,6 +35,11 @@ def make_advance_handler(operation: str = "add"):
         if tok is None:
             expander.logger.warning(f"\\advance [by] expects a value, but found {tok}")
             return None
+
+        if not parsed:
+            return None
+
+        register_type, register_name = parsed
 
         value = parse_register_setter(expander, register_type)
         if value is None or not isinstance(value, int | float):
