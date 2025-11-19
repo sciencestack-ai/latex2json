@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "@onelevel@sanitize": 1,
     "makesavenoteenv": 1,
     "setminted": 1,
     "CJKnospace": 0,

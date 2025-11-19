@@ -92,6 +92,11 @@ REF_COMMANDS = [
     "Cref",
     "nameref",
     "subref",
+    "equationref",
+    "sectionref",
+    "appendixref",
+    "figureref",
+    "tableref",
 ]
 
 CITE_COMMANDS = [
@@ -169,6 +174,9 @@ def noeqref_handler(parser: ParserCore, token: Token):
 def register_ref_label_handlers(parser: ParserCore):
     # labels
     parser.register_handler("label", label_handler)
+    # floatconts (from jmlr package). TECHNICALLY floatconts args are \floatconts{label}{caption...}{content...}
+    # but we simply treat it for its first arg as a label
+    parser.register_handler("floatconts", label_handler)
 
     # refs
     for command in REF_COMMANDS:

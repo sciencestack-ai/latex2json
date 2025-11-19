@@ -108,6 +108,10 @@ def register_newtheorem(expander: ExpanderCore):
     ignored_theorem_pattern_N_blocks = {
         "theoremstyle": 1,
         "newtheoremstyle": 9,
+        "theorembodyfont": 1,
+        "theoremheaderfont": 1,
+        "theorempostheader": 1,
+        "theoremsep": 1,
     }
 
     register_ignore_handlers_util(expander, ignored_theorem_pattern_N_blocks)

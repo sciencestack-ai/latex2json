@@ -58,7 +58,8 @@ def openout_handler(expander: ExpanderCore, token: Token):
 
 
 def register_exec_handlers(expander: ExpanderCore):
-    expander.register_handler("\\write", write_handler, is_global=True)
+    for command in ["write", "protected@write"]:
+        expander.register_handler(command, write_handler, is_global=True)
     expander.register_handler("\\newwrite", newwrite_handler, is_global=True)
     expander.register_handler("\\openout", openout_handler, is_global=True)
 
