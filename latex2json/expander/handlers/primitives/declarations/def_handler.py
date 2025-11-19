@@ -155,7 +155,7 @@ class DefMacro(Macro):
                     expander, out.usage_pattern
                 )
             except ValueError as e:
-                expander.logger.warning(f"\\def parse args error: {out.cmd}: {e}")
+                expander.logger.info(f"\\def parse args error: {out.cmd}: {e}")
                 return []
             subbed = expander.substitute_token_args(out.definition, parsed_args)
             expander.push_tokens(subbed)

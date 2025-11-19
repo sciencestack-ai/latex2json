@@ -339,6 +339,8 @@ class ExpanderCore:
                     if counter_info.skip_parent_zeros:
                         while value.startswith("0."):
                             value = value[2:]
+            while value.startswith("0."):
+                value = value[2:]
             return expander.convert_str_to_tokens(f"{value}")
 
         self.register_handler(
