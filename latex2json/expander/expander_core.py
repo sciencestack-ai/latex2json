@@ -360,7 +360,9 @@ class ExpanderCore:
     def has_counter(self, counter_name: str) -> bool:
         return self.state.has_counter(counter_name)
 
-    def get_counter_display(self, counter_name: str, strict=False) -> Optional[str]:
+    def get_counter_display(
+        self, counter_name: str, strict=False, filter_leading_zeros=True
+    ) -> Optional[str]:
         if not strict and counter_name == "equation" and self.state.in_subequations:
             counter_name = "subequation"
         # check for \thecountername first, since it mimics latex.
@@ -377,7 +379,7 @@ class ExpanderCore:
             counter_display_str = self.state.get_counter_display(
                 counter_name, strict=strict
             )
-        if counter_display_str:
+        if counter_display_str and filter_leading_zeros:
             # filter out leading 0... e.g. 0.0.1 -> 1
             while counter_display_str.startswith("0."):
                 counter_display_str = counter_display_str[2:]
