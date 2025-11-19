@@ -3,6 +3,7 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.registers.base_register_handlers import (
     parse_register_setter,
 )
+from latex2json.registers.types import RegisterType
 from latex2json.tokens.types import Token, TokenType
 
 
@@ -21,31 +22,26 @@ def make_advance_handler(operation: str = "add"):
         # Skip whitespace before "by"
         expander.skip_whitespace()
 
-        # Parse optional "by" keyword
-        b_token = expander.peek()
-        y_token = expander.peek(1)
-        # dont need to check for peek(2) is whitespace; latex greedily parses 'by' verbatim e.g. \advance\count1 bye 10 -> the by will be consumed
-        if b_token and b_token.value == "b" and y_token and y_token.value == "y":
-            expander.consume()
-            expander.consume()
-            # Skip whitespace after "by"
-            expander.skip_whitespace()
+        expander.parse_keyword("by")
 
         tok = expander.peek()
         if tok is None:
             expander.logger.warning(f"\\advance [by] expects a value, but found {tok}")
             return None
 
-        if not parsed:
-            return None
-
-        register_type, register_name = parsed
+        register_type = RegisterType.DIMEN  # default to dimen
+        register_name = None
+        if parsed:
+            register_type, register_name = parsed
 
         value = parse_register_setter(expander, register_type)
         if value is None or not isinstance(value, int | float):
             expander.logger.warning(
                 f"\\advance [by] expects a number, but found {value}"
             )
+            return None
+
+        if not register_name:
             return None
 
         cur_value = expander.get_register_value(register_type, register_name)
