@@ -4,6 +4,11 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "glqq": ",,",
+    "grqq": "“",
+    "glq": ",",
+    "grq": "‘",
+    "Lightning": 9889,  # ⚡
     "pounds": 163,  # £
     "euro": 8364,  # €
     "lq": "'",
