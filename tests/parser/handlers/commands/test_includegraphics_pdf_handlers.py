@@ -68,6 +68,31 @@ def test_includepdf_handler():
     assert len(out) == 1
     assert out[0] == IncludePdfNode("example.pdf", pages="1-3,5-last")
 
+    # all pages with dash, should not capture scale parameter
+    text = r"\includepdf[pages=-,scale=0.9]{example.pdf}"
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert out[0] == IncludePdfNode("example.pdf", pages="-")
+
+    # all pages with dash and comments, should not capture other parameters
+    text = r"""
+\includepdf[%
+pages=-,% include all pages
+scale=0.9,%
+addtotoc={%
+  6,% page number
+  subsection,% level
+  2,% toc depth
+  Example,%
+  sec:example% label
+},%
+pagecommand={}%
+]{example.pdf}
+""".strip()
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert out[0] == IncludePdfNode("example.pdf", pages="-")
+
 
 def test_ignore_graphicspath_handler():
     parser = Parser()

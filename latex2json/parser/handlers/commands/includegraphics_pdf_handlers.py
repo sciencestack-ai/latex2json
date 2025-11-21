@@ -91,8 +91,9 @@ def includepdf_handler(parser: ParserCore, token: Token):
     if pages_str:
         # Match pages parameter with various formats:
         # pages=1, pages={1}, pages=1-5, pages=1-last, pages={1-3,5-last}
+        # Use word boundaries to avoid capturing other parameters
         pages_match = re.search(
-            r"pages=(?:{([0-9\-,a-zA-Z]+)}|([0-9\-,a-zA-Z]+))", pages_str
+            r"pages=(?:{([0-9\-,a-z]+)}|([0-9\-,a-z]+)(?=\s|,|$))", pages_str
         )
         # Use first non-None group (either braced or unbraced match)
         pages = (
@@ -227,8 +228,18 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-    \graphicspath{{figures/}{images/}}
-    \includegraphics[width=0.45\linewidth, page=3]{figures.pdf}
+\includepdf[%
+pages=-,% einzubindende Seite aus dem PDF-Dokument
+scale=0.9,%
+addtotoc={%
+  6,% einzubindende Seite aus dem PDF-Dokument
+  subsection,% Abschnitt
+  2,% Tiefe im Inhaltsverzeichnis
+  Beispiele Kurvendiskussion,%
+  sec:Beispiel für eine Kurvendiskussion rationaler Funktionen% Label-Name
+},%
+pagecommand={}%
+]{figures/Abitur_Q11.pdf}
     """.strip()
     out = parser.parse(text)
     # print(out)
