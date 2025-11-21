@@ -721,50 +721,78 @@ class ExpanderCore:
             file_path = os.path.join(self.cwd, file_path)
         return file_path
 
-    def if_file_exists(self, file_path: str) -> bool:
-        file_path = self.get_cwd_path(file_path)
-        return os.path.exists(file_path)
-
-    def push_file(self, file_path: str, extension: str = ".tex"):
+    def resolve_file_path(
+        self, file_path: str, default_extension: str = ".tex"
+    ) -> Optional[str]:
+        # Convert Path objects to string
+        file_path = str(file_path)
         file_path = self.get_cwd_path(file_path)
         ext = os.path.splitext(file_path)[1].lower()
 
         # If no extension or invalid extension, try to resolve the file
         if not ext or ext not in self.VALID_LATEX_EXTENSIONS:
-            file_path_with_ext = file_path + extension
+            file_path_with_ext = file_path + default_extension
             if os.path.exists(file_path_with_ext):
-                file_path = file_path_with_ext
-                ext = extension.lower()
+                return file_path_with_ext
             elif os.path.exists(file_path):
                 # Original path exists (maybe it's a file without extension)
-                ext = ""
+                return file_path
             else:
-                # Neither exists, use the one with extension and let read_file handle the error
-                file_path = file_path_with_ext
-                ext = extension.lower()
+                # Neither exists
+                return None
+
+        # Has valid extension, check if exists
+        if os.path.exists(file_path):
+            return file_path
+
+        return None
+
+    def if_file_exists(self, file_path: str, default_extension: str = ".tex") -> bool:
+        return self.resolve_file_path(file_path, default_extension) is not None
+
+    def push_file(self, file_path: str, extension: str = ".tex"):
+        """Push a file onto the token stream.
+
+        Args:
+            file_path: The file path to push
+            extension: The default extension to use if file has no extension
+        """
+        resolved_path = self.resolve_file_path(file_path, extension)
+
+        if resolved_path is None:
+            # File doesn't exist, construct path with extension and let read_file handle the error
+            file_path = self.get_cwd_path(file_path)
+            ext = os.path.splitext(file_path)[1].lower()
+            resolved_path = file_path if ext else file_path + extension
+
+        ext = os.path.splitext(resolved_path)[1].lower()
 
         # Handle package or class files
         if ext == ".sty":
-            self.load_package(file_path, extension=ext)
+            self.load_package(resolved_path, extension=ext)
             return
         elif ext == ".cls":
-            self.load_class(file_path, extension=ext)
+            self.load_class(resolved_path, extension=ext)
             return
 
         # Load regular file
-        input_text = self.read_file(file_path)
+        input_text = self.read_file(resolved_path)
         if input_text is None:
             return
         # ensure to put \n at the end of the file to delimit/split, in case file ends with %
-        self.push_text(input_text + "\n", source_file=file_path)
+        self.push_text(input_text + "\n", source_file=resolved_path)
 
     def expand_file(self, file_path: str, is_package_or_class: bool = False):
-        file_path = self.get_cwd_path(file_path)
-        if not self.if_file_exists(file_path):
+        # Determine default extension based on file type
+        default_ext = ".sty" if is_package_or_class else ".tex"
+        resolved_path = self.resolve_file_path(file_path, default_ext)
+
+        if resolved_path is None:
             self.logger.warning(f"Input file {file_path} does not exist")
             return None
-        self.logger.info("EXPANDING FILE " + file_path)
-        input_text = self.read_file(file_path)
+
+        self.logger.info("EXPANDING FILE " + resolved_path)
+        input_text = self.read_file(resolved_path)
         if input_text is None:
             return None
 
@@ -775,9 +803,9 @@ class ExpanderCore:
             return None
 
         if is_package_or_class:
-            return self.expand_ltx(input_text, source_file=file_path)
+            return self.expand_ltx(input_text, source_file=resolved_path)
 
-        return self.expand_text(input_text, source_file=file_path)
+        return self.expand_text(input_text, source_file=resolved_path)
 
     def read_file(self, file_path: str) -> Optional[str]:
         if not os.path.exists(file_path):
@@ -814,7 +842,7 @@ class ExpanderCore:
 
         self.logger.debug(f"Loading package/class: {package_path}")
 
-        if read_file and self.if_file_exists(package_path):
+        if read_file and self.if_file_exists(package_path, extension):
             was_in_package_or_class = self.state.in_package_or_class
             self.state.in_package_or_class = True
             # self.push_scope()

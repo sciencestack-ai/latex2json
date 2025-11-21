@@ -2,6 +2,7 @@ from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.nodes.node_types import NodeTypes
+from latex2json.nodes.utils import strip_whitespace_nodes
 
 
 SECTION_LEVELS = {
@@ -66,7 +67,8 @@ class SectionNode(EnvironmentNode):
             level = SECTION_LEVELS.get(self.name, 1)
 
         result["type"] = NodeTypes.PARAGRAPH if is_paragraph else NodeTypes.SECTION
-        result["title"] = [child.to_json() for child in self.body]
+        body = strip_whitespace_nodes(self.body.copy())
+        result["title"] = [child.to_json() for child in body]
         result["level"] = level
         # if self.label:
         #     result["label"] = self.label

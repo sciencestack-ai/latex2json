@@ -398,22 +398,28 @@ class ParserCore:
         postprocess=False,
         resolve_cross_document_references=False,
     ) -> Optional[List[ASTNode]]:
-        dir_path = os.path.abspath(os.path.dirname(file_path))
-        filename = os.path.basename(file_path)
+        # Resolve file path with extension handling
+        resolved_path = self.expander.resolve_file_path(file_path)
+        if resolved_path is None:
+            self.logger.warning(f"File not found: {file_path}")
+            return None
+
+        dir_path = os.path.abspath(os.path.dirname(resolved_path))
+        filename = os.path.basename(resolved_path)
 
         self.filename = filename
         # set expander cwd
         self.cwd = dir_path
 
         # Read and parse the file content
-        content = self.expander.read_file(file_path)
+        content = self.expander.read_file(resolved_path)
         if content is None:
             return None
 
         # Use the main parse method for consistent behavior
         out = self.parse(
             text=content,
-            source_file=file_path,
+            source_file=resolved_path,
             postprocess=postprocess,
             resolve_cross_document_references=resolve_cross_document_references,
         )
