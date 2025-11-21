@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "AddToShipoutPicture": "*{",
     "@onelevel@sanitize": 1,
     "makesavenoteenv": 1,
     "setminted": 1,

@@ -23,3 +23,11 @@ def test_tikz():
     assert out_str == r"\begin{tikzpicture}[baseline=(A.base)]{%s}\end{tikzpicture}" % (
         tikz_cmd
     )
+
+    # test ignore
+    text = r"""
+\tikzstyle{my style} = [fill=red]
+"""
+    out = expander.expand(text.strip())
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == ""
