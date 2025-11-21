@@ -397,6 +397,7 @@ class ParserCore:
         file_path: str,
         postprocess=False,
         resolve_cross_document_references=False,
+        override_cwd=True,
     ) -> Optional[List[ASTNode]]:
         # Resolve file path with extension handling
         resolved_path = self.expander.resolve_file_path(file_path)
@@ -409,7 +410,8 @@ class ParserCore:
 
         self.filename = filename
         # set expander cwd
-        self.cwd = dir_path
+        if override_cwd:
+            self.cwd = dir_path
 
         # Read and parse the file content
         content = self.expander.read_file(resolved_path)

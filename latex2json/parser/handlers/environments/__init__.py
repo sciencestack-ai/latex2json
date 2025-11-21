@@ -12,7 +12,7 @@ from latex2json.parser.handlers.environments.subfloat_handler import (
 from latex2json.parser.handlers.environments.verbatim_lst_handlers import (
     register_verbatim_lst_handlers,
 )
-from latex2json.parser.handlers.environments.picture_handlers import (
+from latex2json.parser.handlers.environments.diagram_handlers import (
     register_picture_handlers,
 )
 from latex2json.parser.handlers.environments.algorithm_handlers import (

@@ -33,10 +33,10 @@ def subfile_handler(parser: ParserCore, token: Token):
     # create standalone parser + fresh expander (to mimic subfiles as standalone documents)
     parser2 = create_subfile_parser(parser)
 
-    # get full filepath
-    file_path = os.path.abspath(parser.get_cwd_path(file_name))
-    # parse file into nodes
-    nodes = parser2.parse_file(file_path)
+    # set cwd to main document cwd
+    parser2.cwd = parser.cwd
+    # don't override cwd - subfile may be a standalone document, but still use the same cwd as main document
+    nodes = parser2.parse_file(file_name, override_cwd=False)
 
     return nodes
 

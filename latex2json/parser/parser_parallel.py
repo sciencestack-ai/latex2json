@@ -84,11 +84,15 @@ class ParserParallel(Parser):
         file_path: str,
         postprocess=False,
         resolve_cross_document_references=False,
+        override_cwd=True,
     ) -> Optional[List[ASTNode]]:
         workers = min(self.n_processors, os.cpu_count())
         if workers <= 1:
             return super().parse_file(
-                file_path, postprocess, resolve_cross_document_references
+                file_path,
+                postprocess,
+                resolve_cross_document_references,
+                override_cwd=override_cwd,
             )
 
         # set expander cwd
