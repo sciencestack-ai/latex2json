@@ -339,9 +339,14 @@ font_awesome_patterns = {
     "faGithubAlt": 0,
 }
 
+biblatex_patterns = {
+    "DeclareNameAlias": 2,
+}
+
 IGNORE_PATTERNS = (
     separator_patterns
     | formatting_patterns
     | content_formatting_patterns
     | font_awesome_patterns
+    | biblatex_patterns
 )

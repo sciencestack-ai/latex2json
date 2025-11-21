@@ -4,7 +4,6 @@ from concurrent.futures import ProcessPoolExecutor
 from latex2json.nodes.base_nodes import ASTNode
 from latex2json.nodes.bibliography_nodes import BibEntryNode, BibliographyNode
 from latex2json.parser.parser import Parser
-from latex2json.parser.bib.bib_parser import BibParser
 from latex2json.tokens.types import CommandWithArgsToken, Token, TokenType
 from latex2json.expander.expander import Expander
 from latex2json.tokens.utils import split_tokens_by_predicate
