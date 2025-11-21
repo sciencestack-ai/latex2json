@@ -23,6 +23,21 @@ def test_verb_handler():
     assert out == expected
 
 
+def test_verb_handler_with_percent():
+    """Test that % is captured in verbatim mode, not treated as a comment."""
+    expander = Expander()
+
+    text = r"""\verb|test%inside| POST"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    expected = [
+        CommandWithArgsToken("verb", args=[expander.convert_str_to_tokens("test%inside")]),
+        *expander.convert_str_to_tokens(" POST"),
+    ]
+
+    assert out == expected
+
+
 def test_lst_inline_handler():
     expander = Expander()
 
@@ -48,6 +63,24 @@ def test_lst_inline_handler():
             "lstinline",
             args=[expander.convert_str_to_tokens("TRICKY")],
             opt_args=[expander.convert_str_to_tokens("language=python")],
+        ),
+        *expander.convert_str_to_tokens(" POST"),
+    ]
+    assert out == expected
+
+
+def test_lst_inline_handler_with_percent():
+    """Test that % is captured in lstinline verbatim mode."""
+    expander = Expander()
+
+    text = r"""\lstinline|code%with%percent| POST"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    expected = [
+        CommandWithArgsToken(
+            "lstinline",
+            args=[expander.convert_str_to_tokens("code%with%percent")],
+            opt_args=[[]],
         ),
         *expander.convert_str_to_tokens(" POST"),
     ]

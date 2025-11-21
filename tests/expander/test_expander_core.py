@@ -732,3 +732,30 @@ def test_macro_scopes():
     # now pop the scope. Make sure it is still the old \test
     expander.pop_scope()
     assert expander.expand(r"\test") == tokens_123
+
+
+def test_parse_tokens_until_verbatim_with_percent():
+    """Test that % is captured in verbatim mode during parse_tokens_until."""
+    expander = ExpanderCore()
+
+    # Test parsing verbatim content with % character
+    expander.set_text(r"test%value|rest")
+    verbatim_tokens = expander.parse_tokens_until(
+        lambda tok: tok.value == "|", consume_predicate=True, verbatim=True
+    )
+
+    # Should capture the % in verbatim mode
+    expected = expander.convert_str_to_tokens("test%value")
+    assert_token_sequence(verbatim_tokens, expected)
+
+    # Verify we consumed the | delimiter and can continue reading
+    next_tok = expander.consume()
+    assert next_tok.value == "r"
+    assert next_tok.catcode == Catcode.LETTER
+
+    # Test that normal (non-verbatim) mode still skips comments
+    expander.set_text("text % comment\nmore")
+    normal_tokens = expander.expand("text % comment\nmore")
+    normal_str = expander.convert_tokens_to_str(normal_tokens)
+    assert "comment" not in normal_str
+    assert "text" in normal_str and "more" in normal_str

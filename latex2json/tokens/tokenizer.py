@@ -23,6 +23,7 @@ class Tokenizer:
         self._catcodes = catcodes if catcodes is not None else get_default_catcodes()
         self.text = ""
         self.position = 0  # Current reading position
+        self.verbatim_mode = False  # When True, % is treated as a regular character
 
     @property
     def pos(self) -> int:
@@ -119,6 +120,12 @@ class Tokenizer:
         # --- Dispatch based on Catcode ---
 
         if current_catcode == Catcode.COMMENT:  # Comment (%)
+            # In verbatim mode, treat % as a regular character
+            if self.verbatim_mode:
+                self.position += 1
+                return Token(
+                    TokenType.CHARACTER, current_char, start_pos, catcode=current_catcode
+                )
             # Consume the comment and then CONTINUE the loop to find the next token
             self._consume_comment()
             return (

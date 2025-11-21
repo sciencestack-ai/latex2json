@@ -85,8 +85,10 @@ def is_end_env_token(
     # regular \\end{...}
     if token.value == "end":
         # parse {...} after \\end to get the env name
+        # Note: We don't use verbatim=True here because % characters
+        # between \end and { should still be treated as comments
         tokens_to_return = expander.parse_tokens_until(
-            is_begin_group_token, verbatim=True
+            is_begin_group_token, verbatim=False
         )
         # check {...} is the env name
         parsed_env_name = expander.parse_brace_name()

@@ -941,6 +941,14 @@ class ExpanderCore:
                 return out
         return None
 
+    def _set_verbatim_mode_context(self, verbatim: bool):
+        if verbatim:
+            self.stream.set_verbatim_mode(True)
+
+    def _reset_verbatim_mode_context(self, verbatim: bool):
+        if verbatim:
+            self.stream.set_verbatim_mode(False)
+
     def parse_token(self, verbatim=False) -> Optional[Token]:
         """Don't push mode here, since that should only be handled in expansion (and not parse phase)"""
         if verbatim:
@@ -962,15 +970,19 @@ class ExpanderCore:
         self, predicate: TokenPredicate, consume_predicate=False, verbatim=False
     ) -> List[Token]:
         out = []
-        while not self.eof():
-            tok = self.parse_token(verbatim=verbatim)
-            if tok is None:
-                break
-            if predicate(tok):
-                if not consume_predicate:  # if don't consume, push back
-                    self.push_tokens([tok])
-                break
-            out.append(tok)
+        self._set_verbatim_mode_context(verbatim)
+        try:
+            while not self.eof():
+                tok = self.parse_token(verbatim=verbatim)
+                if tok is None:
+                    break
+                if predicate(tok):
+                    if not consume_predicate:  # if don't consume, push back
+                        self.push_tokens([tok])
+                    break
+                out.append(tok)
+        finally:
+            self._reset_verbatim_mode_context(verbatim)
         return out
 
     # parser helper functions
@@ -1508,34 +1520,38 @@ class ExpanderCore:
                 return None
             self.consume()
 
-        out_tokens: List[Token] = []
-        brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
+        self._set_verbatim_mode_context(verbatim)
+        try:
+            out_tokens: List[Token] = []
+            brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
 
-        # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
-        while brace_depth > 0:
-            current_token = self.peek()
+            # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
+            while brace_depth > 0:
+                current_token = self.peek()
 
-            if current_token is None:
-                # Error: Reached the end of the input stream before finding a matching closing brace.
-                self.logger.info(
-                    "Expander - Unmatched braces: Reached end of stream within a definition."
-                )
-                # Depending on your error handling strategy, you might raise an exception here
-                # or return the partially collected tokens.
-                break  # Exit loop due to error
+                if current_token is None:
+                    # Error: Reached the end of the input stream before finding a matching closing brace.
+                    self.logger.info(
+                        "Expander - Unmatched braces: Reached end of stream within a definition."
+                    )
+                    # Depending on your error handling strategy, you might raise an exception here
+                    # or return the partially collected tokens.
+                    break  # Exit loop due to error
 
-            # Check token type and update brace_depth
-            if begin_predicate(current_token):
-                brace_depth += 1
-            elif end_predicate(current_token):
-                brace_depth -= 1
+                # Check token type and update brace_depth
+                if begin_predicate(current_token):
+                    brace_depth += 1
+                elif end_predicate(current_token):
+                    brace_depth -= 1
 
-            current_token = self.parse_token(verbatim=verbatim)
+                current_token = self.parse_token(verbatim=verbatim)
 
-            if brace_depth > 0:
-                out_tokens.append(current_token)
+                if brace_depth > 0:
+                    out_tokens.append(current_token)
 
-        return out_tokens
+            return out_tokens
+        finally:
+            self._reset_verbatim_mode_context(verbatim)
 
     def parse_brace_as_tokens(
         self, expand=False, verbatim=False

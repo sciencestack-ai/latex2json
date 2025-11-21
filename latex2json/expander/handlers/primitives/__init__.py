@@ -25,6 +25,9 @@ from latex2json.expander.handlers.primitives.dblarg import register_dblarg_handl
 from latex2json.expander.handlers.primitives.at_x_of_x import (
     register_at_x_of_x_handlers,
 )
+from latex2json.expander.handlers.primitives.detokenize import (
+    register_detokenize_handler,
+)
 
 
 def register_primitives(expander: ExpanderCore):
@@ -41,3 +44,4 @@ def register_primitives(expander: ExpanderCore):
     register_addtomacro_handler(expander)
     register_dblarg_handlers(expander)
     register_at_x_of_x_handlers(expander)
+    register_detokenize_handler(expander)

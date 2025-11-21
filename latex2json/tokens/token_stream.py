@@ -41,6 +41,7 @@ class StringSource(TokenSource):
         # Create new tokenizer with same settings
         self.tokenizer = Tokenizer()
         self.tokenizer.set_catcode_table(shared_tokenizer._catcodes)
+        self.tokenizer.verbatim_mode = shared_tokenizer.verbatim_mode
         self.tokenizer.set(content)
         # self.current_pos = 0
 
@@ -194,6 +195,14 @@ class TokenStream:
     def set_catcode(self, char_code: int, catcode: Catcode):
         """Change catcodes globally across all sources"""
         self.tokenizer.set_catcode(char_code, catcode)
+
+    def set_verbatim_mode(self, verbatim: bool):
+        """Set verbatim mode on the shared tokenizer and all active sources"""
+        self.tokenizer.verbatim_mode = verbatim
+        # Also update all StringSource tokenizers to keep them in sync
+        for source in self.source_stack:
+            if isinstance(source, StringSource):
+                source.tokenizer.verbatim_mode = verbatim
 
     def skip_whitespace(self):
         while not self.eof():
