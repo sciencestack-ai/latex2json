@@ -10,7 +10,7 @@ from latex2json.expander.handlers.primitives.expand_handlers import (
     register_expand_handlers,
 )
 from latex2json.expander.handlers.primitives.makeat import register_makeat
-from latex2json.expander.handlers.primitives.bgroup import register_bgroup
+from latex2json.expander.handlers.primitives.bgroup_egroup import register_bgroup
 from latex2json.expander.handlers.primitives.catcode_sfcode_handlers import (
     register_catcode_sfcode_handlers,
 )

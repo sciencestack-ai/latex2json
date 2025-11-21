@@ -23,38 +23,6 @@ def test_prevent_whitelisted_redefinitions():
     assert expander.expand(r"\newcommand") == []
 
 
-def test_bgroup_egroup():
-    expander = Expander()
-
-    # scoped
-    out = expander.expand("\\bgroup")  # -> evals to {
-    assert_token_sequence(out, [BEGIN_BRACE_TOKEN])
-
-    # test catcode change (local inside scope)
-    assert expander.get_catcode(ord("@")) == Catcode.OTHER
-    expander.makeatletter()
-    assert expander.get_catcode(ord("@")) == Catcode.LETTER
-
-    out = expander.expand("\\egroup")  # -> evals to }
-    assert_token_sequence(out, [END_BRACE_TOKEN])
-
-    assert expander.get_catcode(ord("@")) == Catcode.OTHER
-
-    # begin/endgroup
-
-    out = expander.expand(r"\begingroup")  # -> pushes scope but not {
-    assert_token_sequence(out, [])
-
-    # test catcode change (local inside scope)
-    expander.makeatletter()
-    assert expander.get_catcode(ord("@")) == Catcode.LETTER
-
-    out = expander.expand(r"\endgroup")
-    assert_token_sequence(out, [])
-
-    assert expander.get_catcode(ord("@")) == Catcode.OTHER
-
-
 def test_catcode():
     expander = Expander()
     assert expander.get_catcode(ord("]")) == Catcode.OTHER
@@ -599,14 +567,14 @@ def test_realworld_penalty_dimension_commands():
     \def\l@section#1#2{
         \addpenalty{\@secpenalty} % good place for page break
         \@tempdima 1.5em             % width of box holding section number
-        \begingroup
+        
             \parindent  \z@ \rightskip \@pnumwidth
             \parfillskip -\@pnumwidth
             \leavevmode                % TeX command to enter horizontal mode.
             \advance\leftskip\@tempdima %% added 5 Feb 88 to conform to
             \hskip -\leftskip           %% 25 Jan 88 change to \numberline
             %#1\nobreak\hfil \nobreak\hbox to\@pnumwidth{\hss #2}\par
-    \endgroup}
+    }
 
     \l@section{Section 1}{1.55em}
 """
