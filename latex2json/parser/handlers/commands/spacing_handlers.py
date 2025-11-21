@@ -74,6 +74,7 @@ def register_spacing_handlers(parser: ParserCore):
         "newline",
         "@centercr",
         "par",
+        "endgraf",
         "pagebreak",
         "filbreak",
         "eject",
