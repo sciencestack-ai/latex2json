@@ -88,7 +88,7 @@ def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     return []
 
 
-INTERNAL_NEW_IFS = ["@ignore", "@tempswa"]
+INTERNAL_NEW_IFS = ["@ignore", "@tempswa", "@endpe"]
 
 
 def register_newif(expander: ExpanderCore):

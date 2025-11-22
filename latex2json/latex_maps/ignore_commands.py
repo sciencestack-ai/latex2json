@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "@gobble": "{",  # A simple 1-argument macro that throws away its argument.
     "AddToShipoutPicture": "*{",
     "@onelevel@sanitize": 1,
     "makesavenoteenv": 1,
@@ -347,6 +348,13 @@ biblatex_patterns = {
 index_patterns = {
     "index": 1,
     "printindex": 0,
+    "makeindex": 0,
+}
+
+nomenclature_patterns = {
+    "nomenclature": "[{{",
+    "printnomenclature": "[",
+    "makenomenclature": 0,
 }
 
 IGNORE_PATTERNS = (
@@ -356,4 +364,5 @@ IGNORE_PATTERNS = (
     | font_awesome_patterns
     | biblatex_patterns
     | index_patterns
+    | nomenclature_patterns
 )
