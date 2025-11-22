@@ -96,3 +96,13 @@ def test_ignore_theorem_formatting():
     assert out == expander.expand(" POST")
 
     assert expander.expand(r"\theoremstyle{mystyle}") == []
+
+
+def test_named_theorem_patterns():
+    expander = Expander()
+
+    expander.expand(r"\theoremname{Theorem}")
+    assert expander.expand(r"\theoremname") == expander.expand("Theorem")
+
+    expander.expand(r"\proofname{Proof}")
+    assert expander.expand(r"\proofname") == expander.expand("Proof")

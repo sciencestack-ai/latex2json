@@ -1,9 +1,14 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
+from latex2json.expander.handlers.handler_utils import (
+    make_command_to_str_macro,
+    register_ignore_handlers_util,
+)
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.latex_maps.environments import EnvironmentDefinition
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType, EnvironmentType
+from latex2json.tokens.utils import convert_str_to_tokens
 
 
 def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -72,6 +77,12 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     expander.register_environment(
         env_name, env_def, is_global=True, is_user_defined=True
     )
+    # e.g. \theoremname -> Theorem
+    expander.register_macro(
+        f"{env_name}name",
+        make_command_to_str_macro(f"{env_name}name", display_name),
+        is_global=True,
+    )
 
     return []
 
@@ -104,6 +115,16 @@ def register_newtheorem(expander: ExpanderCore):
         macro,
         is_global=True,
     )
+
+    named_theorem_patterns = {
+        "theoremname": "Theorem",
+        "lemmaname": "Lemma",
+        "proofname": "Proof",
+    }
+    for command, display_name in named_theorem_patterns.items():
+        expander.register_macro(
+            command, make_command_to_str_macro(command, display_name), is_global=True
+        )
 
     ignored_theorem_pattern_N_blocks = {
         "theoremstyle": 1,

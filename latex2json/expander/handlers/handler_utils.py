@@ -1,7 +1,9 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.macro_registry import Handler
+from latex2json.expander.macro_registry import Handler, Macro
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import CommandWithArgsToken, Token, TokenType
+from latex2json.tokens.utils import convert_str_to_tokens
 
 
 def make_generic_command_handler(
@@ -125,3 +127,10 @@ def make_math_command_handler(command: str, argspec: str) -> Handler:
         return tokens
 
     return math_command_handler
+
+
+def make_command_to_str_macro(command: str, display_name: str):
+    tokens = convert_str_to_tokens(display_name, catcode=Catcode.LETTER)
+
+    macro = Macro(command, definition=tokens.copy())
+    return macro
