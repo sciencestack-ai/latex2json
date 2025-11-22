@@ -88,14 +88,8 @@ def newif_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]
     return []
 
 
-INTERNAL_NEW_IFS = ["@ignore", "@tempswa", "@endpe"]
-
-
 def register_newif(expander: ExpanderCore):
     expander.register_handler("\\newif", newif_handler, is_global=True)
-
-    for name in INTERNAL_NEW_IFS:
-        register_newif_name_macros(expander, name, is_user_defined=False)
 
 
 if __name__ == "__main__":
