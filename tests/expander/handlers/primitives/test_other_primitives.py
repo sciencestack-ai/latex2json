@@ -11,6 +11,22 @@ from tests.expander.handlers.sectioning.test_section_handlers import mock_sectio
 from tests.test_utils import assert_token_sequence
 
 
+def test_at_x_of_x_handler():
+    expander = Expander()
+
+    # if not defined, just define it
+    text = r"""
+\makeatletter
+    
+\@firstoftwo{ONE}{TWO}
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "ONE"
+
+    assert expander.expand(r"\@secondoftwo{ONE}{TWO}") == expander.expand("TWO")
+
+
 def test_dblarg_handler():
     expander = Expander()
 
@@ -29,3 +45,16 @@ def test_dblarg_handler():
     assert expander.convert_tokens_to_str(out) == "Optional: long; Mandatory: long"
     out = expander.expand(r"\foo[short]{long}")
     assert expander.convert_tokens_to_str(out) == "Optional: short; Mandatory: long"
+
+
+def test_addpunct_handler():
+    expander = Expander()
+
+    text = r"""
+\makeatletter
+    
+A\@addpunct{.}
+"""
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).replace(" ", "").replace("\n", "")
+    assert out_str == "A."

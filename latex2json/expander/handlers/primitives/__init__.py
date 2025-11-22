@@ -21,9 +21,8 @@ from latex2json.expander.handlers.primitives.exec_handlers import register_exec_
 from latex2json.expander.handlers.primitives.addtomacro import (
     register_addtomacro_handler,
 )
-from latex2json.expander.handlers.primitives.dblarg import register_dblarg_handlers
-from latex2json.expander.handlers.primitives.at_x_of_x import (
-    register_at_x_of_x_handlers,
+from latex2json.expander.handlers.primitives.other_primitives import (
+    register_other_primitives,
 )
 from latex2json.expander.handlers.primitives.detokenize import (
     register_detokenize_handler,
@@ -42,6 +41,5 @@ def register_primitives(expander: ExpanderCore):
     register_exec_handlers(expander)
     register_chardef_handlers(expander)
     register_addtomacro_handler(expander)
-    register_dblarg_handlers(expander)
-    register_at_x_of_x_handlers(expander)
+    register_other_primitives(expander)
     register_detokenize_handler(expander)

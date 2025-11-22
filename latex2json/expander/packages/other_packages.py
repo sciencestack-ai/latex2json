@@ -1,7 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
-from latex2json.latex_maps.environments import LIST_ENVIRONMENTS, EnvironmentDefinition
-from latex2json.tokens.types import EnvironmentType, Token, TokenType
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
@@ -19,11 +18,17 @@ def color_handler(expander: ExpanderCore, token: Token):
     ]
 
 
-def register_xcolor(expander: ExpanderCore):
+def register_other_packages(expander: ExpanderCore):
+    """
+    Register LaTeX package macros defined via ltx_text.
+    Consolidates simple macro definitions that don't require complex Python handlers.
+    """
+
+    # Register xcolor handler (has Python logic)
     expander.register_handler("color", color_handler, is_global=True)
 
-    # ensure \def is registered
-    ltx_text = r"""
+    # xcolor package macros
+    ltx_text_xcolor = r"""
 \def\default@color{black}          % The "normal" text color
 \let\current@color\default@color   % Initialize current color to default
 
@@ -58,19 +63,4 @@ def register_xcolor(expander: ExpanderCore):
   \set@color             % activate it
 }
 """
-    expander.expand_ltx(ltx_text)
-
-
-if __name__ == "__main__":
-    from latex2json.expander.expander import Expander
-
-    expander = Expander()
-    register_xcolor(expander)
-
-    text = r"""
-    \makeatletter
-\color@begingroup
-HAHA
-\color@endgroup
-""".strip()
-    out = expander.expand(text)
+    expander.expand_ltx(ltx_text_xcolor)
