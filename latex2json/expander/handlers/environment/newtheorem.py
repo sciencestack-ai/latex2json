@@ -54,9 +54,9 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
     if counter_name:
         expander.create_new_counter(counter_name)
 
-    display_name = env_name
+    display_name: str | List[Token] = env_name
     if tok.value == "{":
-        display_name = expander.parse_brace_name()
+        display_name = expander.parse_brace_as_tokens(expand=True)
         if display_name is None:
             expander.logger.warning(f"\\newtheorem [{env_name}] expects a display name")
             return None
@@ -69,7 +69,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
 
     env_def = EnvironmentDefinition(
         name=env_name,
-        display_name=display_name or env_name,
+        display_name=display_name,
         counter_name=counter_name,
         has_direct_command=False,
         env_type=EnvironmentType.THEOREM,

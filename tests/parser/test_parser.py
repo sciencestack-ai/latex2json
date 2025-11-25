@@ -140,6 +140,7 @@ def test_theorem_handler():
     \end{theorem}
     """.strip()
     out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
     assert len(out) == 1
     assert isinstance(out[0], TheoremNode)
     assert out[0] == TheoremNode(
@@ -148,6 +149,26 @@ def test_theorem_handler():
         body=[TextNode("Hello")],
         numbering="1",
         display_name="Theorem",
+    )
+
+    # also test with weird displayname tokens
+    text = r"""
+\newtheorem{question}[thm]{\hspace{-.5ex}}      % Exercise
+
+\begin{question}
+Exercise 1
+\end{question}
+""".strip()
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+    assert isinstance(out[0], TheoremNode)
+    assert out[0] == TheoremNode(
+        "question",
+        # title=[TextNode("Exercise")],
+        body=[TextNode("Exercise 1")],
+        numbering="1",
+        display_name="question",  # since display name is empty, use env name
     )
 
 

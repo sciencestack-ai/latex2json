@@ -15,7 +15,7 @@ def test_newtheorem():
         "definition",
         content="DEF",
         numbering="1",
-        display_name="Definition",
+        display_name=expander.convert_str_to_tokens("Definition"),
         env_type=EnvironmentType.THEOREM,
     )
 
@@ -28,7 +28,7 @@ def test_newtheorem():
         expander,
         "remark",
         content="REM",
-        display_name="Remark",
+        display_name=expander.convert_str_to_tokens("Remark"),
         env_type=EnvironmentType.THEOREM,
     )
 
@@ -56,7 +56,7 @@ def test_newtheorem():
                 "theorem",
                 content="This is a theorem",
                 numbering="2.1",
-                display_name="Theorem",
+                display_name=expander.convert_str_to_tokens("Theorem"),
                 env_type=EnvironmentType.THEOREM,
             ),
         ),
@@ -67,7 +67,7 @@ def test_newtheorem():
                 "lemma",
                 content="This is a lemma",
                 numbering="2.2",
-                display_name="Lemma",
+                display_name=expander.convert_str_to_tokens("Lemma"),
                 env_type=EnvironmentType.THEOREM,
             ),
         ),

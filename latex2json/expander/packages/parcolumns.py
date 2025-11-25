@@ -1,7 +1,6 @@
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import register_ignore_handlers_util
-from latex2json.latex_maps.environments import LIST_ENVIRONMENTS, EnvironmentDefinition
-from latex2json.tokens.types import EnvironmentType, Token
+from latex2json.tokens.types import Token
 
 
 def colchunk_handler(expander: ExpanderCore, token: Token):

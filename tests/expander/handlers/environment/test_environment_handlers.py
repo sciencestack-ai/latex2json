@@ -26,7 +26,7 @@ def mock_env_token(
     req_args: List[str] = [],
     numbering: Optional[str] = None,
     env_type: EnvironmentType = EnvironmentType.DEFAULT,
-    display_name: Optional[str] = None,
+    display_name: Optional[str | List[Token]] = None,
 ):
     """Create a mock environment token sequence with optional arguments and numbering.
 

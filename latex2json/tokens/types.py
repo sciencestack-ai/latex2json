@@ -103,7 +103,7 @@ class EnvironmentStartToken(Token):
         name: str,
         numbering: Optional[str] = None,
         env_type: EnvironmentType = EnvironmentType.DEFAULT,
-        display_name: Optional[str] = None,
+        display_name: Optional[str | List[Token]] = None,
         args: Optional[List[List[Token]]] = None,
         direct_command: Optional[str] = None,
     ):
@@ -123,7 +123,11 @@ class EnvironmentStartToken(Token):
             name=self.name,
             numbering=self.numbering,
             env_type=self.env_type,
-            display_name=self.display_name,
+            display_name=(
+                self.display_name.copy()
+                if isinstance(self.display_name, list)
+                else self.display_name
+            ),
             args=self.args.copy() if self.args else None,
         )
 

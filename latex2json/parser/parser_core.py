@@ -559,6 +559,13 @@ class ParserCore:
     ) -> EnvironmentNode | EquationNode:
         env_name = token.name
         numbering = token.numbering
+        display_name = token.display_name
+        if isinstance(display_name, list):
+            # convert tokens to str
+            processed_display_name = self.process_tokens(display_name)
+            display_name = self.convert_nodes_to_str(processed_display_name)
+            if not display_name.strip():
+                display_name = env_name
         if numbering:
             # handle cases where numbering is a control sequence e.g. \textbf{P} for e.g. equation \tag{\textbf{P}}
             numbering = self.sanitize_string(numbering)
@@ -581,11 +588,11 @@ class ParserCore:
                 env_name,
                 title=title_nodes,
                 numbering=numbering,
-                display_name=token.display_name,
+                display_name=display_name,
             )
         else:
             env_node = EnvironmentNode(
-                env_name, numbering=numbering, display_name=token.display_name
+                env_name, numbering=numbering, display_name=display_name
             )
         return env_node
 

@@ -21,12 +21,11 @@ class EnvironmentDefinition:
     name: str
     begin_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
     end_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
-    display_name: Optional[str] = None
 
     def __init__(
         self,
         name: str,
-        display_name: Optional[str] = None,
+        display_name: Optional[str | List[Token]] = None,
         begin_definition: List[Token] = [],
         end_definition: List[Token] = [],
         num_args: int = 0,
@@ -65,6 +64,11 @@ class EnvironmentDefinition:
     def copy(self) -> "EnvironmentDefinition":
         new_env = EnvironmentDefinition(
             name=self.name,
+            display_name=(
+                self.display_name.copy()
+                if isinstance(self.display_name, list)
+                else self.display_name
+            ),
             begin_definition=self.begin_definition.copy(),
             end_definition=self.end_definition.copy(),
             num_args=self.num_args,
