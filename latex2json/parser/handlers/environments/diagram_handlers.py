@@ -3,8 +3,13 @@ from latex2json.latex_maps.environments import PICTURE_ENVIRONMENTS
 from latex2json.nodes import DiagramNode
 from latex2json.nodes.graphics_pdf_diagram_nodes import IncludeGraphicsNode
 from latex2json.parser.parser_core import ParserCore
+from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
-from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
+from latex2json.tokens.utils import (
+    is_begin_group_token,
+    is_end_group_token,
+    convert_str_to_tokens,
+)
 
 
 def make_picture_handler(env_name: str):
@@ -42,7 +47,7 @@ def overpic_handler(parser: ParserCore, token: Token):
 
 def make_diagram_handler(num_braces: int):
     def diagram_command_handler(parser: ParserCore, token: Token):
-        r"""\xymatrix{...} or \chemfig{...}"""
+        r"""\chemfig{...} or \polylongdiv{...}{...}"""
         parser.skip_whitespace()
         # parse all as verbatim tokens, then convert to str
         all_tokens = [token]
@@ -68,6 +73,73 @@ def make_diagram_handler(num_braces: int):
     return diagram_command_handler
 
 
+def xymatrix_handler(parser: ParserCore, token: Token):
+    r"""\xymatrix with optional @ modifiers
+
+    Handles xy-pic @ syntax for spacing and arrow options:
+    - \xymatrix@C-2ex{...}  (reduce column spacing)
+    - \xymatrix@R+1em{...}  (increase row spacing)
+    - \xymatrix@C=1pc@R=2pc{...}  (set both)
+
+    Also handles \xymatrix@ as a single token (when \makeatletter is active)
+    """
+    parser.skip_whitespace()
+
+    # Check if token contains @ (e.g., "xymatrix@C" in makeatletter context)
+    # If so, normalize the token and push "@" + rest back
+    has_at = "@" in token.value
+    if has_at:
+        post_at_str = token.value.split("@", 1)[1]
+        # Normalize token to just "xymatrix"
+        token.value = "xymatrix"
+        # Push "@" back first
+        at_token_to_push = Token(TokenType.CHARACTER, "@", catcode=Catcode.OTHER)
+        # Then the rest of the string
+        parser.push_tokens([at_token_to_push] + convert_str_to_tokens(post_at_str))
+
+    all_tokens = [token]
+
+    # Consume @ options like @C-2ex, @R+1em, etc.
+    while parser.peek() and parser.peek().value == "@":
+        # Consume the @ token
+        at_token = parser.consume()
+        all_tokens.append(at_token)
+
+        # Consume option characters (letters, digits, +, -, =, etc.) until we hit whitespace or { or another @
+        while parser.peek() and parser.peek().value not in [
+            " ",
+            "\n",
+            "\t",
+            "{",
+            "@",
+            None,
+        ]:
+            opt_token = parser.consume()
+            all_tokens.append(opt_token)
+
+        parser.skip_whitespace()
+
+    # Now parse the main brace group
+    tokens = parser.parse_begin_end_as_tokens(
+        is_begin_group_token,
+        is_end_group_token,
+        check_first_token=True,
+        include_begin_end_tokens=True,
+    )
+    if tokens:
+        all_tokens.extend(tokens)
+
+    if len(all_tokens) == 1:  # only the command token, no braces parsed
+        return []
+
+    diagram_str = parser.convert_tokens_to_str(all_tokens)
+    # Normalize env_name to "xymatrix" (strip trailing @ if present)
+    env_name = "xymatrix"
+    diagram_node = DiagramNode(env_name, diagram_str)
+    diagram_node.source_file = token.source_file
+    return [diagram_node]
+
+
 def register_picture_handlers(parser: ParserCore):
     for env in PICTURE_ENVIRONMENTS:
         if env == "overpic":
@@ -75,9 +147,18 @@ def register_picture_handlers(parser: ParserCore):
         else:
             parser.register_env_handler(env, make_picture_handler(env))
 
-    parser.register_handler("xymatrix", make_diagram_handler(1))
     parser.register_handler("chemfig", make_diagram_handler(1))
     parser.register_handler("polylongdiv", make_diagram_handler(2))
+
+    # xymatrix commands
+    parser.register_handler("xymatrix", xymatrix_handler)
+
+    # Register pattern handler for xymatrix with @ options (e.g., \xymatrix@C, \xymatrix@R+2em)
+    # this could happen due to \makeatletter, where the control sequence e.g. \xymatrix@C is treated as a single token
+    def is_xymatrix_with_at(cmd_name: str) -> bool:
+        return cmd_name.startswith("xymatrix@")
+
+    parser.register_pattern_handler(is_xymatrix_with_at, xymatrix_handler)
 
 
 if __name__ == "__main__":
