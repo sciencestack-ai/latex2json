@@ -1,5 +1,4 @@
 import pytest
-from latex2json.nodes import GroupNode, CaptionNode
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.environment_nodes import SubTableNode, TableNode
 from latex2json.parser.parser import Parser

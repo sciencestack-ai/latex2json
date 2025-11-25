@@ -111,9 +111,11 @@ class ExpanderState:
             "thanks": [],
         }
 
-        self.protected_frontmatter_commands: set[str] = {
-            "\\@" + key for key in self.frontmatter.keys()
-        }
+        self.protected_frontmatter_commands: set[str] = set()
+
+        for key in self.frontmatter.keys():
+            self.protected_frontmatter_commands.add("\\" + key)
+            self.protected_frontmatter_commands.add("\\@" + key)
 
         # appendix
         self.in_appendix = False

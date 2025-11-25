@@ -451,7 +451,7 @@ class ExpanderCore:
         # Check if this macro needs protection (frontmatter commands)
         if is_user_defined:
             if tok_str in self.state.protected_frontmatter_commands:
-                key = tok_str.lstrip("\\@")
+                key = tok_str.lstrip("\\").lstrip("@")
                 if key in self.state.frontmatter:
                     self.state.frontmatter[key] = macro.definition.copy()
                     return

@@ -254,6 +254,7 @@ content_formatting_patterns = {
     # files
     "listfiles": 0,
     # TOCs
+    "@starttoc": 1,
     "localtableofcontents": 0,
     "tableofcontents": 0,
     "etocsettocstyle": 2,

@@ -54,8 +54,14 @@ WHITELISTED_COMMANDS = [
     "ref",
     "appendix",
     "appendices",
+    # newlines
     "\\",
     "\\\\",
+    # equation
+    "(",  # \(
+    ")",  # \)
+    "[",  # \[
+    "]",  # \]
     # text font
     "textbf",
     "textit",
