@@ -136,12 +136,18 @@ WHITELISTED_COMMANDS = [
 WHITELISTED_ENVIRONMENTS = []
 for env in (
     list(DOCUMENT_ENVIRONMENTS.keys())
-    + list(MATH_ENVIRONMENTS.keys())
     + list(TABLE_ENVIRONMENTS.keys())
     + list(FIGURE_ENVIRONMENTS.keys())
 ):
     WHITELISTED_ENVIRONMENTS.append(env)
-    WHITELISTED_ENVIRONMENTS.append(env + "*")
+
+for env, env_def in MATH_ENVIRONMENTS.items():
+    WHITELISTED_ENVIRONMENTS.append(env)
+    if env_def.begin_command:
+        # e.g. prevent \equation and \endequation from being overridden
+        WHITELISTED_COMMANDS.append(env_def.begin_command)
+    if env_def.end_command:
+        WHITELISTED_COMMANDS.append(env_def.end_command)
 
 
 WHITELISTED_PACKAGES = ["subfiles", "fancyhdr", "natbib", "algorithmic", "IEEEtran"]
