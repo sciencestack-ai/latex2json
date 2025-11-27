@@ -13,7 +13,6 @@ class NodeTypes(StrEnum):
     DOCUMENT = "document"
     TITLE = "title"
     SECTION = "section"
-    PARAGRAPH = "paragraph"
     ABSTRACT = "abstract"
     APPENDIX = "appendix"
 
