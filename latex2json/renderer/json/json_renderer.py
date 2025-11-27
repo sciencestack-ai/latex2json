@@ -203,7 +203,7 @@ class JSONRenderer:
         organized: List[Dict],
         parent_stack: Optional[List[Dict]] = None,
     ):
-        """Helper function to manage stack operations for sections and paragraphs"""
+        """Helper function to manage stack operations for sections"""
         # Clear lower stacks if needed
         while stack and stack[-1]["level"] >= token["level"]:
             stack.pop()
@@ -224,12 +224,9 @@ class JSONRenderer:
     ):
         organized = []
         section_stack = []
-        paragraph_stack = []
         root = organized  # Default root for content
 
         def get_current_target():
-            if paragraph_stack:
-                return paragraph_stack[-1]["content"]
             if section_stack:
                 return section_stack[-1]["content"]
             return root
@@ -256,7 +253,6 @@ class JSONRenderer:
             # Handle appendix declaration
             if token["type"] == NodeTypes.APPENDIX:
                 section_stack.clear()
-                paragraph_stack.clear()
 
                 if not token.get("content"):
                     token["content"] = []
@@ -283,14 +279,9 @@ class JSONRenderer:
             # Handle special token types
             if token["type"] == NodeTypes.BIBLIOGRAPHY:
                 section_stack.clear()
-                paragraph_stack.clear()
                 organized.append(token)
             elif token["type"] == NodeTypes.SECTION:
-                paragraph_stack.clear()
-
                 self._manage_stack(token, section_stack, root)
-            elif token["type"] == NodeTypes.PARAGRAPH:
-                self._manage_stack(token, paragraph_stack, root, section_stack)
             else:
                 get_current_target().append(token)
 
@@ -575,10 +566,10 @@ Appendix 2 content
 """
 
     text = r"""
-\begin{align}
-P &= 33 \\ 
-  &= 44
-\end{align}
+\section{ASDSADS}
+sasadas
+\paragraph{HAHASHD}
+adasdas
 """.strip()
 
     json = renderer.parse(text)

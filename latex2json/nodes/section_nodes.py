@@ -11,11 +11,8 @@ SECTION_LEVELS = {
     "section": 1,
     "subsection": 2,
     "subsubsection": 3,
-}
-
-PARAGRAPH_LEVELS = {
-    "paragraph": 1,
-    "subparagraph": 2,
+    "paragraph": 4,
+    "subparagraph": 5,
 }
 
 
@@ -59,14 +56,9 @@ class SectionNode(EnvironmentNode):
 
     def to_json(self):
         result = ASTNode.to_json(self)
-        is_paragraph = "paragraph" in self.name
-        level = 0
-        if is_paragraph:
-            level = PARAGRAPH_LEVELS.get(self.name, 1)
-        else:
-            level = SECTION_LEVELS.get(self.name, 1)
+        level = SECTION_LEVELS.get(self.name, 1)
 
-        result["type"] = NodeTypes.PARAGRAPH if is_paragraph else NodeTypes.SECTION
+        result["type"] = NodeTypes.SECTION
         body = strip_whitespace_nodes(self.body.copy())
         result["title"] = [child.to_json() for child in body]
         result["level"] = level
