@@ -56,7 +56,7 @@ def newtheorem_handler(expander: ExpanderCore, token: Token) -> Optional[List[To
 
     display_name: str | List[Token] = env_name
     if tok.value == "{":
-        display_name = expander.parse_brace_as_tokens(expand=True)
+        display_name = expander.parse_brace_as_tokens(expand=False)
         if display_name is None:
             expander.logger.warning(f"\\newtheorem [{env_name}] expects a display name")
             return None
@@ -146,16 +146,15 @@ if __name__ == "__main__":
 
     # Basic theorem
     text = r"""
-\newtheorem{theorem}{Theorem}[section]
-\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem*{namedtheorem}{\theoremname}
+\newcommand{\theoremname}{testing}
 
-\section{Section 1}
-\begin{theorem}This is a theorem\end{theorem} % 1.1
-\begin{theorem}This is a theorem\end{theorem} % 1.2
-\begin{lemma}This is a lemma\end{lemma} % 1.3
+\newenvironment{named}[1]{ \renewcommand{\theoremname}{#1} \begin{namedtheorem}} {\end{namedtheorem}}
+\begin{named}{Parseval's Theorem}
+\end{named}
 """
     out = expander.expand(text)
-    print(expander.expand(r"\value{theorem}"))  # 1.3
 
     # # Theorem with section numbering
     # expander.expand(r"\newtheorem{lemma}[section]{Lemma}")

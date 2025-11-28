@@ -1,7 +1,8 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.tokens.types import EnvironmentType
+from latex2json.tokens.types import EnvironmentStartToken, EnvironmentType
+from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 from tests.expander.handlers.environment.test_environment_handlers import mock_env_token
 
 
@@ -106,3 +107,29 @@ def test_named_theorem_patterns():
 
     expander.expand(r"\proofname{Proof}")
     assert expander.expand(r"\proofname") == expander.expand("Proof")
+
+
+def test_newtheorem_displayname():
+    expander = Expander()
+
+    text = r"""
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem*{namedtheorem}{\theoremname}
+\newcommand{\theoremname}{testing}
+
+\newenvironment{named}[1]{ \renewcommand{\theoremname}{#1} \begin{namedtheorem}} {\end{namedtheorem}}
+\begin{named}{Parseval's Theorem}
+\end{named}
+""".strip()
+
+    out = expander.expand(text)
+    out = [t for t in out if not is_whitespace_token(t)]
+    assert len(out) > 1
+    # test that \theoremname displayname is expanded at time of env creation
+    expected_display_name = expander.convert_str_to_tokens("Parseval's Theorem")
+    assert out[0] == EnvironmentStartToken("named")
+    assert out[1] == EnvironmentStartToken(
+        "namedtheorem",
+        display_name=expected_display_name,
+        env_type=EnvironmentType.THEOREM,
+    )

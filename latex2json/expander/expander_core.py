@@ -1767,13 +1767,13 @@ class ExpanderCore:
         if env_def.has_direct_command and env_name.isalpha():
             self.register_macro(
                 env_name,
-                Macro(env_name, begin_handler, env_def.begin_definition),
+                Macro(env_name, env_def.begin_handler, env_def.begin_definition),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
             self.register_macro(
                 "end" + env_name,
-                Macro("end" + env_name, end_handler, env_def.end_definition),
+                Macro("end" + env_name, env_def.end_handler, env_def.end_definition),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
@@ -1781,7 +1781,11 @@ class ExpanderCore:
         if env_def.begin_command:
             self.register_macro(
                 env_def.begin_command,
-                Macro(env_def.begin_command, begin_handler, env_def.begin_definition),
+                Macro(
+                    env_def.begin_command,
+                    env_def.begin_handler,
+                    env_def.begin_definition,
+                ),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
@@ -1789,7 +1793,7 @@ class ExpanderCore:
         if env_def.end_command:
             self.register_macro(
                 env_def.end_command,
-                Macro(env_def.end_command, end_handler, env_def.end_definition),
+                Macro(env_def.end_command, env_def.end_handler, env_def.end_definition),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )

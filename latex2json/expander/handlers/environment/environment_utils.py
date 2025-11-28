@@ -125,6 +125,8 @@ def create_environment_start_token(
 
     if env_def:
         display_name = env_def.display_name
+        if isinstance(display_name, list):
+            display_name = expander.expand_tokens(display_name)
         env_type = env_def.env_type
         counter_name = env_def.counter_name
 
@@ -230,10 +232,14 @@ def process_environment_begin(
     default_skip = 1 if env_def.default_arg is not None else 0
     token_args = (args or [])[default_skip:]
 
+    display_name = env_def.display_name
+    if isinstance(display_name, list):
+        display_name = expander.expand_tokens(display_name)
+
     # Create environment start token
     begin_token = EnvironmentStartToken(
         out_env_name,
-        display_name=env_def.display_name,
+        display_name=display_name,
         numbering=numbering,
         env_type=env_def.env_type,
         args=token_args,
