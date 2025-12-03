@@ -149,9 +149,6 @@ class ExpanderState:
             else:
                 counter.style = CounterFormat.ARABIC
 
-        # addiitonally, clear the macro for TOP_SECTION counter
-        self.delete_macro("the" + TOP_SECTION, is_global=True)
-
     def set_in_subequations(self, in_subequations: bool):
         if in_subequations == self.in_subequations:
             return

@@ -58,6 +58,7 @@ BUILTIN_SKIPS = [
     "doublerulesep",  # Space between double rules
     "aboverulesep",
     "belowrulesep",
+    "extracolsep",
     # Float separations
     "floatsep",  # Space between floats
     "textfloatsep",  # Space between floats and text
