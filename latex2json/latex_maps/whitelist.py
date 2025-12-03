@@ -30,6 +30,8 @@ STRICTLY_BLOCKED_COMMANDS = [
     # Font commands - derived from fonts.py
     *LATEX_TO_FONT_STYLE.keys(),
     *LEGACY_TO_FONT_STYLE.keys(),
+    "textcolor",
+    "color",
     # Additional font-related commands not in fonts.py
     "text",
     "mathversion",

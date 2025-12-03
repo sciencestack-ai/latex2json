@@ -164,6 +164,19 @@ class Expander(ExpanderCore):
                         CommandWithArgsToken("maketitle", args=[output])
                     ]
 
+                else:
+                    # Generic protected commands - return semantic token with expanded args
+                    # e.g. \def\xxx{XXX} \abstract{\xxx} -> CommandWithArgsToken("abstract", args=["XXX"])
+
+                    def make_return_callback(name):
+                        def callback(exp: ExpanderCore, args: List[Token], output):
+                            expanded_args = [exp.expand_tokens(arg) for arg in args]
+                            return [CommandWithArgsToken(name, args=expanded_args)]
+
+                        return callback
+
+                    return_callback = make_return_callback(cmd_name)
+
                 # Create wrapped handler
                 macro.handler = create_wrapped_protected_handler(
                     cmd_name, macro, storage_callback, return_callback

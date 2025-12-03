@@ -161,6 +161,7 @@ LEGACY_TO_FONT_STYLE: Dict[str, FontStyle] = {
     "Huge": FontSize.HUGE,
     "smaller": FontSize.SMALL,
     "larger": FontSize.LARGE,
+    # "color": FontColor.COLOR,
 }
 
 

@@ -7,21 +7,22 @@ being wrapped for downstream processing.
 """
 
 from typing import Callable, List, Optional, TYPE_CHECKING
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.tokens.types import Token
 
 if TYPE_CHECKING:
     from latex2json.expander.expander_core import ExpanderCore
 
 
-Handler = Callable[["ExpanderCore", Token], Optional[List[Token]]]
+StorageCallback = Callable[["ExpanderCore", List[List[Token]]], None]
+ReturnCallback = Callable[["ExpanderCore", List[List[Token]], List[Token]], List[Token]]
 
 
 def create_wrapped_protected_handler(
     command_name: str,
     macro: Macro,
-    storage_callback: Optional[Callable[["ExpanderCore", List[List[Token]]], None]] = None,
-    return_callback: Optional[Callable[["ExpanderCore", List[List[Token]], List[Token]], List[Token]]] = None,
+    storage_callback: Optional[StorageCallback] = None,
+    return_callback: Optional[ReturnCallback] = None,
 ) -> Handler:
     """
     Create a wrapped handler for user-redefined protected commands.
@@ -49,16 +50,14 @@ def create_wrapped_protected_handler(
             return [CommandWithArgsToken("title", args=[output])]
         handler = create_wrapped_protected_handler("@title", macro, return_callback=return_semantic)
     """
-    num_args = getattr(macro, 'num_args', 0)
-    default_arg = getattr(macro, 'default_arg', None)
+    num_args = getattr(macro, "num_args", 0)
+    default_arg = getattr(macro, "default_arg", None)
     original_definition = macro.definition.copy()
 
     def handler(exp: "ExpanderCore", tok: Token) -> List[Token]:
         # Parse args according to user's signature
         args = exp.get_parsed_args(
-            num_args=num_args,
-            default_arg=default_arg,
-            command_name=tok.value
+            num_args=num_args, default_arg=default_arg, command_name=tok.value
         )
         if args is None:
             args = []
