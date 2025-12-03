@@ -81,3 +81,48 @@ def test_etoolbox_toggles_undefined():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "FALSE"
+
+
+def test_etoolbox_ifstrequal_basic():
+    expander = Expander()
+
+    text = r"""
+    \ifstrequal{5}{5}{True!}{False!}
+    \ifstrequal{5}{6}{True!}{False!}
+    \ifstrequal{hello}{hello}{Match}{No match}
+    \ifstrequal{hello}{world}{Match}{No match}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["True!", "False!", "Match", "No match"]
+
+    text = r"""
+    \ifstrequal{foo bar}{foo bar}{Equal}{Not equal}
+    \ifstrequal{foo bar}{foobar}{Equal}{Not equal}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["Equal", "Not equal"]
+
+    text = r"""
+    \ifstrequal{}{}{Both empty}{Not equal}
+    \ifstrequal{}{text}{Both empty}{Not equal}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["Both empty", "Not equal"]
+
+    text = r"""
+    \def\foo{test}
+    \def\bar{test}
+    \def\baz{other}
+    \ifstrequal{\foo}{\bar}{Macros equal}{Macros not equal}
+    \ifstrequal{\foo}{\baz}{Macros equal}{Macros not equal}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["Macros equal", "Macros not equal"]

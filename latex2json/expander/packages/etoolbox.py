@@ -175,6 +175,39 @@ def apptocmd_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def ifstrequal_handler(expander: ExpanderCore, token: Token):
+    r"""
+    Handler for \ifstrequal{string1}{string2}{true-branch}{false-branch}
+    Compares two strings and executes the appropriate branch.
+    """
+    expander.skip_whitespace()
+
+    # Parse the four arguments
+    blocks = expander.parse_braced_blocks(4, expand=True, check_immediate_tokens=True)
+    if len(blocks) != 4:
+        expander.logger.warning("\\ifstrequal expects 4 blocks")
+        return []
+
+    str1_tokens = blocks[0]
+    str2_tokens = blocks[1]
+    true_branch = blocks[2]
+    false_branch = blocks[3]
+
+    # Convert tokens to strings for comparison
+    str1 = expander.convert_tokens_to_str(str1_tokens).strip()
+    str2 = expander.convert_tokens_to_str(str2_tokens).strip()
+
+    # Choose the appropriate branch
+    if str1 == str2:
+        if true_branch:
+            expander.push_tokens(true_branch)
+    else:
+        if false_branch:
+            expander.push_tokens(false_branch)
+
+    return []
+
+
 def register_etoolbox_handler(expander: ExpanderCore):
     # Patch commands
     expander.register_handler("patchcmd", patchcmd_macro_handler, is_global=True)
@@ -193,6 +226,9 @@ def register_etoolbox_handler(expander: ExpanderCore):
         "togglefalse", toggle_manager.set_toggle_false, is_global=True
     )
     expander.register_handler("iftoggle", toggle_manager.if_toggle, is_global=True)
+
+    # String comparison
+    expander.register_handler("ifstrequal", ifstrequal_handler, is_global=True)
 
 
 if __name__ == "__main__":

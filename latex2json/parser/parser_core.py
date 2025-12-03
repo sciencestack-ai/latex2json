@@ -673,7 +673,7 @@ class ParserCore:
             # handle cases where numbering is a control sequence e.g. \textbf{P} for e.g. equation \tag{\textbf{P}}
             numbering = self.sanitize_string(numbering)
         if token.name in SECTIONS:
-            args = token.args[0]
+            args = token.args[0] if token.args else []
             opt_args = token.opt_args[0] if token.opt_args else []
 
             # remove cur env for this section

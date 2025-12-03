@@ -12,6 +12,9 @@ from latex2json.latex_maps.sections import SECTIONS
 
 # Commands that should NEVER be redefined (strict blocking)
 STRICTLY_BLOCKED_COMMANDS = [
+    # Sections
+    *SECTIONS,
+    "bibliography",
     # Core LaTeX primitives
     "noexpand",
     "expandafter",
@@ -53,11 +56,8 @@ STRICTLY_BLOCKED_COMMANDS = [
 
 # Commands that CAN be redefined but with wrapping to preserve semantics
 PROTECTED_COMMANDS = [
-    # Sections
-    *SECTIONS,
     # Document structure
     "abstract",
-    "bibliography",
     "appendix",
     "appendices",
     # Misc
