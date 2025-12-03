@@ -161,7 +161,16 @@ class DefMacro(Macro):
             expander.push_tokens(subbed)
             return []
 
-        macro = Macro(out.cmd, handler, out.definition)
+        # Count number of parameters in usage pattern
+        num_args = len([t for t in out.usage_pattern if t.type == TokenType.PARAMETER])
+
+        macro = Macro(
+            out.cmd,
+            handler,
+            out.definition,
+            num_args=num_args,
+            default_arg=None,  # \def doesn't support default args like \newcommand
+        )
         expander.register_macro(
             out.cmd, macro, is_global=self.is_global, is_user_defined=True
         )

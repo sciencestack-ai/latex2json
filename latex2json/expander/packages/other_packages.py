@@ -4,20 +4,6 @@ from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
-def color_handler(expander: ExpanderCore, token: Token):
-    expander.skip_whitespace()
-    # invoke internal @color command
-    color_tokens = expander.parse_brace_as_tokens(expand=True)
-    if not color_tokens:
-        return []
-    expander.expand_tokens([Token(TokenType.CONTROL_SEQUENCE, "@color"), *color_tokens])
-    # return as raw \color for downstream handling e.g. parser
-    return [
-        Token(TokenType.CONTROL_SEQUENCE, "color"),
-        *wrap_tokens_in_braces(color_tokens),
-    ]
-
-
 def register_other_packages(expander: ExpanderCore):
     """
     Register LaTeX package macros defined via ltx_text.
@@ -25,7 +11,6 @@ def register_other_packages(expander: ExpanderCore):
     """
 
     # Register xcolor handler (has Python logic)
-    expander.register_handler("color", color_handler, is_global=True)
 
     # xcolor package macros
     ltx_text_xcolor = r"""

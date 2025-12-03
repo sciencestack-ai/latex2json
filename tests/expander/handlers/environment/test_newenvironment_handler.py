@@ -150,7 +150,8 @@ def test_newenvironment_with_counter():
 
 
 def test_newenvironment_with_nested_begin_block():
-    expander = Expander(prevent_whitelisted_redefinitions=False)
+    # Allow abstract environment to be redefined for this test
+    expander = Expander(whitelisted_environments=[])
 
     text = r"""
 \renewenvironment{abstract}%

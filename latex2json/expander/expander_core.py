@@ -448,27 +448,6 @@ class ExpanderCore:
         tok_str, is_active_char = normalized
         macro.is_user_defined = is_user_defined
 
-        # Check if this macro needs protection (frontmatter commands)
-        if is_user_defined:
-            if tok_str in self.state.protected_frontmatter_commands:
-                key = tok_str.lstrip("\\").lstrip("@")
-                if key in self.state.frontmatter:
-                    self.state.frontmatter[key] = macro.definition.copy()
-                    return
-
-            # Wrap @maketitle redefinitions to return CommandWithArgsToken
-            elif tok_str == "\\@maketitle":
-                original_definition = macro.definition.copy()
-
-                def wrapped_handler(exp: "ExpanderCore", tok: Token) -> List[Token]:
-                    # Expand the user's definition tokens
-                    expanded = exp.expand_tokens(original_definition)
-                    # Wrap in CommandWithArgsToken for semantic processing
-
-                    return [CommandWithArgsToken("maketitle", args=[expanded])]
-
-                macro.handler = wrapped_handler
-
         self.state.set_macro(
             tok_str, macro, is_global=is_global, is_active_char=is_active_char
         )

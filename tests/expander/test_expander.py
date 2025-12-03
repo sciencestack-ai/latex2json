@@ -15,12 +15,25 @@ from tests.test_utils import assert_token_sequence
 
 
 def test_prevent_whitelisted_redefinitions():
-    expander = Expander(prevent_whitelisted_redefinitions=True)
-    assert "normalsize" in expander.white_listed_commands
+    expander = Expander()
+    # Test strictly blocked commands (should never be redefined)
+    assert "newcommand" in expander.strictly_blocked_commands
+    assert "def" in expander.strictly_blocked_commands
 
-    # prevent redefinition of white-listed commands e.g. \newcommand
+    # Test protected commands (can be redefined with wrapping)
+    assert "abstract" in expander.protected_commands
+
+    # Prevent redefinition of strictly blocked commands e.g. \newcommand
     expander.expand(r"\renewcommand\newcommand{NEWCOMMAND}")
     assert expander.expand(r"\newcommand") == []
+
+    # Test custom lists
+    expander2 = Expander(strictly_blocked_commands=["foo"], protected_commands=["bar"])
+    assert "foo" in expander2.strictly_blocked_commands
+    assert "newcommand" not in expander2.strictly_blocked_commands
+    assert "bar" in expander2.protected_commands
+    # Frontmatter still auto-added
+    assert "title" in expander2.protected_commands
 
 
 def test_catcode():

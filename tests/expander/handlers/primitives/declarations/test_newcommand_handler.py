@@ -236,3 +236,28 @@ def test_newcommand_with_multi_brace_args_def():
     assert expander.get_macro("\\xxx")
     assert expander.get_macro("\\yyy")
     assert expander.convert_tokens_to_str(out).strip() == "{} 12"
+
+
+def test_newcommand_with_side_effect_definitions():
+    r"""Test that \newcommand can define other macros as side effects"""
+    expander = Expander()
+
+    text = r"""
+    \def\contentfont#1{CONTENT-FONT[#1]}
+    \newcommand{\abstract}[1]{\newcommand{\abstractlist}{\contentfont{#1}}}
+
+    \abstract{This is my abstract content}
+
+    Result: \abstractlist
+    """
+
+    expander.protected_commands.add("abstract")
+
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+
+    # \storeabstract should execute and define \abstractlist
+    assert expander.get_macro("\\abstractlist")
+
+    # \abstractlist should expand correctly
+    assert "Result: CONTENT-FONT[This is my abstract content]" in out_str

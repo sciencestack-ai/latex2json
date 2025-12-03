@@ -105,3 +105,56 @@ def test_maketitle_redefinition_simple():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "FAKE"
+
+
+def test_renewcommand_title_with_side_effects():
+    r"""
+    Test that \renewcommand{\title} can execute side effects like \newcommand
+    while still populating frontmatter and preserving semantic wrapping.
+    """
+    expander = Expander()
+
+    text = r"""
+    \def\titlefont#1{FONT[#1]}
+    \renewcommand{\title}[1]{\newcommand{\titlelist}{\titlefont{#1}}}
+
+    \title{My Great Title}
+
+    Result: \titlelist
+
+    \maketitle
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+
+    # Side effect: \titlelist should be defined and work
+    assert "Result: FONT[My Great Title]" in out_str
+
+    # Frontmatter: \maketitle should still have content
+    assert r"\maketitle{" in out_str
+    assert r"\title{My Great Title}" in out_str
+    assert expander.get_macro("titlelist")
+
+
+def test_renewcommand_title_with_multiple_args():
+    r"""Test \renewcommand{\title}[N] with multiple arguments stores all args"""
+    expander = Expander()
+
+    text = r"""
+    \renewcommand{\title}[3]{\newcommand{\mytitle}{#1-#2-#3}}
+
+    \title{A}{B}{C}
+
+    Title is: \mytitle
+
+    \maketitle
+    """
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+
+    # Side effect should work
+    assert "Title is: A-B-C" in out_str
+
+    # All args should be stored in frontmatter and appear in maketitle
+    assert r"\maketitle{" in out_str
+    assert r"\title{A}{B}{C}" in out_str

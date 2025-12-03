@@ -1,6 +1,7 @@
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.handler_utils import Handler
+from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import (
     WHITESPACE_TOKEN,
@@ -61,21 +62,26 @@ def make_at_frontmatter_key_handler(key: str) -> Handler:
 
     def handler(expander: ExpanderCore, token: Token) -> List[Token]:
         # Always read from state.frontmatter
-        tokens = expander.state.frontmatter.get(key, [])
-        if not tokens:
+        stored_args = expander.state.frontmatter.get(key, [])
+        if not stored_args:
             return []
 
-        # expander.push_tokens(tokens)
-        # return []
-
-        # Expand stored tokens to resolve any macros
-        expanded = expander.expand_tokens(tokens)
+        # stored_args can be either:
+        # - Old format: single list of tokens (backward compat)
+        # - New format: list of token lists (multiple args)
+        expanded_args = []
+        if stored_args and isinstance(stored_args[0], list):
+            # New format: list of arg lists
+            for arg_tokens in stored_args:
+                expanded_args.append(expander.expand_tokens(arg_tokens))
+        else:
+            # Old format: single list of tokens
+            expanded_args = [expander.expand_tokens(stored_args)]
 
         # Return semantic CommandWithArgsToken
-        # This preserves the semantic meaning even inside redefined \@maketitle
         cmd_token = CommandWithArgsToken(
             name=key,
-            args=[expanded],
+            args=expanded_args,
         )
         return [cmd_token]
 

@@ -733,6 +733,12 @@ class ParserCore:
             if isinstance(self.current_env, EquationNode):
                 self.current_env.numbering = numbering
             return []
+        elif token.name == "abstract":
+            arg_nodes: List[List[ASTNode]] = []
+            for arg in token.args:
+                arg_nodes.append(self.process_tokens(arg, scoped=True))
+            if arg_nodes:
+                return [MetadataNode(NodeTypes.ABSTRACT, arg_nodes[0])]
         else:
             arg_nodes: List[List[ASTNode]] = []
             opt_arg_nodes: List[List[ASTNode]] = []
