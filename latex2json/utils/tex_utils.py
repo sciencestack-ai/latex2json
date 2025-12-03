@@ -74,10 +74,15 @@ def convert_color_to_css(model: str, spec: str) -> str:
         return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "RGB":
-        # LaTeX: RGB values 0-255 → CSS: same
-        # Input: "255, 100, 50"
-        values = [int(x.strip()) for x in spec.split(",")]
-        return _rgb_string(values[0], values[1], values[2])
+        # LaTeX: RGB values 0-255 or 0-1 floats → CSS: 0-255
+        # Input: "255, 100, 50" or "0.5, 0.8, 0.2"
+        values = [float(x.strip()) for x in spec.split(",")]
+        # If all values are <= 1.0, treat as 0-1 range and scale to 0-255
+        if all(v <= 1.0 for v in values):
+            rgb_values = [int(round(v * 255)) for v in values]
+        else:
+            rgb_values = [int(v) for v in values]
+        return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "HTML":
         # LaTeX: hex without # → CSS: hex with #

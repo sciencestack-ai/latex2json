@@ -43,7 +43,7 @@ def test_text_handlers():
 
     expected_text_style_pairs = [
         ("RED", ["color=red"]),
-        ("GREEN", ["color=rgb(0,1,0)"]),
+        ("GREEN", ["color=rgb(0,255,0)"]),
         ("Bold text", ["bold"]),
         ("Italic text", ["italic"]),
         ("Monospace text", ["monospace"]),
