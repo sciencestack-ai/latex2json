@@ -25,6 +25,7 @@ BUILTIN_DIMENSIONS = [
     "unitlength",  # Unit length for picture environment
     # Paragraph formatting
     "parindent",  # Paragraph indentation
+    "hangindent",
     # List formatting
     "leftmargin",  # Left margin in lists
     "rightmargin",  # Right margin in lists

@@ -56,6 +56,8 @@ BUILTIN_SKIPS = [
     "arraycolsep",  # Column separation in array environment
     "tabcolsep",  # Column separation in tabular environment
     "doublerulesep",  # Space between double rules
+    "aboverulesep",
+    "belowrulesep",
     # Float separations
     "floatsep",  # Space between floats
     "textfloatsep",  # Space between floats and text
