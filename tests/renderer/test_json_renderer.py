@@ -1,4 +1,5 @@
 import pytest
+from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.node_types import NodeTypes
 from latex2json.renderer.json.json_renderer import JSONRenderer
 
@@ -14,7 +15,10 @@ def test_json_output_of_math_n_text_equations():
     json = renderer.parse(text)
     assert len(json) == 1
     # notice that the command and text are separated by a space
-    assert json[0] == {"type": NodeTypes.EQUATION, "content": r"\chi one"}
+    assert json[0] == {
+        "type": NodeTypes.EQUATION,
+        "content": [{"type": NodeTypes.TEXT, "content": r"\chi one"}],
+    }
 
     # test bigger case
     text = r"""

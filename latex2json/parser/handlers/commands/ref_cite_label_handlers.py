@@ -57,6 +57,43 @@ def hyperref_handler(parser: ParserCore, token: Token):
     return []
 
 
+def hypertarget_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    anchor_node = parser.parse_brace_as_nodes()
+    anchor_id = parser.convert_nodes_to_str(anchor_node)
+    parser.skip_whitespace()
+    title_nodes = parser.parse_brace_as_nodes()
+    if not anchor_id:
+        return []
+    parser.register_label(anchor_id)
+    if not title_nodes:
+        # if empty, default as \label{anchor_id}
+        env_node = parser.current_env
+        if env_node:
+            env_node.labels.append(anchor_id)
+        return []
+
+    title_str = parser.convert_nodes_to_str(title_nodes)
+    out_node = TextNode(title_str)
+    out_node.labels.append(anchor_id)
+    return [out_node]
+
+
+def hyperlink_handler(parser: ParserCore, token: Token):
+    parser.skip_whitespace()
+    anchor_node = parser.parse_brace_as_nodes()
+    anchor_id = parser.convert_nodes_to_str(anchor_node)
+    parser.skip_whitespace()
+    title_nodes = parser.parse_brace_as_nodes() or []
+    title_nodes = parser.postprocess_nodes(title_nodes)
+    if not anchor_id:
+        return []
+    # if anchor_id.startswith("cite."):
+    #     cite_key = anchor_id.split(".")[1]
+    #     return [CiteNode([cite_key], title=title_nodes)]
+    return [RefNode([anchor_id], title=title_nodes)]
+
+
 def cite_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     prenote = parser.parse_bracket_as_nodes()
@@ -183,6 +220,10 @@ def register_ref_label_handlers(parser: ParserCore):
         split_comma = command.lower() == "cref"
         parser.register_handler(command, make_ref_handler(split_comma))
 
+    # hypertarget/hyperlink
+    parser.register_handler("hypertarget", hypertarget_handler)
+    parser.register_handler("hyperlink", hyperlink_handler)
+
     # hyperref
     parser.register_handler("hyperref", hyperref_handler)
 
@@ -213,6 +254,11 @@ def register_ref_label_handlers(parser: ParserCore):
 if __name__ == "__main__":
     from latex2json.parser.parser import Parser
 
+    text = r"""
+    
+\hypertarget{cite.WZ25b}{CHANGE MANNN }
+\hyperlink{cite.WZ25b}{HOHSAD  }
+""".strip()
+
     parser = Parser()
-    parser.set_text(r"\cites[see][Chapter 4]{sdsds,   ss}")
-    out = parser.parse()
+    out = parser.parse(text)

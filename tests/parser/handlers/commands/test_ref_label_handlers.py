@@ -1,6 +1,7 @@
 import pytest
 
 from latex2json.nodes.base_nodes import CommandNode, TextNode
+from latex2json.nodes.bibliography_nodes import BibEntryNode, BibType, BibliographyNode
 from latex2json.nodes.math_nodes import EquationNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, RefNode, URLNode
 from latex2json.nodes.tabular_node import TabularNode
@@ -183,3 +184,85 @@ def test_urls():
     assert isinstance(out[0], URLNode)
     assert out[0].url == "https://www.google.com"
     assert not out[0].title
+
+
+def test_hyperlink_with_title():
+    parser = Parser()
+
+    text = r"\hyperlink{target:label}{Click here}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], RefNode)
+    assert out[0].references == ["target:label"]
+    assert out[0].title == [TextNode("Click here")]
+
+
+def test_hypertarget_with_title():
+    parser = Parser()
+
+    text = r"\hypertarget{my:target}{Target text}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], TextNode)
+    assert out[0].text == "Target text"
+    assert out[0].labels == ["my:target"]
+
+
+def test_hypertarget_empty_title_no_env():
+    parser = Parser()
+
+    text = r"\hypertarget{another:target}{}"
+    out = parser.parse(text)
+
+    # When title is empty and not in an environment, returns nothing
+    assert len(out) == 0
+    # But the label should be registered
+    assert parser.has_label("another:target")
+
+
+def test_hypertarget_empty_title_in_env():
+    parser = Parser()
+
+    text = r"""
+    \begin{tabular}{c}
+        \hypertarget{tab:target}{}
+        Content & More content \\
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], TabularNode)
+    # The label should be attached to the environment
+    assert out[0].labels == ["tab:target"]
+    # And registered in parser
+    assert parser.has_label("tab:target")
+
+
+def test_hyperlink_bibitems():
+    parser = Parser()
+
+    text = r"""
+    \hyperlink{cite.BIB1}{My citation}
+
+    \begin{thebibliography}{99}
+    \bibitem{BIB1} % cite.BIB1
+    My first citation
+    
+    \end{thebibliography}
+    """.strip()
+    out = parser.parse(text)
+
+    assert out[0] == RefNode(["cite.BIB1"], title=[TextNode("My citation")])
+    assert isinstance(out[-1], BibliographyNode)
+    biblio = out[-1]
+
+    bibitem = biblio.bib_items[0]
+    exp_bibitem = BibEntryNode(
+        "BIB1", [TextNode("My first citation")], format=BibType.BIBITEM
+    )
+    exp_bibitem.labels = ["cite.BIB1"]
+    assert bibitem == exp_bibitem

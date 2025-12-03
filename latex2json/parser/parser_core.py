@@ -127,12 +127,16 @@ class ParserCore:
         self.graphics_paths: Set[str] = set()
 
     def register_label(self, label: str):
-        key = self.filename
-        if not key:
-            return
+        key = self.filename or "default"
         if key not in self.label_registry:
             self.label_registry[key] = []
         self.label_registry[key].append(label)
+
+    def has_label(self, label: str, filename: Optional[str] = None) -> bool:
+        key = filename or self.filename or "default"
+        if key not in self.label_registry:
+            return False
+        return label in self.label_registry[key]
 
     def register_external_document_prefix(self, filename: str, prefix: str):
         key = self.filename

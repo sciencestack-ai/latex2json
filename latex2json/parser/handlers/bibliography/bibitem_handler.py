@@ -1,6 +1,7 @@
 from typing import List, Optional
 from latex2json.nodes import ASTNode, BibEntryNode, BibliographyNode
 from latex2json.nodes.base_nodes import CommandNode, TextNode
+from latex2json.nodes.bibliography_nodes import BibType
 from latex2json.nodes.utils import split_nodes_by_predicate, strip_whitespace_nodes
 from latex2json.parser.handlers.commands.command_handler_utils import (
     register_ignore_handlers_util,
@@ -22,12 +23,7 @@ def bibitem_handler(parser: ParserCore, token: Token) -> List[BibEntryNode]:
     label_str = parser.convert_nodes_to_str(label).strip() if label else None
 
     return [
-        BibEntryNode(
-            citation_key=cite_key_str,
-            label=label_str,
-            format="bibitem",
-            entry_type="bibitem",
-        )
+        BibEntryNode(citation_key=cite_key_str, label=label_str, format=BibType.BIBITEM)
     ]
 
 

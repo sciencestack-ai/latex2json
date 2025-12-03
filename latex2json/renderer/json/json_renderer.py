@@ -329,17 +329,17 @@ class JSONRenderer:
             del token["display"]
         content = token.get("content")
         if content and isinstance(content, list):
-            # check if all content is "text"
-            if all(is_text_token(item) for item in content):
-                # if so, merge into a single string
-                token["content"] = "".join(item.get("content", "") for item in content)
-            else:
-                # check if single non-text or command token, return that directly instead
-                # e.g. single reference token inside equation e.g. $\ref{eq:1}$ -> \ref{eq:1}
-                if len(content) == 1:
-                    item = content[0]
-                    if not is_katex_compatible_token(item):
-                        return item
+            # # check if all content is "text"
+            # if all(is_text_token(item) for item in content):
+            #     # if so, merge into a single string
+            #     token["content"] = "".join(item.get("content", "") for item in content)
+            # else:
+            #     # check if single non-text or command token, return that directly instead
+            #     # e.g. single reference token inside equation e.g. $\ref{eq:1}$ -> \ref{eq:1}
+            if len(content) == 1:
+                item = content[0]
+                if not is_katex_compatible_token(item):
+                    return item
         return token
 
     def _recursive_postprocess(
@@ -572,15 +572,14 @@ Appendix 2 content
 """
 
     text = r"""
-    \def\xxx{XXX}
-\renewcommand\abstract[1]{\newcommand{\abstractlist}{\textbf{#1}}}
-\def\AAA{
-\abstract{\xxx}
-}
-\def\xxx{YYY}
-\AAA
 
-\color[HTML]{FF0000}
+\hyperlink{cite.WZ25b}{CHANGE MANNN }
+
+\begin{thebibliography}{99}
+\bibitem{WZ25b} 
+CHANGE MAN MA
+
+\end{thebibliography}
 
 """.strip()
 

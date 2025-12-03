@@ -1,6 +1,12 @@
+from enum import StrEnum
 from typing import Dict, List, Optional
 from latex2json.nodes.base_nodes import ASTNode, TextNode
 from latex2json.nodes.node_types import NodeTypes
+
+
+class BibType(StrEnum):
+    BIBITEM = "bibitem"
+    BIBTEX = "bibtex"
 
 
 def convert_fields_to_bibtex_str(
@@ -16,7 +22,7 @@ class BibEntryNode(ASTNode):
         self,
         citation_key: str,
         content: List[ASTNode] = [],
-        format: str = "bibtex",
+        format: str = BibType.BIBTEX,
         label: Optional[str] = None,  # for bibitem e.g. \bibitem[...label...]{}
         # bibtex related below
         entry_type: Optional[str] = None,  # e.g. article/proceedings/etc.
@@ -24,6 +30,10 @@ class BibEntryNode(ASTNode):
     ):
         super().__init__()
         self.citation_key = citation_key
+        if format == BibType.BIBITEM:
+            # in latex, internally anchor 'cite.{citation_key}' is created per bibitem
+            item_label = f"cite.{citation_key}"
+            self.labels.append(item_label)
         self.label = label
         self.format = format
         self.set_body(content)
@@ -56,7 +66,7 @@ class BibEntryNode(ASTNode):
 
     def detokenize(self) -> str:
         out_str = ""
-        if self.format == "bibitem":
+        if self.format == BibType.BIBITEM:
             out_str = f"\\bibitem"
             if self.label:
                 out_str += f"[{self.label}]"
@@ -70,7 +80,7 @@ class BibEntryNode(ASTNode):
         return self.detokenize()
 
     def get_author_str(self):
-        if self.format == "bibitem":
+        if self.format == BibType.BIBITEM:
             content = "".join(child.detokenize() for child in self.children).strip()
             comma_idx = content.find(",")
             dash_idx = content.find("--")

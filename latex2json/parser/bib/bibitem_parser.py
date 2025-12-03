@@ -3,7 +3,7 @@ from typing import List
 import logging
 
 from latex2json.nodes.base_nodes import TextNode
-from latex2json.nodes.bibliography_nodes import BibEntryNode
+from latex2json.nodes.bibliography_nodes import BibEntryNode, BibType
 
 BEGIN_BIB_PATTERN = re.compile(
     r"\\begin\s*\{(\w*bibliography)\}(.*?)\\end\s*\{\1\}", re.DOTALL
@@ -57,8 +57,7 @@ class BibItemParser:
                     citation_key=match.group(2).strip(),
                     content=[TextNode(item)],
                     label=match.group(1).strip() if match.group(1) else None,
-                    entry_type="bibitem",
-                    format="bibitem",
+                    format=BibType.BIBITEM,
                     fields={},
                 )
                 entries.append(entry)

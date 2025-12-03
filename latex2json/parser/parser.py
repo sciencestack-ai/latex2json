@@ -1,7 +1,7 @@
 import logging, os
 from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode
-from latex2json.nodes.bibliography_nodes import BibEntryNode, BibliographyNode
+from latex2json.nodes.bibliography_nodes import BibEntryNode, BibType, BibliographyNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.parser.bib.bib_parser import BibParser
 from latex2json.tokens.types import Token
@@ -75,7 +75,7 @@ class Parser(ParserCore):
 
         bib_items = []
         for i, item in enumerate(non_duplicate_entries):
-            if item.format == "bibitem":
+            if item.format == BibType.BIBITEM:
                 if item.should_postprocess:
                     content_str = standalone_parser.convert_nodes_to_str(item.body)
                     # process the content_str
