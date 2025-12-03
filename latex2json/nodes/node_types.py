@@ -83,6 +83,15 @@ class NodeTypes(StrEnum):
         return self.value
 
 
-if __name__ == "__main__":
-    x = {"type": NodeTypes.CITATION, "content": "SSS"}
-    print(x)
+INLINE_TYPES = {
+    NodeTypes.TEXT,
+    NodeTypes.CITATION,
+    NodeTypes.REF,
+    NodeTypes.URL,
+    NodeTypes.FOOTNOTE,
+    NodeTypes.COMMAND,
+}
+
+
+def is_inline_type(node_type: NodeTypes) -> bool:
+    return node_type in INLINE_TYPES

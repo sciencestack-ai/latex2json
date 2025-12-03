@@ -1,5 +1,5 @@
 # types
-from latex2json.nodes.node_types import NodeTypes
+from latex2json.nodes.node_types import NodeTypes, is_inline_type
 
 # NODES
 from latex2json.nodes.base_nodes import *
