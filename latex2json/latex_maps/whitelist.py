@@ -8,6 +8,7 @@ from latex2json.latex_maps.fonts import (
     LATEX_TO_FONT_STYLE,
     LEGACY_TO_FONT_STYLE,
 )
+from latex2json.latex_maps.sections import SECTIONS
 
 # Commands that should NEVER be redefined (strict blocking)
 STRICTLY_BLOCKED_COMMANDS = [
@@ -22,6 +23,7 @@ STRICTLY_BLOCKED_COMMANDS = [
     # newlines
     "\\",
     "\\\\",
+    "newline",
     # equation delimiters
     "(",  # \(
     ")",  # \)
@@ -35,23 +37,6 @@ STRICTLY_BLOCKED_COMMANDS = [
     # Additional font-related commands not in fonts.py
     "text",
     "mathversion",
-]
-
-# Commands that CAN be redefined but with wrapping to preserve semantics
-PROTECTED_COMMANDS = [
-    # Sections
-    "section",
-    "subsection",
-    "subsubsection",
-    "paragraph",
-    "subparagraph",
-    "part",
-    "chapter",
-    # Document structure
-    "abstract",
-    "bibliography",
-    "appendix",
-    "appendices",
     # References and citations
     "cite",
     "citep",
@@ -64,10 +49,20 @@ PROTECTED_COMMANDS = [
     "figure",
     "caption",
     "captionof",
+]
+
+# Commands that CAN be redefined but with wrapping to preserve semantics
+PROTECTED_COMMANDS = [
+    # Sections
+    *SECTIONS,
+    # Document structure
+    "abstract",
+    "bibliography",
+    "appendix",
+    "appendices",
     # Misc
     "date",
     "and",
-    "newline",
     # Bib commands
     "bysame",
 ]

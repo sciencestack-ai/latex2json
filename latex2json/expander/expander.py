@@ -1,10 +1,8 @@
 from logging import Logger
-from typing import List, Optional
+from typing import Callable, List, Optional
+
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.expander.handlers.protected_commands import (
-    create_wrapped_protected_handler,
-)
-from latex2json.expander.macro_registry import Macro
+from latex2json.expander.macro_registry import Handler, Macro
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.whitelist import (
     STRICTLY_BLOCKED_COMMANDS,
@@ -16,15 +14,79 @@ from latex2json.latex_maps.whitelist import (
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import CommandWithArgsToken, Token
 
+StorageCallback = Callable[["ExpanderCore", List[List[Token]]], None]
+ReturnCallback = Callable[["ExpanderCore", List[List[Token]], List[Token]], List[Token]]
+
+
+def create_wrapped_protected_handler(
+    command_name: str,
+    macro: Macro,
+    storage_callback: Optional[StorageCallback] = None,
+    return_callback: Optional[ReturnCallback] = None,
+) -> Handler:
+    r"""
+    Create a wrapped handler for user-redefined protected commands.
+
+    The wrapper:
+    1. Parses arguments according to user's signature
+    2. Executes the user's definition (side effects happen)
+    3. Optionally stores args via storage_callback
+    4. Returns result from return_callback or empty list
+
+    Args:
+        command_name: Name of the command (e.g., "title", "abstract", "@title")
+        macro: The user-defined macro
+        storage_callback: Optional function to store parsed args (e.g., in frontmatter)
+        return_callback: Optional function(exp, args, expanded_output) to generate return tokens
+
+    Example:
+        # For \title - store args
+        def store(exp, args):
+            exp.state.frontmatter["title"] = args
+        handler = create_wrapped_protected_handler("title", macro, storage_callback=store)
+
+        # For \@title - return semantic token with expanded output
+        def return_semantic(exp, args, output):
+            return [CommandWithArgsToken("title", args=[output])]
+        handler = create_wrapped_protected_handler("@title", macro, return_callback=return_semantic)
+    """
+    num_args = macro.num_args
+    default_arg = macro.default_arg
+    original_definition = macro.definition.copy()
+
+    def handler(exp: "ExpanderCore", tok: Token) -> List[Token]:
+        # Parse args according to user's signature
+        args = exp.get_parsed_args(
+            num_args=num_args, default_arg=default_arg, command_name=tok.value
+        )
+        if args is None:
+            args = []
+
+        # Execute user's definition (side effects like \newcommand)
+        definition_with_args = exp.substitute_token_args(original_definition, args)
+        expanded_output = exp.expand_tokens(definition_with_args)
+
+        # Store args if callback provided
+        if storage_callback:
+            storage_callback(exp, args)
+
+        # Return result from callback or empty
+        if return_callback:
+            # Pass both args (for metadata) and expanded output (actual content)
+            return return_callback(exp, args, expanded_output)
+        return []
+
+    return handler
+
 
 class Expander(ExpanderCore):
     def __init__(
         self,
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
-        strictly_blocked_commands: Optional[List[str]] = None,
-        protected_commands: Optional[List[str]] = None,
-        whitelisted_environments: Optional[List[str]] = None,
+        strictly_blocked_commands: Optional[List[str]] = STRICTLY_BLOCKED_COMMANDS,
+        protected_commands: Optional[List[str]] = PROTECTED_COMMANDS,
+        whitelisted_environments: Optional[List[str]] = WHITELISTED_ENVIRONMENTS,
         ignore_package_cls: bool = False,
     ):
         self.ignore_package_cls = ignore_package_cls
@@ -34,12 +96,12 @@ class Expander(ExpanderCore):
         self.strictly_blocked_commands: List[str] = (
             strictly_blocked_commands.copy()
             if strictly_blocked_commands is not None
-            else STRICTLY_BLOCKED_COMMANDS.copy()
+            else []
         )
         self.white_listed_environments: List[str] = (
             whitelisted_environments.copy()
             if whitelisted_environments is not None
-            else WHITELISTED_ENVIRONMENTS.copy()
+            else []
         )
         self.white_listed_classes: List[str] = WHITELISTED_CLASSES.copy()
         self.white_listed_packages: List[str] = WHITELISTED_PACKAGES.copy()
@@ -141,18 +203,16 @@ class Expander(ExpanderCore):
                 storage_callback = None
                 return_callback = None
 
-                # Frontmatter storage commands (\title, \author, etc.)
-                if cmd_name in self.state.frontmatter:
-                    storage_callback = (
-                        lambda exp, args: exp.state.frontmatter.__setitem__(
-                            cmd_name, args
-                        )
-                    )
+                # # Frontmatter storage commands (\title, \author, etc.)
+                # if cmd_name in self.state.frontmatter:
+                #     storage_callback = (
+                #         lambda exp, args: exp.state.frontmatter.__setitem__(
+                #             cmd_name, args
+                #         )
+                #     )
 
                 # Frontmatter accessor commands (\@title, \@author, etc.)
-                elif (
-                    cmd_name.startswith("@") and cmd_name[1:] in self.state.frontmatter
-                ):
+                if cmd_name.startswith("@") and cmd_name[1:] in self.state.frontmatter:
                     key = cmd_name[1:]
                     return_callback = lambda exp, args, output: [
                         CommandWithArgsToken(key, args=[output])

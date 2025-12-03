@@ -4,6 +4,7 @@ from latex2json.nodes.bibliography_nodes import BibEntryNode
 from latex2json.nodes.environment_nodes import TheoremNode
 from latex2json.nodes.list_item_node import ListNode
 from latex2json.nodes.math_nodes import EquationNode
+from latex2json.nodes.metadata_nodes import MetadataNode
 from latex2json.nodes.ref_cite_url_nodes import RefNode
 from latex2json.nodes.section_nodes import SectionNode
 from latex2json.nodes.utils import (
@@ -293,3 +294,24 @@ def test_newlist():
     assert list_node.list_type == "itemize"
     assert list_node.is_inline == True
     assert len(list_node.list_items) == 2
+
+
+def test_protected_commands_allow_side_effects():
+    parser = Parser()
+    text = r"""
+\def\xxx{XXX}
+\renewcommand\abstract[1]{\newcommand{\abstractlist}{\textbf{#1}}}
+\def\AAA{
+\abstract{\xxx}
+}
+\def\xxx{YYY}
+\AAA
+% Output should be \abstract{YYY} since it is a protected command
+""".strip()
+    assert "abstract" in parser.expander.protected_commands
+
+    out = parser.parse(text)
+    out = strip_whitespace_nodes(out)
+    assert len(out) == 1
+
+    assert out[0] == MetadataNode("abstract", [TextNode("YYY")])

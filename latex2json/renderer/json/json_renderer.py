@@ -172,22 +172,28 @@ class JSONRenderer:
             output.append(out_dict)
 
         # strip out all tokens before the first document
-        # but also ensure that any bibliography token before first document is not lost
+        # but also ensure that any preamble_token_types token before first document is not lost
         first_document_idx = -1
-        bib_token = None
+        preamble_token_types = [
+            NodeTypes.BIBLIOGRAPHY,
+            NodeTypes.TITLE,
+            NodeTypes.AUTHOR,
+            NodeTypes.ABSTRACT,
+        ]
+        filtered_preamble_tokens = []
         for i, token in enumerate(output):
             if isinstance(token, dict):
                 token_type = token.get("type")
                 if token_type == NodeTypes.DOCUMENT:
                     first_document_idx = i
                     break
-                elif token_type == NodeTypes.BIBLIOGRAPHY:
-                    bib_token = token
+                elif token_type in preamble_token_types:
+                    filtered_preamble_tokens.append(token)
         if first_document_idx != -1:
             output = output[first_document_idx:]
-        if bib_token:
-            # add back bib token
-            output.insert(0, bib_token)
+        if filtered_preamble_tokens:
+            # add back useful preamble tokens
+            output = filtered_preamble_tokens + output
 
         if organize_hierachy:
             organized = self._recursive_organize(output)
@@ -566,10 +572,16 @@ Appendix 2 content
 """
 
     text = r"""
-\section{ASDSADS}
-sasadas
-\paragraph{HAHASHD}
-adasdas
+    \def\xxx{XXX}
+\renewcommand\abstract[1]{\newcommand{\abstractlist}{\textbf{#1}}}
+\def\AAA{
+\abstract{\xxx}
+}
+\def\xxx{YYY}
+\AAA
+
+\color[HTML]{FF0000}
+
 """.strip()
 
     json = renderer.parse(text)
