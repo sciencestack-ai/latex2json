@@ -36,6 +36,8 @@ class Macro:
         definition: List[Token] = [],
         type: MacroType = MacroType.MACRO,  # "macro" or "char" (e.g. \let \bgroup etc are single character tokens and treated differently for \ifx etc)
         is_user_defined: bool = False,
+        num_args: int = 0,
+        default_arg: Optional[List[Token]] = None,
     ):
         self.name = name  # usually the command name e.g. \foo
 
@@ -54,6 +56,10 @@ class Macro:
         self.type = type
         self.is_user_defined = is_user_defined
 
+        # Argument metadata for user-defined macros (from \newcommand, etc.)
+        self.num_args = num_args
+        self.default_arg = default_arg
+
     def copy(self) -> "Macro":
         return Macro(
             name=self.name,
@@ -61,6 +67,8 @@ class Macro:
             definition=self.definition.copy(),
             type=self.type,
             is_user_defined=self.is_user_defined,
+            num_args=self.num_args,
+            default_arg=self.default_arg.copy() if self.default_arg else None,
         )
 
 

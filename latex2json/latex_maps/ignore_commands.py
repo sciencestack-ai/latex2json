@@ -340,6 +340,22 @@ separator_patterns = {
 font_awesome_patterns = {
     "faGithub": 0,
     "faGithubAlt": 0,
+    "faStar": 0,
+    "faCog": 0,
+    "faSearch": 0,
+    # Add more as needed:
+    "faEnvelope": 0,
+    "faPhone": 0,
+    "faLinkedin": 0,
+    "faTwitter": 0,
+    "faHome": 0,
+    "faUser": 0,
+    "faFile": 0,
+    "faCheck": 0,
+    "faTimes": 0,
+    "faArrowRight": 0,
+    "faArrowLeft": 0,
+    "faExternalLink": 0,
 }
 
 biblatex_patterns = {

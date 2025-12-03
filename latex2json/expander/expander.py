@@ -1,16 +1,20 @@
 from logging import Logger
 from typing import List, Optional
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.protected_commands import (
+    create_wrapped_protected_handler,
+)
 from latex2json.expander.macro_registry import Macro
 from latex2json.latex_maps.environments import EnvironmentDefinition
 from latex2json.latex_maps.whitelist import (
-    WHITELISTED_COMMANDS,
+    STRICTLY_BLOCKED_COMMANDS,
+    PROTECTED_COMMANDS,
     WHITELISTED_ENVIRONMENTS,
     WHITELISTED_PACKAGES,
     WHITELISTED_CLASSES,
 )
 from latex2json.tokens.tokenizer import Tokenizer
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import CommandWithArgsToken, Token
 
 
 class Expander(ExpanderCore):
@@ -18,19 +22,41 @@ class Expander(ExpanderCore):
         self,
         tokenizer: Optional[Tokenizer] = None,
         logger: Optional[Logger] = None,
-        prevent_whitelisted_redefinitions: bool = True,
+        strictly_blocked_commands: Optional[List[str]] = None,
+        protected_commands: Optional[List[str]] = None,
+        whitelisted_environments: Optional[List[str]] = None,
         ignore_package_cls: bool = False,
     ):
-        self.prevent_whitelisted_redefinitions = prevent_whitelisted_redefinitions
         self.ignore_package_cls = ignore_package_cls
         super().__init__(tokenizer, logger)
 
-        self.white_listed_commands: List[str] = WHITELISTED_COMMANDS.copy()
-        self.white_listed_environments: List[str] = WHITELISTED_ENVIRONMENTS.copy()
+        # Commands that BLOCK redefinition entirely (strict blocking - never allow)
+        self.strictly_blocked_commands: List[str] = (
+            strictly_blocked_commands.copy()
+            if strictly_blocked_commands is not None
+            else STRICTLY_BLOCKED_COMMANDS.copy()
+        )
+        self.white_listed_environments: List[str] = (
+            whitelisted_environments.copy()
+            if whitelisted_environments is not None
+            else WHITELISTED_ENVIRONMENTS.copy()
+        )
         self.white_listed_classes: List[str] = WHITELISTED_CLASSES.copy()
         self.white_listed_packages: List[str] = WHITELISTED_PACKAGES.copy()
 
+        # Initialize protected_commands early (before handlers)
+        # Will be populated with frontmatter keys after handler registration
+        base_protected = (
+            protected_commands if protected_commands is not None else PROTECTED_COMMANDS
+        )
+        self.protected_commands: set[str] = set(base_protected)
+
         self._register_handlers_and_packages()
+
+        # Add frontmatter commands to protected set (now that handlers are registered)
+        self.protected_commands.update(self.state.frontmatter.keys())
+        self.protected_commands.update([f"@{k}" for k in self.state.frontmatter.keys()])
+        self.protected_commands.add("@maketitle")
 
     def _register_handlers_and_packages(self):
         from latex2json.expander.handlers import register_handlers
@@ -75,7 +101,7 @@ class Expander(ExpanderCore):
         is_global: bool = True,
         is_user_defined: bool = False,
     ) -> None:
-        if is_user_defined and self.prevent_whitelisted_redefinitions:
+        if is_user_defined:
             if env_name in self.white_listed_environments:
                 self.logger.info(
                     f"Preventing redefinition of white-listed environment {env_name}"
@@ -98,15 +124,50 @@ class Expander(ExpanderCore):
             return  # Invalid token type, cannot register
         tok_str, is_active_char = normalized
 
-        # prevent redefinition of white-listed commands in package/class files
-        if is_user_defined and self.prevent_whitelisted_redefinitions:
+        # Prevent redefinition of strictly blocked commands
+        if is_user_defined:
             if not is_active_char:
                 tok_str = tok_str.lstrip("\\")
-            if tok_str in self.white_listed_commands:
+            if tok_str in self.strictly_blocked_commands:
                 self.logger.info(
-                    f"Preventing redefinition of white-listed command \\{tok_str}"  # inside package/class: \\{name}"
+                    f"Preventing redefinition of strictly blocked command \\{tok_str}"
                 )
                 return
+
+            # Apply protection wrapping for protected commands
+            cmd_name = tok_str.lstrip("\\")
+            if cmd_name in self.protected_commands:
+                # Determine callbacks based on command type
+                storage_callback = None
+                return_callback = None
+
+                # Frontmatter storage commands (\title, \author, etc.)
+                if cmd_name in self.state.frontmatter:
+                    storage_callback = (
+                        lambda exp, args: exp.state.frontmatter.__setitem__(
+                            cmd_name, args
+                        )
+                    )
+
+                # Frontmatter accessor commands (\@title, \@author, etc.)
+                elif (
+                    cmd_name.startswith("@") and cmd_name[1:] in self.state.frontmatter
+                ):
+                    key = cmd_name[1:]
+                    return_callback = lambda exp, args, output: [
+                        CommandWithArgsToken(key, args=[output])
+                    ]
+
+                # \@maketitle - special semantic wrapper
+                elif cmd_name == "@maketitle":
+                    return_callback = lambda exp, args, output: [
+                        CommandWithArgsToken("maketitle", args=[output])
+                    ]
+
+                # Create wrapped handler
+                macro.handler = create_wrapped_protected_handler(
+                    cmd_name, macro, storage_callback, return_callback
+                )
 
         super().register_macro(tok_or_name, macro, is_global, is_user_defined)
 
@@ -114,7 +175,7 @@ class Expander(ExpanderCore):
 if __name__ == "__main__":
     from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 
-    expander = Expander(prevent_whitelisted_redefinitions=False)
+    expander = Expander()
     text = r"""
 \renewenvironment{abstract}%
 {%

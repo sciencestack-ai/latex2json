@@ -14,8 +14,8 @@ from latex2json.expander.expander import Expander
 
 @pytest.fixture
 def parser():
-    """Create a parser with prevent_whitelisted_redefinitions=False for all tests."""
-    expander = Expander(prevent_whitelisted_redefinitions=False)
+    """Create a parser with no strictly blocked commands for all tests."""
+    expander = Expander(strictly_blocked_commands=[])
     return Parser(expander=expander)
 
 

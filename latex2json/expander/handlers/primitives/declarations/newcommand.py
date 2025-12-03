@@ -40,7 +40,13 @@ class NewCommandMacro(Macro):
             expander.push_tokens(subbed)
             return []
 
-        macro = Macro(out.cmd_token, handler, out.definition)
+        macro = Macro(
+            out.cmd_token,
+            handler,
+            out.definition,
+            num_args=out.num_args,
+            default_arg=out.default_arg,
+        )
         expander.register_macro(
             out.cmd_token, macro, is_global=True, is_user_defined=True
         )

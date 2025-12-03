@@ -4,134 +4,71 @@ from latex2json.latex_maps.environments import (
     TABLE_ENVIRONMENTS,
     FIGURE_ENVIRONMENTS,
 )
+from latex2json.latex_maps.fonts import (
+    LATEX_TO_FONT_STYLE,
+    LEGACY_TO_FONT_STYLE,
+)
 
-MAKETITLE_COMMANDS = [
-    # only disable redefinition of @maketitle to ignore layout and preserve metadata
-    "@maketitle",
-    # allow redefinition of maketitle and author, title, thanks
-    # "maketitle",
-    # "@author",
-    # "author",
-    # "@title",
-    # "title",
-    # "@thanks",
-    # "thanks",
-]
-
-# These commands should not be overrwritten by newcommand/newenvironment
-WHITELISTED_COMMANDS = [
-    *MAKETITLE_COMMANDS,
-    # expand
+# Commands that should NEVER be redefined (strict blocking)
+STRICTLY_BLOCKED_COMMANDS = [
+    # Core LaTeX primitives
     "noexpand",
     "expandafter",
-    # sections
-    "bibliography",
     "newcommand",
     "def",
     "begin",
     "end",
+    "newtheorem",
+    # newlines
+    "\\",
+    "\\\\",
+    # equation delimiters
+    "(",  # \(
+    ")",  # \)
+    "[",  # \[
+    "]",  # \]
+    # Font commands - derived from fonts.py
+    *LATEX_TO_FONT_STYLE.keys(),
+    *LEGACY_TO_FONT_STYLE.keys(),
+    # Additional font-related commands not in fonts.py
+    "text",
+    "mathversion",
+]
+
+# Commands that CAN be redefined but with wrapping to preserve semantics
+PROTECTED_COMMANDS = [
+    # Sections
     "section",
     "subsection",
     "subsubsection",
     "paragraph",
     "subparagraph",
-    "newline",
-    "newtheorem",
-    "date",
-    "and",
     "part",
     "chapter",
+    # Document structure
     "abstract",
-    "table",
-    "figure",
+    "bibliography",
+    "appendix",
+    "appendices",
+    # References and citations
     "cite",
     "citep",
     "citet",
-    "caption",
-    "captionof",
     "bibitem",
     "url",
     "ref",
-    "appendix",
-    "appendices",
-    # newlines
-    "\\",
-    "\\\\",
-    # equation
-    "(",  # \(
-    ")",  # \)
-    "[",  # \[
-    "]",  # \]
-    # text font
-    "textbf",
-    "textit",
-    "textsl",
-    "textsc",
-    "textsf",
-    "texttt",
-    "textrm",
-    "textup",
-    "emph",
-    # text size
-    "texttiny",
-    "textscriptsize",
-    "textfootnotesize",
-    "textsmall",
-    "textnormal",
-    "textlarge",
-    "texthuge",
-    "text",
-    # legacy font
-    # Basic text style commands
-    "tt",
-    "bf",
-    "it",
-    "sl",
-    "sc",
-    "sf",
-    "rm",
-    "em",
-    "bold",
-    # Font family declarations
-    "rmfamily",
-    "sffamily",
-    "ttfamily",
-    # Font shape declarations
-    "itshape",
-    "scshape",
-    "upshape",
-    "slshape",
-    # Font series declarations
-    "bfseries",
-    "mdseries",
-    # Font combinations and resets
-    "normalfont",
-    # Additional text mode variants
-    "textup",
-    "textnormal",
-    "textmd",
-    # math stuff (often used directly before math mode)
-    "unboldmath",
-    "boldmath",
-    "mathversion",
-    # Basic size commands
-    "tiny",
-    "scriptsize",
-    "footnotesize",
-    "small",
-    "normalsize",
-    "large",
-    "Large",
-    "LARGE",
-    "huge",
-    "Huge",
-    # Additional size declarations
-    "smaller",
-    "larger",
-    # bib stuff
+    # Floats
+    "table",
+    "figure",
+    "caption",
+    "captionof",
+    # Misc
+    "date",
+    "and",
+    "newline",
+    # Bib commands
     "bysame",
 ]
-
 
 WHITELISTED_ENVIRONMENTS = []
 for env in (
@@ -145,9 +82,9 @@ for env, env_def in MATH_ENVIRONMENTS.items():
     WHITELISTED_ENVIRONMENTS.append(env)
     if env_def.begin_command:
         # e.g. prevent \equation and \endequation from being overridden
-        WHITELISTED_COMMANDS.append(env_def.begin_command)
+        STRICTLY_BLOCKED_COMMANDS.append(env_def.begin_command)
     if env_def.end_command:
-        WHITELISTED_COMMANDS.append(env_def.end_command)
+        STRICTLY_BLOCKED_COMMANDS.append(env_def.end_command)
 
 
 WHITELISTED_PACKAGES = ["subfiles", "fancyhdr", "natbib", "algorithmic", "IEEEtran"]
