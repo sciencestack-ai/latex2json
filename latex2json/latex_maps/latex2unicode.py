@@ -18,7 +18,9 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "LaTeX": "LaTeX",
     "TeX": "TeX",
     "dag": 8224,  # †
+    "dagger": 8224,
     "ddag": 8225,  # ‡
+    "ddagger": 8225,
     "qedhere": 9633,  # "□"
     "qedsymbol": 9633,
     "copyright": 169,  # ©

@@ -33,6 +33,7 @@ formatting_patterns = {
     "CJKnospace": 0,
     "bibpunct": 6,
     "newcolumntype": "{[{",
+    "columnbreak": 0,
     "addpenalty": "{",
     "@parboxrestore": 0,
     # language/localization
@@ -356,6 +357,7 @@ font_awesome_patterns = {
     "faArrowRight": 0,
     "faArrowLeft": 0,
     "faExternalLink": 0,
+    "faGlobe": 0,
 }
 
 biblatex_patterns = {
