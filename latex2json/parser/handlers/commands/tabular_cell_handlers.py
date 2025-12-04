@@ -1,5 +1,8 @@
 from typing import Optional, Tuple, List
 
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens import Token
 from latex2json.nodes import CommandNode, ASTNode, TextNode, CellNode
@@ -34,19 +37,28 @@ def merge_nodes_into_cellnode(
     return cellnode
 
 
-def _parse_number_and_nodes(parser: ParserCore) -> Optional[Tuple[List[ASTNode], int]]:
+def _parse_number_in_brace(parser: ParserCore, cmd_name: str) -> Optional[int]:
     parser.skip_whitespace()
     brace1 = parser.parse_brace_as_nodes(scoped=False)
-
     if not brace1 or not isinstance(brace1[0], TextNode):
-        parser.logger.warning("multirow: expected {number} as first argument")
-        return None
-
+        parser.logger.warning(
+            f"{cmd_name}: expected a number as first argument, found {brace1} - defaulting to 1"
+        )
+        return 1
     try:
         number = int(brace1[0].text)
     except ValueError:
-        parser.logger.warning("multirow: expected {number} as first argument")
-        return None
+        parser.logger.warning(
+            f"{cmd_name}: expected a number as first argument, found {brace1[0].text} - defaulting to 1"
+        )
+        return 1
+    return number
+
+
+def _parse_number_and_nodes(
+    parser: ParserCore, cmd_name: str
+) -> Optional[Tuple[List[ASTNode], int]]:
+    number = _parse_number_in_brace(parser, cmd_name)
 
     # skip second arg
     parser.skip_whitespace()
@@ -59,7 +71,11 @@ def _parse_number_and_nodes(parser: ParserCore) -> Optional[Tuple[List[ASTNode],
 
 
 def multirow_handler(parser: ParserCore, token: Token):
-    parsed = _parse_number_and_nodes(parser)
+    r"""\multirow[c]{2}{*}{...}"""
+    parser.skip_whitespace()
+    opt_arg1 = parser.parse_bracket_as_nodes()
+
+    parsed = _parse_number_and_nodes(parser, token.value)
     if not parsed:
         return []
 
@@ -69,7 +85,8 @@ def multirow_handler(parser: ParserCore, token: Token):
 
 
 def multicolumn_handler(parser: ParserCore, token: Token):
-    parsed = _parse_number_and_nodes(parser)
+    r"""\multicolumn{2}{c}{...}"""
+    parsed = _parse_number_and_nodes(parser, token.value)
     if not parsed:
         return []
 
@@ -78,6 +95,22 @@ def multicolumn_handler(parser: ParserCore, token: Token):
     cellnode = merge_nodes_into_cellnode(nodes, start_cols=num_cols)
 
     return [cellnode]
+
+
+def multirowcell_handler(parser: ParserCore, token: Token):
+    r"""
+    multirowcell{2}[-0.5ex][l]{...}
+    """
+    number = _parse_number_in_brace(parser, token.value)
+
+    parser.skip_whitespace()
+    opt_arg1 = parser.parse_bracket_as_nodes()
+    parser.skip_whitespace()
+    opt_arg2 = parser.parse_bracket_as_nodes()
+    parser.skip_whitespace()
+
+    nodes = parser.parse_brace_as_nodes()
+    return [merge_nodes_into_cellnode(nodes, start_rows=number)]
 
 
 def makecell_handler(parser: ParserCore, token: Token):
@@ -141,7 +174,11 @@ def register_tabular_cell_handlers(parser: ParserCore):
     # makecell/shortstack
     parser.register_handler("makecell", makecell_handler)
     parser.register_handler("shortstack", makecell_handler)
+    # thead is a wrapper around makecell
+    parser.register_handler("thead", makecell_handler)
+
     # multirow/col
+    parser.register_handler("multirowcell", multirowcell_handler)
     parser.register_handler("multirow", multirow_handler)
     parser.register_handler("multicolumn", multicolumn_handler)
 
@@ -150,6 +187,11 @@ def register_tabular_cell_handlers(parser: ParserCore):
     # diagbox
     parser.register_handler("diagbox", diagbox_handler)
 
+    ignore_patterns = {
+        "theadfont": 1,
+    }
+    register_ignore_handlers_util(parser, ignore_patterns)
+
 
 if __name__ == "__main__":
     from latex2json.parser import Parser
@@ -157,15 +199,9 @@ if __name__ == "__main__":
     parser = Parser()
     text = r"""
 		\begin{tabular}{c|c|c|c|c|c|c|c|c}
-			\Xhline{3\arrayrulewidth} \bigstrut
-			  & \multicolumn{4}{c|}{Variance Exploding SDE (SMLD)} & \multicolumn{4}{c}{Variance Preserving SDE (DDPM)}\\
-			 \Xhline{1\arrayrulewidth}\bigstrut
-			\diagbox[height=1cm, width=3cm]{Predictor}{FID$\downarrow$}{Sampler} & P1000 & \cellcolor{h}P2000 & \cellcolor{h}C2000 & \cellcolor{h}PC1000 & P1000 & \cellcolor{h}P2000 & \cellcolor{h}C2000 & \cellcolor{h}PC1000  \\
-			\Xhline{1\arrayrulewidth}\bigstrut
-            ancestral sampling & 4.98\scalebox{0.7}{ $\pm$ .06}	& \cellcolor{h}4.88\scalebox{0.7}{ $\pm$ .06} &\cellcolor{h} & \cellcolor{h}\textbf{3.62\scalebox{0.7}{ $\pm$ .03}} & 3.24\scalebox{0.7}{ $\pm$ .02}	& \cellcolor{h}3.24\scalebox{0.7}{ $\pm$ .02} &\cellcolor{h} & \cellcolor{h}\textbf{3.21\scalebox{0.7}{ $\pm$ .02}}\\
-        	reverse diffusion & 4.79\scalebox{0.7}{ $\pm$ .07} & \cellcolor{h}4.74\scalebox{0.7}{ $\pm$ .08} & \cellcolor{h} & \cellcolor{h}\textbf{3.60\scalebox{0.7}{ $\pm$ .02}} & 3.21\scalebox{0.7}{ $\pm$ .02} & \cellcolor{h}3.19\scalebox{0.7}{ $\pm$ .02} & \cellcolor{h} &\cellcolor{h}\textbf{3.18\scalebox{0.7}{ $\pm$ .01}}\\
-            probability flow &	15.41\scalebox{0.7}{ $\pm$ .15} &\cellcolor{h}10.54\scalebox{0.7}{ $\pm$ .08}&\cellcolor{h} \multirow{-3}{*}{20.43\scalebox{0.7}{ $\pm$ .07}} & \cellcolor{h}\textbf{3.51\scalebox{0.7}{ $\pm$ .04}} & 3.59\scalebox{0.7}{ $\pm$ .04} & \cellcolor{h}3.23\scalebox{0.7}{ $\pm$ .03} & \cellcolor{h}\multirow{-3}{*}{19.06\scalebox{0.7}{ $\pm$ .06}} & \cellcolor{h}\textbf{3.06\scalebox{0.7}{ $\pm$ .03}}\\
-			\Xhline{3\arrayrulewidth}
+    \multirowcell{2}[-0.5ex]{
+    LTF~\cite{kashyap2022transfuser}}
+
 		\end{tabular}
     """.strip()
 
