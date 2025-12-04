@@ -4,6 +4,8 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "Letter": 9993,
+    "Envelope": 9993,  # ✉
     "glqq": ",,",
     "grqq": "“",
     "glq": ",",
@@ -47,6 +49,7 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "textregistered": 174,
     "textasciimacron": 175,
     "textdegree": 176,
+    "degree": 176,  # °
     "textpm": 177,
     "texttwosuperior": 178,
     "textthreesuperior": 179,
