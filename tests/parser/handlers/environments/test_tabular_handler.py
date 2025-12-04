@@ -152,7 +152,7 @@ def test_cellcolor_and_styling():
     # test cellcolor nested inside makecell inside multirow
     text = r"""
     \begin{tabular}{c}
-        \multirow{2}{*}{\makecell{\cellcolor[rgb]{1,0,0} 111 \\ 222}}
+        \multirow{2}{*}{\makecell{\cellcolor[rgb]{1,0,0} 111 \\ 222}} & \multicolumn{2}{c|}{{{333}}}
     \end{tabular}
     """.strip()
 
@@ -161,7 +161,7 @@ def test_cellcolor_and_styling():
     tabular = out[0]
     assert len(tabular.row_nodes) == 1
     row1 = tabular.row_nodes[0]
-    assert len(row1.cells) == 1
+    assert len(row1.cells) == 2
     cell1 = row1.cells[0]
     # Rowspan corrected to 1 because there's only 1 row in the table
     assert cell1.rowspan == 1 and cell1.colspan == 1  # Auto-corrected from declared 2
@@ -170,6 +170,11 @@ def test_cellcolor_and_styling():
 
     # inner cellcolor style is preserved!
     assert cell1.styles == ["color=rgb(255,0,0)"]
+
+    # check that {{{333}}} -> 333
+    cell2 = row1.cells[1]
+    assert cell2.body == [TextNode("333")]
+    assert cell2.colspan == 2
 
 
 def test_proper_cells_with_braces():

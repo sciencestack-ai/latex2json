@@ -30,6 +30,10 @@ def merge_nodes_into_cellnode(
             max_rows = max(max_rows, node.rowspan)
             max_cols = max(max_cols, node.colspan)
         else:
+            if isinstance(node, TextNode):
+                text = node.text
+                # strip out { and }, remnants due to tabular mode brace preservation used for splitting text in parser_core.py
+                node.text = text.replace("{", "").replace("}", "")
             out_nodes.append(node)
 
     cellnode = CellNode(body=out_nodes, rowspan=max_rows, colspan=max_cols)
@@ -92,7 +96,6 @@ def multicolumn_handler(parser: ParserCore, token: Token):
         return []
 
     nodes, num_cols = parsed
-
     cellnode = merge_nodes_into_cellnode(nodes, start_cols=num_cols)
 
     return [cellnode]
@@ -202,25 +205,8 @@ if __name__ == "__main__":
     text = r"""
 \begin{tabular}{l|c|c|*{1}}
      
-     \multicolumn{4}{c}{\textit{{Regeression-based Planner}}} \\
-     
-        \multirow{4}{*}{\makecell[l] {FIRST}} 
-        & \multirow{4}{*}{XX} 
-        & \textit{w/o} 
-        & \makecell{S 1 \\ S 2} 
-    \\
-     \multirowcell{2}[c]{MULTIROW \\ SDSD} & 2 & 3 & 4 \\
-      & 4 & 3 & 4 \\
-    \cmidrule{1-4}
-    
-        \multirow{4}{*}{\makecell[l] {SECOND}} 
-        & \multirow{4}{*}{YY} 
-        & \textit{w} 
-        & \makecell{S 3 \\ S 4} 
-    \\
         
-     \multicolumn{4}{c}{\textit{{Diffusion-based Planner}\quad \quad}} \\
-
+     \multicolumn{4}{c}{{{Diffusion-based Planner}}} \\
 \end{tabular}
     """.strip()
 
