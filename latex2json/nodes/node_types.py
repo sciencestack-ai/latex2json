@@ -5,6 +5,22 @@ class StrEnum(str, Enum):
     def __str__(self):
         return self.value
 
+    def __eq__(self, other) -> bool:
+        if isinstance(other, str):
+            return self.value == other
+        return super().__eq__(other)
+
+    def __hash__(self) -> int:
+        return hash(self.value)
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class BibType(StrEnum):
+    BIBITEM = "bibitem"
+    BIBTEX = "bibtex"
+
 
 class NodeTypes(StrEnum):
     """Enum for node types"""
@@ -68,19 +84,8 @@ class NodeTypes(StrEnum):
     # Other
     GROUP = "group"
 
-    def __eq__(self, other) -> bool:
-        if isinstance(other, str):
-            return self.value == other
-        return super().__eq__(other)
-
-    def __hash__(self) -> int:
-        return hash(self.value)
-
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}.{self.value.upper()}"
-
-    def __str__(self) -> str:
-        return self.value
 
 
 INLINE_TYPES = {

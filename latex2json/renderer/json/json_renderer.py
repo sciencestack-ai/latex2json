@@ -384,13 +384,20 @@ class JSONRenderer:
             # This makes it easier to read the json metadata format before 'content'
             tokens[i] = self._reorder_dict_keys(token)
 
+        out_tokens = []
         for token in tokens:
-            if isinstance(token, dict) and token.get("type") == NodeTypes.COMMAND:
-                command_name: str = token.get("command", "")
-                if command_name.lower() not in ACCEPTED_COMMAND_NAMES:
-                    self.logger.warning(f"Found unknown command: {command_name}")
+            if isinstance(token, dict):
+                if token.get("type") == NodeTypes.COMMAND:
+                    command_name: str = token.get("command", "")
+                    if command_name.lower() not in ACCEPTED_COMMAND_NAMES:
+                        self.logger.warning(f"Found unknown command: {command_name}")
+                elif token.get("type") == NodeTypes.BIBLIOGRAPHY:
+                    # dont append empty bibliography tokens
+                    if not token.get("content"):
+                        continue
+            out_tokens.append(token)
 
-        return tokens
+        return out_tokens
 
 
 if __name__ == "__main__":

@@ -1,12 +1,6 @@
-from enum import StrEnum
 from typing import Dict, List, Optional
 from latex2json.nodes.base_nodes import ASTNode, TextNode
-from latex2json.nodes.node_types import NodeTypes
-
-
-class BibType(StrEnum):
-    BIBITEM = "bibitem"
-    BIBTEX = "bibtex"
+from latex2json.nodes.node_types import BibType, NodeTypes
 
 
 def convert_fields_to_bibtex_str(
