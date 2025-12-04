@@ -121,6 +121,19 @@ def multirowcell_handler(parser: ParserCore, token: Token):
     return [cell]
 
 
+def multirowthead_handler(parser: ParserCore, token: Token):
+    r"""
+    \multirowthead{2}{...}
+    Combines multirow and thead - creates a multi-row cell with header formatting
+    """
+    rowspan = _parse_number_in_brace(parser, token.value)
+
+    # treat as makecell
+    cell = makecell_handler(parser, token)[0]
+    cell.rowspan = rowspan
+    return [cell]
+
+
 def makecell_handler(parser: ParserCore, token: Token):
     r"""Handle \makecell command which creates a cell with line breaks in tables.
     Format: \makecell[alignment]{content with \\ for line breaks}
@@ -187,6 +200,7 @@ def register_tabular_cell_handlers(parser: ParserCore):
 
     # multirow/col
     parser.register_handler("multirowcell", multirowcell_handler)
+    parser.register_handler("multirowthead", multirowthead_handler)
     parser.register_handler("multirow", multirow_handler)
     parser.register_handler("multicolumn", multicolumn_handler)
 
