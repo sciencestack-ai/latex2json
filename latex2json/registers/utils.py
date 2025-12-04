@@ -100,6 +100,7 @@ def dimension_to_scaled_points(
     """
     if not unit or unit.isspace():
         return int(value)
+    unit = unit.strip()
     if not is_dimension_unit(unit):
         return None
     return int(value * LATEX_DIMENSION_UNITS[unit])

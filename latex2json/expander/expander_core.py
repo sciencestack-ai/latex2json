@@ -1218,8 +1218,9 @@ class ExpanderCore:
                     self.skip_whitespace()
 
                 unit, relax = self._expand_and_combine_as_str(
-                    lambda tok, cur_str: tok.catcode == Catcode.LETTER
-                    or (tok.value == " " and cur_str.strip() == "")
+                    lambda tok, cur_str: (
+                        tok.catcode == Catcode.LETTER and " " not in cur_str
+                    )
                 )
 
         pts = dimension_to_scaled_points(digits, unit)
@@ -1306,6 +1307,13 @@ class ExpanderCore:
 
         Returns: (int, bool) where int is the parsed value and bool is whether relax
         """
+        self.skip_whitespace()
+        tok = self.peek()
+        if is_begin_group_token(tok):
+            # e.g. \vskip{\fill} or \vskip{0pt plus 1fil}
+            brace_tokens = self.parse_brace_as_tokens(expand=True)
+            self.push_tokens(brace_tokens + [RELAX_TOKEN.copy()])
+
         # Parse base component (required)
         base_result = self._parse_dimensions()
         if base_result is None:

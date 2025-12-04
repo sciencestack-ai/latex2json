@@ -1,6 +1,8 @@
 from typing import Tuple, Optional, List, Union
+from latex2json.expander.handlers.handler_utils import make_command_to_str_macro
 from latex2json.expander.macro_registry import Handler, Macro, MacroType
 from latex2json.registers.defaults.counts import BUILTIN_COUNTS
+from latex2json.registers.defaults.glues import BUILTIN_GLUES
 from latex2json.registers.defaults.inserts import BUILTIN_INSERTS
 from latex2json.registers.defaults.skips import BUILTIN_SKIPS
 from latex2json.registers import RegisterType
@@ -221,6 +223,13 @@ def register_base_register_macros(expander: ExpanderCore):
             is_global=True,
         )
 
+    for glue_name, glue_value in BUILTIN_GLUES.items():
+        expander.register_macro(
+            glue_name,
+            make_command_to_str_macro(glue_name, glue_value),
+            is_global=True,
+        )
+
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
@@ -228,12 +237,8 @@ if __name__ == "__main__":
     expander = Expander()
     # test in scope
     text = r"""
-        \newtoks\tokker
-        \tokker={123}
-        \the\tokker
+        \hskip \fill
     """.strip()
-    expander.push_scope()
     out = expander.expand(text)
-    expander.pop_scope()
-
-    expander.state.get_register(RegisterType.TOKS, "tokker")
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print(out_str)

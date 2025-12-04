@@ -213,3 +213,17 @@ def test_newinserts():
 
         test_assignment = r"\skip" + f"\\{builtin_insert}" + r" = \skip\footins"
         assert expander.expand(test_assignment) == []
+
+
+def test_glues():
+    expander = Expander()
+
+    text = r"""
+\vskip{\fill}
+\vskip 0pt plus 1fil
+\vskip{0pt plus 1fil}
+"""
+    out = expander.expand(text)
+    out = strip_whitespace_tokens(out)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == ""
