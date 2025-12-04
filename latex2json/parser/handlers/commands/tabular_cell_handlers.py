@@ -34,6 +34,8 @@ def merge_nodes_into_cellnode(
                 text = node.text
                 # strip out { and }, remnants due to tabular mode brace preservation used for splitting text in parser_core.py
                 node.text = text.replace("{", "").replace("}", "")
+                if not node.text.strip():
+                    continue
             out_nodes.append(node)
 
     cellnode = CellNode(body=out_nodes, rowspan=max_rows, colspan=max_cols)
@@ -105,8 +107,7 @@ def multirowcell_handler(parser: ParserCore, token: Token):
     r"""
     multirowcell{2}[-0.5ex][l]{...}
     """
-    number = _parse_number_in_brace(parser, token.value)
-    # NOTE that multirowcell is not true rowspan but only visual. Hence actual rowspan is 1.
+    rowspan = _parse_number_in_brace(parser, token.value)
 
     parser.skip_whitespace()
     opt_arg1 = parser.parse_bracket_as_nodes()
@@ -115,7 +116,9 @@ def multirowcell_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
 
     # treat as makecell
-    return makecell_handler(parser, token)
+    cell = makecell_handler(parser, token)[0]
+    cell.rowspan = rowspan
+    return [cell]
 
 
 def makecell_handler(parser: ParserCore, token: Token):
@@ -204,9 +207,32 @@ if __name__ == "__main__":
     parser = Parser()
     text = r"""
 \begin{tabular}{l|c|c|*{1}}
-     
-        
-     \multicolumn{4}{c}{{{Diffusion-based Planner}}} \\
+    \multirowcell{2}[-0.5ex][l]{
+    LTF~\cite{kashyap2022transfuser}} & \multirowcell{2}[-0.8ex][c]{ResNet34} 
+    & \textit{w/o} 
+    & 97.7
+    & 94.0
+    & 99.3
+    & 99.8
+    & 87.2 
+    & 96.7 
+    & 95.5 
+    & {98.3} 
+    & 82.9 
+    & 81.5   \\
+    \cmidrule{3-13}
+
+     &  & \cellcolor[rgb]{0.9,0.95,1}\textit{w/}${^\ast}$
+     & \cellcolor[rgb]{0.9,0.95,1}98.1
+     & \cellcolor[rgb]{0.9,0.95,1}95.8
+     & \cellcolor[rgb]{0.9,0.95,1}99.7
+     & \cellcolor[rgb]{0.9,0.95,1}99.9
+     & \cellcolor[rgb]{0.9,0.95,1}87.3 
+     & \cellcolor[rgb]{0.9,0.95,1}{97.3}
+     & \cellcolor[rgb]{0.9,0.95,1}{96.9}
+     & \cellcolor[rgb]{0.9,0.95,1}{98.3}
+     & \cellcolor[rgb]{0.9,0.95,1}{88.2}
+     & \cellcolor[rgb]{0.9,0.95,1}\textbf{84.4} \textcolor[rgb]{0,0.3,0.6}{{\tiny +2.9}}  \\
 \end{tabular}
     """.strip()
 

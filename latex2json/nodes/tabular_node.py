@@ -64,7 +64,15 @@ class CellNode(ASTNode):
 
     def __str__(self):
         out = ", ".join(child.__str__() for child in self.children)
-        return "[" + out + "]"
+        out = "[" + out + "]"
+        if self.rowspan > 1:
+            out += f", rowspan={self.rowspan}"
+        if self.colspan > 1:
+            out += f", colspan={self.colspan}"
+        return out
+
+    def __repr__(self):
+        return self.__str__()
 
     def to_json(self):
         result = super().to_json()
