@@ -41,7 +41,8 @@ def test_tabular_with_multirow_col():
     assert row1.cells[3].body == [TextNode("3")]
 
     assert row2.cells[0].body == [TextNode("4")]
-    assert row2.cells[0].rowspan == 2
+    # Rowspan is corrected to 1 because there's no empty cell in subsequent rows
+    assert row2.cells[0].rowspan == 1  # Auto-corrected from declared 2
     assert row2.cells[0].colspan == 3
     assert row2.cells[1].body == [TextNode("6")]
 
@@ -119,7 +120,7 @@ def test_with_makecell():
 
     text = r"""
     \begin{tabular}{c}
-        \makecell{111 \\ 222} & 333 \tabularnewline
+        {\makecell{111 \\ 222}} & 333 \tabularnewline
         444 & \shortstack{555 \\ 666}
     \end{tabular}
     """.strip()
@@ -162,7 +163,8 @@ def test_cellcolor_and_styling():
     row1 = tabular.row_nodes[0]
     assert len(row1.cells) == 1
     cell1 = row1.cells[0]
-    assert cell1.rowspan == 2 and cell1.colspan == 1
+    # Rowspan corrected to 1 because there's only 1 row in the table
+    assert cell1.rowspan == 1 and cell1.colspan == 1  # Auto-corrected from declared 2
     cell_str = parser.convert_nodes_to_str(cell1.body, postprocess=False).strip()
     assert cell_str.replace(" ", "") == "111\n222"
 
@@ -238,3 +240,182 @@ def test_nicetabular():
     assert row0_cells[0].body == [TextNode("Last name")]
     assert row0_cells[1].body == [TextNode("First name")]
     assert row0_cells[2].body == [TextNode("Birth day")]
+
+
+def test_build_cell_matrix_with_multirow():
+    """Test cell matrix building with multirow spanning."""
+    parser = Parser()
+    text = r"""
+    \begin{tabular}{ccc}
+        \multirow{2}{*}{A} & B & C \\
+        & D & E
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    # The parser creates 3 cells in row 1: empty, D, E
+    # This is correct - the LaTeX has an empty cell at position 0
+    assert len(tabular.row_nodes[1].cells) == 3
+
+    matrix = tabular.build_cell_matrix()
+    assert len(matrix) == 2  # 2 rows
+    assert len(matrix[0]) == 3  # 3 columns
+
+    # First cell should span 2 rows
+    cell_a = matrix[0][0]
+    assert cell_a.body == [TextNode("A")]
+    assert cell_a.rowspan == 2
+
+    # Both row 0 and row 1, column 0 should point to same cell
+    assert matrix[0][0] is cell_a
+    assert matrix[1][0] is cell_a  # Same cell reference - occupied by multirow
+
+    # Other cells should be different
+    assert matrix[0][1].body == [TextNode("B")]
+    assert matrix[0][2].body == [TextNode("C")]
+    # Row 1: The empty cell from "&" gets pushed to col 1, D to col 2
+    # E would be at col 3 but matrix is only 3 cols wide
+    assert matrix[1][1].body == []  # Empty cell from "&"
+    assert matrix[1][2].body == [TextNode("D")]
+
+
+def test_build_cell_matrix_with_multicolumn():
+    """Test cell matrix building with multicolumn spanning."""
+    parser = Parser()
+    text = r"""
+    \begin{tabular}{ccc}
+        \multicolumn{2}{c}{AB} & C \\
+        D & E & F
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    matrix = tabular.build_cell_matrix()
+    assert len(matrix) == 2  # 2 rows
+    assert len(matrix[0]) == 3  # 3 columns
+
+    # First cell should span 2 columns
+    cell_ab = matrix[0][0]
+    assert cell_ab.body == [TextNode("AB")]
+    assert cell_ab.colspan == 2
+
+    # Both column 0 and 1 in row 0 should point to same cell
+    assert matrix[0][0] is cell_ab
+    assert matrix[0][1] is cell_ab  # Same cell reference
+
+    # Other cells
+    assert matrix[0][2].body == [TextNode("C")]
+    assert matrix[1][0].body == [TextNode("D")]
+    assert matrix[1][1].body == [TextNode("E")]
+    assert matrix[1][2].body == [TextNode("F")]
+
+
+def test_build_cell_matrix_complex():
+    """Test cell matrix with both multirow and multicolumn."""
+    parser = Parser()
+    text = r"""
+    \begin{tabular}{cccc}
+        \multirow{2}{*}{A} & B & C & D \\
+        & \multicolumn{2}{c}{EF} & G \\
+        H & I & J & K
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    matrix = tabular.build_cell_matrix()
+    assert len(matrix) == 3  # 3 rows
+    assert len(matrix[0]) == 4  # 4 columns
+
+    # Cell A spans 2 rows
+    cell_a = matrix[0][0]
+    assert cell_a.body == [TextNode("A")]
+    assert matrix[0][0] is cell_a
+    assert matrix[1][0] is cell_a
+
+    # Row 1 has empty cell at [1][1], then EF at [1][2-3]
+    assert matrix[1][1].body == []  # Empty cell from "&"
+
+    # Cell EF spans 2 columns starting at col 2
+    cell_ef = matrix[1][2]
+    assert cell_ef.body == [TextNode("EF")]
+    assert cell_ef.colspan == 2
+    assert matrix[1][2] is cell_ef
+    assert matrix[1][3] is cell_ef
+
+
+def test_correct_rowspans_automatic():
+    """Test that rowspans are automatically corrected during parsing."""
+    parser = Parser()
+    # Declare multirow{4} but only 2 rows exist
+    text = r"""
+    \begin{tabular}{ccc}
+        \multirow{4}{*}{A} & B & C \\
+        & D & E
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    # The rowspan should have been automatically corrected to 2
+    cell_a = tabular.row_nodes[0].cells[0]
+    assert cell_a.body == [TextNode("A")]
+    assert cell_a.rowspan == 2  # Corrected from 4 to 2
+
+
+def test_correct_rowspans_overdeclared():
+    """Test correction when multirow doesn't actually span all declared rows."""
+    parser = Parser()
+    text = r"""
+    \begin{tabular}{ccc}
+        \multirow{3}{*}{A} & B & C \\
+        & D & E \\
+        X & Y & Z
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    # The rowspan should have been corrected to 2 (row 3 has X, not empty)
+    cell_a = tabular.row_nodes[0].cells[0]
+    assert cell_a.rowspan == 2  # Corrected from 3 to 2
+
+
+def test_correct_rowspans_multiple_cells():
+    """Test correction with multiple multirow cells in same table."""
+    parser = Parser()
+    text = r"""
+    \begin{tabular}{cccc}
+        \multirow{3}{*}{1} & \multirow{2}{*}{2} & \multirow{2}{*}{3} & 4 \\
+        & & 3 & 4 \\
+        1 & 2 & 3 & 4
+    \end{tabular}
+    """.strip()
+
+    out = parser.parse(text, postprocess=True)
+    assert len(out) == 1 and isinstance(out[0], TabularNode)
+    tabular = out[0]
+
+    # Cell A: declared 3, should be corrected to 2
+    cell_a = tabular.row_nodes[0].cells[0]
+    assert cell_a.rowspan == 2  # Corrected from 3
+
+    # Cell B: declared 2, should remain 2 (correct)
+    cell_b = tabular.row_nodes[0].cells[1]
+    assert cell_b.rowspan == 2  # Already correct
+
+    # Cell C: declared 2, should be 1
+    cell_c = tabular.row_nodes[0].cells[2]
+    assert cell_c.rowspan == 1  # Corrected from 2 to 1

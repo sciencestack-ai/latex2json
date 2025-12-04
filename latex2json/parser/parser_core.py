@@ -297,8 +297,9 @@ class ParserCore:
         parser = self.create_standalone(logger=self.logger, expander=self.expander)
         return parser.process_tokens(tokens)
 
-    def _generate_stop_token(self):
-        return self.expander._generate_stop_token()
+    @staticmethod
+    def _generate_stop_token():
+        return Expander._generate_stop_token()
 
     def process_tokens(
         self, tokens: List[Token], scoped=False, postprocess=False
@@ -770,7 +771,8 @@ class ParserCore:
             nodes = self.postprocess_nodes(nodes)
         return "".join(node.detokenize() for node in nodes)
 
-    def postprocess_nodes(self, nodes: List[ASTNode]) -> List[ASTNode]:
+    @staticmethod
+    def postprocess_nodes(nodes: List[ASTNode]) -> List[ASTNode]:
         r"""
         post process nodes by
         1. merging spacing, newlines
@@ -779,7 +781,7 @@ class ParserCore:
         final_nodes: List[ASTNode] = []
 
         # parse out all existing stop tokens (shouldn't happen)
-        stop_token_value = self._generate_stop_token().value
+        stop_token_value = ParserCore._generate_stop_token().value
 
         for node in nodes:
             if not node.should_postprocess:
@@ -824,7 +826,7 @@ class ParserCore:
                     text = normalize_whitespace_and_lines(text)
                     node.text = text.replace("~", " ")
             elif node.children:
-                new_children = self.postprocess_nodes(node.children)
+                new_children = ParserCore.postprocess_nodes(node.children)
                 node.set_children(new_children)
 
             final_nodes.append(node)

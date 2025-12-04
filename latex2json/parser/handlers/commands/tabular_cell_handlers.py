@@ -46,7 +46,8 @@ def _parse_number_in_brace(parser: ParserCore, cmd_name: str) -> Optional[int]:
         )
         return 1
     try:
-        number = int(brace1[0].text)
+        # round down in case of decimals
+        number = int(float(brace1[0].text))
     except ValueError:
         parser.logger.warning(
             f"{cmd_name}: expected a number as first argument, found {brace1[0].text} - defaulting to 1"
@@ -102,6 +103,7 @@ def multirowcell_handler(parser: ParserCore, token: Token):
     multirowcell{2}[-0.5ex][l]{...}
     """
     number = _parse_number_in_brace(parser, token.value)
+    # NOTE that multirowcell is not true rowspan but only visual. Hence actual rowspan is 1.
 
     parser.skip_whitespace()
     opt_arg1 = parser.parse_bracket_as_nodes()
@@ -109,8 +111,8 @@ def multirowcell_handler(parser: ParserCore, token: Token):
     opt_arg2 = parser.parse_bracket_as_nodes()
     parser.skip_whitespace()
 
-    nodes = parser.parse_brace_as_nodes()
-    return [merge_nodes_into_cellnode(nodes, start_rows=number)]
+    # treat as makecell
+    return makecell_handler(parser, token)
 
 
 def makecell_handler(parser: ParserCore, token: Token):
@@ -198,11 +200,28 @@ if __name__ == "__main__":
 
     parser = Parser()
     text = r"""
-		\begin{tabular}{c|c|c|c|c|c|c|c|c}
-    \multirowcell{2}[-0.5ex]{
-    LTF~\cite{kashyap2022transfuser}}
+\begin{tabular}{l|c|c|*{1}}
+     
+     \multicolumn{4}{c}{\textit{{Regeression-based Planner}}} \\
+     
+        \multirow{4}{*}{\makecell[l] {FIRST}} 
+        & \multirow{4}{*}{XX} 
+        & \textit{w/o} 
+        & \makecell{S 1 \\ S 2} 
+    \\
+     \multirowcell{2}[c]{MULTIROW \\ SDSD} & 2 & 3 & 4 \\
+      & 4 & 3 & 4 \\
+    \cmidrule{1-4}
+    
+        \multirow{4}{*}{\makecell[l] {SECOND}} 
+        & \multirow{4}{*}{YY} 
+        & \textit{w} 
+        & \makecell{S 3 \\ S 4} 
+    \\
+        
+     \multicolumn{4}{c}{\textit{{Diffusion-based Planner}\quad \quad}} \\
 
-		\end{tabular}
+\end{tabular}
     """.strip()
 
     #     text = r"""
