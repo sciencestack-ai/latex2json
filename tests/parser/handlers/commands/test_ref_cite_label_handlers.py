@@ -251,7 +251,7 @@ def test_hyperlink_bibitems():
     \begin{thebibliography}{99}
     \bibitem{BIB1} % cite.BIB1
     My first citation
-    
+
     \end{thebibliography}
     """.strip()
     out = parser.parse(text)
@@ -266,3 +266,28 @@ def test_hyperlink_bibitems():
     )
     exp_bibitem.labels = ["cite.BIB1"]
     assert bibitem == exp_bibitem
+
+
+def test_crefalias():
+    """Test crefalias command from cleveref package."""
+    parser = Parser()
+
+    # Basic crefalias usage - should parse without errors and return empty
+    text = r"\crefalias{prop}{proposition}"
+    out = parser.parse(text)
+
+    assert len(out) == 0  # crefalias doesn't produce output nodes
+
+    # Multiple crefalias commands
+    text = r"\crefalias{thm}{theorem}\crefalias{lem}{lemma}\crefalias{cor}{corollary}"
+    out = parser.parse(text)
+
+    assert len(out) == 0
+
+    # crefalias with subsequent cref usage
+    text = r"\crefalias{prop}{proposition}\cref{prop:example}"
+    out = parser.parse(text)
+
+    assert len(out) == 1
+    assert isinstance(out[0], RefNode)
+    assert out[0].references == ["prop:example"]

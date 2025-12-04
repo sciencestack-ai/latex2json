@@ -154,13 +154,37 @@ CITE_COMMANDS = [
 ]
 
 
+def crefalias_handler(parser: ParserCore, token: Token):
+    """Handler for \\crefalias from cleveref package.
+    Syntax: \\crefalias{counter}{type}
+    Maps a counter name to a reference type for cross-referencing."""
+    parser.skip_whitespace()
+    counter_nodes = parser.parse_brace_as_nodes()
+    parser.skip_whitespace()
+    type_nodes = parser.parse_brace_as_nodes()
+    if not counter_nodes:
+        parser.logger.warning("\\crefalias expects a counter name")
+        return None
+    if not type_nodes:
+        parser.logger.warning("\\crefalias expects a type name")
+        return None
+    # For this parser, we don't need to track counter aliases
+    # as we're extracting semantic content, not rendering references
+    # Just consume the command and return empty
+    return []
+
+
 def defcitealias_handler(parser: ParserCore, token: Token):
+    """Handler for \\defcitealias from natbib package.
+    Syntax: \\defcitealias{key}{alias}
+    Defines a citation alias for bibliography entries."""
     parser.skip_whitespace()
     cite_key = parser.parse_brace_as_nodes()
+    parser.skip_whitespace()
+    alias_nodes = parser.parse_brace_as_nodes()
     if not cite_key:
         parser.logger.warning("\\defcitealias expects a citation key")
         return None
-    alias_nodes = parser.parse_brace_as_nodes()
     if not alias_nodes:
         parser.logger.warning("\\defcitealias expects an alias")
         return None
@@ -233,7 +257,10 @@ def register_ref_label_handlers(parser: ParserCore):
     # nocite (basically parse and ignore)
     register_ignore_handlers_util(parser, {"nocite": 1})
 
-    # defcitealias
+    # crefalias (cleveref package)
+    parser.register_handler("crefalias", crefalias_handler)
+
+    # defcitealias (natbib package)
     parser.register_handler("defcitealias", defcitealias_handler)
 
     # citealias
