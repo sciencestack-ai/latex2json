@@ -75,6 +75,10 @@ class CellNode(ASTNode):
         return self.__str__()
 
     def to_json(self):
+        # Check cache first
+        if self._json_cache is not None:
+            return self._json_cache.copy()
+
         result = super().to_json()
         result["type"] = "cell"
         result["content"] = [child.to_json() for child in self.children]
@@ -82,6 +86,9 @@ class CellNode(ASTNode):
             result["rowspan"] = self.rowspan
         if self.colspan > 1:
             result["colspan"] = self.colspan
+
+        # Cache the result
+        self._json_cache = result.copy()
         return result
 
     def copy(self):
@@ -321,8 +328,13 @@ class TabularNode(EnvironmentNode):
         return self.detokenize()
 
     def to_json(self):
+        # Check cache first
+        if self._json_cache is not None:
+            return self._json_cache.copy()
+
         result = super().to_json()
         result["type"] = NodeTypes.TABULAR
+
         content = []
         for row in self.row_nodes:
             row_json = []
@@ -340,6 +352,9 @@ class TabularNode(EnvironmentNode):
                 row_json.append(cell_json)
             content.append(row_json)
         result["content"] = content
+
+        # Cache the result
+        self._json_cache = result.copy()
         return result
 
     def copy(self):

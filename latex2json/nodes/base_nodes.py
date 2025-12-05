@@ -20,13 +20,25 @@ class ASTNode(ABC):
     ):
         self.children = children if children is not None else []
         self.parent = parent
-        self.labels = labels if labels is not None else []
+        self._labels = labels if labels is not None else []
         self._styles = styles if styles is not None else []
 
         # variables for postprocessing
         self.should_postprocess = True
         self.is_math = False
         self.source_file: Optional[str] = None
+
+        # Cache for to_json to prevent redundant conversions
+        self._json_cache: Optional[dict] = None
+
+    @property
+    def labels(self) -> List[str]:
+        return self._labels
+
+    @labels.setter
+    def labels(self, value: List[str]):
+        self._labels = value
+        self._json_cache = None
 
     def __repr__(self):
         return self.__str__()
@@ -48,6 +60,9 @@ class ASTNode(ABC):
         for child in self.children:
             child.parent = self
 
+        # Invalidate cache when children change
+        self._json_cache = None
+
     def add_styles(self, styles: List[str], insert_at_front: bool = False):
         if not styles:
             return
@@ -66,6 +81,9 @@ class ASTNode(ABC):
             if style not in self._styles and style not in parent_styles:
                 self._styles.append(style)
 
+        # Invalidate cache when styles change
+        self._json_cache = None
+
     @property
     def styles(self) -> List[str]:
         return self._styles
@@ -82,6 +100,10 @@ class ASTNode(ABC):
         """Base to_json implementation that handles styles and labels.
         Child classes should call this using super().to_json() and extend it with their own fields.
         """
+        # Check cache first to avoid redundant conversions
+        if self._json_cache is not None:
+            return self._json_cache.copy()
+
         result = {}
 
         if self.styles:
