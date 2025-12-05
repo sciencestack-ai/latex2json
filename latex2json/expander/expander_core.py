@@ -883,7 +883,21 @@ class ExpanderCore:
             return self._exec_macro(tok)
         else:
             self.state.pending_global = False
-            if is_begin_group_token(tok):
+            # Pop scope when we encounter an EnvironmentEndToken that needs it
+            # This completes the environment scope lifecycle:
+            #   1. begin_environment_handler pushes scope
+            #   2. begin_definition and body are processed (scope active)
+            #   3. end_definition is processed (scope still active - can access scoped macros)
+            #   4. EnvironmentEndToken is encountered HERE - scope is popped
+            # The flag ensures we only pop for "fresh" end tokens, not reprocessed ones
+            if tok.type == TokenType.ENVIRONMENT_END:
+                from latex2json.tokens.types import EnvironmentEndToken
+                if isinstance(tok, EnvironmentEndToken) and hasattr(tok, 'should_pop_scope') and tok.should_pop_scope:
+                    self.pop_env_stack(tok.value)
+                    self.pop_scope()
+                    # Clear the flag so we don't pop again if token is reprocessed
+                    tok.should_pop_scope = False
+            elif is_begin_group_token(tok):
                 self.push_scope()
             elif is_end_group_token(tok):
                 self.pop_scope()
@@ -1738,16 +1752,18 @@ class ExpanderCore:
 
         if env_def.end_handler is None:
 
-            def end_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+            def end_handler_impl(
+                expander: "ExpanderCore", token: Token, env_name_param: str
+            ) -> List[Token]:
                 # Use shared environment end processing logic
                 from latex2json.expander.handlers.environment.environment_utils import (
                     process_environment_end,
                 )
 
-                return process_environment_end(expander, token, env_def)
+                return process_environment_end(expander, token, env_name_param, env_def)
 
             # attach the handler to the envdef instance
-            env_def.end_handler = end_handler
+            env_def.end_handler = end_handler_impl
 
         if env_def.has_direct_command and env_name.isalpha():
             self.register_macro(
@@ -1756,9 +1772,19 @@ class ExpanderCore:
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
+
+            # Create a wrapper for direct end commands (like \endhello)
+            # that extracts the env name and calls the end_handler
+            def make_end_macro_handler(env_name_captured: str):
+                def end_macro_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                    # Extract env name from token (remove "end" prefix)
+                    name = token.value[3:] if token.value.startswith("end") else env_name_captured
+                    return env_def.end_handler(expander, token, name)
+                return end_macro_handler
+
             self.register_macro(
                 "end" + env_name,
-                Macro("end" + env_name, env_def.end_handler, env_def.end_definition),
+                Macro("end" + env_name, make_end_macro_handler(env_name), env_def.end_definition),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
@@ -1776,9 +1802,15 @@ class ExpanderCore:
             )
 
         if env_def.end_command:
+            # Wrap end_handler to provide env_name for custom end commands
+            def make_end_cmd_handler(env_name_captured: str):
+                def end_cmd_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                    return env_def.end_handler(expander, token, env_name_captured)
+                return end_cmd_handler
+
             self.register_macro(
                 env_def.end_command,
-                Macro(env_def.end_command, env_def.end_handler, env_def.end_definition),
+                Macro(env_def.end_command, make_end_cmd_handler(env_name), env_def.end_definition),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )

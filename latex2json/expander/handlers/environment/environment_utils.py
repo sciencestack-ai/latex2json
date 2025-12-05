@@ -345,26 +345,32 @@ def process_environment_begin(
 
 
 def process_environment_end(
-    expander: ExpanderCore, token: Token, env_def: EnvironmentDefinition
+    expander: ExpanderCore,
+    token: Token,
+    env_name: str,
+    env_def: EnvironmentDefinition,
 ) -> List[Token]:
     """Process environment end logic - shared between \\end and \\end@float.
 
-    This function contains the complete environment end handling logic including:
-    - end_definition expansion (optional)
-    - End hook execution
-    - Mode popping (for math environments)
-    - EnvironmentEndToken creation
+    This function prepares tokens for environment end, including the end_definition
+    and EnvironmentEndToken. The returned tokens will be pushed to the stream by
+    end_environment_handler, allowing them to expand while the environment scope
+    is still active.
+
+    Scope Management:
+        - Scope is NOT popped here
+        - The EnvironmentEndToken is marked with should_pop_scope=True
+        - Scope will be popped in expand_next when that token is processed
+        - This ensures end_definition can access scoped macros defined in begin_definition
 
     Args:
         expander: The expander instance
         token: The token that triggered this (for direct_command tracking)
         env_name: The environment name (input name, e.g., "wrapfigure")
         env_def: The environment definition
-        expand_end_definition: If True, expand the end_definition tokens.
-                              Set to False for \\end@float if needed.
 
     Returns:
-        List of tokens to insert
+        List of tokens: [end_definition tokens..., EnvironmentEndToken]
     """
     state = expander.state
     out_env_name = env_def.name
@@ -380,13 +386,13 @@ def process_environment_end(
     if token.value != "end":
         direct_command = token.value
 
-    # Create end token
-    end_token = EnvironmentEndToken(out_env_name, direct_command=direct_command)
+    # Create end token with flag to indicate scope should be popped
+    end_token = EnvironmentEndToken(out_env_name, direct_command=direct_command, should_pop_scope=True)
 
-    # Expand end_definition if requested
+    # Substitute arguments in end_definition
     out_tokens = []
     subbed = expander.substitute_token_args(env_def.end_definition, [])
-    out_tokens.extend(expander.expand_tokens(subbed))
+    out_tokens.extend(subbed)
 
     # Execute end hooks
     for hook in env_def.hooks.end:
@@ -479,33 +485,41 @@ def end_environment_handler(
 
     env_def = expander.state.get_environment_definition(name)
 
-    out_tokens = [create_environment_end_token(name)]
-
     if not env_def:
+        # Fallback: environment not found
         log_str = f"End Environment '{name}' not found -> "
         end_name = "end" + name
+        out_tokens = []
         if expander.get_macro(end_name):
             log_str += f"Found \\{end_name} instead"
-            # convert to macro
-            # Expand here since we want to expand the end_name macro, and insert before final environment end token
+            # Expand the end_name macro
             next_tokens = expander.expand_tokens(
                 [Token(TokenType.CONTROL_SEQUENCE, end_name)]
             )
             if next_tokens:
-                out_tokens = next_tokens + out_tokens
+                out_tokens.extend(next_tokens)
         else:
             log_str += " returning default end token"
         expander.logger.info(log_str)
+        # Create end token with scope pop flag
+        end_token = EnvironmentEndToken(name, should_pop_scope=True)
+        expander.push_tokens(out_tokens + [end_token])
+        return []
+
     elif env_def.end_handler:
-        out_tokens = env_def.end_handler(expander, token)
+        # Get tokens from handler (includes unexpanded end_definition + end token with flag)
+        out_tokens = env_def.end_handler(expander, token, name)
+        # Push tokens so they can be expanded while scope is still active
+        # Scope will be popped when EnvironmentEndToken is encountered
+        expander.push_tokens(out_tokens)
+        return []
+
     else:
-        # env is defined but has no end handler
+        # Environment is defined but has no end handler
         expander.logger.info(
             f"{token.value}{{{name}}} has no end handler, returning default environment end token"
         )
-
-    # pop scope at the end!
-    expander.pop_env_stack(name)
-    expander.pop_scope()
-
-    return out_tokens
+        # Create end token with scope pop flag
+        end_token = EnvironmentEndToken(name, should_pop_scope=True)
+        expander.push_tokens([end_token])
+        return []

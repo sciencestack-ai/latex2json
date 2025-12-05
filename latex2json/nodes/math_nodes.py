@@ -12,73 +12,6 @@ from latex2json.nodes.utils import merge_text_nodes, strip_whitespace_nodes
 from latex2json.nodes.node_types import NodeTypes
 
 
-def render_math_children_to_json(
-    children: List[ASTNode], merge_nodes: bool = True
-) -> List[dict]:
-    """
-    Render math children to JSON, converting CommandNode and nested EquationNode to text.
-
-    Args:
-        children: List of child nodes to render
-        merge_nodes: Whether to merge text nodes and add spacing (default True)
-
-    Returns:
-        List of JSON dictionaries representing the rendered children
-    """
-    if not merge_nodes:
-        # Simplified version for array cells - no copying, just direct conversion
-        result = []
-        for child in children:
-            if isinstance(child, CommandNode):
-                result.append({"type": "text", "text": child.detokenize()})
-            elif isinstance(child, EquationNode):
-                result.append({"type": "text", "text": child.equation_to_str()})
-            else:
-                result.append(child.to_json())
-        return result
-
-    # Full version with merging and spacing for EquationNode
-    nodes = []
-
-    def should_add_space_after(i: int) -> bool:
-        if i >= len(children) - 1:
-            return False
-        child = children[i]
-        if isinstance(child, CommandNode):
-            if not child.name[-1].isalpha():
-                return False
-        next_node = children[i + 1]
-        if isinstance(next_node, TextNode):
-            if next_node.text and next_node.text[0].isalpha():
-                return True
-        return False
-
-    for i, child in enumerate(children):
-        styles = child.styles
-        labels = child.labels
-
-        if isinstance(child, CommandNode):
-            cmd_str = child.detokenize()
-            node = TextNode(cmd_str)
-            node.add_styles(styles)
-            node.labels = labels
-            nodes.append(node)
-        elif isinstance(child, EquationNode):
-            eq_str = child.equation_to_str()
-            node = TextNode(eq_str)
-            node.add_styles(styles)
-            node.labels = labels
-            nodes.append(node)
-        else:
-            nodes.append(child)
-
-        if should_add_space_after(i):
-            nodes.append(TextNode(" "))
-
-    nodes = merge_text_nodes(nodes, ignore_styles=True)
-    return [node.to_json() for node in nodes]
-
-
 class EquationNode(ASTNode):
     def __init__(
         self,
@@ -102,7 +35,6 @@ class EquationNode(ASTNode):
     def set_body(self, body: List[ASTNode]):
         body = strip_whitespace_nodes(body)
         self.set_children(body)
-        # Cache invalidation is handled by set_children
 
     @property
     def body(self) -> List[ASTNode]:
@@ -154,10 +86,6 @@ class EquationNode(ASTNode):
         return begin_str + math_str + end_str
 
     def to_json(self):
-        # Check cache first
-        if self._json_cache is not None:
-            return self._json_cache.copy()
-
         result = super().to_json()
         result["type"] = NodeTypes.EQUATION
         result["display"] = self.equation_type.value
@@ -166,11 +94,56 @@ class EquationNode(ASTNode):
         if self.numbering:
             result["numbering"] = self.numbering
 
-        content_json = render_math_children_to_json(self.children, merge_nodes=True)
+        # convert command nodes to text nodes
+        nodes = []
+        childs = self.children
+
+        def should_add_space_after(i: int) -> bool:
+            # if we're converting to a string, we need to be careful about textnodes rightafter commands
+            # so we add a space after the command
+
+            if i >= len(childs) - 1:
+                return False
+
+            child = childs[i]
+            if isinstance(child, CommandNode):
+                if not child.name[-1].isalpha():
+                    return False
+            next_node = childs[i + 1]
+            if isinstance(next_node, TextNode):
+                if next_node.text and next_node.text[0].isalpha():
+                    return True
+            return False
+
+        for i, child in enumerate(childs):
+            node = child
+            styles = child.styles
+            labels = child.labels
+            if isinstance(child, CommandNode):
+                cmd_str = child.detokenize()
+                node = TextNode(cmd_str)
+            elif isinstance(child, EquationNode):
+                eq_str = child.equation_to_str()
+                # if an inner equation node, convert the equation str (without $$) to text node
+                node = TextNode(eq_str)
+            # elif isinstance(child, EquationArrayNode):
+            #     # if an inner equation array node that is not numbered
+            #     # and is all text and commands, i.e. no special nodes like \ref \cite \envs
+            #     # convert the equation array str to text node
+            #     if child.is_all_text_and_commands() and not child.has_numbering():
+            #         node = TextNode(child.detokenize())
+            else:
+                node = child.copy()
+            node.add_styles(styles)
+            node.labels = labels
+            nodes.append(node)
+            if should_add_space_after(i):
+                nodes.append(TextNode(" "))
+        nodes = merge_text_nodes(nodes, ignore_styles=True)
+        content_json = [node.to_json() for node in nodes]
+
         result["content"] = content_json
 
-        # Cache the result
-        self._json_cache = result.copy()
         return result
 
     def copy(self):
@@ -275,10 +248,10 @@ class EquationArrayNode(ASTNode):
             row_content = []
 
             for cell in row.cells:
-                cell_content = render_math_children_to_json(
-                    cell.children, merge_nodes=False
-                )
-                row_content.append(cell_content)
+                # convert each cell to equation node to ensure json output consistency
+                eq_node = EquationNode(cell.children)
+                eq_node_json = eq_node.to_json()
+                row_content.append(eq_node_json["content"])
             row_json["content"] = row_content
 
             if (

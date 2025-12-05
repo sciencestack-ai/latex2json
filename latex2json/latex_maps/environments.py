@@ -20,7 +20,7 @@ class Hooks:
 class EnvironmentDefinition:
     name: str
     begin_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
-    end_handler: Optional[Callable[["ExpanderCore", Token], List[Token]]] = None
+    end_handler: Optional[Callable[["ExpanderCore", Token, str], List[Token]]] = None
 
     def __init__(
         self,
