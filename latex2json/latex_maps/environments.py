@@ -166,6 +166,7 @@ PICTURE_ENVIRONMENTS = {
     "tikzpicture": EnvironmentDefinition(
         "tikzpicture", env_type=EnvironmentType.VERBATIM
     ),
+    "quantikz": EnvironmentDefinition("quantikz", env_type=EnvironmentType.VERBATIM),
     "circuitikz": EnvironmentDefinition(
         "circuitikz", env_type=EnvironmentType.VERBATIM
     ),
@@ -392,7 +393,9 @@ MATH_ENVIRONMENTS = {
         "psmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # align environments
-    "align": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
+    "align": EnvironmentDefinition(
+        "align", env_type=EnvironmentType.EQUATION_ALIGN, has_direct_command=True
+    ),
     "align*": EnvironmentDefinition("align*", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
     "eqnarray*": EnvironmentDefinition(
@@ -419,7 +422,7 @@ MATH_ENVIRONMENTS = {
         env_type=EnvironmentType.EQUATION_ALIGN,
     ),
     # subequations
-    "subequations": EnvironmentDefinition("subequations"),
+    "subequations": EnvironmentDefinition("subequations", has_direct_command=True),
 }
 
 # Theorem-like environments

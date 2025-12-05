@@ -345,11 +345,7 @@ def process_environment_begin(
 
 
 def process_environment_end(
-    expander: ExpanderCore,
-    token: Token,
-    env_name: str,
-    env_def: EnvironmentDefinition,
-    expand_end_definition: bool = True,
+    expander: ExpanderCore, token: Token, env_def: EnvironmentDefinition
 ) -> List[Token]:
     """Process environment end logic - shared between \\end and \\end@float.
 
@@ -388,11 +384,9 @@ def process_environment_end(
     end_token = EnvironmentEndToken(out_env_name, direct_command=direct_command)
 
     # Expand end_definition if requested
-    if expand_end_definition:
-        subbed = expander.substitute_token_args(env_def.end_definition, [])
-        out_tokens = expander.expand_tokens(subbed)
-    else:
-        out_tokens = []
+    out_tokens = []
+    subbed = expander.substitute_token_args(env_def.end_definition, [])
+    out_tokens.extend(expander.expand_tokens(subbed))
 
     # Execute end hooks
     for hook in env_def.hooks.end:

@@ -1744,9 +1744,7 @@ class ExpanderCore:
                     process_environment_end,
                 )
 
-                return process_environment_end(
-                    expander, token, env_name, env_def, expand_end_definition=True
-                )
+                return process_environment_end(expander, token, env_def)
 
             # attach the handler to the envdef instance
             env_def.end_handler = end_handler
