@@ -73,6 +73,15 @@ def includegraphics_handler(parser: ParserCore, token: Token):
     return [IncludeGraphicsNode(resolved_path, page=page)]
 
 
+def adjustimage_handler(parser: ParserCore, token: Token):
+    # simply treat like includegraphics
+    r"""\adjustimage{height=0.65cm,valign=m}{figure/panorama_cp0.png}"""
+    parser.skip_whitespace()
+    options_nodes = parser.parse_brace_as_nodes()
+
+    return includegraphics_handler(parser, token)
+
+
 def includepdf_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     pages_nodes = parser.parse_bracket_as_nodes()
@@ -217,6 +226,8 @@ def includestandalone_handler(parser: ParserCore, token: Token):
 
 def register_includegraphics_pdf_handlers(parser: ParserCore):
     parser.register_handler("includegraphics", includegraphics_handler)
+    parser.register_handler("adjustimage", adjustimage_handler)
+
     parser.register_handler("includepdf", includepdf_handler)
     parser.register_handler("includestandalone", includestandalone_handler)
 

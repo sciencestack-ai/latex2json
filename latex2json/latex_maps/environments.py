@@ -128,6 +128,7 @@ VERBATIM_ENVIRONMENTS = {
     "verbatim": EnvironmentDefinition(
         "verbatim", has_direct_command=True, env_type=EnvironmentType.VERBATIM
     ),
+    "Verbatim": EnvironmentDefinition("verbatim", env_type=EnvironmentType.VERBATIM),
     "lstlisting": EnvironmentDefinition(
         "lstlisting", env_type=EnvironmentType.VERBATIM
     ),
