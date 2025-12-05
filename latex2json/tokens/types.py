@@ -159,11 +159,12 @@ class EnvironmentStartToken(Token):
 
 
 class EnvironmentEndToken(Token):
-    def __init__(self, value: str, direct_command: Optional[str] = None):
+    def __init__(self, value: str, direct_command: Optional[str] = None, should_pop_scope: bool = False):
         super().__init__(TokenType.ENVIRONMENT_END, value=value)
         if direct_command and not direct_command.startswith("\\"):
             direct_command = "\\" + direct_command
         self.direct_command = direct_command
+        self.should_pop_scope = should_pop_scope  # Flag to track if scope needs popping
 
     def to_str(self):
         if self.direct_command:

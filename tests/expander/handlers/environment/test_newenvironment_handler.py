@@ -1,7 +1,13 @@
 import pytest
 
 from latex2json.expander.expander import Expander
-from latex2json.tokens.types import EnvironmentStartToken, Token, TokenType
+from latex2json.tokens.types import (
+    EnvironmentEndToken,
+    EnvironmentStartToken,
+    EnvironmentType,
+    Token,
+    TokenType,
+)
 from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 from tests.test_utils import assert_token_sequence
 
@@ -229,3 +235,27 @@ Middle body
     assert body_str.startswith("XXX")
     assert "Middle body" in body_str
     assert body_str.endswith("haha")
+
+
+def test_nested_newalign_newenvironment():
+    expander = Expander()
+
+    text = r"""
+\newenvironment{aligns}{\begin{align}} {\end{align}}
+
+\begin{aligns}
+    a = b
+\end{aligns}
+    """.strip()
+    out = expander.expand(text)
+    out = [t for t in out if not is_whitespace_token(t)]
+    assert out[0] == EnvironmentStartToken("aligns")
+    assert out[1] == EnvironmentStartToken(
+        "align", env_type=EnvironmentType.EQUATION_ALIGN
+    )
+    assert out[2] == EnvironmentStartToken(
+        "equation", env_type=EnvironmentType.EQUATION, numbering="1"
+    )
+    assert out[-3] == EnvironmentEndToken("equation")
+    assert out[-2] == Token(TokenType.ENVIRONMENT_END, "align")
+    assert out[-1] == Token(TokenType.ENVIRONMENT_END, "aligns")
