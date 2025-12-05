@@ -884,8 +884,12 @@ class ExpanderCore:
         else:
             self.state.pending_global = False
             # Pop scope when we encounter an EnvironmentEndToken that needs it
-            # This handles the case where process_environment_end pushed tokens
-            # without popping scope (so scoped macros in end_definition work)
+            # This completes the environment scope lifecycle:
+            #   1. begin_environment_handler pushes scope
+            #   2. begin_definition and body are processed (scope active)
+            #   3. end_definition is processed (scope still active - can access scoped macros)
+            #   4. EnvironmentEndToken is encountered HERE - scope is popped
+            # The flag ensures we only pop for "fresh" end tokens, not reprocessed ones
             if tok.type == TokenType.ENVIRONMENT_END:
                 from latex2json.tokens.types import EnvironmentEndToken
                 if isinstance(tok, EnvironmentEndToken) and hasattr(tok, 'should_pop_scope') and tok.should_pop_scope:
