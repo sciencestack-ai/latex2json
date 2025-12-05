@@ -14,6 +14,7 @@ from latex2json.expander.packages.etoolbox import register_etoolbox_handler
 from latex2json.expander.packages.xpatch import register_xpatch_handler
 from latex2json.expander.packages.xparse import register_xparse
 from latex2json.expander.packages.pgfmath import register_pgfmath
+from latex2json.expander.packages.xstring import register_xstring_handler
 
 
 def register_packages(expander: ExpanderCore):
@@ -32,3 +33,4 @@ def register_packages(expander: ExpanderCore):
     register_etoolbox_handler(expander)
     register_xpatch_handler(expander)
     register_pgfmath(expander)
+    register_xstring_handler(expander)
