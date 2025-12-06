@@ -96,6 +96,8 @@ def register_bibitem_handler(parser: ParserCore):
         "zbl": "{",
         "mrev": "{",
         "arx": "{",
+        "urldef": 0,
+        "tempurl": 0,
     }
 
     register_ignore_handlers_util(parser, ignore_patterns)

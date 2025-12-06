@@ -4,6 +4,9 @@ from latex2json.utils.tex_utils import convert_color_to_css
 
 
 def define_color_handler(expander: ExpanderCore, token: Token):
+    expander.skip_whitespace()
+    namespace = expander.parse_bracket_as_tokens()
+    expander.skip_whitespace()
     blocks = expander.parse_braced_blocks(3, expand=True)
     if len(blocks) != 3:
         expander.logger.warning("\\definecolor expects 3 arguments")

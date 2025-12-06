@@ -194,3 +194,29 @@ def test_say_handler():
     out = parser.parse(text)
     out_str = parser.convert_nodes_to_str(out).strip()
     assert out_str == '"hello"'
+
+
+def test_textcircled():
+    parser = Parser()
+
+    # Test numbers
+    text = r"\textcircled{1} \textcircled{5} \textcircled{0}"
+    out = parser.parse(text)
+    out_str = parser.convert_nodes_to_str(out).strip()
+    assert "①" in out_str
+    assert "⑤" in out_str
+    assert "⓪" in out_str
+
+    # Test uppercase letters
+    text = r"\textcircled{A} \textcircled{Z}"
+    out = parser.parse(text)
+    out_str = parser.convert_nodes_to_str(out).strip()
+    assert "Ⓐ" in out_str
+    assert "Ⓩ" in out_str
+
+    # Test lowercase letters
+    text = r"\textcircled{a} \textcircled{z}"
+    out = parser.parse(text)
+    out_str = parser.convert_nodes_to_str(out).strip()
+    assert "ⓐ" in out_str
+    assert "ⓩ" in out_str

@@ -142,6 +142,35 @@ def say_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
     return [TextNode('"'), *nodes, TextNode('"')]
 
 
+def char_to_circled(char: str) -> str:
+    """Convert a character to its circled Unicode equivalent."""
+    if "1" <= char <= "9":
+        return chr(0x2460 + ord(char) - ord("1"))
+    elif char == "0":
+        return "⓪"
+    elif "A" <= char <= "Z":
+        return chr(0x24B6 + ord(char) - ord("A"))
+    elif "a" <= char <= "z":
+        return chr(0x24D0 + ord(char) - ord("a"))
+    else:
+        return char
+
+
+def textcircled_handler(parser: ParserCore, token: Token) -> List[ASTNode]:
+    """Convert \\textcircled{X} to Unicode circled character."""
+    parser.skip_whitespace()
+    tok = parser.peek()
+
+    nodes = parser.parse_brace_as_nodes()
+    if nodes and isinstance(nodes[0], TextNode):
+        char = nodes[0].text[0] if nodes[0].text else ""
+        circled = char_to_circled(char)
+        if circled:
+            nodes[0].text = circled + nodes[0].text[1:]
+
+    return nodes
+
+
 def register_text_handlers(parser: ParserCore):
     """
     Register text handling.
@@ -183,6 +212,8 @@ def register_text_handlers(parser: ParserCore):
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
 
     parser.register_handler("say", say_handler)
+
+    parser.register_handler("textcircled", textcircled_handler, text_mode_only=True)
 
 
 if __name__ == "__main__":
