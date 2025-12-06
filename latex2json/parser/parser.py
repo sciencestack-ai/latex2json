@@ -109,7 +109,7 @@ class Parser(ParserCore):
 
             try:
                 bib_content, bib_path = self.bib_parser.search_and_extract_bib_content(
-                    full_path, cwd=self.cwd
+                    full_path, cwd=self.cwd, project_root=self.project_root
                 )
                 if not bib_content:
                     continue

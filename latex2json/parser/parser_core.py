@@ -186,6 +186,14 @@ class ParserCore:
     def cwd(self, value: str):
         self.expander.cwd = value
 
+    @property
+    def project_root(self) -> str:
+        return self.expander.project_root
+
+    @project_root.setter
+    def project_root(self, value: str):
+        self.expander.project_root = value
+
     def get_cwd_path(self, file_path: str) -> str:
         if not os.path.isabs(file_path):
             file_path = os.path.join(self.cwd, file_path)
@@ -403,6 +411,7 @@ class ParserCore:
         postprocess=False,
         resolve_cross_document_references=False,
         override_cwd=True,
+        project_root: Optional[str] = None,
     ) -> Optional[List[ASTNode]]:
         # Resolve file path with extension handling
         resolved_path = self.expander.resolve_file_path(file_path)
@@ -414,9 +423,10 @@ class ParserCore:
         filename = os.path.basename(resolved_path)
 
         self.filename = filename
-        # set expander cwd
+        # set expander cwd and project_root
         if override_cwd:
             self.cwd = dir_path
+            self.project_root = os.path.abspath(project_root) if project_root else dir_path
 
         # Read and parse the file content
         content = self.expander.read_file(resolved_path)

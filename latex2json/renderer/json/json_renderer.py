@@ -137,10 +137,13 @@ class JSONRenderer:
         return self.parser.get_colors()
 
     def parse_file(
-        self, file_path: str, organize_hierachy=True
+        self, file_path: str, organize_hierachy=True, project_root: str = None
     ) -> Optional[Dict[str, List[Dict]]]:
         nodes = self.parser.parse_file(
-            file_path, postprocess=True, resolve_cross_document_references=True
+            file_path,
+            postprocess=True,
+            resolve_cross_document_references=True,
+            project_root=project_root,
         )
         if not nodes:
             return None

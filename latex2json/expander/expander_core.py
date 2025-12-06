@@ -133,6 +133,7 @@ class ExpanderCore:
         self.state = ExpanderState(self.tokenizer, logger=self.logger)
 
         self.cwd = "."
+        self.project_root = "."
         self.loaded_packages: Set[str] = set()
         self.loaded_classes: Set[str] = set()
 
@@ -700,29 +701,51 @@ class ExpanderCore:
             file_path = os.path.join(self.cwd, file_path)
         return file_path
 
+    def _try_resolve_with_extension(
+        self, base_path: str, default_extension: str
+    ) -> Optional[str]:
+        """Try to resolve a file path with extension handling."""
+        ext = os.path.splitext(base_path)[1].lower()
+
+        # If no extension or invalid extension, try to resolve the file
+        if not ext or ext not in self.VALID_LATEX_EXTENSIONS:
+            file_path_with_ext = base_path + default_extension
+            if os.path.exists(file_path_with_ext):
+                return file_path_with_ext
+            elif os.path.exists(base_path):
+                # Original path exists (maybe it's a file without extension)
+                return base_path
+            else:
+                return None
+
+        # Has valid extension, check if exists
+        if os.path.exists(base_path):
+            return base_path
+
+        return None
+
     def resolve_file_path(
         self, file_path: str, default_extension: str = ".tex"
     ) -> Optional[str]:
         # Convert Path objects to string
         file_path = str(file_path)
-        file_path = self.get_cwd_path(file_path)
-        ext = os.path.splitext(file_path)[1].lower()
 
-        # If no extension or invalid extension, try to resolve the file
-        if not ext or ext not in self.VALID_LATEX_EXTENSIONS:
-            file_path_with_ext = file_path + default_extension
-            if os.path.exists(file_path_with_ext):
-                return file_path_with_ext
-            elif os.path.exists(file_path):
-                # Original path exists (maybe it's a file without extension)
-                return file_path
-            else:
-                # Neither exists
-                return None
+        # If absolute path, resolve directly
+        if os.path.isabs(file_path):
+            return self._try_resolve_with_extension(file_path, default_extension)
 
-        # Has valid extension, check if exists
-        if os.path.exists(file_path):
-            return file_path
+        # Try relative to cwd first (most common case)
+        cwd_path = os.path.join(self.cwd, file_path)
+        result = self._try_resolve_with_extension(cwd_path, default_extension)
+        if result:
+            return result
+
+        # Fallback: try relative to project_root if different from cwd
+        if self.project_root != self.cwd:
+            root_path = os.path.join(self.project_root, file_path)
+            result = self._try_resolve_with_extension(root_path, default_extension)
+            if result:
+                return result
 
         return None
 

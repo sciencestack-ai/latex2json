@@ -1,0 +1,33 @@
+\documentclass{article}
+\usepackage{graphicx}
+
+\title{Test Non-Standard Layout}
+\author{Test Author}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+\input{inputs/intro}
+
+\subsection{Testing Input Files}
+
+\subsection{Testing Bibliography}
+
+Here we cite some references \cite{ref1} and \cite{ref2}.
+
+\subsection{Testing Graphics Path}
+
+We can also include graphics from the root images folder:
+\graphicspath{{../images/}}
+
+\section{Conclusion}
+
+This tests that project_root is properly set and files are resolved correctly.
+
+\bibliography{main}
+\bibliographystyle{plain}
+
+\end{document}

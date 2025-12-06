@@ -25,6 +25,7 @@ class ProcessingResult:
     color_map: Optional[Dict[str, Dict[str, str]]] = None
 
     main_tex_path: Optional[Path] = None
+    project_root: Optional[Path] = None
     temp_dir: Optional[Path] = None
 
     def cleanup(self):
@@ -92,21 +93,34 @@ class TexReader:
         if not file_path.exists():
             raise FileNotFoundError(f"{file_type} not found: {file_path}")
 
-    def process_file(self, file_path: Path | str) -> ProcessingResult:
+    def process_file(
+        self, file_path: Path | str, project_root: Path | str = None
+    ) -> ProcessingResult:
         file_path = Path(file_path)
+        if project_root:
+            project_root = Path(project_root)
+        else:
+            # Default to parent directory of the file
+            project_root = file_path.parent
 
         self.clear()
         self._verify_file_exists(file_path)
         is_supported, error_msg = is_supported_tex_version(file_path)
         if not is_supported:
             raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
-        output = self.json_renderer.parse_file(file_path) or []
+        output = (
+            self.json_renderer.parse_file(
+                file_path, project_root=str(project_root) if project_root else None
+            )
+            or []
+        )
         color_map = self.json_renderer.get_colors()
 
         return ProcessingResult(
             tokens=output,
             color_map=color_map,
             main_tex_path=file_path,
+            project_root=project_root,
         )
 
     def to_json(self, result: ProcessingResult) -> str:
@@ -156,8 +170,8 @@ class TexReader:
                 f"Found main TeX file in archive: {main_tex}, {compressed_path}"
             )
             file_path = os.path.join(temp_dir, main_tex)
-            output = self.process_file(file_path)
-            output.temp_dir = temp_dir
+            output = self.process_file(file_path, project_root=temp_dir)
+            output.temp_dir = Path(temp_dir)
             return output
 
     def process_folder(self, folder_path: str | Path) -> ProcessingResult:
@@ -167,7 +181,7 @@ class TexReader:
         main_tex, _ = TexFileExtractor.from_folder(str(folder_path))
         self.logger.info(f"Found main TeX file in folder: {main_tex}, {folder_path}")
         file_path = folder_path / main_tex
-        return self.process_file(file_path)
+        return self.process_file(file_path, project_root=folder_path)
 
     def process(
         self, input_path: str | Path, cleanup: bool = False

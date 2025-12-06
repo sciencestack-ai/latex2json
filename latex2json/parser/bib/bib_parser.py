@@ -89,7 +89,7 @@ class BibParser:
         return read_file(file_path)
 
     def search_and_extract_bib_content(
-        self, file_path: str, cwd: Optional[str] = None
+        self, file_path: str, cwd: Optional[str] = None, project_root: Optional[str] = None
     ) -> Tuple[str | None, str | None]:
         exts = [".bbl", ".bib"]
 
@@ -115,17 +115,39 @@ class BibParser:
             main_bbl = os.path.join(directory, "main.bbl")
 
             if os.path.exists(main_bbl):
-                self.logger.info("Bib fallback -> Found main.bbl")
+                self.logger.info("Bib fallback -> Found main.bbl in cwd")
                 bib_content = self._open_file(main_bbl)
                 bib_path = main_bbl
             else:
-                # Look for any .bbl file
-                bbl_files = [f for f in os.listdir(directory) if f.endswith(".bbl")]
-                if bbl_files:
-                    first_bbl = os.path.join(directory, bbl_files[0])
-                    self.logger.info(f"Bib fallback -> Found {bbl_files[0]}")
-                    bib_content = self._open_file(first_bbl)
-                    bib_path = first_bbl
+                # Look for any .bbl file in cwd
+                try:
+                    bbl_files = [f for f in os.listdir(directory) if f.endswith(".bbl")]
+                    if bbl_files:
+                        first_bbl = os.path.join(directory, bbl_files[0])
+                        self.logger.info(f"Bib fallback -> Found {bbl_files[0]} in cwd")
+                        bib_content = self._open_file(first_bbl)
+                        bib_path = first_bbl
+                except (OSError, FileNotFoundError):
+                    pass
+
+        # Case 4: Try project_root if different from cwd
+        if not bib_content and project_root and project_root != cwd:
+            main_bbl = os.path.join(project_root, "main.bbl")
+            if os.path.exists(main_bbl):
+                self.logger.info("Bib fallback -> Found main.bbl in project_root")
+                bib_content = self._open_file(main_bbl)
+                bib_path = main_bbl
+            else:
+                # Look for any .bbl file in project_root
+                try:
+                    bbl_files = [f for f in os.listdir(project_root) if f.endswith(".bbl")]
+                    if bbl_files:
+                        first_bbl = os.path.join(project_root, bbl_files[0])
+                        self.logger.info(f"Bib fallback -> Found {bbl_files[0]} in project_root")
+                        bib_content = self._open_file(first_bbl)
+                        bib_path = first_bbl
+                except (OSError, FileNotFoundError):
+                    pass
 
         return bib_content, bib_path
 

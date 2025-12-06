@@ -1,0 +1,13 @@
+\begin{thebibliography}{1}
+
+\bibitem{ref1}
+Author Name.
+\newblock Title of the paper.
+\newblock {\em Journal Name}, 2023.
+
+\bibitem{ref2}
+Another Author.
+\newblock Another title.
+\newblock {\em Another Journal}, 2024.
+
+\end{thebibliography}
