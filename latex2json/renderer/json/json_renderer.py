@@ -3,7 +3,7 @@ from typing import Dict, List, Optional
 from latex2json.expander.expander import Expander
 from latex2json.nodes import ASTNode
 from latex2json.nodes.node_types import NodeTypes
-from latex2json.parser import ParserCore, ParserParallel
+from latex2json.parser import ParserCore, Parser
 
 INLINE_TYPES = [
     NodeTypes.TEXT,
@@ -124,9 +124,7 @@ class JSONRenderer:
         if expander is None:
             expander = Expander(logger=self.logger)
 
-        self.parser = ParserParallel(
-            logger=self.logger, n_processors=self.n_processors, expander=expander
-        )
+        self.parser = Parser(logger=self.logger, expander=expander)
 
     @property
     def expander(self) -> Expander:
