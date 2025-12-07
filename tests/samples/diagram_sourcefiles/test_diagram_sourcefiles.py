@@ -14,13 +14,13 @@ SAMPLES_DIR_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 
 def test_diagram_sourcefiles():
     parser = Parser()
-    out = parser.parse_file(
-        os.path.join(SAMPLES_DIR_PATH, "diagram_sourcefiles/main.tex")
-    )
+    test_file = os.path.join(SAMPLES_DIR_PATH, "diagram_sourcefiles/main.tex")
+    out = parser.parse_file(test_file)
     assert len(out) >= 1
     diagram_nodes: List[DiagramNode] = find_nodes_by_type(out, DiagramNode)
     assert len(diagram_nodes) == 4
 
+    # Source files should be relative to project_root
     node1: DiagramNode = diagram_nodes[0]
     assert node1.env_name == "tikzpicture"
     assert node1.source_file == "intro.tex"

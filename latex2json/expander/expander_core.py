@@ -687,13 +687,23 @@ class ExpanderCore:
 
     def push_text(self, text: str, source_file: Optional[str] = None):
         if source_file:
-            # Ensure source_file is relative to cwd if within cwd, otherwise keep absolute
+            # Convert to absolute path first to avoid ambiguity with changing cwd
             abs_source = os.path.abspath(source_file)
-            abs_cwd = os.path.abspath(self.cwd)
+            abs_project_root = os.path.abspath(self.project_root)
 
-            rel_path = os.path.relpath(abs_source, abs_cwd)
-            # Only use relative path if it doesn't start with '..' (i.e., is within cwd)
-            source_file = rel_path if not rel_path.startswith("..") else abs_source
+            # Make relative to project_root if within project_root
+            try:
+                rel_path = os.path.relpath(abs_source, abs_project_root)
+                # Only use relative path if it doesn't go outside project_root
+                if not rel_path.startswith('..'):
+                    source_file = rel_path
+                else:
+                    # Outside project_root, keep absolute
+                    source_file = abs_source
+            except ValueError:
+                # Different drives on Windows, keep absolute
+                source_file = abs_source
+
         self.stream.push_text(text, source_file=source_file)
 
     def get_cwd_path(self, file_path: str) -> str:
