@@ -185,6 +185,9 @@ formatting_patterns = {
     "rcsInfo": "{",
     # todo
     "todo": "[{",
+    # listof
+    "listoffigures": 0,
+    "listoftables": 0,
     "listoftodos": 0,
     "listoftheorems": 0,
     # error lines
@@ -237,6 +240,8 @@ formatting_patterns = {
 }
 
 content_formatting_patterns = {
+    "addappheadtotoc": 0,
+    "appendixpage": 0,
     # row
     "rowfont": "{",
     "RowStyle": "{",
@@ -257,6 +262,8 @@ content_formatting_patterns = {
     # files
     "listfiles": 0,
     # TOCs
+    "doparttoc": 0,
+    "faketableofcontents": 0,
     "@starttoc": 1,
     "localtableofcontents": 0,
     "tableofcontents": 0,
@@ -364,6 +371,14 @@ font_awesome_patterns = {
 
 biblatex_patterns = {
     "DeclareNameAlias": 2,
+    # macro provided by the AMS document classes/packages, e.g. Mathematical Reviews MR
+    "MR": "{",
+    "zbl": "{",
+    "mrev": "{",
+    "arx": "{",
+    "urldef": 0,
+    "tempurl": 0,
+    "urlprefix": 0,
 }
 
 index_patterns = {

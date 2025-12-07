@@ -90,18 +90,6 @@ def register_bibitem_handler(parser: ParserCore):
     parser.register_env_handler("thebibliography", bibliography_handler)
     parser.register_handler("natexlab", natexlab_handler)
 
-    ignore_patterns = {
-        # macro provided by the AMS document classes/packages, e.g. Mathematical Reviews MR
-        "MR": "{",
-        "zbl": "{",
-        "mrev": "{",
-        "arx": "{",
-        "urldef": 0,
-        "tempurl": 0,
-    }
-
-    register_ignore_handlers_util(parser, ignore_patterns)
-
 
 if __name__ == "__main__":
     from latex2json.parser import Parser
