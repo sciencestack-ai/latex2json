@@ -237,6 +237,8 @@ formatting_patterns = {
     "endfirstfoot": 0,
     # stackengine
     "@STRT": 0,
+    # Treat \Centerstack{...} as an inline macro that returns its argument unchanged.
+    "Centerstack": 0,
 }
 
 content_formatting_patterns = {
