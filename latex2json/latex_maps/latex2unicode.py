@@ -27,6 +27,7 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "circledR": 174,  # ®
     "sep": 44,  # ,
     # "\\@": "",
+    "Checkmark": 10003,
     "checkmark": 10003,  # ✓
     "dots": 8230,  # ...
     "dotfill": "...",  # ...

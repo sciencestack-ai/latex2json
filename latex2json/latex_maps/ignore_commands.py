@@ -80,6 +80,7 @@ formatting_patterns = {
     "renewpagestyle": 2,
     "thispagestyle": 1,
     "fancypagestyle": 2,
+    "thisfloatpagestyle": 1,
     "urlstyle": 1,
     "theoremstyle": 1,
     "bibliographystyle": 1,
@@ -263,6 +264,7 @@ content_formatting_patterns = {
     # files
     "listfiles": 0,
     # TOCs
+    "parttoc": 0,
     "doparttoc": 0,
     "faketableofcontents": 0,
     "@starttoc": 1,

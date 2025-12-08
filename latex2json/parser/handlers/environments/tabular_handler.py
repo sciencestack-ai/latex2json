@@ -141,6 +141,7 @@ def register_tabular_handlers(parser: ParserCore):
         "bigstrut": "[",
         "arrayrulecolor": 1,
         "hhline": "{",
+        "Xcline": 2,
     }
 
     register_ignore_handlers_util(parser, ignored_env_pattern_N_blocks)
