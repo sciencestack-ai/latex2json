@@ -231,3 +231,57 @@ def test_preserve_empty_align_cells():
             },
         ],
     }
+
+
+def test_bibliography_pruning():
+    """Test that unused bibliography entries are pruned by default"""
+    renderer = JSONRenderer()
+
+    # Test with citations - should prune unused entries
+    text = r"""
+    \cite{key1, key2}
+
+    \begin{thebibliography}{99}
+    \bibitem{key1} Entry 1
+    \bibitem{key2} Entry 2
+    \bibitem{unused1} Unused 1
+    \bibitem{unused2} Unused 2
+    \end{thebibliography}
+    """.strip()
+
+    json = renderer.parse(text, organize_hierachy=False)
+
+    # Find bibliography node (may have duplicates, just check first)
+    bib_nodes = [node for node in json if node.get("type") == "bibliography"]
+    assert len(bib_nodes) >= 1
+
+    # Check that only cited entries are included
+    bib_entries = bib_nodes[0]["content"]
+    assert len(bib_entries) == 2
+    assert bib_entries[0]["key"] == "key1"
+    assert bib_entries[1]["key"] == "key2"
+
+    # Test with \nocite{*} - should keep all entries
+    text_with_nocite_all = r"""
+    \cite{key1}
+    \nocite{*}
+
+    \begin{thebibliography}{99}
+    \bibitem{key1} Entry 1
+    \bibitem{key2} Entry 2
+    \bibitem{key3} Entry 3
+    \end{thebibliography}
+    """.strip()
+
+    renderer2 = JSONRenderer()
+    json2 = renderer2.parse(text_with_nocite_all, organize_hierachy=False)
+    bib_nodes2 = [node for node in json2 if node.get("type") == "bibliography"]
+    bib_entries2 = bib_nodes2[0]["content"]
+    assert len(bib_entries2) == 3  # All entries kept due to \nocite{*}
+
+    # Test disabling pruning
+    renderer3 = JSONRenderer(prune_bibliography=False)
+    json3 = renderer3.parse(text, organize_hierachy=False)
+    bib_nodes3 = [node for node in json3 if node.get("type") == "bibliography"]
+    bib_entries3 = bib_nodes3[0]["content"]
+    assert len(bib_entries3) == 4  # All entries kept when pruning disabled

@@ -2,9 +2,6 @@ from typing import List, Optional
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
-from latex2json.parser.handlers.commands.command_handler_utils import (
-    register_ignore_handlers_util,
-)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
 
@@ -117,6 +114,12 @@ def cite_handler(parser: ParserCore, token: Token):
         title = parser.postprocess_nodes(title)
     cite_str = parser.convert_nodes_to_str(citation_nodes).split(",")
     cite_str = [s.strip() for s in cite_str]
+
+    # Track all citation keys
+    for cite_key in cite_str:
+        if cite_key:  # Skip empty strings
+            parser.register_citation(cite_key)
+
     return [CiteNode(cite_str, title=title)]
 
 
@@ -226,6 +229,22 @@ def make_url_handler(parse_title: bool = False, path_prefix: str = ""):
     return url_handler
 
 
+def nocite_handler(parser: ParserCore, token: Token):
+    """Handler for \\nocite command.
+    Tracks citations but doesn't produce output nodes.
+    Note: \\nocite{*} will register '*' as a citation key."""
+    parser.skip_whitespace()
+    citation_nodes = parser.parse_brace_as_nodes()
+    if citation_nodes:
+        cite_str = parser.convert_nodes_to_str(citation_nodes).split(",")
+        cite_str = [s.strip() for s in cite_str]
+        # Track all citation keys
+        for cite_key in cite_str:
+            if cite_key:
+                parser.register_citation(cite_key)
+    return []
+
+
 def noeqref_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
     parser.parse_brace_as_nodes()
@@ -254,8 +273,9 @@ def register_ref_label_handlers(parser: ParserCore):
     # cite
     for command in CITE_COMMANDS:
         parser.register_handler(command, cite_handler)
-    # nocite (basically parse and ignore)
-    register_ignore_handlers_util(parser, {"nocite": 1})
+
+    # nocite (track citations but don't produce output)
+    parser.register_handler("nocite", nocite_handler)
 
     # crefalias (cleveref package)
     parser.register_handler("crefalias", crefalias_handler)

@@ -123,6 +123,7 @@ class ParserCore:
             {}
         )  # file_path -> {filename: prefix}
         self.label_registry: Dict[str, List[str]] = {}  # file_path -> labels
+        self.citation_registry: Dict[str, Set[str]] = {}  # file_path -> citation keys
 
         self.graphics_paths: Set[str] = set()
 
@@ -131,6 +132,43 @@ class ParserCore:
         if key not in self.label_registry:
             self.label_registry[key] = []
         self.label_registry[key].append(label)
+
+    def register_citation(self, cite_key: str):
+        """Register a citation key used in the document.
+
+        Args:
+            cite_key: The citation key (e.g., from \\cite{cite_key})
+        """
+        key = self.filename or "default"
+        if key not in self.citation_registry:
+            self.citation_registry[key] = set()
+        self.citation_registry[key].add(cite_key)
+
+    def get_all_citations(self) -> Set[str]:
+        """Get all citation keys used across all files.
+
+        Returns:
+            Set of all citation keys used in the document
+        """
+        all_citations = set()
+        for citations in self.citation_registry.values():
+            all_citations.update(citations)
+        return all_citations
+
+    def has_citation(self, cite_key: str, filename: Optional[str] = None) -> bool:
+        """Check if a citation key was used in the document.
+
+        Args:
+            cite_key: The citation key to check
+            filename: Optional specific file to check (defaults to current file)
+
+        Returns:
+            True if the citation key was used
+        """
+        key = filename or self.filename or "default"
+        if key not in self.citation_registry:
+            return False
+        return cite_key in self.citation_registry[key]
 
     def has_label(self, label: str, filename: Optional[str] = None) -> bool:
         key = filename or self.filename or "default"

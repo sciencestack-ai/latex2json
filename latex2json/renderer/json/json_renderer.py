@@ -114,9 +114,11 @@ class JSONRenderer:
         logger: Optional[logging.Logger] = None,
         n_processors: int = 1,
         expander: Optional[Expander] = None,
+        prune_bibliography: bool = True,
     ):
         self.logger = logger or logging.getLogger(__name__)
         self.n_processors = n_processors
+        self.prune_bibliography = prune_bibliography
 
         self._init_parser(expander)
 
@@ -198,10 +200,64 @@ class JSONRenderer:
 
         if organize_hierachy:
             organized = self._recursive_organize(output)
-            # Apply recursive whitespace stripping
+            # Apply recursive whitespace stripping and bibliography pruning
             output = self._recursive_postprocess(organized)
+        else:
+            # Even without hierarchy, prune bibliography if requested
+            if self.prune_bibliography:
+                for i, token in enumerate(output):
+                    if (
+                        isinstance(token, dict)
+                        and token.get("type") == NodeTypes.BIBLIOGRAPHY
+                    ):
+                        output[i] = self._prune_bibliography_dict(token)
 
         return [t for t in output if t]
+
+    def _prune_bibliography_dict(self, bib_dict: Dict) -> Dict:
+        """Prune unused bibliography entries based on tracked citations.
+
+        This removes bibliography entries that were never cited in the document,
+        reducing output size and processing time for large bibliographies.
+
+        Args:
+            bib_dict: Bibliography dictionary with 'content' list of entries
+
+        Returns:
+            Modified dictionary with pruned entries
+        """
+        content = bib_dict.get("content", [])
+        if not content:
+            return bib_dict
+
+        cited_keys = self.parser.get_all_citations()
+
+        # If \nocite{*} was used, keep all entries
+        if "*" in cited_keys:
+            self.logger.info(
+                f"Found \\nocite{{*}}, keeping all {len(content)} bibliography entries"
+            )
+            return bib_dict
+
+        # If no citations found, keep all (safer default)
+        if not cited_keys:
+            self.logger.debug(
+                f"No citations tracked, keeping all {len(content)} bibliography entries"
+            )
+            return bib_dict
+
+        # Prune unused entries
+        original_count = len(content)
+        pruned_content = [item for item in content if item.get("key") in cited_keys]
+
+        if len(pruned_content) < original_count:
+            self.logger.info(
+                f"Pruned bibliography: {original_count} → {len(pruned_content)} entries "
+                f"({original_count - len(pruned_content)} unused entries removed)"
+            )
+
+        bib_dict["content"] = pruned_content
+        return bib_dict
 
     def _manage_stack(
         self,
@@ -393,9 +449,12 @@ class JSONRenderer:
                     if command_name.lower() not in ACCEPTED_COMMAND_NAMES:
                         self.logger.warning(f"Found unknown command: {command_name}")
                 elif token.get("type") == NodeTypes.BIBLIOGRAPHY:
-                    # dont append empty bibliography tokens
-                    if not token.get("content"):
-                        continue
+                    # Prune bibliography if requested
+                    if self.prune_bibliography:
+                        token = self._prune_bibliography_dict(token)
+                # dont append empty tokens e.g. content: '' or content: []
+                if "content" in token and not token["content"]:
+                    continue
             out_tokens.append(token)
 
         return out_tokens
