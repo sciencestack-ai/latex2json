@@ -1,3 +1,4 @@
+from typing import List
 import pytest
 import os
 from latex2json.expander.expander import Expander
@@ -19,7 +20,7 @@ def test_subfile_handler_counter_continuity():
     nodes = parser.parse_file(filepath, postprocess=True)
 
     # Find all section nodes
-    section_nodes = find_nodes_by_type(nodes, SectionNode)
+    section_nodes: List[SectionNode] = find_nodes_by_type(nodes, SectionNode)
 
     # We should have sections from manuscript.tex, intro.tex, and appendix.tex
     # The counters should be sequential
@@ -30,7 +31,9 @@ def test_subfile_handler_counter_continuity():
     assert any("section" in name for name in section_names), "Should have section nodes"
 
     # Verify we have at least 3 sections (Main, Intro, and one or more from subfiles)
-    assert len(section_nodes) >= 3, f"Should have at least 3 sections, found {len(section_nodes)}"
+    assert (
+        len(section_nodes) >= 3
+    ), f"Should have at least 3 sections, found {len(section_nodes)}"
 
 
 def test_subfile_handler_expander_state():
@@ -38,13 +41,16 @@ def test_subfile_handler_expander_state():
     expander = Expander()
 
     # Define a macro before loading subfile
-    text = r"""
+    text = (
+        r"""
     \newcounter{testcounter}
     \setcounter{testcounter}{5}
     \def\mymacro{DEFINED}
 
     \subfile{%s/intro.tex}
-    """ % test_data_path
+    """
+        % test_data_path
+    )
 
     tokens = expander.expand(text)
 
@@ -70,8 +76,10 @@ def test_subfile_handler_basic():
     assert len(tokens) > 0, "Should have tokens from subfile"
 
     # Check that we got content from the subfile
-    token_str = "".join([t.value for t in tokens if hasattr(t, 'value')])
-    assert "INTRO DOC" in token_str or "Intro" in token_str, "Should contain content from intro.tex"
+    token_str = "".join([t.value for t in tokens if hasattr(t, "value")])
+    assert (
+        "INTRO DOC" in token_str or "Intro" in token_str
+    ), "Should contain content from intro.tex"
 
 
 def test_subfile_nonexistent():
