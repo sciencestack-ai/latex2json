@@ -58,7 +58,7 @@ class BibParser:
             self.logger.debug("Parsing bibitem content")
             entries.extend(self.bibitem_parser.parse(content))
         else:
-            self.logger.warning("No suitable parser found for the content")
+            self.logger.warning("No suitable bibparser found for the content")
             return []
 
         if len(entries) == 0:
