@@ -384,8 +384,12 @@ class ParserCore:
             for node in nodes:
                 if styles:
                     node.add_styles(styles, insert_at_front=True)
-                if self.filename and not node.source_file:
-                    node.source_file = self.filename
+                # Set source_file from token if available, otherwise fall back to self.filename
+                if not node.source_file:
+                    if hasattr(token, 'source_file') and token.source_file:
+                        node.source_file = token.source_file
+                    elif self.filename:
+                        node.source_file = self.filename
         return nodes
 
     def parse(

@@ -21,7 +21,7 @@ from latex2json.parser.parser_core import ParserCore
 
 
 def is_tabular_newline_command(node: ASTNode) -> bool:
-    return isinstance(node, CommandNode) and node.name in ["\\", "tabularnewline"]
+    return isinstance(node, CommandNode) and node.name in ["\\", "tabularnewline", "cr"]
 
 
 def split_nodes_into_columns_n_merge(nodes: List[ASTNode]) -> List[CellNode]:
