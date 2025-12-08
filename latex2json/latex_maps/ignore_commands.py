@@ -237,8 +237,6 @@ formatting_patterns = {
     "endfirstfoot": 0,
     # stackengine
     "@STRT": 0,
-    # Treat \Centerstack{...} as an inline macro that returns its argument unchanged.
-    "Centerstack": 0,
 }
 
 content_formatting_patterns = {
@@ -369,6 +367,10 @@ font_awesome_patterns = {
     "faArrowLeft": 0,
     "faExternalLink": 0,
     "faGlobe": 0,
+    "faBiohazard": 0,
+    "faShield": 0,
+    "faRobot": 0,
+    "faQuestionCircle": 0,
 }
 
 biblatex_patterns = {

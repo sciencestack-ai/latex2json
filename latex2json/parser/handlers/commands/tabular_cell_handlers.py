@@ -195,6 +195,7 @@ def register_tabular_cell_handlers(parser: ParserCore):
     # makecell/shortstack
     parser.register_handler("makecell", makecell_handler)
     parser.register_handler("shortstack", makecell_handler)
+    parser.register_handler("Centerstack", makecell_handler)
     # thead is a wrapper around makecell
     parser.register_handler("thead", makecell_handler)
 
