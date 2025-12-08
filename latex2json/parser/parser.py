@@ -74,7 +74,19 @@ class Parser(ParserCore):
         )
 
         bib_items = []
+        total = len(non_duplicate_entries)
+
+        # Log progress for large bibliographies
+        if total > 1000:
+            self.logger.info(f"Post-processing {total} bibliography entries...")
+
         for i, item in enumerate(non_duplicate_entries):
+            # Progress logging for large files
+            if total > 1000 and i > 0 and i % 10000 == 0:
+                self.logger.info(
+                    f"Post-processing progress: {i}/{total} bib entries ({i*100//total}%)"
+                )
+
             if item.format == BibType.BIBITEM:
                 if item.should_postprocess:
                     content_str = standalone_parser.convert_nodes_to_str(item.body)
@@ -85,8 +97,13 @@ class Parser(ParserCore):
             else:
                 fields = item.fields
                 for k, v in fields.items():
-                    formatted_nodes = standalone_parser.process_text(v)
-                    fields[k] = standalone_parser.convert_nodes_to_str(formatted_nodes)
+                    # Optimization: only process fields that contain LaTeX commands
+                    if "\\" in v or "{" in v:
+                        formatted_nodes = standalone_parser.process_text(v)
+                        fields[k] = standalone_parser.convert_nodes_to_str(
+                            formatted_nodes
+                        )
+                    # else: keep original plain text value
                 entry = BibEntryNode.from_bibtex(
                     entry_type=item.entry_type,
                     citation_key=item.citation_key,

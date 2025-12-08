@@ -211,6 +211,43 @@ def extract_nested_content(
     return content, end_pos
 
 
+def extract_braced_content_fast(text: str, start: int = 0) -> Tuple[str | None, int]:
+    """
+    Fast brace extraction without escape checking (optimized for BibTeX and similar formats).
+
+    This is much faster than extract_nested_content() because it doesn't check for escaped
+    braces. Use this when you know the content doesn't have escaped braces (e.g., BibTeX files).
+
+    Args:
+        text: The text to extract from
+        start: Starting position in the text
+
+    Returns:
+        Tuple of (content, next_position) where:
+            - content is the text between braces (or None if not found)
+            - next_position is the position after the closing brace (or 0 if not found)
+    """
+    # Skip to opening brace
+    while start < len(text) and text[start].isspace():
+        start += 1
+
+    if start >= len(text) or text[start] != '{':
+        return None, 0
+
+    depth = 0
+    i = start
+    while i < len(text):
+        if text[i] == '{':
+            depth += 1
+        elif text[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return text[start + 1:i], i + 1
+        i += 1
+
+    return None, 0
+
+
 def extract_nested_content_sequence_blocks(
     text: str, open_delim: str = "{", close_delim: str = "}", max_blocks=float("inf")
 ) -> Tuple[list[str], int]:

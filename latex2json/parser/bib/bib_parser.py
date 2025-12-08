@@ -69,16 +69,23 @@ class BibParser:
         return entries
 
     def check_bib_file_type(self, bib_text_blob: str) -> str | None:
-        content = preprocess(bib_text_blob)
-        if content:
-            if self.bibdiv_parser.can_handle(content):
-                return "bibdiv"
-            # Use the can_handle method for BibTeX
-            elif self.bibtex_parser.can_handle(content):
-                return "bibtex"
-            # Use the can_handle method for BibItem (now includes bibliography environment check)
-            elif self.bibitem_parser.can_handle(content):
-                return "bibitem"
+        """Check bib file type by examining a small sample instead of preprocessing entire file"""
+        if not bib_text_blob:
+            return None
+
+        bib_text_blob = bib_text_blob.strip()
+        # For detection, only check first 5000 chars (enough to find format indicators)
+        # This avoids preprocessing the entire file which is expensive for large files
+        sample = preprocess(bib_text_blob[:5000])
+
+        # Check patterns directly without full preprocessing
+        if self.bibdiv_parser.can_handle(sample):
+            return "bibdiv"
+        elif self.bibtex_parser.can_handle(sample):
+            return "bibtex"
+        elif self.bibitem_parser.can_handle(sample):
+            return "bibitem"
+
         return None
 
     def _open_file(self, file_path: str) -> str | None:
@@ -89,7 +96,10 @@ class BibParser:
         return read_file(file_path)
 
     def search_and_extract_bib_content(
-        self, file_path: str, cwd: Optional[str] = None, project_root: Optional[str] = None
+        self,
+        file_path: str,
+        cwd: Optional[str] = None,
+        project_root: Optional[str] = None,
     ) -> Tuple[str | None, str | None]:
         exts = [".bbl", ".bib"]
 
@@ -140,10 +150,14 @@ class BibParser:
             else:
                 # Look for any .bbl file in project_root
                 try:
-                    bbl_files = [f for f in os.listdir(project_root) if f.endswith(".bbl")]
+                    bbl_files = [
+                        f for f in os.listdir(project_root) if f.endswith(".bbl")
+                    ]
                     if bbl_files:
                         first_bbl = os.path.join(project_root, bbl_files[0])
-                        self.logger.info(f"Bib fallback -> Found {bbl_files[0]} in project_root")
+                        self.logger.info(
+                            f"Bib fallback -> Found {bbl_files[0]} in project_root"
+                        )
                         bib_content = self._open_file(first_bbl)
                         bib_path = first_bbl
                 except (OSError, FileNotFoundError):
