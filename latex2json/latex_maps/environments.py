@@ -180,6 +180,7 @@ PICTURE_ENVIRONMENTS = {
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
     "framed": EnvironmentDefinition("framed"),
+    "mdframed": EnvironmentDefinition("mdframed"),
     # ignore NoHyper and \NoHyper \endNoHyper pairs
     "NoHyper": EnvironmentDefinition("NoHyper", has_direct_command=True),
     "titlepage": EnvironmentDefinition("titlepage"),

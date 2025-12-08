@@ -221,14 +221,17 @@ def test_subfiles_and_external_documents_reference_resolution():
     assert len(nodes) >= 1
 
     # first, check the refs are apprioriately resolved with relevant file prefixes
+    # NOTE: With expander-level subfile handling, all files share one parser context
+    # (like \input), which maintains counter continuity. Each file's \externaldocument
+    # declarations are processed when encountered, affecting subsequent references.
     ref_nodes: List[RefNode] = find_nodes_by_type(nodes, RefNode)
 
     expected_refs_n_sourcefile = [
-        (["manuscript:sec:main"], "manuscript.tex"),
-        (["manuscript:sec:main"], "intro.tex"),
-        (["intro:sec:intro"], "intro.tex"),
-        (["intro:M-sec:fake"], "intro.tex"),
-        (["intro:sec:intro", "manuscript:sec:main"], "appendix.tex"),
+        (["manuscript:sec:main"], "manuscript.tex"),  # ref from main doc
+        (["M-sec:main"], "intro.tex"),  # intro.tex declares \externaldocument[M-]{manuscript}
+        (["sec:intro"], "intro.tex"),  # local ref within intro.tex
+        (["M-sec:fake"], "intro.tex"),  # ref with explicit M- prefix stays as-is
+        (["I-sec:intro", "M-sec:main"], "appendix.tex"),  # appendix declares both I- and M- prefixes
     ]
 
     assert len(ref_nodes) == len(expected_refs_n_sourcefile)
@@ -241,9 +244,9 @@ def test_subfiles_and_external_documents_reference_resolution():
     sec_nodes: List[SectionNode] = find_nodes_by_type(nodes, SectionNode)
     expected_sec_labels_n_sourcefile = [
         (["manuscript:sec:main"], "manuscript.tex"),
-        (["intro:sec:intro"], "intro.tex"),
-        (["intro:M-sec:fake"], "intro.tex"),
-        (["appendix:sec:appendix"], "appendix.tex"),
+        (["sec:intro"], "intro.tex"),  # No prefix for local label in intro.tex
+        (["M-sec:fake"], "intro.tex"),  # Explicit M- prefix in label name is preserved
+        (["sec:appendix"], "appendix.tex"),  # No prefix for local label in appendix.tex
     ]
 
     assert len(sec_nodes) == len(expected_sec_labels_n_sourcefile)

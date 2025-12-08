@@ -8,9 +8,13 @@ from latex2json.expander.handlers.inputs.input_handler import (
 from latex2json.expander.handlers.inputs.import_handler import (
     register_import_handlers,
 )
+from latex2json.expander.handlers.inputs.subfile_handler import (
+    register_subfile_handlers,
+)
 
 
 def register_input_handlers(expander: ExpanderCore):
     register_file_input_handlers(expander)
     register_import_handlers(expander)
+    register_subfile_handlers(expander)
     register_package_handlers(expander)
