@@ -83,6 +83,36 @@ def resolve_file_path(
     return None
 
 
+def get_search_base_from_source(
+    source_file: Optional[str], project_root: str, fallback_cwd: str
+) -> str:
+    """
+    Determine search base directory from source_file token attribute.
+
+    When a LaTeX command is encountered in a specific .tex file, we often want
+    to resolve relative paths from that file's directory rather than the project root.
+
+    Args:
+        source_file: The source file path from token.source_file attribute (may be None)
+        project_root: Project root directory
+        fallback_cwd: Fallback current working directory if source_file is None
+
+    Returns:
+        Absolute path to the directory to use as search base
+    """
+    if source_file and not os.path.isabs(source_file):
+        # Source file is relative to project_root
+        source_file_abs = os.path.join(project_root, source_file)
+    elif source_file:
+        # Source file is already absolute
+        source_file_abs = source_file
+    else:
+        # No source file, use fallback
+        source_file_abs = None
+
+    return os.path.dirname(source_file_abs) if source_file_abs else fallback_cwd
+
+
 def make_relative_to_project_root(abs_path: str, project_root: str) -> str:
     """
     Convert an absolute path to be relative to project_root.
@@ -103,7 +133,7 @@ def make_relative_to_project_root(abs_path: str, project_root: str) -> str:
     try:
         rel_path = os.path.relpath(abs_path, abs_project_root)
         # If path starts with "..", it's outside project_root, keep it absolute
-        if not rel_path.startswith('..'):
+        if not rel_path.startswith(".."):
             return rel_path
     except ValueError:
         # On Windows, relpath raises ValueError if paths are on different drives

@@ -49,6 +49,7 @@ from latex2json.tokens.utils import (
 )
 from latex2json.utils.tex_utils import strip_latex_comments
 from latex2json.utils.tex_versions import is_supported_tex_version
+from latex2json.utils.file_resolver import resolve_file_path as util_resolve
 
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
 
@@ -695,7 +696,7 @@ class ExpanderCore:
             try:
                 rel_path = os.path.relpath(abs_source, abs_project_root)
                 # Only use relative path if it doesn't go outside project_root
-                if not rel_path.startswith('..'):
+                if not rel_path.startswith(".."):
                     source_file = rel_path
                 else:
                     # Outside project_root, keep absolute
@@ -711,53 +712,45 @@ class ExpanderCore:
             file_path = os.path.join(self.cwd, file_path)
         return file_path
 
-    def _try_resolve_with_extension(
-        self, base_path: str, default_extension: str
-    ) -> Optional[str]:
-        """Try to resolve a file path with extension handling."""
-        ext = os.path.splitext(base_path)[1].lower()
-
-        # If no extension or invalid extension, try to resolve the file
-        if not ext or ext not in self.VALID_LATEX_EXTENSIONS:
-            file_path_with_ext = base_path + default_extension
-            if os.path.exists(file_path_with_ext):
-                return file_path_with_ext
-            elif os.path.exists(base_path):
-                # Original path exists (maybe it's a file without extension)
-                return base_path
-            else:
-                return None
-
-        # Has valid extension, check if exists
-        if os.path.exists(base_path):
-            return base_path
-
-        return None
-
     def resolve_file_path(
         self, file_path: str, default_extension: str = ".tex"
     ) -> Optional[str]:
+        """
+        Resolve a LaTeX file path with extension handling.
+
+        This method now wraps the unified file_resolver utility but maintains
+        backward compatibility with the original API.
+
+        Args:
+            file_path: The file path to resolve
+            default_extension: Default extension to try (default: ".tex")
+
+        Returns:
+            Absolute path to the resolved file, or None if not found
+        """
         # Convert Path objects to string
         file_path = str(file_path)
 
-        # If absolute path, resolve directly
-        if os.path.isabs(file_path):
-            return self._try_resolve_with_extension(file_path, default_extension)
+        # Build extensions list based on file and default_extension
+        ext = os.path.splitext(file_path)[1].lower()
 
-        # Try relative to cwd first (most common case)
-        cwd_path = os.path.join(self.cwd, file_path)
-        result = self._try_resolve_with_extension(cwd_path, default_extension)
-        if result:
-            return result
+        # If file has valid LaTeX extension, try as-is first, then with default
+        if ext in self.VALID_LATEX_EXTENSIONS:
+            extensions = [default_extension] if default_extension else []
+        # If no extension or invalid extension, try with default extension
+        elif not ext or ext not in self.VALID_LATEX_EXTENSIONS:
+            extensions = [default_extension] if default_extension else []
+        else:
+            extensions = []
 
-        # Fallback: try relative to project_root if different from cwd
-        if self.project_root != self.cwd:
-            root_path = os.path.join(self.project_root, file_path)
-            result = self._try_resolve_with_extension(root_path, default_extension)
-            if result:
-                return result
-
-        return None
+        # Use the unified resolver
+        return util_resolve(
+            file_path,
+            cwd=self.cwd,
+            project_root=self.project_root,
+            extensions=extensions,
+            extra_search_paths=None,
+        )
 
     def if_file_exists(self, file_path: str, default_extension: str = ".tex") -> bool:
         return self.resolve_file_path(file_path, default_extension) is not None
@@ -925,7 +918,12 @@ class ExpanderCore:
             # The flag ensures we only pop for "fresh" end tokens, not reprocessed ones
             if tok.type == TokenType.ENVIRONMENT_END:
                 from latex2json.tokens.types import EnvironmentEndToken
-                if isinstance(tok, EnvironmentEndToken) and hasattr(tok, 'should_pop_scope') and tok.should_pop_scope:
+
+                if (
+                    isinstance(tok, EnvironmentEndToken)
+                    and hasattr(tok, "should_pop_scope")
+                    and tok.should_pop_scope
+                ):
                     self.pop_env_stack(tok.value)
                     self.pop_scope()
                     # Clear the flag so we don't pop again if token is reprocessed
@@ -1809,15 +1807,26 @@ class ExpanderCore:
             # Create a wrapper for direct end commands (like \endhello)
             # that extracts the env name and calls the end_handler
             def make_end_macro_handler(env_name_captured: str):
-                def end_macro_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                def end_macro_handler(
+                    expander: "ExpanderCore", token: Token
+                ) -> List[Token]:
                     # Extract env name from token (remove "end" prefix)
-                    name = token.value[3:] if token.value.startswith("end") else env_name_captured
+                    name = (
+                        token.value[3:]
+                        if token.value.startswith("end")
+                        else env_name_captured
+                    )
                     return env_def.end_handler(expander, token, name)
+
                 return end_macro_handler
 
             self.register_macro(
                 "end" + env_name,
-                Macro("end" + env_name, make_end_macro_handler(env_name), env_def.end_definition),
+                Macro(
+                    "end" + env_name,
+                    make_end_macro_handler(env_name),
+                    env_def.end_definition,
+                ),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )
@@ -1837,13 +1846,20 @@ class ExpanderCore:
         if env_def.end_command:
             # Wrap end_handler to provide env_name for custom end commands
             def make_end_cmd_handler(env_name_captured: str):
-                def end_cmd_handler(expander: "ExpanderCore", token: Token) -> List[Token]:
+                def end_cmd_handler(
+                    expander: "ExpanderCore", token: Token
+                ) -> List[Token]:
                     return env_def.end_handler(expander, token, env_name_captured)
+
                 return end_cmd_handler
 
             self.register_macro(
                 env_def.end_command,
-                Macro(env_def.end_command, make_end_cmd_handler(env_name), env_def.end_definition),
+                Macro(
+                    env_def.end_command,
+                    make_end_cmd_handler(env_name),
+                    env_def.end_definition,
+                ),
                 is_global=is_global,
                 is_user_defined=is_user_defined,
             )

@@ -1,6 +1,7 @@
 import os
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token
+from latex2json.utils.file_resolver import resolve_file_path
 
 
 def import_handler(expander: ExpanderCore, token: Token):
@@ -38,8 +39,13 @@ def import_handler(expander: ExpanderCore, token: Token):
     expander.logger.info(f"Importing {import_file} from {new_cwd}")
 
     # Resolve the file path from the new cwd
-    file_path = os.path.join(new_cwd, import_file)
-    resolved_path = expander._try_resolve_with_extension(file_path, ".tex")
+    resolved_path = resolve_file_path(
+        import_file,
+        cwd=new_cwd,
+        project_root=expander.project_root,
+        extensions=[".tex"],
+        extra_search_paths=None,
+    )
 
     if resolved_path:
         text = expander.read_file(resolved_path)
@@ -104,8 +110,13 @@ def subimport_handler(expander: ExpanderCore, token: Token):
     expander.logger.info(f"Subimporting {import_file} from {new_cwd} (relative to {current_file_dir})")
 
     # Resolve the file path from the new cwd
-    file_path = os.path.join(new_cwd, import_file)
-    resolved_path = expander._try_resolve_with_extension(file_path, ".tex")
+    resolved_path = resolve_file_path(
+        import_file,
+        cwd=new_cwd,
+        project_root=expander.project_root,
+        extensions=[".tex"],
+        extra_search_paths=None,
+    )
 
     if resolved_path:
         text = expander.read_file(resolved_path)

@@ -8,6 +8,7 @@ from latex2json.tokens.types import Token
 from latex2json.utils.file_resolver import (
     resolve_file_path,
     make_relative_to_project_root,
+    get_search_base_from_source,
 )
 import re
 import os
@@ -32,20 +33,8 @@ def resolve_graphics_path(
     # Common image extensions that LaTeX uses
     common_extensions = [".pdf", ".png", ".jpg", ".jpeg", ".eps", ".ps"]
 
-    # Get the directory of the source file
-    if source_file and not os.path.isabs(source_file):
-        # Source file is relative to project_root
-        source_file_abs = os.path.join(parser.project_root, source_file)
-    elif source_file:
-        source_file_abs = source_file
-    else:
-        source_file_abs = None
-
-    # Use source file's directory as the search base
-    if source_file_abs:
-        search_dir = os.path.dirname(source_file_abs)
-    else:
-        search_dir = parser.project_root
+    # Determine search directory from source file context
+    search_dir = get_search_base_from_source(source_file, parser.project_root, parser.cwd)
 
     # Convert graphics_paths set to list
     extra_paths = list(parser.graphics_paths) if parser.graphics_paths else None
