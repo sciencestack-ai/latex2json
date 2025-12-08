@@ -37,17 +37,15 @@ def import_handler(expander: ExpanderCore, token: Token):
 
     expander.logger.info(f"Importing {import_file} from {new_cwd}")
 
-    # Save current cwd
-    old_cwd = expander.cwd
+    # Resolve the file path from the new cwd
+    file_path = os.path.join(new_cwd, import_file)
+    resolved_path = expander._try_resolve_with_extension(file_path, ".tex")
 
-    # Change to new directory
-    expander.cwd = new_cwd
-
-    # Load the file (it will be resolved relative to new cwd)
-    expander.push_file(import_file)
-
-    # Restore old cwd
-    expander.cwd = old_cwd
+    if resolved_path:
+        text = expander.read_file(resolved_path)
+        expander.push_text(text, source_file=resolved_path)
+    else:
+        expander.logger.warning(f"Failed to resolve file {import_file} from {new_cwd}")
 
     return []
 
@@ -105,17 +103,15 @@ def subimport_handler(expander: ExpanderCore, token: Token):
 
     expander.logger.info(f"Subimporting {import_file} from {new_cwd} (relative to {current_file_dir})")
 
-    # Save current cwd
-    old_cwd = expander.cwd
+    # Resolve the file path from the new cwd
+    file_path = os.path.join(new_cwd, import_file)
+    resolved_path = expander._try_resolve_with_extension(file_path, ".tex")
 
-    # Change to new directory
-    expander.cwd = new_cwd
-
-    # Load the file (it will be resolved relative to new cwd)
-    expander.push_file(import_file)
-
-    # Restore old cwd
-    expander.cwd = old_cwd
+    if resolved_path:
+        text = expander.read_file(resolved_path)
+        expander.push_text(text, source_file=resolved_path)
+    else:
+        expander.logger.warning(f"Failed to resolve file {import_file} from {new_cwd}")
 
     return []
 

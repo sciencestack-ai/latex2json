@@ -5,47 +5,60 @@ from latex2json.nodes import (
 )
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
+from latex2json.utils.file_resolver import resolve_file_path, make_relative_to_project_root
 import re
 import os
 
 from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
-def resolve_graphics_path(parser: ParserCore, path_str: str) -> str:
+def resolve_graphics_path(parser: ParserCore, path_str: str, source_file: Optional[str] = None) -> str:
     """
-    Resolve graphics path by checking:
-    1. The path itself (relative to parser.cwd or absolute)
-    2. If not found, check in graphics_paths directories (relative to parser.cwd)
+    Resolve graphics path and return it relative to project_root.
 
-    Returns the resolved path (or original if no resolution needed/possible)
+    Resolution order:
+    1. Relative to source file's directory
+    2. In graphics_paths (relative to source file's directory)
+    3. Relative to project_root
+    4. In graphics_paths (relative to project_root)
+
+    Returns path relative to project_root (or original if not found)
     """
     # Common image extensions that LaTeX uses
     common_extensions = [".pdf", ".png", ".jpg", ".jpeg", ".eps", ".ps"]
 
-    def check_cwd_path_exists(relative_path: str) -> bool:
-        """Check if file exists (relative to cwd) with or without common extensions"""
-        abs_path = parser.get_cwd_path(relative_path)
-        if os.path.isfile(abs_path):
-            return True
-        # Try adding common extensions if no extension provided
-        if not os.path.splitext(abs_path)[1]:
-            for ext in common_extensions:
-                if os.path.isfile(abs_path + ext):
-                    return True
-        return False
+    # Get the directory of the source file
+    if source_file and not os.path.isabs(source_file):
+        # Source file is relative to project_root
+        source_file_abs = os.path.join(parser.project_root, source_file)
+    elif source_file:
+        source_file_abs = source_file
+    else:
+        source_file_abs = None
 
-    # First, check the direct path
-    if check_cwd_path_exists(path_str):
-        return path_str
+    # Use source file's directory as the search base
+    if source_file_abs:
+        search_dir = os.path.dirname(source_file_abs)
+    else:
+        search_dir = parser.project_root
 
-    # If not found and we have graphics_paths, try each one
-    if parser.graphics_paths:
-        for graphics_dir in parser.graphics_paths:
-            candidate_path = os.path.join(graphics_dir, path_str)
-            if check_cwd_path_exists(candidate_path):
-                return candidate_path
+    # Convert graphics_paths set to list
+    extra_paths = list(parser.graphics_paths) if parser.graphics_paths else None
 
-    # Return original path if nothing found (file may not exist yet or be relative)
+    # Try to resolve the file
+    resolved_abs = resolve_file_path(
+        path_str,
+        cwd=search_dir,
+        project_root=parser.project_root,
+        extensions=common_extensions,
+        extra_search_paths=extra_paths,
+    )
+
+    if resolved_abs:
+        # Convert to path relative to project_root
+        return make_relative_to_project_root(resolved_abs, parser.project_root)
+
+    # Return original path if nothing found (file may not exist yet)
     return path_str
 
 
@@ -63,8 +76,11 @@ def includegraphics_handler(parser: ParserCore, token: Token):
     # Strip quotes from path if present (LaTeX allows quoted filenames)
     path_str = path_str.strip().replace('"', "").replace("'", "")
 
+    # Get source file from token if available
+    source_file = getattr(token, 'source_file', None)
+
     # Resolve path using graphics_paths if needed
-    resolved_path = resolve_graphics_path(parser, path_str)
+    resolved_path = resolve_graphics_path(parser, path_str, source_file=source_file)
 
     page = None
     if page_str:

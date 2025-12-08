@@ -122,8 +122,6 @@ DOCUMENT_ENVIRONMENTS = {
     "keyword": EnvironmentDefinition("keyword"),
     "keywords": EnvironmentDefinition("keywords"),
     "acknowledgments": EnvironmentDefinition("acknowledgments"),
-    # ignore NoHyper and \NoHyper \endNoHyper pairs
-    "NoHyper": EnvironmentDefinition("NoHyper", has_direct_command=True),
 }
 
 VERBATIM_ENVIRONMENTS = {
@@ -181,6 +179,9 @@ PICTURE_ENVIRONMENTS = {
 
 # Text formatting and layout environments
 LAYOUT_ENVIRONMENTS = {
+    "framed": EnvironmentDefinition("framed"),
+    # ignore NoHyper and \NoHyper \endNoHyper pairs
+    "NoHyper": EnvironmentDefinition("NoHyper", has_direct_command=True),
     "titlepage": EnvironmentDefinition("titlepage"),
     "center": EnvironmentDefinition("center"),
     "centering": EnvironmentDefinition("centering"),
