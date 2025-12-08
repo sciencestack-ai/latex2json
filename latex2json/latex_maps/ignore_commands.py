@@ -291,6 +291,7 @@ content_formatting_patterns = {
     "resetlinenumber": 0,
     # bib
     "printbibliography": "[",
+    "nobibliography": "*",
     "renewbibmacro": "{{",
     # datetime
     "date": "{",

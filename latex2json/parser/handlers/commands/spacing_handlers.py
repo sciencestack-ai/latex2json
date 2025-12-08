@@ -58,7 +58,7 @@ def vspace_handler(parser: ParserCore, token: Token) -> Optional[List[Token]]:
 
 
 def register_spacing_handlers(parser: ParserCore):
-    for cmd in ["ignorespaces", "noindent"]:
+    for cmd in ["ignorespaces", "ignorespacesafterend", "noindent"]:
         parser.register_handler(cmd, ignorespaces_handler)
 
     # allowbreak is only useful in pdf
