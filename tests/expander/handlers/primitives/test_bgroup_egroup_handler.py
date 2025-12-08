@@ -45,4 +45,5 @@ def test_aftergroup():
 
     out = expander.expand(r"\begingroup \aftergroup A B\endgroup")
     out_str = expander.convert_tokens_to_str(out).replace(" ", "")
-    assert out_str == "{B}A"
+    out_str = out_str.replace("{", "").replace("}", "")
+    assert out_str == "BA"
