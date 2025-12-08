@@ -5,14 +5,19 @@ from latex2json.nodes import (
 )
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import Token
-from latex2json.utils.file_resolver import resolve_file_path, make_relative_to_project_root
+from latex2json.utils.file_resolver import (
+    resolve_file_path,
+    make_relative_to_project_root,
+)
 import re
 import os
 
 from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
-def resolve_graphics_path(parser: ParserCore, path_str: str, source_file: Optional[str] = None) -> str:
+def resolve_graphics_path(
+    parser: ParserCore, path_str: str, source_file: Optional[str] = None
+) -> str:
     """
     Resolve graphics path and return it relative to project_root.
 
@@ -77,7 +82,7 @@ def includegraphics_handler(parser: ParserCore, token: Token):
     path_str = path_str.strip().replace('"', "").replace("'", "")
 
     # Get source file from token if available
-    source_file = getattr(token, 'source_file', None)
+    source_file = getattr(token, "source_file", None)
 
     # Resolve path using graphics_paths if needed
     resolved_path = resolve_graphics_path(parser, path_str, source_file=source_file)
@@ -242,6 +247,7 @@ def includestandalone_handler(parser: ParserCore, token: Token):
 
 def register_includegraphics_pdf_handlers(parser: ParserCore):
     parser.register_handler("includegraphics", includegraphics_handler)
+    parser.register_handler("adjincludegraphics", includegraphics_handler)
     parser.register_handler("adjustimage", adjustimage_handler)
 
     parser.register_handler("includepdf", includepdf_handler)
