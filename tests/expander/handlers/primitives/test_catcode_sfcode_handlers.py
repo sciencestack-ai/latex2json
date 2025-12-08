@@ -60,3 +60,63 @@ def test_catcode_mixed_usage():
     # Use numeric without equals
     expander.expand(r"\catcode 64 11")
     assert expander.state.get_catcode(ord("@")) == Catcode.LETTER
+
+
+def test_mathcode_with_backtick_syntax():
+    r"""Test \mathcode with traditional backtick syntax - just verify parsing works"""
+    expander = Expander()
+
+    # Test \mathcode`\+=12345 (backtick syntax) - should parse without error
+    result = expander.expand(r"\mathcode`\+=12345")
+    assert result == []
+
+    # Test \mathcode`\-=8000 (set minus sign)
+    result = expander.expand(r"\mathcode`\-=8000")
+    assert result == []
+
+
+def test_mathcode_with_numeric_syntax():
+    r"""Test \mathcode with numeric character codes - just verify parsing works"""
+    expander = Expander()
+
+    # Test \mathcode 65=1234 (set 'A' mathcode) - should parse without error
+    result = expander.expand(r"\mathcode 65=1234")
+    assert result == []
+
+    # Test \mathcode 97=5678 (set 'a' mathcode)
+    result = expander.expand(r"\mathcode 97=5678")
+    assert result == []
+
+    # Test with large value
+    result = expander.expand(r"\mathcode 48=12345")
+    assert result == []
+
+
+def test_mathcode_without_equals():
+    r"""Test \mathcode with optional equals sign"""
+    expander = Expander()
+
+    # Test without equals sign: \mathcode 66 9999 - should parse without error
+    result = expander.expand(r"\mathcode 66 9999")
+    assert result == []
+
+    # Test with backtick but no equals: \mathcode`\* 11111
+    result = expander.expand(r"\mathcode`\* 11111")
+    assert result == []
+
+
+def test_mathcode_mixed_usage():
+    r"""Test mixing numeric and backtick syntax for mathcode"""
+    expander = Expander()
+
+    # Use numeric to set mathcode - should parse without error
+    result = expander.expand(r"\mathcode 120=5000")
+    assert result == []
+
+    # Use backtick
+    result = expander.expand(r"\mathcode`\x=6000")
+    assert result == []
+
+    # Use numeric without equals
+    result = expander.expand(r"\mathcode 120 7000")
+    assert result == []

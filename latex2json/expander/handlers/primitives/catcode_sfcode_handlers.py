@@ -101,9 +101,35 @@ class SFCodeHandler:
         return expander.convert_str_to_tokens(catcode_str)
 
 
+class MathcodeHandler:
+    @staticmethod
+    def setter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        char = parse_char_value(expander)
+        if char is None:
+            return None
+
+        expander.parse_equals()
+
+        expander.skip_whitespace()
+        mathcode_value = expander.parse_integer()
+        # Parse and ignore, like \sfcode
+
+        return []
+
+    @staticmethod
+    def getter(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        char = parse_char_value(expander)
+        if char is None:
+            return None
+
+        # Return 0 as default mathcode
+        return expander.convert_str_to_tokens("0")
+
+
 def register_catcode_sfcode_handlers(expander: ExpanderCore):
     expander.register_handler("\\catcode", CatcodeHandler.setter, is_global=True)
     expander.register_handler("\\sfcode", SFCodeHandler.setter, is_global=True)
+    expander.register_handler("\\mathcode", MathcodeHandler.setter, is_global=True)
 
 
 if __name__ == "__main__":
