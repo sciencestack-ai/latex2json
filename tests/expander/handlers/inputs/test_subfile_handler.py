@@ -12,7 +12,13 @@ test_data_path = os.path.join(dir_path, "../../../samples/subfiles")
 
 
 def test_subfile_handler_counter_continuity():
-    """Test that subfiles maintain counter continuity when processed at expander level."""
+    r"""Test that subfiles maintain counter continuity when processed at expander level.
+
+    This is the key test showing why \subfile needs to be at the expander level:
+    Section counters must be sequential across all files (1, 2, 3, 4...).
+    If \subfile was handled at parser level, each file would have its own
+    counter context and numbering would restart.
+    """
     parser = Parser()
 
     # Parse the main manuscript which includes subfiles
@@ -22,18 +28,38 @@ def test_subfile_handler_counter_continuity():
     # Find all section nodes
     section_nodes: List[SectionNode] = find_nodes_by_type(nodes, SectionNode)
 
-    # We should have sections from manuscript.tex, intro.tex, and appendix.tex
-    # The counters should be sequential
-    assert len(section_nodes) > 0, "Should have found section nodes"
+    # Expected sections with sequential numbering across all files:
+    # manuscript.tex: section 1
+    # intro.tex: sections 2, 3 (two sections in intro.tex)
+    # appendix.tex: section 4
+    expected_sections = [
+        ("section", "1", "sec:main", "manuscript.tex"),
+        ("section", "2", "sec:intro", "intro.tex"),
+        ("section", "3", "M-sec:fake", "intro.tex"),
+        ("section", "4", "sec:appendix", "appendix.tex"),
+    ]
 
-    # Check that sections exist (basic sanity check)
-    section_names = [node.name for node in section_nodes]
-    assert any("section" in name for name in section_names), "Should have section nodes"
+    assert len(section_nodes) == len(expected_sections), (
+        f"Expected {len(expected_sections)} sections, found {len(section_nodes)}"
+    )
 
-    # Verify we have at least 3 sections (Main, Intro, and one or more from subfiles)
-    assert (
-        len(section_nodes) >= 3
-    ), f"Should have at least 3 sections, found {len(section_nodes)}"
+    # Verify each section has the correct sequential numbering
+    for i, (sec_node, expected) in enumerate(zip(section_nodes, expected_sections)):
+        exp_name, exp_numbering, exp_label, exp_source = expected
+
+        assert sec_node.name == exp_name, (
+            f"Section {i}: expected name '{exp_name}', got '{sec_node.name}'"
+        )
+        assert sec_node.numbering == exp_numbering, (
+            f"Section {i}: expected numbering '{exp_numbering}', got '{sec_node.numbering}'. "
+            f"This indicates counter continuity is broken!"
+        )
+        assert exp_label in sec_node.labels, (
+            f"Section {i}: expected label '{exp_label}' in {sec_node.labels}"
+        )
+        assert sec_node.get_source_file() == exp_source, (
+            f"Section {i}: expected source '{exp_source}', got '{sec_node.get_source_file()}'"
+        )
 
 
 def test_subfile_handler_expander_state():
