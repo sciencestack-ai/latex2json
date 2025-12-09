@@ -4,6 +4,9 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "lbrack": "[",
+    "rbrack": "]",
+    "textunderscore": "_",
     "Letter": 9993,
     "Envelope": 9993,  # ✉
     "glqq": ",,",
