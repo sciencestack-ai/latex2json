@@ -316,10 +316,6 @@ content_formatting_patterns = {
     "markleft": 1,
     # marginpar
     "marginpar": 1,
-    # glossary
-    "makeglossary": 0,
-    "printglossary": 0,
-    "newglossaryentry": "{{",
 }
 
 separator_patterns = {
@@ -401,6 +397,18 @@ nomenclature_patterns = {
     "makenomenclature": 0,
 }
 
+glossary_patterns = {
+    # glossary
+    "makeglossaries": 0,
+    "makeglossary": 0,
+    "printglossary": "[",
+    "newglossaryentry": "{{",
+    "gls": "{",
+    "Gls": "{",
+    "glspl": "{",
+    "Glspl": "{",
+}
+
 IGNORE_PATTERNS = (
     separator_patterns
     | formatting_patterns
@@ -409,4 +417,5 @@ IGNORE_PATTERNS = (
     | biblatex_patterns
     | index_patterns
     | nomenclature_patterns
+    | glossary_patterns
 )
