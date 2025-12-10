@@ -133,3 +133,91 @@ def test_nested_string_operations(expander):
     result = expander.convert_tokens_to_str(out).strip()
     # Should remove 'ab' from left (-> 'cdefgh'), then 'gh' from right (-> 'cdef')
     assert result == "cdef"
+
+
+def test_ifsubstr_basic_match(expander):
+    """Test \\IfSubStr with basic substring match."""
+    text = r"\IfSubStr{xstring}{tri}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "true"
+
+
+def test_ifsubstr_basic_no_match(expander):
+    """Test \\IfSubStr with no substring match."""
+    text = r"\IfSubStr{xstring}{a}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_with_spaces_match(expander):
+    """Test \\IfSubStr with spaces in substring."""
+    text = r"\IfSubStr{a bc def }{c d}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "true"
+
+
+def test_ifsubstr_with_spaces_no_match(expander):
+    """Test \\IfSubStr when spaces prevent match."""
+    text = r"\IfSubStr{a bc def }{cd}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_count_two(expander):
+    """Test \\IfSubStr with count parameter [2]."""
+    text = r"\IfSubStr[2]{1a2a3a}{a}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "true"
+
+
+def test_ifsubstr_count_three(expander):
+    """Test \\IfSubStr with count parameter [3]."""
+    text = r"\IfSubStr[3]{1a2a3a}{a}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "true"
+
+
+def test_ifsubstr_count_four(expander):
+    """Test \\IfSubStr with count parameter [4] exceeding occurrences."""
+    text = r"\IfSubStr[4]{1a2a3a}{a}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_empty_substring(expander):
+    """Test \\IfSubStr with empty substring."""
+    text = r"\IfSubStr{hello}{}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_empty_string(expander):
+    """Test \\IfSubStr with empty string."""
+    text = r"\IfSubStr{}{a}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_count_zero(expander):
+    """Test \\IfSubStr with count [0] should return false."""
+    text = r"\IfSubStr[0]{hello}{l}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"
+
+
+def test_ifsubstr_count_negative(expander):
+    """Test \\IfSubStr with negative count should return false."""
+    text = r"\IfSubStr[-1]{hello}{l}{true}{false}"
+    out = expander.expand(text)
+    result = expander.convert_tokens_to_str(out).strip()
+    assert result == "false"

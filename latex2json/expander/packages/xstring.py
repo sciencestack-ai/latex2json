@@ -103,9 +103,72 @@ def strgobble_right_handler(expander: ExpanderCore, _token: Token):
     return expander.convert_str_to_tokens(result)
 
 
+def ifsubstr_handler(expander: ExpanderCore, _token: Token):
+    r"""
+    Handler for \IfSubStr[*][<number>]{<string>}{<stringA>}{<true>}{<false>}
+    Tests if string contains at least number times stringA and executes appropriate branch.
+    The default value of number is 1.
+    - If number <= 0, runs false
+    - If string or stringA is empty, runs false
+    """
+    expander.skip_whitespace()
+
+    # Check for optional star
+    has_star = False
+    if expander.peek() and expander.peek().value == "*":
+        has_star = True
+        expander.expand_next()  # consume the star
+        expander.skip_whitespace()
+
+    # Check for optional number argument
+    number = 1  # default value
+    number_tokens = expander.parse_bracket_as_tokens(expand=True)
+    if number_tokens is not None:
+        number_str = expander.convert_tokens_to_str(number_tokens).strip()
+        try:
+            number = int(number_str)
+        except ValueError:
+            expander.logger.warning(f"\\IfSubStr: invalid number argument '{number_str}', using default 1")
+            number = 1
+        expander.skip_whitespace()
+
+    # Parse the four mandatory arguments
+    blocks = expander.parse_braced_blocks(4, expand=True, check_immediate_tokens=True)
+    if len(blocks) != 4:
+        expander.logger.warning("\\IfSubStr expects 4 blocks")
+        return []
+
+    string_tokens = blocks[0]
+    substring_tokens = blocks[1]
+    true_branch = blocks[2]
+    false_branch = blocks[3]
+
+    # Convert tokens to strings for comparison
+    string = expander.convert_tokens_to_str(string_tokens)
+    substring = expander.convert_tokens_to_str(substring_tokens)
+
+    # Determine result based on conditions
+    result = False
+    if number > 0 and string and substring:
+        # Count occurrences of substring in string
+        count = string.count(substring)
+        result = count >= number
+
+    # Execute appropriate branch
+    if result:
+        if true_branch:
+            expander.push_tokens(true_branch)
+    else:
+        if false_branch:
+            expander.push_tokens(false_branch)
+
+    return []
+
+
 def register_xstring_handler(expander: ExpanderCore):
     """Register all xstring package handlers."""
     expander.register_handler("IfBeginWith", ifbeginwith_handler, is_global=True)
+    expander.register_handler("IfSubStr", ifsubstr_handler, is_global=True)
     expander.register_handler("StrGobbleLeft", strgobble_left_handler, is_global=True)
     expander.register_handler("StrGobbleRight", strgobble_right_handler, is_global=True)
 
@@ -165,3 +228,28 @@ if __name__ == "__main__":
     out_str = expander.convert_tokens_to_str(out).strip()
     print("Combined test:")
     print(out_str)
+    print()
+
+    # Test IfSubStr (examples from documentation)
+    test_ifsubstr = r"""
+    \IfSubStr{xstring}{tri}{true}{false}\par
+    \IfSubStr{xstring}{a}{true}{false}\par
+    \IfSubStr{a bc def }{c d}{true}{false}\par
+    \IfSubStr{a bc def }{cd}{true}{false}\par
+    \IfSubStr[2]{1a2a3a}{a}{true}{false}\par
+    \IfSubStr[3]{1a2a3a}{a}{true}{false}\par
+    \IfSubStr[4]{1a2a3a}{a}{true}{false}
+    """
+    out = expander.expand(test_ifsubstr)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    print("IfSubStr test (from documentation):")
+    print(out_str)
+    print()
+    print("Expected:")
+    print("true")
+    print("false")
+    print("true")
+    print("false")
+    print("true")
+    print("true")
+    print("false")

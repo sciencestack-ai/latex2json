@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "smash": 0,  # \smash{arg} makes depth and height 0
     "@gobble": "{",  # A simple 1-argument macro that throws away its argument.
     "AddToShipoutPicture": "*{",
     "@onelevel@sanitize": 1,
