@@ -25,6 +25,8 @@ Examples:
 """
 
 formatting_patterns = {
+    "epigraph": 0,  # treat as just normal text
+    "lettrine": "[",  # ignore command and optional arg
     "smash": 0,  # \smash{arg} makes depth and height 0
     "@gobble": "{",  # A simple 1-argument macro that throws away its argument.
     "AddToShipoutPicture": "*{",

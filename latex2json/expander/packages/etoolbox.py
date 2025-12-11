@@ -1,7 +1,7 @@
 from typing import List, Optional, Dict
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.macro_registry import Macro, MacroType
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import find_token_sequence
 
 
@@ -175,6 +175,56 @@ def apptocmd_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def csappto_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \csappto{<csname>}{<append>}
+    Like \appto but takes a control sequence name (without backslash) instead of a token.
+    """
+    expander.skip_whitespace()
+    csname = expander.parse_brace_name()
+    expander.skip_whitespace()
+    append = expander.parse_brace_as_tokens()
+
+    if not csname or not append:
+        return []
+
+    # Convert csname to command token
+    cmd_token = Token(TokenType.CONTROL_SEQUENCE, csname)
+    macro = expander.get_macro(cmd_token)
+    if not macro:
+        return []
+
+    # append to the definition
+    macro.definition[:] = macro.definition + append
+
+    return []
+
+
+def cspreto_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \cspreto{<csname>}{<prepend>}
+    Like \preto but takes a control sequence name (without backslash) instead of a token.
+    """
+    expander.skip_whitespace()
+    csname = expander.parse_brace_name()
+    expander.skip_whitespace()
+    prepend = expander.parse_brace_as_tokens()
+
+    if not csname or not prepend:
+        return []
+
+    # Convert csname to command token
+    cmd_token = Token(TokenType.CONTROL_SEQUENCE, csname)
+    macro = expander.get_macro(cmd_token)
+    if not macro:
+        return []
+
+    # prepend to the definition
+    macro.definition[:] = prepend + macro.definition
+
+    return []
+
+
 def ifstrequal_handler(expander: ExpanderCore, token: Token):
     r"""
     Handler for \ifstrequal{string1}{string2}{true-branch}{false-branch}
@@ -215,6 +265,8 @@ def register_etoolbox_handler(expander: ExpanderCore):
     expander.register_handler("pretocmd", pretocmd_handler, is_global=True)
     expander.register_handler("appto", appto_handler, is_global=True)
     expander.register_handler("apptocmd", apptocmd_handler, is_global=True)
+    expander.register_handler("csappto", csappto_handler, is_global=True)
+    expander.register_handler("cspreto", cspreto_handler, is_global=True)
 
     # Toggle commands
     toggle_manager = ToggleManager()

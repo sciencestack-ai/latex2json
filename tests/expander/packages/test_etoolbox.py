@@ -83,6 +83,23 @@ def test_etoolbox_toggles_undefined():
     assert out_str == "FALSE"
 
 
+def test_etoolbox_csappto_cspreto():
+    expander = Expander()
+
+    text = r"""
+    \def\foo{middle}
+    \csappto{foo}{ end}
+    \foo
+
+    \cspreto{foo}{start }
+    \foo
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["middle end", "start middle end"]
+
+
 def test_etoolbox_ifstrequal_basic():
     expander = Expander()
 

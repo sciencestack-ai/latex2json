@@ -249,6 +249,7 @@ TABULAR_ENVIRONMENTS = {
     "tabular": EnvironmentDefinition(
         "tabular", num_args=2, default_arg=[], has_direct_command=True
     ),
+    "tblr": EnvironmentDefinition("tabular", num_args=1),
     "tabu": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
     # \begin{tabular*}{<width>}{@{\extracolsep{\fill}} l r}
     "xltabular": EnvironmentDefinition("tabular", num_args=2),
