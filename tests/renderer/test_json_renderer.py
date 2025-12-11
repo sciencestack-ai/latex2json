@@ -233,6 +233,64 @@ def test_preserve_empty_align_cells():
     }
 
 
+def test_tabular_with_empty_cells_and_colspan():
+    """Test that empty cells and colspan are preserved in tabular output"""
+    renderer = JSONRenderer()
+
+    text = r"""
+\begin{tabular}{l|rr|r}
+    \toprule
+          & \multicolumn{2}{c}{\% train examples with} & \multicolumn{1}{c}{\% valid with} \\
+          & \multicolumn{1}{c}{dup in train} & \multicolumn{1}{c}{dup in valid} & \multicolumn{1}{c}{dup in train} \\
+          \midrule
+    C4    & 3.04\% & 1.59\% & 4.60\%  \\
+    RealNews & 13.63\% & 1.25\% & 14.35\%  \\
+    \bottomrule
+    \end{tabular}
+    """.strip()
+
+    json = renderer.parse(text)
+    assert len(json) == 1
+    assert json[0]["type"] == NodeTypes.TABULAR
+    assert json[0]["name"] == "tabular"
+
+    content = json[0]["content"]
+
+    # First row: empty cell, colspan=2 cell, regular cell
+    assert content[0][0]["content"] == []  # Empty cell preserved
+    assert content[0][1]["colspan"] == 2
+    assert content[0][1]["content"] == [
+        {"type": NodeTypes.TEXT, "content": "% train examples with"}
+    ]
+    assert content[0][2]["content"] == [
+        {"type": NodeTypes.TEXT, "content": "% valid with"}
+    ]
+
+    # Second row: empty cell, three regular cells
+    assert content[1][0]["content"] == []  # Empty cell preserved
+    assert content[1][1]["content"] == [
+        {"type": NodeTypes.TEXT, "content": "dup in train"}
+    ]
+    assert content[1][2]["content"] == [
+        {"type": NodeTypes.TEXT, "content": "dup in valid"}
+    ]
+    assert content[1][3]["content"] == [
+        {"type": NodeTypes.TEXT, "content": "dup in train"}
+    ]
+
+    # Third row: data cells
+    assert content[2][0]["content"] == [{"type": NodeTypes.TEXT, "content": "C4"}]
+    assert content[2][1]["content"] == [{"type": NodeTypes.TEXT, "content": "3.04%"}]
+    assert content[2][2]["content"] == [{"type": NodeTypes.TEXT, "content": "1.59%"}]
+    assert content[2][3]["content"] == [{"type": NodeTypes.TEXT, "content": "4.60%"}]
+
+    # Fourth row: data cells
+    assert content[3][0]["content"] == [{"type": NodeTypes.TEXT, "content": "RealNews"}]
+    assert content[3][1]["content"] == [{"type": NodeTypes.TEXT, "content": "13.63%"}]
+    assert content[3][2]["content"] == [{"type": NodeTypes.TEXT, "content": "1.25%"}]
+    assert content[3][3]["content"] == [{"type": NodeTypes.TEXT, "content": "14.35%"}]
+
+
 def test_bibliography_pruning():
     """Test that unused bibliography entries are pruned by default"""
     renderer = JSONRenderer()

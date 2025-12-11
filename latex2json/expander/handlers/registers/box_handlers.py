@@ -28,6 +28,11 @@ def parse_box_id(expander: ExpanderCore) -> Optional[int | str]:
     if expander.get_register_value(REGISTER_TYPE, tok.value) is not None:
         expander.consume()
         return tok.value
+
+    # just return the command name if it's a control sequence
+    if expander.is_control_sequence(tok):
+        expander.consume()
+        return tok.value
     return None
 
 

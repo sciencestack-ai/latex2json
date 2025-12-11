@@ -16,6 +16,18 @@ INLINE_TYPES = [
 
 ACCEPTED_COMMAND_NAMES = ["and"]  # \and for delimiting author blocks
 
+# container types
+DISCARD_EMPTY_TYPES = [
+    NodeTypes.FIGURE,
+    NodeTypes.SUBFIGURE,
+    NodeTypes.TABLE,
+    NodeTypes.SUBTABLE,
+    NodeTypes.LIST,
+    NodeTypes.ENVIRONMENT,
+    NodeTypes.BIBLIOGRAPHY,
+    NodeTypes.GROUP,
+]
+
 
 def is_token_inline(token: Dict) -> bool:
     if not isinstance(token, dict):
@@ -444,16 +456,17 @@ class JSONRenderer:
         out_tokens = []
         for token in tokens:
             if isinstance(token, dict):
-                if token.get("type") == NodeTypes.COMMAND:
+                token_type = token.get("type")
+                if token_type == NodeTypes.COMMAND:
                     command_name: str = token.get("command", "")
                     if command_name.lower() not in ACCEPTED_COMMAND_NAMES:
                         self.logger.warning(f"Found unknown command: {command_name}")
-                elif token.get("type") == NodeTypes.BIBLIOGRAPHY:
+                elif token_type == NodeTypes.BIBLIOGRAPHY:
                     # Prune bibliography if requested
                     if self.prune_bibliography:
                         token = self._prune_bibliography_dict(token)
-                # dont append empty tokens e.g. content: '' or content: []
-                if "content" in token and not token["content"]:
+                # # dont append empty tokens e.g. content: '' or content: []
+                if token_type in DISCARD_EMPTY_TYPES and not token.get("content"):
                     continue
             out_tokens.append(token)
 
@@ -640,14 +653,15 @@ Appendix 2 content
 
     text = r"""
 
-\hyperlink{cite.WZ25b}{CHANGE MANNN }
-
-\begin{thebibliography}{99}
-\bibitem{WZ25b} 
-CHANGE MAN MA
-
-\end{thebibliography}
-
+\begin{tabular}{l|rr|r}
+    \toprule
+          & \multicolumn{2}{c}{\% train examples with} & \multicolumn{1}{c}{\% valid with} \\
+          & \multicolumn{1}{c}{dup in train} & \multicolumn{1}{c}{dup in valid} & \multicolumn{1}{c}{dup in train} \\
+          \midrule
+    C4    & 3.04\% & 1.59\% & 4.60\%  \\
+    RealNews & 13.63\% & 1.25\% & 14.35\%  \\
+    \bottomrule
+    \end{tabular}%
 """.strip()
 
     json = renderer.parse(text)
