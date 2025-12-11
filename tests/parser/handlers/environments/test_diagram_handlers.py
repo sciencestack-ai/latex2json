@@ -109,3 +109,14 @@ def test_xymatrix_at_as_single_token():
     assert diagram_node.env_name == "xymatrix"
     # Should preserve the full text including @C-2ex
     assert diagram_node.diagram == r"\xymatrix@C-2ex{ A & B }"
+
+
+def test_pgfplotstabletypeset():
+    """Test pgfplotstabletypeset command with optional bracket and required brace"""
+    parser = Parser()
+    text = r"\pgfplotstabletypeset[col sep=comma]{data.csv}"
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], DiagramNode)
+    diagram_node = out[0]
+    assert diagram_node.env_name == "pgfplotstabletypeset"
+    assert diagram_node.diagram == text.strip()

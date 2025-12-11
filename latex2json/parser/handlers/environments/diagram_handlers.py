@@ -45,24 +45,47 @@ def overpic_handler(parser: ParserCore, token: Token):
     return [out_node]
 
 
-def make_diagram_handler(num_braces: int):
+def make_diagram_handler(arg_spec: str):
     def diagram_command_handler(parser: ParserCore, token: Token):
-        r"""\chemfig{...} or \polylongdiv{...}{...}"""
+        r"""\chemfig{...} or \polylongdiv{...}{...}
+
+        Spec string can contain: * (star), [ (optional arg), { (required arg)
+        e.g. "{", "{{", "[{"
+        """
         parser.skip_whitespace()
         # parse all as verbatim tokens, then convert to str
         all_tokens = [token]
-        for _ in range(num_braces):
-            tokens = parser.parse_begin_end_as_tokens(
-                is_begin_group_token,
-                is_end_group_token,
-                check_first_token=True,
-                include_begin_end_tokens=True,
-            )
-            if not tokens:
-                break
-            all_tokens.extend(tokens)
 
-        if len(all_tokens) == 1:  # only the command token, no braces parsed
+        for char in arg_spec:
+            parser.skip_whitespace()
+            if char == "*":
+                # Consume star if present
+                if parser.peek() and parser.peek().value == "*":
+                    all_tokens.append(parser.consume())
+            elif char == "[":
+                # Optional bracket argument
+                if parser.peek() and parser.peek().value == "[":
+                    tokens = parser.parse_begin_end_as_tokens(
+                        lambda t: t.value == "[",
+                        lambda t: t.value == "]",
+                        check_first_token=True,
+                        include_begin_end_tokens=True,
+                    )
+                    if tokens:
+                        all_tokens.extend(tokens)
+            elif char == "{":
+                # Required brace argument
+                tokens = parser.parse_begin_end_as_tokens(
+                    is_begin_group_token,
+                    is_end_group_token,
+                    check_first_token=True,
+                    include_begin_end_tokens=True,
+                )
+                if not tokens:
+                    break
+                all_tokens.extend(tokens)
+
+        if len(all_tokens) == 1:  # only the command token, no args parsed
             return []
 
         diagram_str = parser.convert_tokens_to_str(all_tokens)
@@ -147,8 +170,13 @@ def register_picture_handlers(parser: ParserCore):
         else:
             parser.register_env_handler(env, make_picture_handler(env))
 
-    parser.register_handler("chemfig", make_diagram_handler(1))
-    parser.register_handler("polylongdiv", make_diagram_handler(2))
+    other_diagrams = {
+        "chemfig": "{",
+        "polylongdiv": "{{",
+        "pgfplotstabletypeset": "[{",
+    }
+    for cmd, arg_spec in other_diagrams.items():
+        parser.register_handler(cmd, make_diagram_handler(arg_spec))
 
     # xymatrix commands
     parser.register_handler("xymatrix", xymatrix_handler)

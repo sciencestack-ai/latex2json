@@ -32,6 +32,10 @@ latex2unicode: Dict[str, Union[str, int]] = {
     # "\\@": "",
     "Checkmark": 10003,
     "checkmark": 10003,  # ✓
+    "CheckmarkBold": 10004,  # ✔
+    "XSolid": 10007,  # ✗
+    "XSolidBrush": 10008,  # ✘
+    "XSolidBold": 10008,  # ✘
     "dots": 8230,  # ...
     "dotfill": "...",  # ...
     "textless": 60,  # <
