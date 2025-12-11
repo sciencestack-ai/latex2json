@@ -143,6 +143,7 @@ CITE_COMMANDS = [
     "cite",
     "citep",
     "citet",
+    "Citet",
     "cites",
     "citealt",
     "citealp",

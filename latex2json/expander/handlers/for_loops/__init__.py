@@ -9,6 +9,9 @@ from latex2json.expander.handlers.for_loops.loop_handler import register_loop_ha
 from latex2json.expander.handlers.for_loops.for_do_handler import (
     register_for_do_handler,
 )
+from latex2json.expander.handlers.for_loops.multido_handler import (
+    register_multido_handler,
+)
 
 
 def register_all_loop_handlers(expander: ExpanderCore):
@@ -16,3 +19,4 @@ def register_all_loop_handlers(expander: ExpanderCore):
     register_loop_handlers(expander)
     register_for_loop_handler(expander)
     register_for_do_handler(expander)
+    register_multido_handler(expander)
