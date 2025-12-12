@@ -759,3 +759,58 @@ def test_parse_tokens_until_verbatim_with_percent():
     normal_str = expander.convert_tokens_to_str(normal_tokens)
     assert "comment" not in normal_str
     assert "text" in normal_str and "more" in normal_str
+
+
+def test_recursion_detection_alternating_sequence():
+    """Test that recursion detection catches repeating sequences of commands."""
+    expander = ExpanderCore()
+
+    # Create two commands that push each other back, forming an infinite loop:
+    # \foo -> pushes \bar, \bar -> pushes \foo
+    def foo_handler(exp, tok):
+        exp.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "bar")])
+        return []
+
+    def bar_handler(exp, tok):
+        exp.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "foo")])
+        return []
+
+    expander.register_handler(r"\foo", foo_handler, is_global=True)
+    expander.register_handler(r"\bar", bar_handler, is_global=True)
+
+    # This should trigger recursion detection after the pattern [\foo, \bar] repeats
+    with pytest.raises(RuntimeError) as exc_info:
+        expander.expand(r"\foo")
+
+    error_msg = str(exc_info.value)
+    assert "Infinite recursion detected" in error_msg
+    assert "sequence" in error_msg.lower()
+
+
+def test_recursion_detection_three_command_cycle():
+    """Test recursion detection with a 3-command cycle."""
+    expander = ExpanderCore()
+
+    # Create a 3-command cycle: \a -> \b -> \c -> \a
+    def handler_a(exp, tok):
+        exp.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "b")])
+        return []
+
+    def handler_b(exp, tok):
+        exp.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "c")])
+        return []
+
+    def handler_c(exp, tok):
+        exp.push_tokens([Token(TokenType.CONTROL_SEQUENCE, "a")])
+        return []
+
+    expander.register_handler(r"\a", handler_a, is_global=True)
+    expander.register_handler(r"\b", handler_b, is_global=True)
+    expander.register_handler(r"\c", handler_c, is_global=True)
+
+    # Should detect the repeating pattern
+    with pytest.raises(RuntimeError) as exc_info:
+        expander.expand(r"\a")
+
+    error_msg = str(exc_info.value)
+    assert "Infinite recursion detected" in error_msg

@@ -1,3 +1,4 @@
+from collections import deque
 from dataclasses import dataclass
 from logging import Logger
 import os
@@ -137,6 +138,10 @@ class ExpanderCore:
         self.project_root = "."
         self.loaded_packages: Set[str] = set()
         self.loaded_classes: Set[str] = set()
+
+        # Recursion detection: track recent tokens to detect infinite loops
+        self._recent_tokens: deque = deque(maxlen=500)  # Track last 500 tokens
+        self._recursion_threshold = 50  # Number of times a sequence must repeat
 
         # Environment stack for tracking nested environments
         self._env_stack: List[EnvStackEntry] = []
@@ -897,10 +902,74 @@ class ExpanderCore:
         return space_cnt
 
     # main parsing logic
+    def _check_recursion(self, tok: Token) -> None:
+        """Check if we're in an infinite recursion loop.
+
+        Detects repeating sequences of tokens, indicating an infinite expansion loop.
+
+        Args:
+            tok: The token being processed
+
+        Raises:
+            RuntimeError: If infinite recursion is detected
+        """
+        # Only track control sequences - skip whitespace and regular characters
+        # Infinite loops typically involve macro expansions
+        if tok.type != TokenType.CONTROL_SEQUENCE:
+            return
+
+        # Create a hashable token signature: (type, value)
+        # Don't include position - we want to detect when the same command
+        # keeps appearing regardless of where it came from
+        token_sig = (tok.type, tok.value)
+
+        # Add to recent tokens
+        self._recent_tokens.append(token_sig)
+
+        # Need at least 6 tokens to detect a repeating sequence (2 token pattern * 3 repetitions)
+        if len(self._recent_tokens) < 6:
+            return
+
+        # Try different sequence lengths (from 1 to half the buffer size)
+        # We check if the same sequence repeats N times
+        recent_list = list(self._recent_tokens)
+
+        for seq_len in range(1, len(recent_list) // (self._recursion_threshold) + 1):
+            # Check if the last seq_len * threshold tokens form a repeating pattern
+            total_len = seq_len * self._recursion_threshold
+            if total_len > len(recent_list):
+                break
+
+            # Extract the most recent tokens
+            recent_segment = recent_list[-total_len:]
+
+            # Check if it's a repeating pattern
+            pattern = recent_segment[:seq_len]
+            is_repeating = True
+
+            for i in range(self._recursion_threshold):
+                segment = recent_segment[i * seq_len : (i + 1) * seq_len]
+                if segment != pattern:
+                    is_repeating = False
+                    break
+
+            if is_repeating:
+                # Format error message with context
+                pattern_str = " ".join(f"'{sig[1]}'" for sig in pattern)
+                error_msg = (
+                    f"Infinite recursion detected: sequence [{pattern_str}] "
+                    f"has repeated {self._recursion_threshold} times.\n"
+                    f"This likely indicates an infinite expansion loop in the LaTeX code."
+                )
+                raise RuntimeError(error_msg)
+
     def expand_next(self) -> Optional[List[Token]]:
         tok = self.parse_token()
         if tok is None:
             return None
+
+        # Check for infinite recursion before processing
+        self._check_recursion(tok)
 
         # if self.state.is_verbatim_mode:
         #     return [tok]
