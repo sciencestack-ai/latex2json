@@ -40,6 +40,8 @@ BUILTIN_SKIPS = [
     "thickmuskip",  # Thick math space (around relations)
     "thinmuskip",  # Thin math space (around punctuation)
     # Special skips
+    "interlineskip",
+    "nointerlineskip",
     "offinterlineskip",
     # temps
     "@tempskipa",
