@@ -140,8 +140,10 @@ class ExpanderCore:
         self.loaded_classes: Set[str] = set()
 
         # Recursion detection: track recent tokens to detect infinite loops
-        self._recent_tokens: deque = deque(maxlen=500)  # Track last 500 tokens
+        self._recent_tokens: deque = deque(maxlen=1000)  # Track last 1000 tokens
         self._recursion_threshold = 50  # Number of times a sequence must repeat
+        # Since we track full token sequences (not just control sequences),
+        # different commands create different patterns, avoiding false positives
 
         # Environment stack for tracking nested environments
         self._env_stack: List[EnvStackEntry] = []
@@ -905,7 +907,9 @@ class ExpanderCore:
     def _check_recursion(self, tok: Token) -> None:
         """Check if we're in an infinite recursion loop.
 
-        Detects repeating sequences of tokens, indicating an infinite expansion loop.
+        Detects when tokens from the SAME source position keep repeating, which indicates
+        infinite macro expansion. Different source positions are fine (e.g., 100 different
+        \DeclareMathOperator calls from different lines).
 
         Args:
             tok: The token being processed
@@ -913,23 +917,29 @@ class ExpanderCore:
         Raises:
             RuntimeError: If infinite recursion is detected
         """
-        # Only track control sequences - skip whitespace and regular characters
-        # Infinite loops typically involve macro expansions
-        if tok.type != TokenType.CONTROL_SEQUENCE:
+        # Skip whitespace tokens to reduce noise, but track everything else
+        if tok.type == TokenType.CHARACTER and tok.catcode == Catcode.SPACE:
+            return
+        if tok.type == TokenType.END_OF_LINE:
             return
 
-        # Create a hashable token signature: (type, value)
-        # Don't include position - we want to detect when the same command
-        # keeps appearing regardless of where it came from
-        token_sig = (tok.type, tok.value)
+        # Create a hashable token signature: (type, value, catcode, position)
+        # INCLUDE POSITION: This differentiates between:
+        # - \DeclareMathOperator at line 10 (position X)
+        # - \DeclareMathOperator at line 11 (position Y)
+        # These are different! Only same position repeating = infinite loop
+        token_sig = (tok.type, tok.value, tok.catcode, tok.position)
 
         # Add to recent tokens
         self._recent_tokens.append(token_sig)
 
-        # Need at least 6 tokens to detect a repeating sequence (2 token pattern * 3 repetitions)
-        if len(self._recent_tokens) < 6:
-            return
+        # Check for patterns periodically once we have enough tokens
+        # Checking every token is expensive, so we batch the checks
+        if len(self._recent_tokens) >= 500 and len(self._recent_tokens) % 100 == 0:
+            self._check_for_repeating_pattern()
 
+    def _check_for_repeating_pattern(self) -> None:
+        """Check if recent tokens contain a repeating pattern."""
         # Try different sequence lengths (from 1 to half the buffer size)
         # We check if the same sequence repeats N times
         recent_list = list(self._recent_tokens)
@@ -958,7 +968,7 @@ class ExpanderCore:
                 pattern_str = " ".join(f"'{sig[1]}'" for sig in pattern)
                 error_msg = (
                     f"Infinite recursion detected: sequence [{pattern_str}] "
-                    f"has repeated {self._recursion_threshold} times.\n"
+                    f"has repeated {self._recursion_threshold} times without making progress.\n"
                     f"This likely indicates an infinite expansion loop in the LaTeX code."
                 )
                 raise RuntimeError(error_msg)
