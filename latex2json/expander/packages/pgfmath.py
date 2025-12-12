@@ -186,10 +186,24 @@ def register_pgfmath(expander: ExpanderCore):
 
         return []
 
+    def pgfmathprintnumber_handler(expander: ExpanderCore, _token: Token):
+        r"""
+        Handler for \pgfmathprintnumber[<pgfkey>]{number}
+        Just return the number?
+        """
+        expander.skip_whitespace()
+        pgfkey = expander.parse_bracket_as_tokens()
+        expander.skip_whitespace()
+        number_tokens = expander.parse_brace_as_tokens(expand=True)
+        return number_tokens
+
     expander.register_handler("pgfmathparse", pgfmathparse_handler, is_global=True)
     expander.register_handler("pgfmathresult", pgfmathresult_handler, is_global=True)
     expander.register_handler(
         "pgfmathsetmacro", pgfmathsetmacro_handler, is_global=True
+    )
+    expander.register_handler(
+        "pgfmathprintnumber", pgfmathprintnumber_handler, is_global=True
     )
 
 

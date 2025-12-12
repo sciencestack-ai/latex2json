@@ -141,6 +141,7 @@ REF_COMMANDS = [
 
 CITE_COMMANDS = [
     "cite",
+    "shortcite",
     "citep",
     "citet",
     "Citet",
