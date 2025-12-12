@@ -58,11 +58,10 @@ def lowercase_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
 
 def register_case_handlers(expander: ExpanderCore):
-    expander.register_handler(r"\MakeTextUppercase", uppercase_handler, is_global=True)
-    expander.register_handler(r"\uppercase", uppercase_handler, is_global=True)
-
-    expander.register_handler(r"\MakeTextLowercase", lowercase_handler, is_global=True)
-    expander.register_handler(r"\lowercase", lowercase_handler, is_global=True)
+    for cmd in ["MakeTextUppercase", "MakeUppercase", "uppercase"]:
+        expander.register_handler(f"\\{cmd}", uppercase_handler, is_global=True)
+    for cmd in ["MakeTextLowercase", "MakeLowercase", "lowercase"]:
+        expander.register_handler(f"\\{cmd}", lowercase_handler, is_global=True)
 
 
 if __name__ == "__main__":

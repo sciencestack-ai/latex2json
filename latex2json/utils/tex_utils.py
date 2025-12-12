@@ -66,17 +66,26 @@ def _rgb_string(r: int, g: int, b: int) -> str:
 def convert_color_to_css(model: str, spec: str) -> str:
     """Convert LaTeX color specifications to CSS values"""
 
+    def parse_color_values(spec: str) -> list:
+        """Parse color values that can be comma or space delimited"""
+        # Try comma-delimited first
+        if "," in spec:
+            return [float(x.strip()) for x in spec.split(",")]
+        # Otherwise treat as space-delimited
+        else:
+            return [float(x.strip()) for x in spec.split()]
+
     if model == "rgb":
         # LaTeX: rgb values 0-1 → CSS: rgb values 0-255
-        # Input: "0.2, 0.4, 0.8"
-        values = [float(x.strip()) for x in spec.split(",")]
+        # Input: "0.2, 0.4, 0.8" or "0.2 0.4 0.8"
+        values = parse_color_values(spec)
         rgb_values = [int(round(v * 255)) for v in values]
         return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "RGB":
         # LaTeX: RGB values 0-255 or 0-1 floats → CSS: 0-255
-        # Input: "255, 100, 50" or "0.5, 0.8, 0.2"
-        values = [float(x.strip()) for x in spec.split(",")]
+        # Input: "255, 100, 50" or "28 58 88" or "0.5, 0.8, 0.2"
+        values = parse_color_values(spec)
         # If all values are <= 1.0, treat as 0-1 range and scale to 0-255
         if all(v <= 1.0 for v in values):
             rgb_values = [int(round(v * 255)) for v in values]
@@ -92,8 +101,8 @@ def convert_color_to_css(model: str, spec: str) -> str:
 
     elif model.lower() == "cmyk":
         # LaTeX: CMYK 0-1 values → CSS: convert to RGB
-        # Input: "0.5, 0.8, 0, 0.2"
-        values = [float(x.strip()) for x in spec.split(",")]
+        # Input: "0.5, 0.8, 0, 0.2" or "0.5 0.8 0 0.2"
+        values = parse_color_values(spec)
         c, m, y, k = values
 
         # CMYK to RGB conversion
@@ -112,9 +121,9 @@ def convert_color_to_css(model: str, spec: str) -> str:
 
     elif model == "hsb":
         # LaTeX: HSB values → CSS: convert to RGB
-        # Input: "0.6, 0.8, 0.9" (hue, saturation, brightness)
+        # Input: "0.6, 0.8, 0.9" or "0.6 0.8 0.9" (hue, saturation, brightness)
 
-        values = [float(x.strip()) for x in spec.split(",")]
+        values = parse_color_values(spec)
         h, s, b = values
 
         # HSB to RGB (note: colorsys uses HSV which is same as HSB)
@@ -231,18 +240,18 @@ def extract_braced_content_fast(text: str, start: int = 0) -> Tuple[str | None, 
     while start < len(text) and text[start].isspace():
         start += 1
 
-    if start >= len(text) or text[start] != '{':
+    if start >= len(text) or text[start] != "{":
         return None, 0
 
     depth = 0
     i = start
     while i < len(text):
-        if text[i] == '{':
+        if text[i] == "{":
             depth += 1
-        elif text[i] == '}':
+        elif text[i] == "}":
             depth -= 1
             if depth == 0:
-                return text[start + 1:i], i + 1
+                return text[start + 1 : i], i + 1
         i += 1
 
     return None, 0
