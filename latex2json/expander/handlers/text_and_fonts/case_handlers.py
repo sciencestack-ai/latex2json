@@ -58,7 +58,10 @@ def lowercase_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
 
 
 def register_case_handlers(expander: ExpanderCore):
+    expander.register_handler(r"\MakeTextUppercase", uppercase_handler, is_global=True)
     expander.register_handler(r"\uppercase", uppercase_handler, is_global=True)
+
+    expander.register_handler(r"\MakeTextLowercase", lowercase_handler, is_global=True)
     expander.register_handler(r"\lowercase", lowercase_handler, is_global=True)
 
 

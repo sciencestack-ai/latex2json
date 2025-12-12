@@ -79,7 +79,9 @@ def lstinputlisting_handler(parser: ParserCore, token: Token):
 
     # Determine search directory from source file context
     source_file = getattr(token, "source_file", None)
-    search_dir = get_search_base_from_source(source_file, parser.project_root, parser.cwd)
+    search_dir = get_search_base_from_source(
+        source_file, parser.project_root, parser.cwd
+    )
 
     # Resolve file path using the file_resolver utility
     # Don't provide extensions - lstinputlisting requires exact filename
@@ -102,7 +104,9 @@ def lstinputlisting_handler(parser: ParserCore, token: Token):
             return []
         return [VerbatimNode(content.strip(), title=title)]
     except Exception as e:
-        parser.logger.error(f"\\lstinputlisting: Error reading file {resolved_path}: {e}")
+        parser.logger.error(
+            f"\\lstinputlisting: Error reading file {resolved_path}: {e}"
+        )
         return []
 
 
@@ -117,6 +121,9 @@ def register_verbatim_lst_handlers(parser: ParserCore):
 
     # Register command handlers
     parser.register_handler("lstinputlisting", lstinputlisting_handler)
+
+    # \VerbatimEnvironment marker (just ignore?)
+    parser.register_handler("VerbatimEnvironment", lambda parser, token: [])
 
 
 if __name__ == "__main__":
