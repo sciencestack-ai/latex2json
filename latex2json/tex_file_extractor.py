@@ -86,7 +86,10 @@ class TexFileExtractor:
             for base_path, root in main_tex_files:
                 if os.path.basename(base_path) == "main.tex":
                     return (base_path, root)
-            # Otherwise return the first one
+            # Otherwise return the one with biggest size
+            main_tex_files.sort(
+                key=lambda x: os.path.getsize(os.path.join(x[1], x[0])), reverse=True
+            )
             return main_tex_files[0]
 
         raise FileNotFoundError(

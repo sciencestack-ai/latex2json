@@ -412,11 +412,10 @@ MATH_ENVIRONMENTS = {
     "gather*": EnvironmentDefinition(
         "gather*", env_type=EnvironmentType.EQUATION_ALIGN
     ),
-    "flalign": EnvironmentDefinition(
-        "flalign", env_type=EnvironmentType.EQUATION_ALIGN
-    ),
+    # treat flalign as align
+    "flalign": EnvironmentDefinition("align", env_type=EnvironmentType.EQUATION_ALIGN),
     "flalign*": EnvironmentDefinition(
-        "flalign*", env_type=EnvironmentType.EQUATION_ALIGN
+        "align*", env_type=EnvironmentType.EQUATION_ALIGN
     ),
     "alignat": EnvironmentDefinition(
         "alignat",
