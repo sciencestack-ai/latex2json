@@ -70,27 +70,38 @@ def convert_color_to_css(model: str, spec: str) -> str:
         """Parse color values that can be comma or space delimited"""
         # Try comma-delimited first
         if "," in spec:
-            return [float(x.strip()) for x in spec.split(",")]
+            return [float(x.strip()) for x in spec.split(",") if x.strip()]
         # Otherwise treat as space-delimited
         else:
-            return [float(x.strip()) for x in spec.split()]
+            return [float(x.strip()) for x in spec.split() if x.strip()]
 
     if model == "rgb":
         # LaTeX: rgb values 0-1 → CSS: rgb values 0-255
         # Input: "0.2, 0.4, 0.8" or "0.2 0.4 0.8"
         values = parse_color_values(spec)
-        rgb_values = [int(round(v * 255)) for v in values]
+        if len(values) < 3:
+            print(f"Invalid rgb color spec: expected 3 values, got {len(values)}: {values} from '{spec}'")
+            return "black"  # Fallback for invalid RGB values
+        if len(values) > 3:
+            print(f"Warning: rgb spec has {len(values)} values, using first 3: {values[:3]} from '{spec}'")
+        rgb_values = [int(round(v * 255)) for v in values[:3]]
         return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "RGB":
         # LaTeX: RGB values 0-255 or 0-1 floats → CSS: 0-255
         # Input: "255, 100, 50" or "28 58 88" or "0.5, 0.8, 0.2"
         values = parse_color_values(spec)
+        if len(values) < 3:
+            print(f"Invalid RGB color spec: expected 3 values, got {len(values)}: {values} from '{spec}'")
+            return "black"  # Fallback for invalid RGB values
+        if len(values) > 3:
+            print(f"Warning: RGB spec has {len(values)} values, using first 3: {values[:3]} from '{spec}'")
         # If all values are <= 1.0, treat as 0-1 range and scale to 0-255
-        if all(v <= 1.0 for v in values):
-            rgb_values = [int(round(v * 255)) for v in values]
+        values_to_use = values[:3]
+        if all(v <= 1.0 for v in values_to_use):
+            rgb_values = [int(round(v * 255)) for v in values_to_use]
         else:
-            rgb_values = [int(v) for v in values]
+            rgb_values = [int(v) for v in values_to_use]
         return _rgb_string(rgb_values[0], rgb_values[1], rgb_values[2])
 
     elif model == "HTML":
@@ -103,7 +114,12 @@ def convert_color_to_css(model: str, spec: str) -> str:
         # LaTeX: CMYK 0-1 values → CSS: convert to RGB
         # Input: "0.5, 0.8, 0, 0.2" or "0.5 0.8 0 0.2"
         values = parse_color_values(spec)
-        c, m, y, k = values
+        if len(values) < 4:
+            print(f"Invalid cmyk color spec: expected 4 values, got {len(values)}: {values} from '{spec}'")
+            return "black"  # Fallback for invalid CMYK values
+        if len(values) > 4:
+            print(f"Warning: cmyk spec has {len(values)} values, using first 4: {values[:4]} from '{spec}'")
+        c, m, y, k = values[0], values[1], values[2], values[3]
 
         # CMYK to RGB conversion
         r = int(255 * (1 - c) * (1 - k))
@@ -124,7 +140,12 @@ def convert_color_to_css(model: str, spec: str) -> str:
         # Input: "0.6, 0.8, 0.9" or "0.6 0.8 0.9" (hue, saturation, brightness)
 
         values = parse_color_values(spec)
-        h, s, b = values
+        if len(values) < 3:
+            print(f"Invalid hsb color spec: expected 3 values, got {len(values)}: {values} from '{spec}'")
+            return "black"  # Fallback for invalid HSB values
+        if len(values) > 3:
+            print(f"Warning: hsb spec has {len(values)} values, using first 3: {values[:3]} from '{spec}'")
+        h, s, b = values[0], values[1], values[2]
 
         # HSB to RGB (note: colorsys uses HSV which is same as HSB)
         r, g, b = colorsys.hsv_to_rgb(h, s, b)
