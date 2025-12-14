@@ -90,6 +90,10 @@ class TexFileExtractor:
             main_tex_files.sort(
                 key=lambda x: os.path.getsize(os.path.join(x[1], x[0])), reverse=True
             )
+            for base_path, root in main_tex_files:
+                if "template" in base_path.lower():
+                    continue
+                return (base_path, root)
             return main_tex_files[0]
 
         raise FileNotFoundError(
