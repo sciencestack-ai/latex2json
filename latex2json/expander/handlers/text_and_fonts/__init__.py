@@ -17,6 +17,9 @@ from latex2json.expander.handlers.text_and_fonts.verb_lst_inline_handlers import
 from latex2json.expander.handlers.text_and_fonts.text_handlers import (
     register_text_handlers,
 )
+from latex2json.expander.handlers.text_and_fonts.url_handlers import (
+    register_url_handlers,
+)
 
 
 def register_text_and_font_handlers(expander: ExpanderCore):
@@ -26,3 +29,4 @@ def register_text_and_font_handlers(expander: ExpanderCore):
     register_verb_lst_inline_handlers(expander)
     register_text_handlers(expander)
     register_ding_handlers(expander)
+    register_url_handlers(expander)

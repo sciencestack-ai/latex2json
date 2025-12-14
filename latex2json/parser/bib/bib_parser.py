@@ -42,7 +42,8 @@ class BibParser:
     def parse(self, content: str) -> List[BibEntryNode]:
         """Parse both BibTeX, bibitem, and bibdiv entries from the content"""
 
-        content = preprocess(content)
+        # DON't preprocess content since may cut off % characters in urls etc
+        # content = preprocess(content)
 
         entries = []
 

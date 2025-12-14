@@ -1,4 +1,5 @@
 from typing import List, Optional
+from latex2json.latex_maps.url_commands import URL_COMMANDS
 from latex2json.nodes import CommandNode, RefNode
 from latex2json.nodes.base_nodes import TextNode
 from latex2json.nodes.ref_cite_url_nodes import CiteNode, URLNode
@@ -265,6 +266,8 @@ def register_ref_label_handlers(parser: ParserCore):
         split_comma = command.lower() == "cref"
         parser.register_handler(command, make_ref_handler(split_comma))
 
+    parser.register_handler("noeqref", noeqref_handler)
+
     # hypertarget/hyperlink
     parser.register_handler("hypertarget", hypertarget_handler)
     parser.register_handler("hyperlink", hyperlink_handler)
@@ -290,15 +293,15 @@ def register_ref_label_handlers(parser: ParserCore):
         parser.register_handler(command, citealias_handler)
 
     # urls
-    for url_command in ["url", "Url", "path"]:
-        parser.register_handler(url_command, make_url_handler(parse_title=False))
-    parser.register_handler("href", make_url_handler(parse_title=True))
-    parser.register_handler("burlalt", make_url_handler(parse_title=True))
-    parser.register_handler(
-        "doi", make_url_handler(parse_title=False, path_prefix="https://doi.org/")
-    )
+    for url_command, spec in URL_COMMANDS.items():
+        path_prefix = ""
+        if url_command == "doi":
+            path_prefix = "https://doi.org/"
 
-    parser.register_handler("noeqref", noeqref_handler)
+        parser.register_handler(
+            url_command,
+            make_url_handler(parse_title=spec.startswith("["), path_prefix=path_prefix),
+        )
 
 
 if __name__ == "__main__":
