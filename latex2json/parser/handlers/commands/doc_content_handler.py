@@ -71,6 +71,12 @@ def register_doc_content_handlers(parser: ParserCore):
         "subclass",
         "institute",
         "acknowledgments",
+        "city",
+        "state",
+        "country",
+        "institution",
+        "department",
+        "orcid",
     ]:
         parser.register_handler(
             metadata, make_metadata_handler(metadata, has_short_bracket=True)
@@ -96,6 +102,7 @@ def register_doc_content_handlers(parser: ParserCore):
         "curaddr": 0,
         "addr": 0,
         "inst": 1,
+        "authornotemark": "[",
     }
     register_ignore_handlers_util(parser, ignore_patterns)
 

@@ -27,7 +27,14 @@ def footnotemark_handler(parser: ParserCore, token: Token):
 
 
 def register_footnote_bookmark_handlers(parser: ParserCore):
-    for footnote_command in ["footnote", "footnotetext", "tnote", "tablefootnote"]:
+    for footnote_command in [
+        "footnote",
+        "footnotetext",
+        "@footnotetext",
+        "tnote",
+        "tablefootnote",
+        "authornote",
+    ]:
         parser.register_handler(footnote_command, footnote_handler)
     for footnote_mark_command in ["footnotemark", "@footnotemark"]:
         parser.register_handler(footnote_mark_command, footnotemark_handler)
