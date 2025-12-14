@@ -7,15 +7,15 @@ def test_at_begin_end_document_handler():
     expander = Expander()
     text = r"""
     \def\aaa{AAA}
-    \AtBeginDocument{Hello \aaa} % only expanded at begin document
-    \AtBeginDocument{ANOTHER ONE} % executed/returned right after the begin document token
+
+    \AtBeginDocument{\def\newaaa{\aaa}} % only expanded at begin document
     \AtEndDocument{END} % executed/returned right before the end document token
     \AtEndDocument{END2} % executed/returned right before the end document token
 
     \def\aaa{BBB}
     
     \begin{document}
-    DOC
+    \newaaa % BBB
     \end{document}
 """.strip()
     out = expander.expand(text)
@@ -26,9 +26,4 @@ def test_at_begin_end_document_handler():
     body_tokens = out[1:-1]
     body_stripped = strip_whitespace_tokens(body_tokens)
     body_str = expander.convert_tokens_to_str(body_stripped)
-
-    start_str = "Hello BBBANOTHER ONE"
-    end_str = "ENDEND2"
-    assert body_str.startswith(start_str)
-    assert body_str.endswith(end_str)
-    assert body_str[len(start_str) : -len(end_str)].strip() == "DOC"
+    assert body_str.startswith("BBB")

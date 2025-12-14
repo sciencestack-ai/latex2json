@@ -20,7 +20,10 @@ def make_at_document_hook(expander: ExpanderCore, cmd_name: str, is_begin=True):
             return None
 
         def expand_tokens_hook():
-            return expander.expand_tokens(tokens)
+            # Don't return the tokens since AtBeginDocument/AtEndDocument
+            # are typically in the preamble and normally not meant as semantic content in the body of the document
+            expander.expand_tokens(tokens)
+            return []
 
         hooks = doc_env_def.hooks.begin if is_begin else doc_env_def.hooks.end
         hooks.append(expand_tokens_hook)

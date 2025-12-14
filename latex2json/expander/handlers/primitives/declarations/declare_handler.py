@@ -184,15 +184,16 @@ def register_declare_commands(expander: ExpanderCore):
         is_global=True,
     )
 
-    expander.register_macro(
-        "\\DeclareOption",
-        Macro(
-            "\\DeclareOption",
-            declare_option_handler,
-            type=MacroType.DECLARATION,
-        ),
-        is_global=True,
-    )
+    for cmd in ["DeclareOption", "DeclareOptionX"]:
+        expander.register_macro(
+            f"\\{cmd}",
+            Macro(
+                f"\\{cmd}",
+                declare_option_handler,
+                type=MacroType.DECLARATION,
+            ),
+            is_global=True,
+        )
 
     expander.register_macro(
         "\\DeclareTextFontCommand",

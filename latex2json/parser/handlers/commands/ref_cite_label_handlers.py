@@ -71,10 +71,9 @@ def hypertarget_handler(parser: ParserCore, token: Token):
             env_node.labels.append(anchor_id)
         return []
 
-    title_str = parser.convert_nodes_to_str(title_nodes)
-    out_node = TextNode(title_str)
-    out_node.labels.append(anchor_id)
-    return [out_node]
+    # just append the label to the first node?
+    title_nodes[0].labels.append(anchor_id)
+    return title_nodes
 
 
 def hyperlink_handler(parser: ParserCore, token: Token):
