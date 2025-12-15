@@ -256,6 +256,8 @@ def split_tokens_by_predicate(
 def segment_tokens_by_begin_end(tokens: List[Token]) -> List[List[Token]]:
     """Segment tokens into groups based on begin and end tokens.
 
+    Properly handles nested environments by using a stack to track environment names.
+
     Args:
         tokens: List of tokens to segment
 
@@ -264,21 +266,27 @@ def segment_tokens_by_begin_end(tokens: List[Token]) -> List[List[Token]]:
     """
     groups: List[List[Token]] = []
     current_group: List[Token] = []
-    env_name: str | None = None
+    env_stack: List[str] = []  # Stack to track nested environment names
 
     for tok in tokens:
         if isinstance(tok, EnvironmentStartToken):
-            groups.append(current_group)
-            current_group = [tok]  # Start new group with begin token
-            env_name = tok.name
-        elif tok.type == TokenType.ENVIRONMENT_END:
-            if tok.value == env_name:  # Found matching end token
-                current_group.append(tok)
+            if not env_stack:
+                # Starting a new top-level environment
                 groups.append(current_group)
-                current_group = []
-                env_name = None
+                current_group = [tok]
             else:
+                # Nested environment - add to current group
                 current_group.append(tok)
+            env_stack.append(tok.name)
+        elif tok.type == TokenType.ENVIRONMENT_END:
+            current_group.append(tok)
+            # Check if this end matches the most recent begin
+            if env_stack and tok.value == env_stack[-1]:
+                env_stack.pop()
+                # If stack is empty, we've closed the top-level environment
+                if not env_stack:
+                    groups.append(current_group)
+                    current_group = []
         else:
             current_group.append(tok)
 

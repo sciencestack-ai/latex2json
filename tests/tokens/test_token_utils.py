@@ -204,3 +204,37 @@ def test_segment_tokens_by_begin_end_and_braces():
         tok_str = tok_str.replace("\n", " ").replace(" ", "")
         assert tok_str == expected_str
         assert groups[i].is_group == expected_is_group
+
+
+def test_segment_tokens_nested_environments():
+    """Test that nested environments are properly segmented.
+
+    This tests the fix for the bug where nested environment starts would
+    overwrite the parent environment name, breaking parent grouping.
+    """
+    from latex2json.expander.expander import Expander
+
+    expander = Expander()
+    # Nested environments without braces
+    text = r"""
+    \begin{outer}
+    before inner
+    \begin{inner}inner content\end{inner}
+    after inner
+    \end{outer}
+    """.strip()
+    tokens = expander.expand(text)
+    groups = segment_tokens_by_begin_end_and_braces(tokens)
+
+    # Should produce one group for the outer environment
+    # (containing the nested inner environment)
+    assert len(groups) == 1
+    assert groups[0].is_group == True
+
+    tok_str = expander.convert_tokens_to_str(groups[0].tokens).strip()
+    tok_str = tok_str.replace("\n", " ")
+    # The outer environment should be complete from \begin{outer} to \end{outer}
+    assert tok_str.startswith(r"\begin{outer}")
+    assert tok_str.endswith(r"\end{outer}")
+    assert r"\begin{inner}" in tok_str
+    assert r"\end{inner}" in tok_str
