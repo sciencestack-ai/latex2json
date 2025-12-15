@@ -175,6 +175,7 @@ PICTURE_ENVIRONMENTS = {
         "pgfpicture", env_type=EnvironmentType.VERBATIM
     ),
     "overpic": EnvironmentDefinition("overpic", env_type=EnvironmentType.VERBATIM),
+    "lapdf": EnvironmentDefinition("lapdf", env_type=EnvironmentType.VERBATIM),
 }
 
 # Text formatting and layout environments

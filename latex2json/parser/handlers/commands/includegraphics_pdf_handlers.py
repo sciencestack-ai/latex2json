@@ -16,6 +16,16 @@ import os
 from latex2json.tokens.utils import is_begin_group_token, is_end_group_token
 
 
+def sanitize_path_str(path_str: str) -> str:
+    return (
+        path_str.strip()
+        .replace('"', "")
+        .replace("'", "")
+        .replace("{", "")
+        .replace("}", "")
+    )
+
+
 def resolve_graphics_path(
     parser: ParserCore, path_str: str, source_file: Optional[str] = None
 ) -> str:
@@ -52,10 +62,10 @@ def resolve_graphics_path(
 
     if resolved_abs:
         # Convert to path relative to project_root
-        return make_relative_to_project_root(resolved_abs, parser.project_root)
+        path_str = make_relative_to_project_root(resolved_abs, parser.project_root)
 
     # Return original path if nothing found (file may not exist yet)
-    return path_str
+    return sanitize_path_str(path_str)
 
 
 def includegraphics_handler(parser: ParserCore, token: Token):
@@ -70,7 +80,7 @@ def includegraphics_handler(parser: ParserCore, token: Token):
     path_str = parser.convert_nodes_to_str(path)
 
     # Strip quotes from path if present (LaTeX allows quoted filenames)
-    path_str = path_str.strip().replace('"', "").replace("'", "")
+    path_str = sanitize_path_str(path_str)
 
     # Get source file from token if available
     source_file = getattr(token, "source_file", None)
@@ -106,7 +116,7 @@ def includepdf_handler(parser: ParserCore, token: Token):
     path_str = parser.convert_nodes_to_str(path)
 
     # Strip quotes from path if present (LaTeX allows quoted filenames)
-    path_str = path_str.strip().replace('"', "").replace("'", "")
+    path_str = sanitize_path_str(path_str)
 
     pages = None
     if pages_str:
