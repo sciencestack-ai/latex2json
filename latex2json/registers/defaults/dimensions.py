@@ -69,6 +69,8 @@ BUILTIN_DIMENSIONS = [
     "pdfpageheight",
     # algorithmic
     "algorithmicindent",
+    "epsfysize",
+    "epsfxsize",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:

@@ -216,6 +216,7 @@ formatting_patterns = {
     "newsymbol": "\\i",
     # other
     "tolerance": "=i",
+    "pretolerance": "=i",
     "delimitershortfall": "=d",
     # mathversion
     "mathversion": "{",

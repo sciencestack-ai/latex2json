@@ -34,7 +34,9 @@ def resolve_graphics_path(
     common_extensions = [".pdf", ".png", ".jpg", ".jpeg", ".eps", ".ps"]
 
     # Determine search directory from source file context
-    search_dir = get_search_base_from_source(source_file, parser.project_root, parser.cwd)
+    search_dir = get_search_base_from_source(
+        source_file, parser.project_root, parser.cwd
+    )
 
     # Convert graphics_paths set to list
     extra_paths = list(parser.graphics_paths) if parser.graphics_paths else None
@@ -235,8 +237,8 @@ def includestandalone_handler(parser: ParserCore, token: Token):
 
 
 def register_includegraphics_pdf_handlers(parser: ParserCore):
-    parser.register_handler("includegraphics", includegraphics_handler)
-    parser.register_handler("adjincludegraphics", includegraphics_handler)
+    for includegraphics_cmd in ["includegraphics", "adjincludegraphics", "epsffile"]:
+        parser.register_handler(includegraphics_cmd, includegraphics_handler)
     parser.register_handler("adjustimage", adjustimage_handler)
 
     parser.register_handler("includepdf", includepdf_handler)

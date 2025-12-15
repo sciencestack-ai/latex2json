@@ -156,6 +156,9 @@ CITE_COMMANDS = [
     "autocite",
     "parencite",
     "onlinecite",
+    "textcite",
+    "Textcite",
+    "fullcite",
 ]
 
 

@@ -77,6 +77,7 @@ def register_doc_content_handlers(parser: ParserCore):
         "institution",
         "department",
         "orcid",
+        "preprint",
     ]:
         parser.register_handler(
             metadata, make_metadata_handler(metadata, has_short_bracket=True)

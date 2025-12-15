@@ -35,6 +35,14 @@ def test_includegraphics_handler():
     assert out[0] == IncludeGraphicsNode("lstmn.jpg")
 
 
+def test_epsffile_handler():
+    parser = Parser()
+    text = r"\epsffile{example.eps}"
+    out = parser.parse(text)
+    assert len(out) == 1
+    assert out[0] == IncludeGraphicsNode("example.eps")
+
+
 def test_includepdf_handler():
     parser = Parser()
 

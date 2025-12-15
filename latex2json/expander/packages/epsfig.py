@@ -49,11 +49,6 @@ def register_epsfig(expander: ExpanderCore):
         expander.register_handler(cmd, psfig_handler, is_global=True)
     expander.register_handler("epsfbox", epsfbox_handler, is_global=True)
 
-    ignore_patterns = {
-        "epsfxsize": "=d",
-    }
-    register_ignore_handlers_util(expander, ignore_patterns)
-
 
 if __name__ == "__main__":
     from latex2json.expander.expander import Expander
