@@ -200,3 +200,34 @@ def test_nested_caption_numbering():
         DummyCaption(float_env="figure", numbering="1", caption_text="OUTER FIGURE"),
     ]
     assert_caption_instances(expander, expected_captions)
+
+
+def test_captionbox_handler():
+    """Test captionbox command - transforms to caption + contents tokens."""
+    expander = Expander()
+
+    text = r"""
+    \begin{figure}
+        \captionbox{A cat}{\includegraphics{cat}}
+    \end{figure}
+    """
+    expander.set_text(text)
+
+    # After transformation, we should see: \caption{A cat} \includegraphics{cat}
+    caption_found = False
+    graphics_found = False
+
+    while not expander.eof():
+        tokens = expander.next_non_expandable_tokens()
+        out = strip_whitespace_tokens(tokens)
+        if out and out[0].value == "caption":
+            # Check the caption token
+            assert out[0].args
+            caption_text = expander.convert_tokens_to_str(out[0].args[0])
+            assert caption_text == "A cat"
+            assert out[0].numbering == "1"
+            caption_found = True
+        elif out and out[0].value == "includegraphics":
+            graphics_found = True
+
+    assert caption_found and graphics_found

@@ -109,3 +109,91 @@ def test_subfigure_cmd_handler():
     assert len(sbody2) == 2
     assert sbody2[0] == subfig2_caption
     assert sbody2[1] == IncludeGraphicsNode("figures/efficiency.pdf")
+
+
+def test_captionbox_handler():
+    """Test captionbox at parser level."""
+    parser = Parser()
+
+    text = r"""
+\begin{figure}
+    \captionbox{A cat}{\includegraphics{cat.jpg}}
+    \captionbox[Short entry]{An elephant}[5cm][c]{\includegraphics{elephant.jpg}}
+\end{figure}
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], FigureNode)
+
+    figure_node = out[0]
+    body = [node for node in figure_node.body if not is_whitespace_node(node)]
+
+    # First captionbox creates caption + graphic directly in parent figure
+    # Second captionbox creates nested figure
+    assert len(body) == 3
+
+    # First captionbox
+    assert isinstance(body[0], CaptionNode)
+    assert body[0].body == [TextNode("A cat")]
+    assert body[0].numbering == "1"
+    assert isinstance(body[1], IncludeGraphicsNode)
+    assert body[1].path == "cat.jpg"
+
+    # Second captionbox - nested figure
+    assert isinstance(body[2], FigureNode)
+    fig2 = body[2]
+    fig2_body = [node for node in fig2.body if not is_whitespace_node(node)]
+    assert len(fig2_body) == 2
+    assert isinstance(fig2_body[0], CaptionNode)
+    assert fig2_body[0].body == [TextNode("An elephant")]
+    assert fig2_body[0].numbering == "2"
+    assert isinstance(fig2_body[1], IncludeGraphicsNode)
+    assert fig2_body[1].path == "elephant.jpg"
+
+
+def test_subcaptionbox_handler():
+    """Test subcaptionbox at parser level - should create SubFigureNode with renumbered captions."""
+    parser = Parser()
+
+    text = r"""
+\begin{figure}
+    \subcaptionbox{A cat}{\includegraphics{cat.jpg}}
+    \subcaptionbox[Short]{An elephant}[.4\textwidth]{\includegraphics{elephant.jpg}}
+    \subcaptionbox*{A dog}[5cm][c]{\includegraphics{dog.jpg}}
+    \caption{Animals}
+\end{figure}
+    """.strip()
+    out = parser.parse(text)
+    assert len(out) == 1 and isinstance(out[0], FigureNode)
+
+    figure_node = out[0]
+
+    # Main caption should be numbered "1"
+    main_caption = figure_node.get_caption_node()
+    assert main_caption and main_caption.body == [TextNode("Animals")]
+    assert main_caption.numbering == "1"
+
+    body = [node for node in figure_node.body if not is_whitespace_node(node)]
+
+    # Should have 4 items: 3 SubFigureNodes + 1 main caption
+    assert len(body) == 4
+
+    # First subcaptionbox - wrapped in SubFigureNode, caption renumbered to "a"
+    assert isinstance(body[0], SubFigureNode)
+    subfig1_caption = body[0].get_caption_node()
+    assert subfig1_caption and subfig1_caption.body == [TextNode("A cat")]
+    assert subfig1_caption.numbering == "a"
+
+    # Second subcaptionbox - wrapped in SubFigureNode, caption renumbered to "b"
+    assert isinstance(body[1], SubFigureNode)
+    subfig2_caption = body[1].get_caption_node()
+    assert subfig2_caption and subfig2_caption.body == [TextNode("An elephant")]
+    assert subfig2_caption.numbering == "b"
+
+    # Third subcaptionbox (starred) - wrapped in SubFigureNode, caption renumbered to "c"
+    assert isinstance(body[2], SubFigureNode)
+    subfig3_caption = body[2].get_caption_node()
+    assert subfig3_caption and subfig3_caption.body == [TextNode("A dog")]
+    assert subfig3_caption.numbering == "c"
+
+    # Main caption at the end
+    assert body[3] == main_caption

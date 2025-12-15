@@ -258,6 +258,7 @@ content_formatting_patterns = {
     "frontmatter": 0,
     "mainmatter": 0,
     "backmatter": 0,
+    "everypar": 0,
     # math
     "everymath": 1,
     # title
