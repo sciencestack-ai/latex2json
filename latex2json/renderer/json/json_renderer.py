@@ -261,11 +261,17 @@ class JSONRenderer:
         # Prune unused entries
         original_count = len(content)
         pruned_content = [item for item in content if item.get("key") in cited_keys]
-
         if len(pruned_content) < original_count:
             self.logger.info(
                 f"Pruned bibliography: {original_count} → {len(pruned_content)} entries "
                 f"({original_count - len(pruned_content)} unused entries removed)"
+            )
+
+        # If all entries were pruned, cap to first 100 entries
+        if len(pruned_content) == 0 and original_count > 0:
+            pruned_content = content[:100]
+            self.logger.info(
+                f"0 entries found, returning {len(pruned_content)} entries"
             )
 
         bib_dict["content"] = pruned_content

@@ -18,7 +18,7 @@ DOCUMENTCLASS_PATTERN = re.compile(
 BEGIN_DOCUMENT_PATTERN = re.compile(r"\\begin\s*\{document\}|\\document\b", re.DOTALL)
 
 
-SUPPORTED_TEX_EXTENSIONS = (".tex", ".flt")
+SUPPORTED_TEX_EXTENSIONS = (".tex", ".flt", ".ltx")
 
 
 class TexFileExtractor:
@@ -64,7 +64,7 @@ class TexFileExtractor:
         main_tex_files: List[Tuple[str, str]] = []
         for root, _, files in os.walk(folder_path):
             for file in files:
-                if file.endswith(SUPPORTED_TEX_EXTENSIONS):
+                if file.lower().endswith(SUPPORTED_TEX_EXTENSIONS):
                     full_path = os.path.join(root, file)
                     base_path = os.path.relpath(full_path, folder_path)
                     all_tex_files.append((base_path, root))
