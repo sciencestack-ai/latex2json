@@ -269,6 +269,8 @@ content_formatting_patterns = {
     # files
     "listfiles": 0,
     # TOCs
+    "minitoc": 0,
+    "dominitoc": 0,
     "parttoc": 0,
     "doparttoc": 0,
     "faketableofcontents": 0,

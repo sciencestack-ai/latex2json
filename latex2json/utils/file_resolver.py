@@ -10,16 +10,26 @@ def resolve_file_path(
     project_root: str,
     extensions: Optional[List[str]] = None,
     extra_search_paths: Optional[List[str]] = None,
+    recursive: bool = True,
 ) -> Optional[str]:
     """
     Resolve a file path by checking multiple locations.
 
-    Resolution order:
+    Resolution order (when recursive=False):
     1. Absolute paths (if file_path is absolute)
     2. Relative to cwd
     3. Relative to extra_search_paths (if provided), resolved from cwd
     4. Relative to project_root (if different from cwd)
     5. Relative to extra_search_paths (if provided), resolved from project_root
+
+    Resolution order (when recursive=True):
+    1. Absolute paths (if file_path is absolute)
+    2. Relative to cwd
+    3. Relative to extra_search_paths (if provided), resolved from cwd
+    4. Recursively in cwd subdirectories
+    5. Relative to project_root (if different from cwd)
+    6. Relative to extra_search_paths (if provided), resolved from project_root
+    7. Recursively in project_root subdirectories
 
     Args:
         file_path: The file path to resolve
@@ -27,6 +37,7 @@ def resolve_file_path(
         project_root: Project root directory
         extensions: List of extensions to try (e.g., [".tex", ".ltx"])
         extra_search_paths: Additional directories to search (e.g., graphics_paths)
+        recursive: If True, recursively search subdirectories (default: True)
 
     Returns:
         Absolute path to the resolved file, or None if not found
@@ -44,6 +55,24 @@ def resolve_file_path(
         for ext in extensions:
             if os.path.isfile(path + ext):
                 return os.path.abspath(path + ext)
+
+        return None
+
+    def recursive_search(base_dir: str, target_filename: str) -> Optional[str]:
+        """Recursively search for a file in base_dir and its subdirectories."""
+        if not os.path.isdir(base_dir):
+            return None
+
+        # Extract just the filename from the path
+        filename = os.path.basename(target_filename)
+
+        # Walk through all subdirectories
+        for root, dirs, files in os.walk(base_dir):
+            # Check if file exists in this directory
+            candidate = os.path.join(root, filename)
+            result = try_resolve_with_extension(candidate)
+            if result:
+                return result
 
         return None
 
@@ -65,6 +94,12 @@ def resolve_file_path(
             if result:
                 return result
 
+    # Recursively search cwd subdirectories if enabled
+    if recursive:
+        result = recursive_search(cwd, file_path)
+        if result:
+            return result
+
     # Fallback: try relative to project_root if different from cwd
     if project_root != cwd:
         root_path = os.path.join(project_root, file_path)
@@ -79,6 +114,12 @@ def resolve_file_path(
                 result = try_resolve_with_extension(candidate)
                 if result:
                     return result
+
+        # Recursively search project_root subdirectories if enabled
+        if recursive:
+            result = recursive_search(project_root, file_path)
+            if result:
+                return result
 
     return None
 

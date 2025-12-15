@@ -95,6 +95,8 @@ def register_font_handlers(expander: ExpanderCore):
         "@setfontsize": 3,
         "selectfont": 0,
         "usefont": 4,
+        "fontseries": 1,
+        "fontshape": 1,
     }
     register_ignore_handlers_util(expander, ignore_patterns)
 

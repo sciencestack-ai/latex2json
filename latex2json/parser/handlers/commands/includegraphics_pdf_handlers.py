@@ -118,6 +118,12 @@ def includepdf_handler(parser: ParserCore, token: Token):
     # Strip quotes from path if present (LaTeX allows quoted filenames)
     path_str = sanitize_path_str(path_str)
 
+    # Get source file from token if available
+    source_file = getattr(token, "source_file", None)
+
+    # Resolve path using graphics_paths if needed
+    resolved_path = resolve_graphics_path(parser, path_str, source_file=source_file)
+
     pages = None
     if pages_str:
         # Match pages parameter with various formats:
@@ -132,7 +138,7 @@ def includepdf_handler(parser: ParserCore, token: Token):
             if pages_match
             else None
         )
-    return [IncludePdfNode(path_str, pages=pages)]
+    return [IncludePdfNode(resolved_path, pages=pages)]
 
 
 def graphicspath_handler(parser: ParserCore, token: Token):
