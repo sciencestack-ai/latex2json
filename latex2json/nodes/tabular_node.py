@@ -292,7 +292,7 @@ class TabularNode(EnvironmentNode):
                             "cell": cell,
                         }
                         corrections.append(correction)
-                        logger.info(
+                        logger.debug(
                             f"Corrected rowspan at ({row_idx}, {col_pos}): "
                             f"{old_rowspan} -> {actual_rows_occupied}"
                         )

@@ -5,6 +5,7 @@ from latex2json.expander.handlers.sectioning.section_handlers import (
     make_section_handler,
 )
 from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
 def caption_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
@@ -35,12 +36,84 @@ def captionof_handler(expander: ExpanderCore, token: Token) -> Optional[List[Tok
     return out
 
 
+def captionbox_subcaptionbox_handler(
+    expander: ExpanderCore, token: Token, is_subcaption: bool = False
+) -> Optional[List[Token]]:
+    r"""Handle captionbox/subcaptionbox tokens.
+    Syntax: \[sub]captionbox[<list entry>]{<heading>}[<width>][<inner-pos>]{<contents>}
+
+    transforms to \begin{subfigure} \caption{heading} contents \end{subfigure}
+    """
+    expander.skip_whitespace()
+
+    # Check if starred version
+    is_starred = expander.parse_asterisk()
+
+    # Parse optional [list entry] (skip for starred version)
+    if not is_starred:
+        expander.parse_bracket_as_tokens()
+    expander.skip_whitespace()
+
+    # Parse required {heading} - this is the caption
+    heading = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+
+    # Parse optional [width] and [inner-pos] (ignore them)
+    expander.parse_bracket_as_tokens()
+    expander.skip_whitespace()
+    expander.parse_bracket_as_tokens()
+    expander.skip_whitespace()
+
+    # Parse required {contents}
+    contents = expander.parse_brace_as_tokens() or []
+
+    # Determine if we should use subfigure or subtable
+    float_env = expander.get_parent_float_env()
+    is_table = float_env and float_env.name == "table"
+    env_name = "table" if is_table else "figure"
+    if is_subcaption:
+        env_name = "sub" + env_name
+
+    # Create tokens: \begin{subfigure} \caption{heading} contents \end{subfigure}
+    env_name_tokens = expander.convert_str_to_tokens(env_name)
+    env_name_tokens = wrap_tokens_in_braces(env_name_tokens)
+
+    out_tokens = [
+        Token(TokenType.CONTROL_SEQUENCE, "begin"),
+        *env_name_tokens.copy(),
+        Token(
+            TokenType.CONTROL_SEQUENCE, "caption" if not is_subcaption else "subcaption"
+        ),
+        *wrap_tokens_in_braces(heading),
+        *contents,
+        Token(TokenType.CONTROL_SEQUENCE, "end"),
+        *env_name_tokens.copy(),
+    ]
+
+    expander.push_tokens(out_tokens)
+    return []
+
+
 def register_caption_handler(expander: ExpanderCore):
     """Register caption handlers."""
     for caption in ["caption", "subcaption"]:
         expander.register_handler(caption, caption_handler, is_global=True)
 
     expander.register_handler("captionof", captionof_handler, is_global=True)
+
+    # captionbox and subcaptionbox use the same handler with different parameters
+    expander.register_handler(
+        "captionbox",
+        lambda exp, tok: captionbox_subcaptionbox_handler(
+            exp, tok, is_subcaption=False
+        ),
+        is_global=True,
+    )
+    expander.register_handler(
+        "subcaptionbox",
+        lambda exp, tok: captionbox_subcaptionbox_handler(exp, tok, is_subcaption=True),
+        is_global=True,
+    )
 
     ignore_patterns = {
         "captionsetup": "[{",
