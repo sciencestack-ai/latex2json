@@ -158,6 +158,26 @@ def delcare_textfont_handler(
     return []
 
 
+def declare_fixedfont_handler(
+    expander: ExpanderCore, token: Token
+) -> Optional[list[Token]]:
+    r"""Handler for \DeclareFixedFont
+    \DeclareFixedFont\trfont{OT1}{phv}{b}{sc}{11}
+    """
+    expander.skip_whitespace()
+    cmd_tok = expander.parse_command_name_token()
+    expander.skip_whitespace()
+    expander.parse_braced_blocks(5)
+
+    # just ignore?
+    def handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
+        return []
+
+    expander.register_handler(cmd_tok, handler, is_global=True, is_user_defined=True)
+
+    return []
+
+
 def register_declare_commands(expander: ExpanderCore):
     expander.register_macro(
         "\\DeclareRobustCommand",
@@ -200,6 +220,15 @@ def register_declare_commands(expander: ExpanderCore):
         Macro(
             "\\DeclareTextFontCommand",
             delcare_textfont_handler,
+            type=MacroType.DECLARATION,
+        ),
+        is_global=True,
+    )
+    expander.register_macro(
+        "\\DeclareFixedFont",
+        Macro(
+            "\\DeclareFixedFont",
+            declare_fixedfont_handler,
             type=MacroType.DECLARATION,
         ),
         is_global=True,

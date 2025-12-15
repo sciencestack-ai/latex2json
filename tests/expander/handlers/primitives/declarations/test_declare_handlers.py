@@ -88,3 +88,14 @@ def test_declare_textfont():
 
     tokens = expander.expand(r"\myfont{Hello}")
     assert tokens == expander.expand(r"\textbf{Hello}")
+
+
+def test_declare_fixedfont():
+    expander = Expander()
+    expander.expand(r"\DeclareFixedFont{\myfont}{rm}{m}{n}{10}")
+    assert expander.get_macro("myfont")
+    assert expander.check_macro_is_user_defined("myfont")
+
+    # ignore?
+    out_str = expander.convert_tokens_to_str(expander.expand(r"\myfont{Hello}"))
+    assert out_str == "{Hello}"

@@ -141,7 +141,7 @@ class ExpanderCore:
 
         # Recursion detection: track recent tokens to detect infinite loops
         self._recent_tokens: deque = deque(maxlen=1000)  # Track last 1000 tokens
-        self._recursion_threshold = 50  # Number of times a sequence must repeat
+        self._recursion_threshold = 100  # Number of times a sequence must repeat
         # Since we track full token sequences (not just control sequences),
         # different commands create different patterns, avoiding false positives
 

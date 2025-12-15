@@ -142,6 +142,7 @@ def register_tabular_handlers(parser: ParserCore):
         "arrayrulecolor": 1,
         "hhline": "{",
         "Xcline": 2,
+        "taburulecolor": 1,
     }
 
     register_ignore_handlers_util(parser, ignored_env_pattern_N_blocks)
