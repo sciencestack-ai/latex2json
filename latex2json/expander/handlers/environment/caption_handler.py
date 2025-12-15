@@ -78,13 +78,24 @@ def captionbox_subcaptionbox_handler(
     env_name_tokens = expander.convert_str_to_tokens(env_name)
     env_name_tokens = wrap_tokens_in_braces(env_name_tokens)
 
-    out_tokens = [
-        Token(TokenType.CONTROL_SEQUENCE, "begin"),
-        *env_name_tokens.copy(),
+    caption_tokens = [
         Token(
             TokenType.CONTROL_SEQUENCE, "caption" if not is_subcaption else "subcaption"
         ),
         *wrap_tokens_in_braces(heading),
+    ]
+
+    begin_env_tokens = [
+        Token(TokenType.CONTROL_SEQUENCE, "begin"),
+        *env_name_tokens.copy(),
+    ]
+    if is_subcaption:
+        # if \begin{subfigure}, need extra mandatory arg {width}. Keep 'width' empty here
+        begin_env_tokens.extend(wrap_tokens_in_braces([]))
+
+    out_tokens = [
+        *begin_env_tokens,
+        *caption_tokens,
         *contents,
         Token(TokenType.CONTROL_SEQUENCE, "end"),
         *env_name_tokens.copy(),
