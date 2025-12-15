@@ -88,7 +88,8 @@ class TexFileExtractor:
                     return (base_path, root)
             # Otherwise return the one with biggest size
             main_tex_files.sort(
-                key=lambda x: os.path.getsize(os.path.join(x[1], x[0])), reverse=True
+                key=lambda x: os.path.getsize(os.path.join(folder_path, x[0])),
+                reverse=True,
             )
             for base_path, root in main_tex_files:
                 if "template" in base_path.lower():
