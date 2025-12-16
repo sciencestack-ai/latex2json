@@ -294,6 +294,7 @@ content_formatting_patterns = {
     "getpagerefnumber": 1,
     # line numbers
     "linenumbers": 0,
+    "nolinenumbers": 0,
     "linesnumbered": 0,
     "linenomath": 0,
     "endlinenomath": 0,

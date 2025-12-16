@@ -382,6 +382,9 @@ MATH_ENVIRONMENTS = {
     "pmatrix": EnvironmentDefinition(
         "pmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),  # parentheses ()
+    "pmatrix*": EnvironmentDefinition(
+        "pmatrix*", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
     "bmatrix": EnvironmentDefinition(
         "bmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),  # brackets []

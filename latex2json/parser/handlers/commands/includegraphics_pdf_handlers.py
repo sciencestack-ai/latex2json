@@ -70,6 +70,8 @@ def resolve_graphics_path(
 
 def includegraphics_handler(parser: ParserCore, token: Token):
     parser.skip_whitespace()
+    parser.parse_asterisk()
+    parser.skip_whitespace()
     page_nodes = parser.parse_bracket_as_nodes()
     page_str = parser.convert_nodes_to_str(page_nodes) if page_nodes else None
     parser.skip_whitespace()
