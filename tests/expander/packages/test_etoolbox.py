@@ -143,3 +143,198 @@ def test_etoolbox_ifstrequal_basic():
     out_str = expander.convert_tokens_to_str(out).strip()
     out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
     assert out_strs == ["Macros equal", "Macros not equal"]
+
+
+def test_etoolbox_ifdef_basic():
+    r"""Test \ifdef with defined and undefined commands."""
+    expander = Expander()
+
+    text = r"""
+    \def\definedcmd{value}
+    \ifdef{\definedcmd}{DEFINED}{UNDEFINED}
+    \ifdef{\undefinedcmd}{DEFINED}{UNDEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifdef_with_relax():
+    r"""Test \ifdef treats \relax as defined."""
+    expander = Expander()
+
+    text = r"""
+    \let\relaxcmd\relax
+    \ifdef{\relaxcmd}{DEFINED}{UNDEFINED}
+    \ifdef{\relax}{DEFINED}{UNDEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "DEFINED"]
+
+
+def test_etoolbox_ifcsdef_basic():
+    r"""Test \ifcsdef with control sequence names."""
+    expander = Expander()
+
+    text = r"""
+    \def\definedcmd{value}
+    \ifcsdef{definedcmd}{DEFINED}{UNDEFINED}
+    \ifcsdef{undefinedcmd}{DEFINED}{UNDEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifcsdef_with_relax():
+    r"""Test \ifcsdef treats \relax as defined."""
+    expander = Expander()
+
+    text = r"""
+    \let\relaxcmd\relax
+    \ifcsdef{relaxcmd}{DEFINED}{UNDEFINED}
+    \ifcsdef{relax}{DEFINED}{UNDEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "DEFINED"]
+
+
+def test_etoolbox_ifundef_basic():
+    r"""Test \ifundef with defined and undefined commands."""
+    expander = Expander()
+
+    text = r"""
+    \def\definedcmd{value}
+    \ifundef{\definedcmd}{UNDEFINED}{DEFINED}
+    \ifundef{\undefinedcmd}{UNDEFINED}{DEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifundef_with_relax():
+    r"""Test \ifundef treats \relax as undefined."""
+    expander = Expander()
+
+    text = r"""
+    \let\relaxcmd\relax
+    \ifundef{\relaxcmd}{UNDEFINED}{DEFINED}
+    \ifundef{\relax}{UNDEFINED}{DEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    # Both should be UNDEFINED because \relax is treated as undefined by \ifundef
+    assert out_strs == ["UNDEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifcsundef_basic():
+    r"""Test \ifcsundef with control sequence names."""
+    expander = Expander()
+
+    text = r"""
+    \def\definedcmd{value}
+    \ifcsundef{definedcmd}{UNDEFINED}{DEFINED}
+    \ifcsundef{undefinedcmd}{UNDEFINED}{DEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["DEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifcsundef_with_relax():
+    r"""Test \ifcsundef treats \relax as undefined."""
+    expander = Expander()
+
+    text = r"""
+    \let\relaxcmd\relax
+    \ifcsundef{relaxcmd}{UNDEFINED}{DEFINED}
+    \ifcsundef{relax}{UNDEFINED}{DEFINED}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    # Both should be UNDEFINED because \relax is treated as undefined by \ifcsundef
+    assert out_strs == ["UNDEFINED", "UNDEFINED"]
+
+
+def test_etoolbox_ifdef_vs_ifundef():
+    r"""Test the difference between \ifdef and \ifundef with \relax."""
+    expander = Expander()
+
+    text = r"""
+    \def\normalcmd{value}
+    \let\relaxcmd\relax
+
+    \ifdef{\normalcmd}{DEF}{UNDEF}
+    \ifundef{\normalcmd}{UNDEF}{DEF}
+
+    \ifdef{\relaxcmd}{DEF}{UNDEF}
+    \ifundef{\relaxcmd}{UNDEF}{DEF}
+
+    \ifdef{\undefinedcmd}{DEF}{UNDEF}
+    \ifundef{\undefinedcmd}{UNDEF}{DEF}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    # normalcmd: defined for both
+    # relaxcmd: defined for ifdef, undefined for ifundef
+    # undefinedcmd: undefined for both
+    assert out_strs == ["DEF", "DEF", "DEF", "UNDEF", "UNDEF", "UNDEF"]
+
+
+def test_etoolbox_ifcsdef_vs_ifcsundef():
+    r"""Test the difference between \ifcsdef and \ifcsundef with \relax."""
+    expander = Expander()
+
+    text = r"""
+    \def\normalcmd{value}
+    \let\relaxcmd\relax
+
+    \ifcsdef{normalcmd}{DEF}{UNDEF}
+    \ifcsundef{normalcmd}{UNDEF}{DEF}
+
+    \ifcsdef{relaxcmd}{DEF}{UNDEF}
+    \ifcsundef{relaxcmd}{UNDEF}{DEF}
+
+    \ifcsdef{undefinedcmd}{DEF}{UNDEF}
+    \ifcsundef{undefinedcmd}{UNDEF}{DEF}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    # normalcmd: defined for both
+    # relaxcmd: defined for ifcsdef, undefined for ifcsundef
+    # undefinedcmd: undefined for both
+    assert out_strs == ["DEF", "DEF", "DEF", "UNDEF", "UNDEF", "UNDEF"]
+
+
+def test_etoolbox_ifdef_nested():
+    r"""Test nested \ifdef conditionals."""
+    expander = Expander()
+
+    text = r"""
+    \def\outer{value}
+    \def\inner{value}
+
+    \ifdef{\outer}{
+        OUTER-TRUE
+        \ifdef{\inner}{INNER-TRUE}{INNER-FALSE}
+    }{
+        OUTER-FALSE
+    }
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
+    assert out_strs == ["OUTER-TRUE", "INNER-TRUE"]

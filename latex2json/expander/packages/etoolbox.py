@@ -1,5 +1,5 @@
 from typing import List, Optional, Dict
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander_core import ExpanderCore, RelaxMacro
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import find_token_sequence
@@ -258,6 +258,153 @@ def ifstrequal_handler(expander: ExpanderCore, token: Token):
     return []
 
 
+def _is_relax_macro(macro: Macro) -> bool:
+    """Check if a macro is semantically equivalent to \\relax."""
+    if macro is None:
+        return False
+    return isinstance(macro, RelaxMacro) or (
+        len(macro.definition) == 1
+        and macro.definition[0].type == TokenType.CONTROL_SEQUENCE
+        and macro.definition[0].value == "relax"
+    )
+
+
+def _check_definition(
+    expander: ExpanderCore,
+    cmd_token: Token,
+    true_branch: List[Token],
+    false_branch: List[Token],
+    treat_relax_as_undefined: bool = False,
+):
+    """
+    Helper function to check if a command is defined and push the appropriate branch.
+
+    Args:
+        expander: The expander core instance
+        cmd_token: The command token to check
+        true_branch: Tokens to push if the condition is true
+        false_branch: Tokens to push if the condition is false
+        treat_relax_as_undefined: If True, treat \\relax as undefined (for \\ifundef variants)
+    """
+    macro = expander.get_macro(cmd_token)
+
+    if treat_relax_as_undefined:
+        # For \ifundef: undefined if macro doesn't exist OR if it's \relax
+        is_undefined = macro is None or _is_relax_macro(macro)
+        branch = true_branch if is_undefined else false_branch
+    else:
+        # For \ifdef: defined if macro exists (including \relax)
+        is_defined = macro is not None
+        branch = true_branch if is_defined else false_branch
+
+    if branch:
+        expander.push_tokens(branch)
+
+
+def ifdef_handler(expander: ExpanderCore, _token: Token):
+    r"""
+    Handler for \ifdef{<control sequence>}{<true>}{<false>}
+    Expands to <true> if the control sequence is defined, and to <false> otherwise.
+    Note that control sequences will be considered as defined even if their meaning is \relax.
+    """
+    expander.skip_whitespace()
+    blocks = expander.parse_braced_blocks(3, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 3:
+        expander.logger.warning("\\ifdef expects 3 blocks")
+        return []
+
+    cmd_tokens, true_branch, false_branch = blocks
+    if not cmd_tokens or cmd_tokens[0].type != TokenType.CONTROL_SEQUENCE:
+        expander.logger.warning("\\ifdef expects a control sequence as first argument")
+        if false_branch:
+            expander.push_tokens(false_branch)
+        return []
+
+    _check_definition(expander, cmd_tokens[0], true_branch, false_branch)
+    return []
+
+
+def ifcsdef_handler(expander: ExpanderCore, _token: Token):
+    r"""
+    Handler for \ifcsdef{<csname>}{<true>}{<false>}
+    Similar to \ifdef except that it takes a control sequence name as its first argument.
+    """
+    expander.skip_whitespace()
+    csname = expander.parse_brace_name()
+    if not csname:
+        expander.logger.warning("\\ifcsdef expects a control sequence name")
+        return []
+
+    expander.skip_whitespace()
+    blocks = expander.parse_braced_blocks(2, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 2:
+        expander.logger.warning("\\ifcsdef expects 3 blocks total")
+        return []
+
+    true_branch, false_branch = blocks
+    cmd_token = Token(TokenType.CONTROL_SEQUENCE, csname)
+    _check_definition(expander, cmd_token, true_branch, false_branch)
+    return []
+
+
+def ifundef_handler(expander: ExpanderCore, _token: Token):
+    r"""
+    Handler for \ifundef{<control sequence>}{<true>}{<false>}
+    Expands to <true> if the control sequence is undefined, and to <false> otherwise.
+    Apart from reversing the logic of the test, this command also differs from \ifdef in
+    that commands will be considered as undefined if their meaning is \relax.
+    """
+    expander.skip_whitespace()
+    blocks = expander.parse_braced_blocks(3, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 3:
+        expander.logger.warning("\\ifundef expects 3 blocks")
+        return []
+
+    cmd_tokens, true_branch, false_branch = blocks
+    if not cmd_tokens or cmd_tokens[0].type != TokenType.CONTROL_SEQUENCE:
+        expander.logger.warning(
+            "\\ifundef expects a control sequence as first argument"
+        )
+        if true_branch:
+            expander.push_tokens(true_branch)
+        return []
+
+    _check_definition(
+        expander,
+        cmd_tokens[0],
+        true_branch,
+        false_branch,
+        treat_relax_as_undefined=True,
+    )
+    return []
+
+
+def ifcsundef_handler(expander: ExpanderCore, _token: Token):
+    r"""
+    Handler for \ifcsundef{<csname>}{<true>}{<false>}
+    Similar to \ifundef except that it takes a control sequence name as its first argument.
+    This command may be used as a drop-in replacement for the \@ifundefined test in the LaTeX kernel.
+    """
+    expander.skip_whitespace()
+    csname = expander.parse_brace_name()
+    if not csname:
+        expander.logger.warning("\\ifcsundef expects a control sequence name")
+        return []
+
+    expander.skip_whitespace()
+    blocks = expander.parse_braced_blocks(2, expand=False, check_immediate_tokens=True)
+    if len(blocks) != 2:
+        expander.logger.warning("\\ifcsundef expects 3 blocks total")
+        return []
+
+    true_branch, false_branch = blocks
+    cmd_token = Token(TokenType.CONTROL_SEQUENCE, csname)
+    _check_definition(
+        expander, cmd_token, true_branch, false_branch, treat_relax_as_undefined=True
+    )
+    return []
+
+
 def register_etoolbox_handler(expander: ExpanderCore):
     # Patch commands
     expander.register_handler("patchcmd", patchcmd_macro_handler, is_global=True)
@@ -281,6 +428,12 @@ def register_etoolbox_handler(expander: ExpanderCore):
 
     # String comparison
     expander.register_handler("ifstrequal", ifstrequal_handler, is_global=True)
+
+    # Conditional definition checks
+    expander.register_handler("ifdef", ifdef_handler, is_global=True)
+    expander.register_handler("ifcsdef", ifcsdef_handler, is_global=True)
+    expander.register_handler("ifundef", ifundef_handler, is_global=True)
+    expander.register_handler("ifcsundef", ifcsundef_handler, is_global=True)
 
 
 if __name__ == "__main__":
@@ -324,3 +477,41 @@ if __name__ == "__main__":
     toggle_str = expander.convert_tokens_to_str(toggle_out).strip()
     print("Toggle commands test:")
     print(toggle_str)
+    print()
+
+    # Test ifdef/ifcsdef commands
+    ifdef_text = r"""
+    \def\definedcmd{value}
+    \let\relaxcmd\relax
+
+    \ifdef{\definedcmd}{DEFINED}{UNDEFINED}
+    \ifdef{\undefinedcmd}{DEFINED}{UNDEFINED}
+    \ifdef{\relaxcmd}{DEFINED}{UNDEFINED}
+
+    \ifcsdef{definedcmd}{DEFINED}{UNDEFINED}
+    \ifcsdef{undefinedcmd}{DEFINED}{UNDEFINED}
+    \ifcsdef{relaxcmd}{DEFINED}{UNDEFINED}
+    """
+    ifdef_out = expander.expand(ifdef_text)
+    ifdef_str = expander.convert_tokens_to_str(ifdef_out).strip()
+    print("ifdef/ifcsdef commands test:")
+    print(ifdef_str)
+    print()
+
+    # Test ifundef/ifcsundef commands
+    ifundef_text = r"""
+    \def\definedcmd{value}
+    \let\relaxcmd\relax
+
+    \ifundef{\definedcmd}{UNDEFINED}{DEFINED}
+    \ifundef{\undefinedcmd}{UNDEFINED}{DEFINED}
+    \ifundef{\relaxcmd}{UNDEFINED}{DEFINED}
+
+    \ifcsundef{definedcmd}{UNDEFINED}{DEFINED}
+    \ifcsundef{undefinedcmd}{UNDEFINED}{DEFINED}
+    \ifcsundef{relaxcmd}{UNDEFINED}{DEFINED}
+    """
+    ifundef_out = expander.expand(ifundef_text)
+    ifundef_str = expander.convert_tokens_to_str(ifundef_out).strip()
+    print("ifundef/ifcsundef commands test:")
+    print(ifundef_str)

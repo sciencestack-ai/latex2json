@@ -253,7 +253,12 @@ def includestandalone_handler(parser: ParserCore, token: Token):
 
 
 def register_includegraphics_pdf_handlers(parser: ParserCore):
-    for includegraphics_cmd in ["includegraphics", "adjincludegraphics", "epsffile"]:
+    for includegraphics_cmd in [
+        "includegraphics",
+        "adjincludegraphics",
+        "tcbincludegraphics",
+        "epsffile",
+    ]:
         parser.register_handler(includegraphics_cmd, includegraphics_handler)
     parser.register_handler("adjustimage", adjustimage_handler)
 
