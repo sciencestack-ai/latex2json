@@ -1,6 +1,6 @@
 from copy import deepcopy
 from enum import Enum, auto
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from latex2json.tokens.catcodes import Catcode
 
@@ -56,6 +56,7 @@ class Token:
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
         self.source_file = source_file
+        self.metadata: Dict[str, Any] = {}
 
     def __str__(self) -> str:
         value = self.value
@@ -77,9 +78,11 @@ class Token:
         return self.value
 
     def copy(self) -> "Token":
-        return Token(
+        new_token = Token(
             self.type, self.value, self.position, self.catcode, self.source_file
         )
+        new_token.metadata = self.metadata.copy()
+        return new_token
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -159,7 +162,12 @@ class EnvironmentStartToken(Token):
 
 
 class EnvironmentEndToken(Token):
-    def __init__(self, value: str, direct_command: Optional[str] = None, should_pop_scope: bool = False):
+    def __init__(
+        self,
+        value: str,
+        direct_command: Optional[str] = None,
+        should_pop_scope: bool = False,
+    ):
         super().__init__(TokenType.ENVIRONMENT_END, value=value)
         if direct_command and not direct_command.startswith("\\"):
             direct_command = "\\" + direct_command

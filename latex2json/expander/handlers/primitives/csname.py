@@ -1,5 +1,6 @@
 from typing import List, Optional
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
+from latex2json.expander.macro_registry import Macro
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import is_whitespace_token
 
@@ -35,6 +36,9 @@ def csname_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]
 
     str_name = expander.convert_tokens_to_str(block)
     control_sequence = Token(TokenType.CONTROL_SEQUENCE, str_name)
+    # mark csname
+    control_sequence.metadata["csname"] = True
+
     expander.push_tokens([control_sequence])
     return []
 

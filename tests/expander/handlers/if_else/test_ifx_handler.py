@@ -259,3 +259,24 @@ def test_ifx_for_let():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert Expander.check_tokens_equal(out, expander.expand("LET COLON"))
+
+
+def test_ifx_csname_relax():
+    expander = Expander()
+    # in latex, newly-defined \csname...\endcsname is actually equivalent to \relax
+    text = r"""
+    \expandafter\ifx\csname bibnamefont\endcsname\relax
+        SAME
+    \else
+        DIFFERENT
+    \fi
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "SAME"
+
+    # now define \bibnamefont
+    expander.expand(r"\def\bibnamefont{My Bibliography}")
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "DIFFERENT"

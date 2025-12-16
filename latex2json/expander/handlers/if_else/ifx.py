@@ -1,5 +1,5 @@
 from typing import List, Optional
-from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.expander_core import RELAX_TOKEN, ExpanderCore
 from latex2json.expander.handlers.if_else.base_if import IfMacro
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token, TokenType
@@ -22,6 +22,12 @@ def check_ifx_equals(a: Token, b: Token, expander: ExpanderCore) -> bool | None:
             # both undefined, so they are equal in \ifx
             return True
         elif undefined_a or undefined_b:
+            # note that newly defined csname tokens and \relax are supposed to be equivalent
+            if undefined_a and a.metadata.get("csname") and b == RELAX_TOKEN:
+                return True
+
+            if undefined_b and b.metadata.get("csname") and a == RELAX_TOKEN:
+                return True
             # one is undefined, so they are different in \ifx
             return False
 
