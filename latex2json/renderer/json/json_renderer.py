@@ -18,6 +18,7 @@ ACCEPTED_COMMAND_NAMES = ["and"]  # \and for delimiting author blocks
 
 # container types
 DISCARD_EMPTY_TYPES = [
+    NodeTypes.DOCUMENT,
     NodeTypes.FIGURE,
     NodeTypes.SUBFIGURE,
     NodeTypes.TABLE,
