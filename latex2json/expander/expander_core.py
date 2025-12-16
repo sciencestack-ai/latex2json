@@ -905,7 +905,7 @@ class ExpanderCore:
 
     # main parsing logic
     def _check_recursion(self, tok: Token) -> None:
-        """Check if we're in an infinite recursion loop.
+        r"""Check if we're in an infinite recursion loop.
 
         Detects when tokens from the SAME source position keep repeating, which indicates
         infinite macro expansion. Different source positions are fine (e.g., 100 different
@@ -1115,6 +1115,9 @@ class ExpanderCore:
         last_exp = None
         while not self.eof():
             tok = self.peek()
+            if tok:
+                self._check_recursion(tok)
+
             if tok_cur_str_predicate(tok, out):
                 self.consume()
                 out += tok.value
