@@ -6,6 +6,7 @@ import shutil
 from typing import List, Optional, Tuple
 import zipfile
 import re
+import json
 from contextlib import contextmanager
 
 from latex2json.utils.tex_utils import strip_latex_comments
@@ -23,6 +24,40 @@ SUPPORTED_TEX_EXTENSIONS = (".tex", ".flt", ".ltx")
 
 class TexFileExtractor:
     """A class to handle reading and processing TeX files from various sources."""
+
+    @staticmethod
+    def get_main_tex_from_readme(folder_path: str) -> Optional[str]:
+        """Read the main tex file from 00README.json if it exists.
+
+        Args:
+            folder_path (str): Path to the directory to search
+
+        Returns:
+            Optional[str]: The main tex filename if found in 00README.json, None otherwise
+        """
+        readme_path = os.path.join(folder_path, "00README.json")
+        if not os.path.exists(readme_path):
+            return None
+
+        try:
+            with open(readme_path, "r", encoding="utf-8") as f:
+                readme_data = json.load(f)
+
+            # Look for the source with "usage": "toplevel"
+            sources = readme_data.get("sources", [])
+            for source in sources:
+                if source.get("usage") == "toplevel":
+                    filename = source.get("filename")
+                    if filename:
+                        # Verify the file actually exists
+                        full_path = os.path.join(folder_path, filename)
+                        if os.path.exists(full_path):
+                            return filename
+
+            return None
+        except (json.JSONDecodeError, KeyError, IOError) as e:
+            print(f"Error reading 00README.json: {str(e)}")
+            return None
 
     @staticmethod
     def is_main_tex_file(content: str) -> bool:
@@ -60,6 +95,16 @@ class TexFileExtractor:
         Raises:
             FileNotFoundError: If no main TeX file is found
         """
+        # First, try to get the main tex file from 00README.json
+        readme_main_tex = TexFileExtractor.get_main_tex_from_readme(folder_path)
+        if readme_main_tex:
+            print(f"Found main tex file {readme_main_tex} in 00README.json")
+            # Get the directory containing the main tex file
+            main_tex_full_path = os.path.join(folder_path, readme_main_tex)
+            main_folder = os.path.dirname(main_tex_full_path)
+            return (readme_main_tex, main_folder if main_folder else folder_path)
+
+        # Fall back to the original search logic
         all_tex_files: List[Tuple[str, str]] = []
         main_tex_files: List[Tuple[str, str]] = []
         for root, _, files in os.walk(folder_path):
@@ -91,10 +136,10 @@ class TexFileExtractor:
                 key=lambda x: os.path.getsize(os.path.join(folder_path, x[0])),
                 reverse=True,
             )
-            for base_path, root in main_tex_files:
-                if "template" in base_path.lower():
-                    continue
-                return (base_path, root)
+            # for base_path, root in main_tex_files:
+            #     if "template" in base_path.lower():
+            #         continue
+            #     return (base_path, root)
             return main_tex_files[0]
 
         raise FileNotFoundError(
