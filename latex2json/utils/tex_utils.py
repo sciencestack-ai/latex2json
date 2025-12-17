@@ -70,10 +70,20 @@ def convert_color_to_css(model: str, spec: str) -> str:
         """Parse color values that can be comma or space delimited"""
         # Try comma-delimited first
         if "," in spec:
-            return [float(x.strip()) for x in spec.split(",") if x.strip()]
+            parts = [x.strip() for x in spec.split(",") if x.strip()]
         # Otherwise treat as space-delimited
         else:
-            return [float(x.strip()) for x in spec.split() if x.strip()]
+            parts = [x.strip() for x in spec.split() if x.strip()]
+
+        # Convert to floats with error handling
+        result = []
+        for part in parts:
+            try:
+                result.append(float(part))
+            except ValueError:
+                print(f"Warning: Invalid color value '{part}' in spec '{spec}', skipping")
+                continue
+        return result
 
     if model == "rgb":
         # LaTeX: rgb values 0-1 → CSS: rgb values 0-255
