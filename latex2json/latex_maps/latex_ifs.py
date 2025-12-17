@@ -5,6 +5,7 @@ These behave like \newif conditionals with setter commands.
 
 LATEX_IFS = {
     # Standard LaTeX formatting conditionals
+    "@minipage": False,
     "@twoside": False,
     "@onecolumn": True,
     "@twocolumn": False,

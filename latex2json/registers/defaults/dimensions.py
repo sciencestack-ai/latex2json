@@ -1,4 +1,6 @@
 BUILTIN_DIMENSIONS = [
+    "@height",
+    "@width",
     "pagetotal",
     "pagegoal",
     "displaywidth",

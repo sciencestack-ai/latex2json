@@ -25,6 +25,8 @@ Examples:
 """
 
 formatting_patterns = {
+    "onecolumngrid": 0,
+    "twocolumngrid": 0,
     "epigraph": 0,  # treat as just normal text
     "lettrine": "[",  # ignore command and optional arg
     "smash": 0,  # \smash{arg} makes depth and height 0
