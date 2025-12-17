@@ -69,15 +69,37 @@ def resolve_graphics_path(
 
 
 def includegraphics_handler(parser: ParserCore, token: Token):
+    r"""
+    Synopses for graphics package:
+
+    \includegraphics{filename}
+    \includegraphics[urx,ury]{filename}
+    \includegraphics[llx,lly][urx,ury]{filename}
+    \includegraphics*{filename}
+    \includegraphics*[urx,ury]{filename}
+    \includegraphics*[llx,lly][urx,ury]{filename}
+
+
+    Synopses for graphicx package:
+
+    \includegraphics{filename}
+    \includegraphics[key-value list]{filename}
+    \includegraphics*{filename}
+    \includegraphics*[key-value list]{filename}
+    """
     parser.skip_whitespace()
     parser.parse_asterisk()
     parser.skip_whitespace()
     page_nodes = parser.parse_bracket_as_nodes()
+    if page_nodes:
+        # in case of \includegraphics[llx,lly][urx,ury]{filename}
+        parser.skip_whitespace()
+        _ = parser.parse_bracket_as_nodes()
     page_str = parser.convert_nodes_to_str(page_nodes) if page_nodes else None
     parser.skip_whitespace()
     path = parser.parse_brace_as_nodes()
     if path is None:
-        parser.logger.warning(f"\\includegraphics: Missing path")
+        parser.logger.warning(f"\\{token.value}: Missing path, found {parser.peek()}")
         return None
     path_str = parser.convert_nodes_to_str(path)
 

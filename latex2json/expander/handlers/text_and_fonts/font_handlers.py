@@ -6,14 +6,18 @@ from latex2json.tokens.types import Token, TokenType
 
 def font_handler(expander: ExpanderCore, token: Token):
     expander.skip_whitespace()
+
+    font_id = None
     cmd = expander.parse_command_name_token()
     if not cmd:
-        expander.logger.info(
-            "\\font expects a font command name, found %s", expander.peek()
-        )
-        # consume the token
-        expander.parse_immediate_token()
-        return None
+        font_id = expander.parse_integer()
+        if font_id is None:
+            expander.logger.info("\\font expects a font id, found %s", expander.peek())
+            # consume the token
+            # expander.parse_immediate_token()
+            return None
+    else:
+        font_id = cmd.value
 
     if not expander.parse_equals():
         expander.logger.warning("\\font expects a = after the command name")
@@ -23,7 +27,7 @@ def font_handler(expander: ExpanderCore, token: Token):
 
     font_definition = expander.expand_until_eol_or_relax()
 
-    expander.create_new_font(cmd.value, font_definition)
+    expander.create_new_font(f"{font_id}", font_definition)
 
     return []
 
