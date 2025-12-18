@@ -52,6 +52,8 @@ STRICTLY_BLOCKED_COMMANDS = [
     "figure",
     "caption",
     "captionof",
+    # author
+    "author",  # author redefinition sometimes causes problems
 ]
 
 # Commands that CAN be redefined but with wrapping to preserve semantics
