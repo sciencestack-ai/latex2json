@@ -1,5 +1,5 @@
 from typing import List
-from latex2json.latex_maps.environments import PICTURE_ENVIRONMENTS
+from latex2json.latex_maps.environments import DIAGRAM_ENVIRONMENTS
 from latex2json.nodes import DiagramNode
 from latex2json.nodes.graphics_pdf_diagram_nodes import IncludeGraphicsNode
 from latex2json.parser.parser_core import ParserCore
@@ -164,7 +164,7 @@ def xymatrix_handler(parser: ParserCore, token: Token):
 
 
 def register_picture_handlers(parser: ParserCore):
-    for env in PICTURE_ENVIRONMENTS:
+    for env in DIAGRAM_ENVIRONMENTS:
         if env == "overpic":
             parser.register_env_handler(env, overpic_handler)
         else:

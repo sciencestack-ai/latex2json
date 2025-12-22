@@ -7,6 +7,9 @@ from latex2json.nodes.environment_nodes import (
     SubTableNode,
     SubFigureNode,
 )
+from latex2json.parser.handlers.commands.command_handler_utils import (
+    register_ignore_handlers_util,
+)
 from latex2json.parser.parser_core import ParserCore
 from latex2json.registers.utils import int_to_alpha
 from latex2json.tokens.types import EnvironmentStartToken, Token
@@ -90,3 +93,10 @@ def register_table_figure_handlers(parser: ParserCore):
 
     # subfigure cmd e.g. \subfigure[]{}
     parser.register_handler("subfigure", subfigure_cmd_handler)
+
+    # ignore tablename and figurename
+    ignore_patterns = {
+        "tablename": 0,
+        "figurename": 0,
+    }
+    register_ignore_handlers_util(parser, ignore_patterns)

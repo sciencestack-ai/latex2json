@@ -1,5 +1,6 @@
 from latex2json.latex_maps.environments import COMMON_ENVIRONMENTS
-from latex2json.nodes.base_nodes import VerbatimNode
+from latex2json.nodes.base_nodes import TextNode, VerbatimNode
+from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.parser.parser_core import ParserCore
 from latex2json.tokens.types import (
     EnvironmentStartToken,
@@ -20,10 +21,11 @@ def make_verbatim_handler(env_name: str):
             lambda tok: tok == Token(TokenType.ENVIRONMENT_END, env_name),
             consume_predicate=True,
         )
+        tokens_str = parser.convert_tokens_to_str(tokens).strip()
         if env_name == "comment":
             # ignore \begin{comment}...
-            return []
-        return [VerbatimNode(parser.convert_tokens_to_str(tokens).strip())]
+            return [EnvironmentNode(env_name, body=[TextNode(tokens_str)])]
+        return [VerbatimNode(tokens_str)]
 
     return verbatim_handler
 

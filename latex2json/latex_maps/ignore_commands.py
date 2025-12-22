@@ -412,6 +412,7 @@ glossary_patterns = {
     "makeglossaries": 0,
     "makeglossary": 0,
     "printglossary": "[",
+    "printglossaries": 0,
     "newglossaryentry": "{{",
     "gls": "{",
     "Gls": "{",

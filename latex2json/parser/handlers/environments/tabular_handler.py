@@ -137,7 +137,7 @@ def register_tabular_handlers(parser: ParserCore):
     ignored_env_pattern_N_blocks = {
         "columncolor": 1,  # Column colors
         "rowcolor": "[{",  # Row colors
-        "rowcolors": 3,
+        "rowcolors": "*{{{",
         "bigstrut": "[",
         "arrayrulecolor": 1,
         "hhline": "{",

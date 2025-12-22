@@ -135,7 +135,9 @@ VERBATIM_ENVIRONMENTS = {
     "minted": EnvironmentDefinition(
         "minted", env_type=EnvironmentType.VERBATIM, num_args=2, default_arg=[]
     ),
-    "comment": EnvironmentDefinition("comment", env_type=EnvironmentType.VERBATIM),
+    "comment": EnvironmentDefinition(
+        "comment", env_type=EnvironmentType.VERBATIM, has_direct_command=True
+    ),
 }
 
 ALGORITHM_ENVIRONMENTS = {
@@ -150,12 +152,13 @@ ALGORITHM_ENVIRONMENTS = {
     ),
 }
 
-PICTURE_ENVIRONMENTS = {
+DIAGRAM_ENVIRONMENTS = {
     # picture/tikz
     "picture": EnvironmentDefinition("picture", env_type=EnvironmentType.VERBATIM),
     "pspicture": EnvironmentDefinition(
         "pspicture", env_type=EnvironmentType.VERBATIM, has_direct_command=True
     ),
+    "forest": EnvironmentDefinition("forest", env_type=EnvironmentType.VERBATIM),
     "CD": EnvironmentDefinition("CD", env_type=EnvironmentType.VERBATIM),
     "beginpicture": EnvironmentDefinition(
         "picture",
@@ -258,8 +261,8 @@ TABULAR_ENVIRONMENTS = {
     "tabularx": EnvironmentDefinition("tabular", num_args=2),
     "tabularx*": EnvironmentDefinition("tabular", num_args=2),
     "tabulary": EnvironmentDefinition("tabular", num_args=2),
-    "longtable": EnvironmentDefinition("tabular", num_args=1),
-    "longtable*": EnvironmentDefinition("tabular", num_args=1),
+    "longtable": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
+    "longtable*": EnvironmentDefinition("tabular", num_args=2, default_arg=[]),
     # NiceTabular args are {...}[...] - ensure to handle separately downstream
     "NiceTabular": EnvironmentDefinition("NiceTabular"),
     "NiceTabular*": EnvironmentDefinition("NiceTabular*"),
@@ -369,6 +372,9 @@ MATH_ENVIRONMENTS = {
     "cases": EnvironmentDefinition(
         "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
+    "cases*": EnvironmentDefinition(
+        "cases*", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
     "dcases": EnvironmentDefinition(
         "dcases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
@@ -402,6 +408,9 @@ MATH_ENVIRONMENTS = {
     ),
     "psmallmatrix": EnvironmentDefinition(
         "psmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
+    ),
+    "bsmallmatrix": EnvironmentDefinition(
+        "bsmallmatrix", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY
     ),
     # align environments
     "align": EnvironmentDefinition(
@@ -463,7 +472,7 @@ THEOREM_ENVIRONMENTS = {
 COMMON_ENVIRONMENTS = {
     **DOCUMENT_ENVIRONMENTS,
     **VERBATIM_ENVIRONMENTS,
-    **PICTURE_ENVIRONMENTS,
+    **DIAGRAM_ENVIRONMENTS,
     **LAYOUT_ENVIRONMENTS,
     **FIGURE_ENVIRONMENTS,
     **TABLE_ENVIRONMENTS,
