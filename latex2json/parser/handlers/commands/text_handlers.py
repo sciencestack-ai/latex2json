@@ -136,7 +136,7 @@ def citetext_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]
     return parser.parse_brace_as_nodes()
 
 
-def say_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
+def enquote_handler(parser: ParserCore, token: Token) -> Optional[List[ASTNode]]:
     parser.skip_whitespace()
     nodes = parser.parse_brace_as_nodes() or []
     return [TextNode('"'), *nodes, TextNode('"')]
@@ -211,7 +211,8 @@ def register_text_handlers(parser: ParserCore):
 
     parser.register_handler("indent", lambda parser, token: [TextNode("\t")])
 
-    parser.register_handler("say", say_handler)
+    for cmd in ["say", "enquote"]:
+        parser.register_handler(cmd, enquote_handler)
 
     parser.register_handler("textcircled", textcircled_handler, text_mode_only=True)
 
