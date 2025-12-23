@@ -19,6 +19,7 @@ LATEX_IFS = {
     "@newlist": False,
     "hmode": True,
     "vmode": False,
+    "inner": False,
     "pdf": True,  # set to True since LaTeX mostly compiles to pdf
     # Internal LaTeX conditionals
     "@tempswa": False,

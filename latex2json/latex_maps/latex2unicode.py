@@ -4,6 +4,7 @@ from typing import Dict, Union
 
 
 latex2unicode: Dict[str, Union[str, int]] = {
+    "slash": "/",
     "textbar": "|",
     "lbrack": "[",
     "rbrack": "]",

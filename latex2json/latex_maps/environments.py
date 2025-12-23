@@ -138,6 +138,8 @@ VERBATIM_ENVIRONMENTS = {
     "comment": EnvironmentDefinition(
         "comment", env_type=EnvironmentType.VERBATIM, has_direct_command=True
     ),
+    #
+    "alltt": EnvironmentDefinition("alltt", env_type=EnvironmentType.VERBATIM),
 }
 
 ALGORITHM_ENVIRONMENTS = {
@@ -214,6 +216,10 @@ LAYOUT_ENVIRONMENTS = {
         "threeparttable", num_args=1, default_arg=[]
     ),
     "tablenotes": EnvironmentDefinition("tablenotes"),
+    #
+    "knitrout": EnvironmentDefinition("knitrout"),
+    "kframe": EnvironmentDefinition("kframe"),
+    "MakeFramed": EnvironmentDefinition("MakeFramed", has_direct_command=True),
 }
 
 
@@ -368,6 +374,16 @@ MATH_ENVIRONMENTS = {
         num_args=1,
         env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
         # has_direct_command=True,
+    ),
+    "blockarray": EnvironmentDefinition(
+        "blockarray",
+        num_args=1,  # alignment spec
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
+    ),
+    "block": EnvironmentDefinition(
+        "block",
+        num_args=1,
+        env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY,
     ),
     "cases": EnvironmentDefinition(
         "cases", env_type=EnvironmentType.EQUATION_MATRIX_OR_ARRAY

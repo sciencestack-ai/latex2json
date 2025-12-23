@@ -25,6 +25,7 @@ Examples:
 """
 
 formatting_patterns = {
+    "discretionary": 3,
     "onecolumngrid": 0,
     "twocolumngrid": 0,
     "epigraph": 0,  # treat as just normal text

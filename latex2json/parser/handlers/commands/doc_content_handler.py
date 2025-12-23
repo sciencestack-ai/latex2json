@@ -77,6 +77,7 @@ def register_doc_content_handlers(parser: ParserCore):
         "institution",
         "department",
         "orcid",
+        "orcidlink",
         "preprint",
     ]:
         parser.register_handler(

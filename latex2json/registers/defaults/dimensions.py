@@ -73,6 +73,9 @@ BUILTIN_DIMENSIONS = [
     "algorithmicindent",
     "epsfysize",
     "epsfxsize",
+    # other
+    "@totalleftmargin",
+    "@totalrightmargin",
 ]
 
 for incr in ["i", "ii", "iii", "iv", "v"]:
