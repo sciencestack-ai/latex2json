@@ -25,6 +25,9 @@ Examples:
 """
 
 formatting_patterns = {
+    "microtypecontext": 1,
+    "textls": "[",  # letter spacing, but just ignore for our parser
+    "vadjust": 0,
     "discretionary": 3,
     "onecolumngrid": 0,
     "twocolumngrid": 0,

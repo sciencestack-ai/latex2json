@@ -315,6 +315,7 @@ class ExpanderCore:
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
         self.register_handler("\\null", lambda expander, token: [], is_global=True)
         self.register_handler("\\protect", lambda expander, token: [], is_global=True)
+        self.register_handler("\\protected", lambda expander, token: [], is_global=True)
         self.register_handler("\\bye", bye_handler, is_global=True)
 
     def _init_counter_macros(self):

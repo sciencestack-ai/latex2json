@@ -79,6 +79,7 @@ def register_doc_content_handlers(parser: ParserCore):
         "orcid",
         "orcidlink",
         "preprint",
+        "ccsdesc",  # acm package
     ]:
         parser.register_handler(
             metadata, make_metadata_handler(metadata, has_short_bracket=True)
