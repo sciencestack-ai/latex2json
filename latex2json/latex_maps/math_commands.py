@@ -2,6 +2,8 @@
 
 MATH_COMMANDS = {
     "frac": "{{",
+    "dfrac": "{{",
+    "tfrac": "{{",
     "tilde": "{",
     "widetilde": "{",
     "hat": "{",

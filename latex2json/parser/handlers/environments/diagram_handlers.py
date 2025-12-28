@@ -174,6 +174,7 @@ def register_picture_handlers(parser: ParserCore):
         "chemfig": "{",
         "polylongdiv": "{{",
         "pgfplotstabletypeset": "[{",
+        "AddToShipoutPictureFG": "*{",
     }
     for cmd, arg_spec in other_diagrams.items():
         parser.register_handler(cmd, make_diagram_handler(arg_spec))
