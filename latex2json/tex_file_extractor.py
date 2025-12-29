@@ -81,6 +81,68 @@ class TexFileExtractor:
         return False
 
     @staticmethod
+    def count_input_commands(content: str) -> int:
+        """Count the number of \\input and \\include commands in the content.
+
+        Args:
+            content (str): The file content to check
+
+        Returns:
+            int: Number of \\input or \\include commands found
+        """
+        clean_content = strip_latex_comments(content)
+        # Match \input{...} or \include{...}
+        input_pattern = re.compile(r'\\(?:input|include)\s*\{[^}]*\}', re.DOTALL)
+        matches = input_pattern.findall(clean_content)
+        return len(matches)
+
+    @staticmethod
+    def select_most_likely_main_file(
+        main_tex_files: List[Tuple[str, str]], folder_path: str
+    ) -> Tuple[str, str]:
+        """Select the most likely main file from multiple candidates.
+
+        Strategy:
+        1. Prioritize "main.tex" if it exists
+        2. Otherwise, select the file with the most \\input/\\include commands
+        3. If tied, prefer files not containing "template" in the name
+        4. If still tied, use file size as final tiebreaker
+
+        Args:
+            main_tex_files: List of (base_path, root) tuples
+            folder_path: Base folder path for resolving file paths
+
+        Returns:
+            Tuple of (base_path, root) for the selected main file
+        """
+        # Check for main.tex first
+        for base_path, root in main_tex_files:
+            if os.path.basename(base_path) == "main.tex":
+                return (base_path, root)
+
+        # Count input commands for each file
+        file_scores = []
+        for base_path, root in main_tex_files:
+            full_path = os.path.join(folder_path, base_path)
+            try:
+                content = read_file(full_path)
+                input_count = TexFileExtractor.count_input_commands(content)
+                is_template = "template" in base_path.lower()
+                file_size = os.path.getsize(full_path)
+                # Score: (input_count, not_template, file_size)
+                # Higher is better, so negate is_template
+                file_scores.append((base_path, root, input_count, not is_template, file_size))
+            except Exception as e:
+                print(f"Error processing {full_path}: {str(e)}")
+                # Give it a low score if we can't read it
+                file_scores.append((base_path, root, 0, True, 0))
+
+        # Sort by: most inputs, not a template, largest size
+        file_scores.sort(key=lambda x: (x[2], x[3], x[4]), reverse=True)
+
+        return (file_scores[0][0], file_scores[0][1])
+
+    @staticmethod
     def find_main_tex_file(folder_path: str):
         """Find the main TeX file and its containing folder in a directory or its subdirectories.
 
@@ -123,24 +185,12 @@ class TexFileExtractor:
         if len(all_tex_files) == 1:
             # just return the one
             return all_tex_files[0]
+
         N_main_tex_files = len(main_tex_files)
         if N_main_tex_files == 1:
             return main_tex_files[0]
         elif N_main_tex_files > 1:
-            # Prioritize main.tex if it exists
-            for base_path, root in main_tex_files:
-                if os.path.basename(base_path) == "main.tex":
-                    return (base_path, root)
-            # Otherwise return the one with biggest size
-            main_tex_files.sort(
-                key=lambda x: os.path.getsize(os.path.join(folder_path, x[0])),
-                reverse=True,
-            )
-            # for base_path, root in main_tex_files:
-            #     if "template" in base_path.lower():
-            #         continue
-            #     return (base_path, root)
-            return main_tex_files[0]
+            return TexFileExtractor.select_most_likely_main_file(main_tex_files, folder_path)
 
         raise FileNotFoundError(
             "No main TeX file found (no documentclass or begin{document} found)"
