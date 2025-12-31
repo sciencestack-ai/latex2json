@@ -40,20 +40,22 @@ def detect_encoding(path: str) -> str:
 
 
 def read_file(path: str) -> str:
-    encoding = detect_encoding(path)
+    # Try UTF-8 first since most modern LaTeX files use UTF-8
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+    except UnicodeDecodeError:
+        pass
 
+    # Fall back to detected encoding
+    encoding = detect_encoding(path)
     try:
         with open(path, "r", encoding=encoding) as f:
             return f.read()
     except UnicodeDecodeError:
-        # First fallback: try utf-8 with error handling
-        try:
-            with open(path, "r", encoding="utf-8", errors="replace") as f:
-                return f.read()
-        except UnicodeDecodeError:
-            # Last resort: latin-1 can read any byte sequence
-            with open(path, "r", encoding="latin-1") as f:
-                return f.read()
+        # Last resort: latin-1 can read any byte sequence
+        with open(path, "r", encoding="latin-1") as f:
+            return f.read()
 
 
 # Usage
