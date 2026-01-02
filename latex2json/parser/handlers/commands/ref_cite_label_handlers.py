@@ -128,8 +128,6 @@ REF_COMMANDS = [
     "autoref",
     "eqref",
     "pageref",
-    "cref",
-    "Cref",
     "nameref",
     "subref",
     "equationref",
@@ -137,6 +135,13 @@ REF_COMMANDS = [
     "appendixref",
     "figureref",
     "tableref",
+    # crefs
+    "cref",
+    "Cref",
+    "namecref",
+    "lcnamecref",
+    "lnamecref",
+    "labelcref",
 ]
 
 CITE_COMMANDS = [
@@ -265,7 +270,7 @@ def register_ref_label_handlers(parser: ParserCore):
 
     # refs
     for command in REF_COMMANDS:
-        split_comma = command.lower() == "cref"
+        split_comma = command.lower().endswith("cref")
         parser.register_handler(command, make_ref_handler(split_comma))
 
     parser.register_handler("noeqref", noeqref_handler)

@@ -22,6 +22,10 @@ def register_cleveref(expander: ExpanderCore):
         "crefname": 3,
         "Crefname": 3,
         "crefformat": 2,
+        "labelcrefformat": 2,
+        "labelcrefrangeformat": 2,
+        "creflabelformat": 2,
+        "crefrangelabelformat": 2,
     }
 
     register_ignore_handlers_util(expander, ignore_patterns)
