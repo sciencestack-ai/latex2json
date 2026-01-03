@@ -60,6 +60,7 @@ def register_tikz_pgf_handlers(expander: ExpanderCore):
         "pgfdeclareplotmark": 2,
         "tikzstyle": "{=[",
         "tdplotsetmaincoords": 2,
+        "pgfkeys": 1,
     }
 
     register_ignore_handlers_util(expander, ignore_patterns)
