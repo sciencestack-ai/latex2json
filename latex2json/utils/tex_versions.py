@@ -8,15 +8,18 @@ from latex2json.utils.tex_utils import strip_latex_comments
 
 # Pre-compiled patterns for AMSTeX detection (threshold=3 to trigger)
 _AMSTEX_PATTERNS: List[Tuple[re.Pattern, int]] = [
-    (re.compile(r"\\input\s+amstex", re.IGNORECASE), 3),  # Strong indicator
+    (re.compile(r"\\input(?![a-zA-Z])amstex", re.IGNORECASE), 3),  # Strong indicator
     (re.compile(r"\\documentstyle.*ams\w+", re.IGNORECASE), 2),
-    (re.compile(r"\\topmatter", re.IGNORECASE), 2),
+    (re.compile(r"\\topmatter(?![a-zA-Z])", re.IGNORECASE), 2),
     (re.compile(r"\\heading.*?\\endheading", re.DOTALL), 2),
-    (re.compile(r"\\magnification\s*=", re.IGNORECASE), 1),
-    (re.compile(r"\\define\s+\\[a-zA-Z]+", re.IGNORECASE), 1),
-    (re.compile(r"\\proclaim\s", re.IGNORECASE), 1),
-    (re.compile(r"\\demo\s", re.IGNORECASE), 1),
-    (re.compile(r"\\roster\s", re.IGNORECASE), 1),
+    (re.compile(r"\\proclaim.*?\\endproclaim", re.DOTALL), 2),
+    (re.compile(r"\\magnification(?![a-zA-Z])", re.IGNORECASE), 1),
+    (re.compile(r"\\define(?![a-zA-Z])\\[a-zA-Z]+", re.IGNORECASE), 1),
+    (re.compile(r"\\demo(?![a-zA-Z])", re.IGNORECASE), 1),
+    (re.compile(r"\\roster(?![a-zA-Z])", re.IGNORECASE), 1),
+    (re.compile(r"\\Refs(?![a-zA-Z])", re.IGNORECASE), 1),
+    (re.compile(r"\\ref(?![a-zA-Z])", re.IGNORECASE), 1),
+    (re.compile(r"\\key(?![a-zA-Z])", re.IGNORECASE), 1),
 ]
 
 # Pre-compiled patterns for expl3 detection (threshold=3 to trigger)
@@ -46,7 +49,7 @@ def is_content_amstex(content: str) -> bool:
     Detect if content uses AMSTeX format instead of LaTeX.
     AMSTeX is largely obsolete but may still appear in legacy documents.
     """
-    return _check_content_matches_pattern(content, _AMSTEX_PATTERNS)
+    return _check_content_matches_pattern(content, _AMSTEX_PATTERNS, threshold=2)
 
 
 def is_content_expl3(content: str) -> bool:

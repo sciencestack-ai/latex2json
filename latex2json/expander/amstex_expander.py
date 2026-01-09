@@ -10,6 +10,7 @@ from typing import List, Optional
 
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.expander.token_processor import TokenProcessor
+from latex2json.tokens.utils import wrap_tokens_in_braces
 
 
 class AMSTeXExpander(TokenProcessor):
@@ -33,7 +34,6 @@ class AMSTeXExpander(TokenProcessor):
         ("roster", "endroster"): "itemize",
         ("Refs", "endRefs"): "thebibliography",
         # Theorem-like
-        ("proclaim", "endproclaim"): "proclaim",
         ("definition", "enddefinition"): "definition",
         ("lemma", "endlemma"): "lemma",
         ("corollary", "endcorollary"): "corollary",
@@ -42,9 +42,6 @@ class AMSTeXExpander(TokenProcessor):
         ("example", "endexample"): "example",
         # Proof
         ("demo", "enddemo"): "proof",
-        # Sectioning (these take an argument)
-        ("heading", "endheading"): "heading",
-        ("subheading", "endsubheading"): "subheading",
     }
 
     # Commands that should be removed (no-ops)
@@ -60,8 +57,15 @@ class AMSTeXExpander(TokenProcessor):
 
     # Simple command replacements (amstex -> latex)
     SIMPLE_REPLACEMENTS = {
+        # sections
+        "heading": "section",
+        "subheading": "subsection",
+        # bib
+        "ref": "bibitem",
+        #
         "define": "def",
         "redefine": "def",
+        # styles
         "bold": "mathbf",
         "Bold": "mathbf",
         "Cal": "mathcal",
@@ -71,6 +75,7 @@ class AMSTeXExpander(TokenProcessor):
         "ssf": "mathsf",
         "smc": "textsc",
         "rom": "textrm",
+        "dsize": "displaystyle",
     }
 
     def __init__(
@@ -94,6 +99,24 @@ class AMSTeXExpander(TokenProcessor):
         # Register simple replacements
         for amstex_cmd, latex_cmd in self.SIMPLE_REPLACEMENTS.items():
             self._register_replacement_handler(amstex_cmd, latex_cmd)
+
+        # # custom logic for \proclaim
+        # def proclaim_handler(processor: "AMSTeXExpander", token: Token) -> List[Token]:
+        #     return [token]
+
+        # self.register_handler("\\proclaim", proclaim_handler)
+        # self.register_handler("\\endproclaim", proclaim_handler)
+
+        # custom logic for \key
+        def key_handler(processor: "AMSTeXExpander", token: Token) -> List[Token]:
+            # convert to simply {...}
+            processor.skip_whitespace()
+            citekey = processor.parse_tokens_until(
+                predicate=lambda t: t.catcode != Catcode.LETTER
+            )
+            return wrap_tokens_in_braces(citekey)
+
+        self.register_handler("\\key", key_handler)
 
     def _register_environment_pair(self, begin_cmd: str, end_cmd: str, env_name: str):
         """Register handlers for both \\cmd -> \\begin{env} and \\endcmd -> \\end{env}."""
@@ -125,22 +148,54 @@ class AMSTeXExpander(TokenProcessor):
 
     def _make_begin_tokens(self, env_name: str) -> List[Token]:
         """Create tokens for \\begin{env_name}."""
-        tokens = [
-            Token(TokenType.CONTROL_SEQUENCE, "begin"),
-            Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+        env_tokens = [
+            Token(TokenType.CHARACTER, char, catcode=Catcode.LETTER)
+            for char in env_name
         ]
-        for char in env_name:
-            tokens.append(Token(TokenType.CHARACTER, char, catcode=Catcode.LETTER))
-        tokens.append(Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP))
-        return tokens
+        return [Token(TokenType.CONTROL_SEQUENCE, "begin")] + wrap_tokens_in_braces(
+            env_tokens
+        )
 
     def _make_end_tokens(self, env_name: str) -> List[Token]:
         """Create tokens for \\end{env_name}."""
-        tokens = [
-            Token(TokenType.CONTROL_SEQUENCE, "end"),
-            Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+        env_tokens = [
+            Token(TokenType.CHARACTER, char, catcode=Catcode.LETTER)
+            for char in env_name
         ]
-        for char in env_name:
-            tokens.append(Token(TokenType.CHARACTER, char, catcode=Catcode.LETTER))
-        tokens.append(Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP))
-        return tokens
+        return [Token(TokenType.CONTROL_SEQUENCE, "end")] + wrap_tokens_in_braces(
+            env_tokens
+        )
+
+
+if __name__ == "__main__":
+    expander = AMSTeXExpander()
+    text = r"""
+
+\input amstex
+
+\document
+\nologo
+\NoBlackBoxes
+\TagsOnRight
+\define\h{\text{H}}
+\define\Q{\bold Q}
+\define\C{\bold C}
+\define\Z{\bold Z}
+
+\subheading{ Comparision of symplectic and complex geometry}
+
+
+\Refs
+
+\ref \key AM\by P. S. Aspinwall, D. R. Morrison \paper
+ Topological field theory and rational curves \jour Commun. Math. Phys. \pages
+245--262\yr 1993 \vol 151\endref
+
+\endRefs
+
+
+\enddocument
+"""
+    tokens = expander.process_text(text)
+    out_str = expander.convert_tokens_to_str(tokens).strip()
+    print(out_str)

@@ -1,6 +1,7 @@
 import os
 import pytest
 from latex2json.expander.amstex_expander import AMSTeXExpander
+from latex2json.expander.expander import Expander
 from latex2json.parser import Parser
 from latex2json.nodes import EnvironmentNode, strip_whitespace_nodes
 from latex2json.nodes.utils import find_nodes_by_type
@@ -43,18 +44,6 @@ class TestAMSTeXExpander:
         tokens = self.expander.process_text(r"\endroster")
         text = self._tokens_to_str(tokens)
         assert "\\end{itemize}" in text
-
-    def test_proclaim_to_begin_proclaim(self):
-        """Test \\proclaim -> \\begin{proclaim}."""
-        tokens = self.expander.process_text(r"\proclaim")
-        text = self._tokens_to_str(tokens)
-        assert "\\begin{proclaim}" in text
-
-    def test_endproclaim_to_end_proclaim(self):
-        """Test \\endproclaim -> \\end{proclaim}."""
-        tokens = self.expander.process_text(r"\endproclaim")
-        text = self._tokens_to_str(tokens)
-        assert "\\end{proclaim}" in text
 
     def test_demo_to_proof(self):
         """Test \\demo -> \\begin{proof}."""
@@ -148,8 +137,8 @@ The proof.
         assert "\\begin{document}" in text
         assert "\\end{document}" in text
         assert "\\def" in text
-        assert "\\begin{proclaim}" in text
-        assert "\\end{proclaim}" in text
+        # assert "\\begin{proclaim}" in text
+        # assert "\\end{proclaim}" in text
         assert "\\begin{proof}" in text
         assert "\\end{proof}" in text
 
@@ -207,9 +196,8 @@ class TestAMSTeXIntegration:
 
     def test_amstex_detection_in_push_text(self):
         """Test that AMSTeX is detected when text is pushed (e.g., via \\input)."""
-        from latex2json.expander.expander_core import ExpanderCore
 
-        expander = ExpanderCore()
+        expander = Expander()
 
         # Push AMSTeX content - should be automatically preprocessed
         amstex_content = r"""
@@ -219,6 +207,11 @@ class TestAMSTeXIntegration:
 \endtopmatter
 \document
 Hello world.
+
+\proclaim{conjecture}
+This is a conjecture.
+\endproclaim
+
 \enddocument
 """
         expander.push_text(amstex_content)
@@ -229,3 +222,6 @@ Hello world.
         assert "\\begin{topmatter}" in text
         assert "\\begin{document}" in text
         assert "\\end{document}" in text
+
+        assert "\\begin{conjecture}" in text
+        assert "\\end{conjecture}" in text

@@ -586,7 +586,7 @@ class ExpanderCore(TokenProcessor):
     ) -> List[Token]:
         STOP_TOKEN = self._generate_stop_token()
         self.push_tokens([STOP_TOKEN])
-        self.push_text(text, source_file=source_file)
+        self.push_text(text, source_file=source_file, preprocess_amstex=False)
         # use `tok is STOP_TOKEN` to check for identity
         out = self.process(
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
@@ -618,12 +618,24 @@ class ExpanderCore(TokenProcessor):
         )
 
         amstex = AMSTeXExpander(logger=self.logger)
+
         tokens = amstex.process_text(text)
 
         if source_file:
             for tok in tokens:
                 if not tok.source_file:
                     tok.source_file = source_file
+
+        if self.get_macro("\\proclaim") is None and "\\proclaim" in text:
+            # inject proclaim -> newtheorem latex hack
+            pretext = r"""
+            \newcommand\proclaim[1]{%
+            \newtheorem{#1}{#1}
+            \renewcommand\endproclaim{\end{#1}}
+            \begin{#1}%
+            }
+            """
+            self._expand_latex_text(pretext)
 
         return tokens
 
@@ -707,7 +719,12 @@ class ExpanderCore(TokenProcessor):
     def push_tokens(self, tokens: List[Token]):
         self.stream.push_tokens([t for t in tokens if t is not None])
 
-    def push_text(self, text: str, source_file: Optional[str] = None):
+    def push_text(
+        self,
+        text: str,
+        source_file: Optional[str] = None,
+        preprocess_amstex: bool = True,
+    ):
         """
         Push text onto the stream, preprocessing AMSTeX if detected.
 
@@ -715,7 +732,7 @@ class ExpanderCore(TokenProcessor):
         """
         source_file = self._normalize_source_path(source_file)
 
-        if is_content_amstex(text):
+        if preprocess_amstex and is_content_amstex(text):
             tokens = self._preprocess_amstex(text, source_file=source_file)
             self.push_tokens(tokens)
         else:
