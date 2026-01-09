@@ -246,7 +246,7 @@ class ParserCore:
 
     def set_text(self, text: str, source_file: Optional[str] = None):
         self.clear()
-        self.expander.push_text(text, source_file=source_file)
+        self.expander.set_text(text, source_file=source_file)
 
     def push_tokens(self, tokens: List[Token]):
         """Push tokens to the front of the token buffer."""

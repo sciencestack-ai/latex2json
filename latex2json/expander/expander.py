@@ -10,6 +10,7 @@ from latex2json.latex_maps.whitelist import (
     WHITELISTED_ENVIRONMENTS,
     WHITELISTED_PACKAGES,
     WHITELISTED_CLASSES,
+    WHITELISTED_TEX,
 )
 from latex2json.tokens.tokenizer import Tokenizer
 from latex2json.tokens.types import CommandWithArgsToken, Token
@@ -126,6 +127,12 @@ class Expander(ExpanderCore):
 
         register_handlers(self)
         register_packages(self)
+
+    # override
+    def push_file(self, file_path: str, extension: str = ".tex"):
+        if file_path not in WHITELISTED_TEX:
+            return super().push_file(file_path, extension)
+        return None
 
     # override
     def load_package(

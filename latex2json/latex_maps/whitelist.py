@@ -86,5 +86,13 @@ for env, env_def in MATH_ENVIRONMENTS.items():
         STRICTLY_BLOCKED_COMMANDS.append(env_def.end_command)
 
 
-WHITELISTED_PACKAGES = ["subfiles", "fancyhdr", "natbib", "algorithmic", "IEEEtran"]
+WHITELISTED_PACKAGES = [
+    "subfiles",
+    "fancyhdr",
+    "natbib",
+    "algorithmic",
+    "IEEEtran",
+    "amstex",
+]
 WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()
+WHITELISTED_TEX = ["amstex", "amstex.tex"]
