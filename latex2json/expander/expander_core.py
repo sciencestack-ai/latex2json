@@ -12,9 +12,6 @@ from latex2json.tokens.catcodes import MATHMODE_CATCODES
 from latex2json.tokens.types import BEGIN_ENV_TOKEN, END_ENV_TOKEN, CommandWithArgsToken
 from latex2json.tokens.utils import (
     convert_str_to_tokens,
-    is_begin_parenthesis_token,
-    is_end_parenthesis_token,
-    is_mathshift_token,
     is_whitespace_token,
     strip_whitespace_tokens,
     substitute_token_args,
@@ -44,12 +41,13 @@ from latex2json.tokens.utils import (
     is_1_to_9_token,
     is_begin_bracket_token,
     is_begin_group_token,
-    is_end_bracket_token,
     is_end_group_token,
     is_param_token,
 )
+from latex2json.expander.token_processor import TokenProcessor
 from latex2json.utils.tex_utils import strip_latex_comments
-from latex2json.utils.tex_versions import is_supported_tex_version
+from latex2json.utils.tex_versions import is_content_amstex, is_content_expl3
+from latex2json.expander.amstex_expander import AMSTeXExpander
 from latex2json.utils.file_resolver import resolve_file_path as util_resolve
 
 RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
@@ -109,10 +107,12 @@ def is_token_command_name(tok: Token, command_name: str) -> bool:
     return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == command_name
 
 
-class ExpanderCore:
+class ExpanderCore(TokenProcessor):
     """
     The main engine for processing the document.
     Drives parsing, manages state, executes commands, and performs expansion.
+
+    Inherits token stream operations and parsing helpers from TokenProcessor.
     """
 
     # Valid LaTeX file extensions
@@ -129,9 +129,8 @@ class ExpanderCore:
             tokenizer: Optional tokenizer instance. If None, creates a new one with fresh catcodes.
             logger: Logger instance for debugging.
         """
-        self.logger = logger if logger is not None else Logger("expander")
-        self.tokenizer = tokenizer if tokenizer is not None else Tokenizer()
-        self.stream = TokenStream(self.tokenizer)
+        # Initialize base class (sets up tokenizer, stream, logger)
+        super().__init__(tokenizer=tokenizer, logger=logger)
         self.state = ExpanderState(self.tokenizer, logger=self.logger)
 
         self.cwd = "."
@@ -405,10 +404,6 @@ class ExpanderCore:
             is_global=True,
         )
 
-    @staticmethod
-    def is_control_sequence(tok: Token) -> bool:
-        return tok.type == TokenType.CONTROL_SEQUENCE or tok.catcode == Catcode.ACTIVE
-
     # MACROS
     @staticmethod
     def normalize_macro_name(tok_or_name: str | Token) -> tuple[str, bool] | None:
@@ -555,20 +550,6 @@ class ExpanderCore:
     ):
         self.state.increment_register(register_type, reg_id, increment)
 
-    # PROCESSING
-    def clear(self):
-        self.stream.clear()
-
-    def set_text(self, text: str):
-        self.stream.set_text(text)
-
-    def eof(self) -> bool:
-        return self.stream.eof()
-
-    def expand(self, text: str) -> List[Token]:
-        self.set_text(text)
-        return self.process()
-
     def makeatletter(self) -> List[Token]:
         self.set_catcode(ord("@"), Catcode.LETTER)
         return []
@@ -577,14 +558,17 @@ class ExpanderCore:
         self.set_catcode(ord("@"), Catcode.OTHER)
         return []
 
-    def expand_ltx(self, text: str, source_file: Optional[str] = None) -> List[Token]:
-        """
-        Expand LaTeX internal code that may contain @ symbols.
-        """
+    # PROCESSING
+    def expand(self, text: str) -> List[Token]:
+        """Expand text and return resulting tokens."""
+        self.set_text(text)
+        return self.process()
 
+    def expand_ltx(self, text: str, source_file: Optional[str] = None) -> List[Token]:
+        """Expand LaTeX internal code that may contain @ symbols."""
         old_catcode = self.get_catcode(ord("@"))
         self.makeatletter()
-        result = self.expand_text(text, source_file=source_file)
+        result = self._expand_latex_text(text, source_file=source_file)
         self.set_catcode(ord("@"), old_catcode)
         return result
 
@@ -594,9 +578,15 @@ class ExpanderCore:
         return Token(TokenType.CONTROL_SEQUENCE, f"\\@#STOP", catcode=Catcode.OTHER)
 
     def expand_text(self, text: str, source_file: Optional[str] = None) -> List[Token]:
+        """Expand text with source file attribution."""
+        return self._expand_latex_text(text, source_file=source_file)
+
+    def _expand_latex_text(
+        self, text: str, source_file: Optional[str] = None
+    ) -> List[Token]:
         STOP_TOKEN = self._generate_stop_token()
         self.push_tokens([STOP_TOKEN])
-        self.push_text(text, source_file=source_file)
+        self.push_text(text, source_file=source_file, preprocess_amstex=False)
         # use `tok is STOP_TOKEN` to check for identity
         out = self.process(
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
@@ -613,6 +603,41 @@ class ExpanderCore:
             stop_token_logic=lambda tok: tok is STOP_TOKEN, consume_stop_token=True
         )
         return out
+
+    def _preprocess_amstex(
+        self, text: str, source_file: Optional[str] = None
+    ) -> List[Token]:
+        """
+        Preprocess AMSTeX text to LaTeX tokens (NOT expanded).
+
+        Uses a fresh tokenizer to isolate AMSTeX preprocessing from any
+        catcode changes in the main document.
+        """
+        self.logger.info(
+            f"Preprocessing AMSTeX to LaTeX{f' from {source_file}' if source_file else ''}..."
+        )
+
+        amstex = AMSTeXExpander(logger=self.logger)
+
+        tokens = amstex.process_text(text)
+
+        if source_file:
+            for tok in tokens:
+                if not tok.source_file:
+                    tok.source_file = source_file
+
+        if self.get_macro("\\proclaim") is None and "\\proclaim" in text:
+            # inject proclaim -> newtheorem latex hack
+            pretext = r"""
+            \newcommand\proclaim[1]{%
+            \newtheorem{#1}{#1}
+            \renewcommand\endproclaim{\end{#1}}
+            \begin{#1}%
+            }
+            """
+            self._expand_latex_text(pretext)
+
+        return tokens
 
     def process(
         self,
@@ -694,26 +719,51 @@ class ExpanderCore:
     def push_tokens(self, tokens: List[Token]):
         self.stream.push_tokens([t for t in tokens if t is not None])
 
-    def push_text(self, text: str, source_file: Optional[str] = None):
-        if source_file:
-            # Convert to absolute path first to avoid ambiguity with changing cwd
-            abs_source = os.path.abspath(source_file)
-            abs_project_root = os.path.abspath(self.project_root)
+    def push_text(
+        self,
+        text: str,
+        source_file: Optional[str] = None,
+        preprocess_amstex: bool = True,
+    ):
+        """
+        Push text onto the stream, preprocessing AMSTeX if detected.
 
-            # Make relative to project_root if within project_root
-            try:
-                rel_path = os.path.relpath(abs_source, abs_project_root)
-                # Only use relative path if it doesn't go outside project_root
-                if not rel_path.startswith(".."):
-                    source_file = rel_path
-                else:
-                    # Outside project_root, keep absolute
-                    source_file = abs_source
-            except ValueError:
-                # Different drives on Windows, keep absolute
-                source_file = abs_source
+        AMSTeX content is automatically converted to LaTeX tokens before pushing.
+        """
+        source_file = self._normalize_source_path(source_file)
 
-        self.stream.push_text(text, source_file=source_file)
+        if preprocess_amstex and is_content_amstex(text):
+            tokens = self._preprocess_amstex(text, source_file=source_file)
+            self.push_tokens(tokens)
+        else:
+            self.stream.push_text(text, source_file=source_file)
+
+    def _normalize_source_path(self, source_file: Optional[str]) -> Optional[str]:
+        """Normalize source file path relative to project root."""
+        if not source_file:
+            return None
+
+        abs_source = os.path.abspath(source_file)
+        abs_project_root = os.path.abspath(self.project_root)
+
+        try:
+            rel_path = os.path.relpath(abs_source, abs_project_root)
+            # Only use relative path if it doesn't go outside project_root
+            if not rel_path.startswith(".."):
+                return rel_path
+        except ValueError:
+            pass  # Different drives on Windows
+
+        return abs_source
+
+    def set_text(self, text: str, source_file: Optional[str] = None):
+        """
+        Reset stream with new text.
+
+        Unlike push_text which appends, this clears existing content first.
+        """
+        self.stream.clear()
+        self.push_text(text, source_file=source_file)
 
     def get_cwd_path(self, file_path: str) -> str:
         if not os.path.isabs(file_path):
@@ -824,15 +874,21 @@ class ExpanderCore:
         if not os.path.exists(file_path):
             self.logger.warning(f"Input file {file_path} does not exist")
             return None
-        is_supported, error_msg = is_supported_tex_version(file_path)
-        if not is_supported:
-            self.logger.error(f"Unsupported TeX version {file_path}: {error_msg}")
-            return None
         try:
-            return read_file(file_path)
+            content = read_file(file_path)
         except Exception as e:
             self.logger.error(f"Failed to read file {file_path}: {e}")
             return None
+
+        # Check for unsupported formats (AMSTeX handled at token level in expand_file)
+        stripped = strip_latex_comments(content)
+        if is_content_expl3(stripped):
+            self.logger.error(
+                f"Unsupported TeX version {file_path}: Expl3 not supported"
+            )
+            return None
+
+        return content
 
     def _load_package_or_class(
         self,
@@ -881,15 +937,6 @@ class ExpanderCore:
         return self._load_package_or_class(
             class_name, extension or ".cls", is_package=False, read_file=read_file
         )
-
-    def peek(self, offset: int = 0) -> Optional[Token]:
-        return self.stream.peek(offset)
-
-    def consume(self) -> Optional[Token]:
-        return self.stream.consume()
-
-    def skip_whitespace(self):
-        self.stream.skip_whitespace()
 
     def skip_whitespace_not_eol(self):
         space_cnt = 0
@@ -1090,14 +1137,6 @@ class ExpanderCore:
         return out
 
     # parser helper functions
-    def match(
-        self,
-        token_type: Optional[TokenType] = None,
-        value: Optional[str] = None,
-        catcode: Optional[Catcode] = None,
-    ) -> bool:
-        return self.stream.match(token_type, value, catcode)
-
     def is_relax_token(self, token: Token) -> bool:
         if isinstance(self.get_macro(token), RelaxMacro):
             return True
@@ -1668,36 +1707,6 @@ class ExpanderCore:
         finally:
             self._reset_verbatim_mode_context(verbatim)
 
-    def parse_brace_as_tokens(
-        self, expand=False, verbatim=False
-    ) -> Optional[List[Token]]:
-        tokens = self.parse_begin_end_as_tokens(
-            is_begin_group_token, is_end_group_token, verbatim=verbatim
-        )
-        if expand and tokens:
-            tokens = self.expand_tokens(tokens)
-        return tokens
-
-    def parse_bracket_as_tokens(
-        self, expand=False, verbatim=False
-    ) -> Optional[List[Token]]:
-        tokens = self.parse_begin_end_as_tokens(
-            is_begin_bracket_token, is_end_bracket_token, verbatim=verbatim
-        )
-        if expand and tokens:
-            tokens = self.expand_tokens(tokens)
-        return tokens
-
-    def parse_parenthesis_as_tokens(
-        self, expand=False, verbatim=False
-    ) -> Optional[List[Token]]:
-        tokens = self.parse_begin_end_as_tokens(
-            is_begin_parenthesis_token, is_end_parenthesis_token, verbatim=verbatim
-        )
-        if expand and tokens:
-            tokens = self.expand_tokens(tokens)
-        return tokens
-
     def set_catcode(self, char_ord: int, catcode: Catcode):
         self.state.set_catcode(char_ord, catcode)
 
@@ -1763,19 +1772,6 @@ class ExpanderCore:
             c = catcode or self.get_catcode(ord(t))
             out.append(Token(TokenType.CHARACTER, t, catcode=c))
         return out
-
-    @staticmethod
-    def convert_tokens_to_str(tokens: List[Token]) -> str:
-        return "".join(t.to_str() for t in tokens if t is not None)
-
-    @staticmethod
-    def check_tokens_equal(a: List[Token], b: List[Token]) -> bool:
-        if len(a) != len(b):
-            return False
-        for a_tok, b_tok in zip(a, b):
-            if a_tok != b_tok:
-                return False
-        return True
 
     def get_parsed_args(
         self,
