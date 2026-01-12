@@ -128,10 +128,12 @@ class JSONRenderer:
         n_processors: int = 1,
         expander: Optional[Expander] = None,
         prune_bibliography: bool = True,
+        normalize_appendix_counters: bool = True,
     ):
         self.logger = logger or logging.getLogger(__name__)
         self.n_processors = n_processors
         self.prune_bibliography = prune_bibliography
+        self.normalize_appendix_counters = normalize_appendix_counters
 
         self._init_parser(expander)
 
@@ -150,6 +152,36 @@ class JSONRenderer:
 
     def get_colors(self):
         return self.parser.get_colors()
+
+    def _normalize_appendix_numbering(self, numbering: str) -> str:
+        """Convert numeric appendix numbering to alphabetic.
+
+        Examples:
+            '1' -> 'A'
+            '2' -> 'B'
+            '1.1' -> 'A.1'
+            '2.3' -> 'B.3'
+        """
+        if not numbering:
+            return numbering
+        parts = numbering.split(".")
+        if parts[0].isdigit():
+            num = int(parts[0])
+            if 1 <= num <= 26:
+                parts[0] = chr(ord("A") + num - 1)
+            else:
+                # For numbers > 26, use AA, AB, etc.
+                parts[0] = self._int_to_alpha_upper(num)
+        return ".".join(parts)
+
+    def _int_to_alpha_upper(self, num: int) -> str:
+        """Convert integer to uppercase alphabetic (A, B, ..., Z, AA, AB, ...)."""
+        result = []
+        while num > 0:
+            num -= 1
+            result.append(chr(ord("A") + (num % 26)))
+            num //= 26
+        return "".join(reversed(result))
 
     def parse_file(
         self, file_path: str, organize_hierachy=True, project_root: str = None
@@ -302,7 +334,10 @@ class JSONRenderer:
         stack.append(token)
 
     def _recursive_organize(
-        self, tokens: List[Dict], parent_token: Optional[Dict] = None
+        self,
+        tokens: List[Dict],
+        parent_token: Optional[Dict] = None,
+        in_appendix: bool = False,
     ):
         organized = []
         section_stack = []
@@ -335,12 +370,13 @@ class JSONRenderer:
             # Handle appendix declaration
             if token["type"] == NodeTypes.APPENDIX:
                 section_stack.clear()
+                in_appendix = True  # Mark that we're now in appendix mode
 
                 if not token.get("content"):
                     token["content"] = []
                 else:
                     token["content"] = self._recursive_organize(
-                        token["content"], parent_token=token
+                        token["content"], parent_token=token, in_appendix=True
                     )
 
                 if organized and organized[-1]["type"] == NodeTypes.APPENDIX:
@@ -356,6 +392,7 @@ class JSONRenderer:
                 token["content"] = self._recursive_organize(
                     token["content"],
                     parent_token=token,
+                    in_appendix=in_appendix,
                 )
 
             # Handle special token types
@@ -363,6 +400,13 @@ class JSONRenderer:
                 section_stack.clear()
                 organized.append(token)
             elif token["type"] == NodeTypes.SECTION:
+                # Normalize appendix section numbering if enabled
+                if in_appendix and self.normalize_appendix_counters:
+                    numbering = token.get("numbering")
+                    if numbering:
+                        token["numbering"] = self._normalize_appendix_numbering(
+                            numbering
+                        )
                 self._manage_stack(token, section_stack, root)
             else:
                 get_current_target().append(token)
