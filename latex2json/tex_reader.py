@@ -10,7 +10,6 @@ import shutil
 from latex2json.expander.expander import Expander
 from latex2json.tex_file_extractor import TexFileExtractor
 from latex2json.renderer.json import JSONRenderer
-from latex2json.utils.tex_versions import is_supported_tex_version
 
 T = TypeVar("T")
 
@@ -105,9 +104,9 @@ class TexReader:
 
         self.clear()
         self._verify_file_exists(file_path)
-        is_supported, error_msg = is_supported_tex_version(file_path)
-        if not is_supported:
-            raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
+        # is_supported, error_msg = is_supported_tex_version(file_path)
+        # if not is_supported:
+        #     raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
         output = (
             self.json_renderer.parse_file(
                 file_path, project_root=str(project_root) if project_root else None

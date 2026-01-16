@@ -46,7 +46,7 @@ from latex2json.tokens.utils import (
 )
 from latex2json.expander.token_processor import TokenProcessor
 from latex2json.utils.tex_utils import strip_latex_comments
-from latex2json.utils.tex_versions import is_content_amstex, is_content_expl3
+from latex2json.utils.tex_versions import is_content_amstex
 from latex2json.expander.amstex_expander import AMSTeXExpander
 from latex2json.utils.file_resolver import resolve_file_path as util_resolve
 
@@ -878,14 +878,6 @@ class ExpanderCore(TokenProcessor):
             content = read_file(file_path)
         except Exception as e:
             self.logger.error(f"Failed to read file {file_path}: {e}")
-            return None
-
-        # Check for unsupported formats (AMSTeX handled at token level in expand_file)
-        stripped = strip_latex_comments(content)
-        if is_content_expl3(stripped):
-            self.logger.error(
-                f"Unsupported TeX version {file_path}: Expl3 not supported"
-            )
             return None
 
         return content

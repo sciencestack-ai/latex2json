@@ -27,6 +27,7 @@ from latex2json.expander.handlers.primitives.other_primitives import (
 from latex2json.expander.handlers.primitives.detokenize import (
     register_detokenize_handler,
 )
+from latex2json.expander.handlers.expl3 import register_expl3_handlers
 
 
 def register_primitives(expander: ExpanderCore):
@@ -43,3 +44,4 @@ def register_primitives(expander: ExpanderCore):
     register_addtomacro_handler(expander)
     register_other_primitives(expander)
     register_detokenize_handler(expander)
+    register_expl3_handlers(expander)
