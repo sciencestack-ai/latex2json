@@ -60,10 +60,9 @@ def is_content_expl3(content: str) -> bool:
     return _check_content_matches_pattern(content, _EXPL3_PATTERNS)
 
 
-def is_supported_tex_version(file_path: Path | str) -> Tuple[bool, str]:
-    content = read_file(str(file_path))
-    content = strip_latex_comments(content)
-    # AMSTeX is now supported via preprocessing (see amstex_expander.py)
-    if is_content_expl3(content):
-        return False, "Expl3 not supported"
-    return True, ""
+# def is_supported_tex_version(file_path: Path | str) -> Tuple[bool, str]:
+#     content = read_file(str(file_path))
+#     content = strip_latex_comments(content)
+#     # AMSTeX is now supported via preprocessing (see amstex_expander.py)
+#     # expl3 is now supported via catcode handlers (see expl3_handlers.py)
+#     return True, ""
