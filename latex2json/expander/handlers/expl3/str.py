@@ -1,0 +1,151 @@
+"""
+expl3 string (str) handlers.
+
+Handles \str_if_eq:nnTF, \str_case:nnF, etc.
+"""
+
+from typing import List, Optional
+
+from latex2json.expander.expander_core import ExpanderCore
+from latex2json.tokens.catcodes import Catcode
+from latex2json.tokens.types import Token
+
+
+# =============================================================================
+# \str_if_eq:... - String equality conditionals
+# =============================================================================
+
+
+def str_if_eq_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_if_eq:nnTF {str1} {str2} {true} {false}
+    """
+    expander.skip_whitespace()
+    str1_tokens = expander.parse_brace_as_tokens() or []
+    str1 = "".join(t.value for t in str1_tokens)
+
+    expander.skip_whitespace()
+    str2_tokens = expander.parse_brace_as_tokens() or []
+    str2 = "".join(t.value for t in str2_tokens)
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if str1 == str2:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def str_if_eq_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_if_eq:nnT {str1} {str2} {true}  (no false branch)
+    """
+    expander.skip_whitespace()
+    str1_tokens = expander.parse_brace_as_tokens() or []
+    str1 = "".join(t.value for t in str1_tokens)
+
+    expander.skip_whitespace()
+    str2_tokens = expander.parse_brace_as_tokens() or []
+    str2 = "".join(t.value for t in str2_tokens)
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    if str1 == str2:
+        expander.push_tokens(true_branch)
+    return []
+
+
+def str_if_eq_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_if_eq:nnF {str1} {str2} {false}  (no true branch)
+    """
+    expander.skip_whitespace()
+    str1_tokens = expander.parse_brace_as_tokens() or []
+    str1 = "".join(t.value for t in str1_tokens)
+
+    expander.skip_whitespace()
+    str2_tokens = expander.parse_brace_as_tokens() or []
+    str2 = "".join(t.value for t in str2_tokens)
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if str1 != str2:
+        expander.push_tokens(false_branch)
+    return []
+
+
+# =============================================================================
+# \str_case:... - String pattern matching
+# =============================================================================
+
+
+def str_case_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \str_case:nnF {test} { {val1}{result1} ... } {false}
+
+    String pattern matching.
+    """
+    expander.skip_whitespace()
+    test_tokens = expander.parse_brace_as_tokens() or []
+    test_str = "".join(t.value for t in test_tokens).strip()
+
+    expander.skip_whitespace()
+    cases_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    # Push cases tokens back onto stream and parse {key}{value} pairs
+    expander.push_tokens(cases_tokens)
+
+    matched_value = None
+    while expander.peek():
+        expander.skip_whitespace()
+        if not expander.peek() or expander.peek().catcode != Catcode.BEGIN_GROUP:
+            break
+
+        pair = expander.parse_braced_blocks(N_blocks=2)
+        if len(pair) < 2:
+            break
+
+        key_tokens, value_tokens = pair
+        key_str = "".join(t.value for t in key_tokens).strip()
+
+        if matched_value is None and key_str == test_str:
+            matched_value = value_tokens
+            # Continue parsing to consume remaining cases
+
+    # Push result after consuming all cases
+    if matched_value is not None:
+        expander.push_tokens(matched_value)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def register_str_handlers(expander: ExpanderCore) -> None:
+    """Register string handlers."""
+    # Equality conditionals
+    for name in ["\\str_if_eq:nnTF", "\\str_if_eq:VnTF", "\\str_if_eq:eeTF"]:
+        expander.register_handler(name, str_if_eq_TF_handler, is_global=True)
+    for name in ["\\str_if_eq:nnT", "\\str_if_eq:VnT", "\\str_if_eq:eeT"]:
+        expander.register_handler(name, str_if_eq_T_handler, is_global=True)
+    for name in ["\\str_if_eq:nnF", "\\str_if_eq:VnF", "\\str_if_eq:eeF"]:
+        expander.register_handler(name, str_if_eq_F_handler, is_global=True)
+
+    # Case matching
+    for name in ["\\str_case:nnF", "\\str_case:onF", "\\str_case:VnF"]:
+        expander.register_handler(name, str_case_handler, is_global=True)
