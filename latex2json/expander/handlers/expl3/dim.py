@@ -15,171 +15,138 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token
 
 
-# Dedicated storage for dimension values: {var_name: (value, unit)}
-# This allows proper formatting of output (e.g., "10.0pt")
-_dim_store: Dict[str, Tuple[float, str]] = {}
+class DimManager:
+    """Manages dimension variable storage for expl3 dim commands."""
+
+    def __init__(self):
+        self.store: Dict[str, Tuple[float, str]] = {}
+
+    def _get_var_name(self, var: Token) -> str:
+        """Get the variable name from a token."""
+        return var.value
+
+    def _get_dim(self, name: str) -> Tuple[float, str]:
+        """Get dimension value from store, defaulting to (0.0, 'pt')."""
+        return self.store.get(name, (0.0, 'pt'))
+
+    def _set_dim(self, name: str, value: float, unit: str) -> None:
+        """Set dimension value in store."""
+        self.store[name] = (value, unit)
+
+    def dim_new_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_new:N \l_my_dim
+        Create a new dimension variable initialized to 0pt.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        if var:
+            name = self._get_var_name(var)
+            self._set_dim(name, 0.0, 'pt')
+        return []
+
+    def dim_set_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_set:Nn \l_my_dim {10pt}
+        Set a dimension variable to a value.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            parsed = _parse_dim_value(value_str)
+            if parsed:
+                self._set_dim(name, parsed[0], parsed[1])
+        return []
+
+    def dim_add_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_add:Nn \l_my_dim {5pt}
+        Add a value to a dimension variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            current_val, current_unit = self._get_dim(name)
+            parsed = _parse_dim_value(value_str)
+            if parsed:
+                add_val, add_unit = parsed
+                # Convert to pt for addition, then back
+                current_pt = _to_pt(current_val, current_unit)
+                add_pt = _to_pt(add_val, add_unit)
+                if current_pt is not None and add_pt is not None:
+                    result_pt = current_pt + add_pt
+                    self._set_dim(name, result_pt, 'pt')
+        return []
+
+    def dim_sub_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_sub:Nn \l_my_dim {5pt}
+        Subtract a value from a dimension variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            current_val, current_unit = self._get_dim(name)
+            parsed = _parse_dim_value(value_str)
+            if parsed:
+                sub_val, sub_unit = parsed
+                current_pt = _to_pt(current_val, current_unit)
+                sub_pt = _to_pt(sub_val, sub_unit)
+                if current_pt is not None and sub_pt is not None:
+                    result_pt = current_pt - sub_pt
+                    self._set_dim(name, result_pt, 'pt')
+        return []
+
+    def dim_zero_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_zero:N \l_my_dim
+        Set a dimension variable to 0pt.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+
+        if var:
+            name = self._get_var_name(var)
+            self._set_dim(name, 0.0, 'pt')
+        return []
+
+    def dim_use_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \dim_use:N \l_my_dim
+        Output the value of a dimension variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+
+        if var:
+            name = self._get_var_name(var)
+            value, unit = self._get_dim(name)
+            return expander.convert_str_to_tokens(_format_dim(value, unit))
+        return []
 
 
-def _get_var_name(var: Token) -> str:
-    """Get the variable name from a token."""
-    return var.value
-
-
-def _get_dim(name: str) -> Tuple[float, str]:
-    """Get dimension value from store, defaulting to (0.0, 'pt')."""
-    return _dim_store.get(name, (0.0, 'pt'))
-
-
-def _set_dim(name: str, value: float, unit: str) -> None:
-    """Set dimension value in store."""
-    _dim_store[name] = (value, unit)
-
+# Pure functions that don't need instance state
 
 def _format_dim(value: float, unit: str) -> str:
     """Format dimension value for output."""
     if value == int(value):
         return f"{int(value)}{unit}"
     return f"{value}{unit}"
-
-
-def dim_new_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_new:N \l_my_dim
-    Create a new dimension variable initialized to 0pt.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    if var:
-        name = _get_var_name(var)
-        _set_dim(name, 0.0, 'pt')
-    return []
-
-
-def dim_set_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_set:Nn \l_my_dim {10pt}
-    Set a dimension variable to a value.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        parsed = _parse_dim_value(value_str)
-        if parsed:
-            _set_dim(name, parsed[0], parsed[1])
-    return []
-
-
-def dim_gset_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_gset:Nn \g_my_dim {10pt}
-    Globally set a dimension variable.
-    Note: In our implementation, all dim storage is global by nature.
-    """
-    return dim_set_handler(expander, _token)
-
-
-def dim_add_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_add:Nn \l_my_dim {5pt}
-    Add a value to a dimension variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        current_val, current_unit = _get_dim(name)
-        parsed = _parse_dim_value(value_str)
-        if parsed:
-            add_val, add_unit = parsed
-            # Convert to pt for addition, then back
-            current_pt = _to_pt(current_val, current_unit)
-            add_pt = _to_pt(add_val, add_unit)
-            if current_pt is not None and add_pt is not None:
-                result_pt = current_pt + add_pt
-                _set_dim(name, result_pt, 'pt')
-    return []
-
-
-def dim_sub_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_sub:Nn \l_my_dim {5pt}
-    Subtract a value from a dimension variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        current_val, current_unit = _get_dim(name)
-        parsed = _parse_dim_value(value_str)
-        if parsed:
-            sub_val, sub_unit = parsed
-            current_pt = _to_pt(current_val, current_unit)
-            sub_pt = _to_pt(sub_val, sub_unit)
-            if current_pt is not None and sub_pt is not None:
-                result_pt = current_pt - sub_pt
-                _set_dim(name, result_pt, 'pt')
-    return []
-
-
-def dim_zero_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_zero:N \l_my_dim
-    Set a dimension variable to 0pt.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-
-    if var:
-        name = _get_var_name(var)
-        _set_dim(name, 0.0, 'pt')
-    return []
-
-
-def dim_use_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_use:N \l_my_dim
-    Output the value of a dimension variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-
-    if var:
-        name = _get_var_name(var)
-        value, unit = _get_dim(name)
-        return expander.convert_str_to_tokens(_format_dim(value, unit))
-    return []
-
-
-def dim_eval_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \dim_eval:n { 10pt + 5pt }  ->  15pt
-
-    Note: We do simplified evaluation - just return the expression for now
-    since proper dimension arithmetic requires tracking units.
-    """
-    expander.skip_whitespace()
-    expr_tokens = expander.parse_brace_as_tokens() or []
-    expr_str = "".join(t.value for t in expr_tokens).strip()
-
-    # Try to evaluate simple dimension arithmetic
-    result = _safe_eval_dim(expr_str)
-    if result is not None:
-        return expander.convert_str_to_tokens(result)
-    # Fall back to returning the expression
-    return expander.convert_str_to_tokens(expr_str)
 
 
 def _parse_dim_value(s: str) -> Optional[tuple]:
@@ -191,6 +158,27 @@ def _parse_dim_value(s: str) -> Optional[tuple]:
         value = float(match.group(1))
         unit = match.group(2) or 'pt'
         return (value, unit)
+    return None
+
+
+def _to_pt(value: float, unit: str) -> Optional[float]:
+    """Convert dimension value to points."""
+    # Conversion factors to points
+    conversions = {
+        'pt': 1.0,
+        'pc': 12.0,  # 1 pica = 12 points
+        'in': 72.27,  # 1 inch = 72.27 points
+        'bp': 1.00375,  # 1 big point = 1.00375 points
+        'cm': 28.4527559,  # 1 cm = 28.4527559 points
+        'mm': 2.84527559,  # 1 mm = 2.84527559 points
+        'dd': 1.07,  # 1 didot point
+        'cc': 12.84,  # 1 cicero = 12 didot points
+        'sp': 1/65536,  # 1 scaled point
+        'ex': 4.3,  # approximate
+        'em': 10.0,  # approximate (depends on font)
+    }
+    if unit in conversions:
+        return value * conversions[unit]
     return None
 
 
@@ -229,6 +217,54 @@ def _safe_eval_dim(expr_str: str) -> Optional[str]:
             return f"{result}{unit1}"
 
     return None
+
+
+def _eval_dim_compare(expr_str: str) -> bool:
+    """Evaluate dimension comparison expression."""
+    # Normalize operators
+    expr_str = expr_str.replace(">=", " >= ").replace("<=", " <= ")
+    expr_str = expr_str.replace("!=", " != ").replace("==", " = ")
+
+    # Try different operators
+    for op, func in [
+        (">=", lambda a, b: a >= b),
+        ("<=", lambda a, b: a <= b),
+        ("!=", lambda a, b: a != b),
+        (">", lambda a, b: a > b),
+        ("<", lambda a, b: a < b),
+        ("=", lambda a, b: abs(a - b) < 0.001),
+    ]:
+        if op in expr_str:
+            parts = expr_str.split(op, 1)
+            if len(parts) == 2:
+                left_parsed = _parse_dim_value(parts[0].strip())
+                right_parsed = _parse_dim_value(parts[1].strip())
+                if left_parsed and right_parsed:
+                    # Convert to common unit (pt) for comparison
+                    left_pt = _to_pt(left_parsed[0], left_parsed[1])
+                    right_pt = _to_pt(right_parsed[0], right_parsed[1])
+                    if left_pt is not None and right_pt is not None:
+                        return func(left_pt, right_pt)
+    return False
+
+
+def dim_eval_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \dim_eval:n { 10pt + 5pt }  ->  15pt
+
+    Note: We do simplified evaluation - just return the expression for now
+    since proper dimension arithmetic requires tracking units.
+    """
+    expander.skip_whitespace()
+    expr_tokens = expander.parse_brace_as_tokens() or []
+    expr_str = "".join(t.value for t in expr_tokens).strip()
+
+    # Try to evaluate simple dimension arithmetic
+    result = _safe_eval_dim(expr_str)
+    if result is not None:
+        return expander.convert_str_to_tokens(result)
+    # Fall back to returning the expression
+    return expander.convert_str_to_tokens(expr_str)
 
 
 def dim_compare_TF_handler(
@@ -293,56 +329,6 @@ def dim_compare_F_handler(
     if not result:
         expander.push_tokens(false_branch)
     return []
-
-
-def _eval_dim_compare(expr_str: str) -> bool:
-    """Evaluate dimension comparison expression."""
-    # Normalize operators
-    expr_str = expr_str.replace(">=", " >= ").replace("<=", " <= ")
-    expr_str = expr_str.replace("!=", " != ").replace("==", " = ")
-
-    # Try different operators
-    for op, func in [
-        (">=", lambda a, b: a >= b),
-        ("<=", lambda a, b: a <= b),
-        ("!=", lambda a, b: a != b),
-        (">", lambda a, b: a > b),
-        ("<", lambda a, b: a < b),
-        ("=", lambda a, b: abs(a - b) < 0.001),
-    ]:
-        if op in expr_str:
-            parts = expr_str.split(op, 1)
-            if len(parts) == 2:
-                left_parsed = _parse_dim_value(parts[0].strip())
-                right_parsed = _parse_dim_value(parts[1].strip())
-                if left_parsed and right_parsed:
-                    # Convert to common unit (pt) for comparison
-                    left_pt = _to_pt(left_parsed[0], left_parsed[1])
-                    right_pt = _to_pt(right_parsed[0], right_parsed[1])
-                    if left_pt is not None and right_pt is not None:
-                        return func(left_pt, right_pt)
-    return False
-
-
-def _to_pt(value: float, unit: str) -> Optional[float]:
-    """Convert dimension value to points."""
-    # Conversion factors to points
-    conversions = {
-        'pt': 1.0,
-        'pc': 12.0,  # 1 pica = 12 points
-        'in': 72.27,  # 1 inch = 72.27 points
-        'bp': 1.00375,  # 1 big point = 1.00375 points
-        'cm': 28.4527559,  # 1 cm = 28.4527559 points
-        'mm': 2.84527559,  # 1 mm = 2.84527559 points
-        'dd': 1.07,  # 1 didot point
-        'cc': 12.84,  # 1 cicero = 12 didot points
-        'sp': 1/65536,  # 1 scaled point
-        'ex': 4.3,  # approximate
-        'em': 10.0,  # approximate (depends on font)
-    }
-    if unit in conversions:
-        return value * conversions[unit]
-    return None
 
 
 def dim_abs_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
@@ -461,43 +447,40 @@ def dim_to_fp_handler(expander: ExpanderCore, _token: Token) -> Optional[List[To
 
 def register_dim_handlers(expander: ExpanderCore) -> None:
     """Register dimension handlers."""
-    # Creation
-    expander.register_handler("\\dim_new:N", dim_new_handler, is_global=True)
+    # Create instance for this expander
+    dim_manager = DimManager()
 
-    # Setting
+    # Creation (instance method)
+    expander.register_handler("\\dim_new:N", dim_manager.dim_new_handler, is_global=True)
+
+    # Setting (instance methods)
     for name in ["\\dim_set:Nn", "\\dim_set:cn", "\\dim_set:Nx"]:
-        expander.register_handler(name, dim_set_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_set_handler, is_global=True)
     for name in ["\\dim_gset:Nn", "\\dim_gset:cn"]:
-        expander.register_handler(name, dim_gset_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_set_handler, is_global=True)
 
-    # Arithmetic
+    # Arithmetic (instance methods)
     for name in ["\\dim_add:Nn", "\\dim_gadd:Nn"]:
-        expander.register_handler(name, dim_add_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_add_handler, is_global=True)
     for name in ["\\dim_sub:Nn", "\\dim_gsub:Nn"]:
-        expander.register_handler(name, dim_sub_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_sub_handler, is_global=True)
 
-    # Zeroing
+    # Zeroing (instance method)
     for name in ["\\dim_zero:N", "\\dim_gzero:N"]:
-        expander.register_handler(name, dim_zero_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_zero_handler, is_global=True)
 
-    # Using
+    # Using (instance method)
     for name in ["\\dim_use:N", "\\dim_use:c"]:
-        expander.register_handler(name, dim_use_handler, is_global=True)
+        expander.register_handler(name, dim_manager.dim_use_handler, is_global=True)
 
-    # Evaluation
+    # Pure functions (no state needed)
     expander.register_handler("\\dim_eval:n", dim_eval_handler, is_global=True)
-
-    # Comparison
     for name in ["\\dim_compare:nTF", "\\dim_compare:nNnTF"]:
         expander.register_handler(name, dim_compare_TF_handler, is_global=True)
     expander.register_handler("\\dim_compare:nT", dim_compare_T_handler, is_global=True)
     expander.register_handler("\\dim_compare:nF", dim_compare_F_handler, is_global=True)
-
-    # Math functions
     expander.register_handler("\\dim_abs:n", dim_abs_handler, is_global=True)
     expander.register_handler("\\dim_sign:n", dim_sign_handler, is_global=True)
     expander.register_handler("\\dim_max:nn", dim_max_handler, is_global=True)
     expander.register_handler("\\dim_min:nn", dim_min_handler, is_global=True)
-
-    # Conversion
     expander.register_handler("\\dim_to_fp:n", dim_to_fp_handler, is_global=True)

@@ -17,135 +17,120 @@ from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.types import Token
 
 
-# Dedicated storage for floating point values: {var_name: float_value}
-# This is necessary because TeX has no native fp register type.
-_fp_store: Dict[str, float] = {}
+class FpManager:
+    """Manages floating point variable storage for expl3 fp commands."""
+
+    def __init__(self):
+        self.store: Dict[str, float] = {}
+
+    def _get_var_name(self, var: Token) -> str:
+        """Get the variable name from a token."""
+        return var.value
+
+    def _get_fp(self, name: str) -> float:
+        """Get fp value from store, defaulting to 0.0."""
+        return self.store.get(name, 0.0)
+
+    def _set_fp(self, name: str, value: float) -> None:
+        """Set fp value in store."""
+        self.store[name] = value
+
+    def fp_new_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_new:N \l_my_fp
+        Create a new fp variable initialized to 0.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        if var:
+            name = self._get_var_name(var)
+            self._set_fp(name, 0.0)
+        return []
+
+    def fp_zero_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_zero:N \l_my_fp
+        Set an fp variable to 0.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        if var:
+            name = self._get_var_name(var)
+            self._set_fp(name, 0.0)
+        return []
+
+    def fp_set_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_set:Nn \l_my_fp {3.14}
+        Set an fp variable to a value (with expression evaluation).
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            result = _safe_eval_fp(value_str)
+            if result is not None:
+                self._set_fp(name, result)
+        return []
+
+    def fp_add_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_add:Nn \l_my_fp {1.5}
+        Add a value to an fp variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            current = self._get_fp(name)
+            add_val = _safe_eval_fp(value_str)
+            if add_val is not None:
+                self._set_fp(name, current + add_val)
+        return []
+
+    def fp_sub_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_sub:Nn \l_my_fp {1.5}
+        Subtract a value from an fp variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+        expander.skip_whitespace()
+        value_tokens = expander.parse_brace_as_tokens() or []
+        value_str = "".join(t.value for t in value_tokens).strip()
+
+        if var:
+            name = self._get_var_name(var)
+            current = self._get_fp(name)
+            sub_val = _safe_eval_fp(value_str)
+            if sub_val is not None:
+                self._set_fp(name, current - sub_val)
+        return []
+
+    def fp_use_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \fp_use:N \l_my_fp
+        Output the value of an fp variable.
+        """
+        expander.skip_whitespace()
+        var = expander.consume()
+
+        if var:
+            name = self._get_var_name(var)
+            value = self._get_fp(name)
+            return expander.convert_str_to_tokens(_format_fp(value))
+        return []
 
 
-def _get_var_name(var: Token) -> str:
-    """Get the variable name from a token."""
-    return var.value
-
-
-def _get_fp(name: str) -> float:
-    """Get fp value from store, defaulting to 0.0."""
-    return _fp_store.get(name, 0.0)
-
-
-def _set_fp(name: str, value: float) -> None:
-    """Set fp value in store."""
-    _fp_store[name] = value
-
-
-def fp_new_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_new:N \l_my_fp
-    Create a new fp variable initialized to 0.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    if var:
-        name = _get_var_name(var)
-        _set_fp(name, 0.0)
-    return []
-
-
-def fp_zero_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_zero:N \l_my_fp
-    Set an fp variable to 0.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    if var:
-        name = _get_var_name(var)
-        _set_fp(name, 0.0)
-    return []
-
-
-def fp_set_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_set:Nn \l_my_fp {3.14}
-    Set an fp variable to a value (with expression evaluation).
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        result = _safe_eval_fp(value_str)
-        if result is not None:
-            _set_fp(name, result)
-    return []
-
-
-def fp_gset_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_gset:Nn \g_my_fp {3.14}
-    Globally set an fp variable to a value.
-    Note: In our implementation, all fp storage is global by nature.
-    """
-    # Same as fp_set since our store is global
-    return fp_set_handler(expander, _token)
-
-
-def fp_add_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_add:Nn \l_my_fp {1.5}
-    Add a value to an fp variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        current = _get_fp(name)
-        add_val = _safe_eval_fp(value_str)
-        if add_val is not None:
-            _set_fp(name, current + add_val)
-    return []
-
-
-def fp_sub_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_sub:Nn \l_my_fp {1.5}
-    Subtract a value from an fp variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    value_tokens = expander.parse_brace_as_tokens() or []
-    value_str = "".join(t.value for t in value_tokens).strip()
-
-    if var:
-        name = _get_var_name(var)
-        current = _get_fp(name)
-        sub_val = _safe_eval_fp(value_str)
-        if sub_val is not None:
-            _set_fp(name, current - sub_val)
-    return []
-
-
-def fp_use_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \fp_use:N \l_my_fp
-    Output the value of an fp variable.
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-
-    if var:
-        name = _get_var_name(var)
-        value = _get_fp(name)
-        return expander.convert_str_to_tokens(_format_fp(value))
-    return []
-
+# Pure functions that don't need instance state
 
 def fp_eval_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
     r"""
@@ -390,42 +375,39 @@ def _format_fp(value: float) -> str:
 
 def register_fp_handlers(expander: ExpanderCore) -> None:
     """Register floating point handlers."""
-    # Creation
+    # Create instance for this expander
+    fp_manager = FpManager()
+
+    # Creation (instance methods)
     for name in ["\\fp_new:N", "\\fp_new:c"]:
-        expander.register_handler(name, fp_new_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_new_handler, is_global=True)
 
-    # Zeroing
+    # Zeroing (instance methods)
     for name in ["\\fp_zero:N", "\\fp_gzero:N"]:
-        expander.register_handler(name, fp_zero_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_zero_handler, is_global=True)
 
-    # Setting
+    # Setting (instance methods)
     for name in ["\\fp_set:Nn", "\\fp_set:cn", "\\fp_set:Nx"]:
-        expander.register_handler(name, fp_set_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_set_handler, is_global=True)
     for name in ["\\fp_gset:Nn", "\\fp_gset:cn"]:
-        expander.register_handler(name, fp_gset_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_set_handler, is_global=True)
 
-    # Arithmetic
+    # Arithmetic (instance methods)
     for name in ["\\fp_add:Nn", "\\fp_gadd:Nn"]:
-        expander.register_handler(name, fp_add_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_add_handler, is_global=True)
     for name in ["\\fp_sub:Nn", "\\fp_gsub:Nn"]:
-        expander.register_handler(name, fp_sub_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_sub_handler, is_global=True)
 
-    # Using
+    # Using (instance method)
     for name in ["\\fp_use:N", "\\fp_use:c"]:
-        expander.register_handler(name, fp_use_handler, is_global=True)
+        expander.register_handler(name, fp_manager.fp_use_handler, is_global=True)
 
-    # Evaluation
+    # Pure functions (no state needed)
     expander.register_handler("\\fp_eval:n", fp_eval_handler, is_global=True)
-
-    # Comparison
     expander.register_handler("\\fp_compare:nTF", fp_compare_TF_handler, is_global=True)
     expander.register_handler("\\fp_compare:nT", fp_compare_T_handler, is_global=True)
     expander.register_handler("\\fp_compare:nF", fp_compare_F_handler, is_global=True)
-
-    # Conversion
     expander.register_handler("\\fp_to_int:n", fp_to_int_handler, is_global=True)
-
-    # Math functions
     expander.register_handler("\\fp_abs:n", fp_abs_handler, is_global=True)
     expander.register_handler("\\fp_sign:n", fp_sign_handler, is_global=True)
     expander.register_handler("\\fp_max:nn", fp_max_handler, is_global=True)

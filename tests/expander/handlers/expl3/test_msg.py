@@ -3,7 +3,6 @@
 import pytest
 from latex2json.expander.expander import Expander
 from latex2json.expander.token_processor import TokenProcessor
-from latex2json.expander.handlers.expl3 import msg as msg_module
 
 
 def to_str(tokens):
@@ -16,8 +15,6 @@ class TestMsgNew:
 
     def setup_method(self):
         self.expander = Expander()
-        # Clear message store between tests
-        msg_module._message_store.clear()
 
     def test_msg_new_defines_message(self):
         """msg_new:nnn should define a message."""
@@ -44,7 +41,6 @@ class TestMsgSet:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_set_updates_message(self):
         """msg_set:nnn should update or create a message."""
@@ -62,7 +58,6 @@ class TestMsgError:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_error_nn_consumed(self):
         """msg_error:nn should be consumed silently."""
@@ -97,7 +92,6 @@ class TestMsgWarning:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_warning_nn_consumed(self):
         """msg_warning:nn should be consumed silently."""
@@ -123,7 +117,6 @@ class TestMsgInfo:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_info_nn_consumed(self):
         """msg_info:nn should be consumed silently."""
@@ -149,7 +142,6 @@ class TestMsgNote:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_note_nn_consumed(self):
         """msg_note:nn should be consumed silently."""
@@ -166,7 +158,6 @@ class TestMsgIfExist:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_if_exist_TF_true(self):
         """msg_if_exist:nnTF on existing message."""
@@ -231,7 +222,6 @@ class TestMsgRedirect:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_msg_redirect_name_consumed(self):
         """msg_redirect_name:nnn should be consumed silently."""
@@ -257,7 +247,6 @@ class TestMsgIntegration:
 
     def setup_method(self):
         self.expander = Expander()
-        msg_module._message_store.clear()
 
     def test_multiple_messages(self):
         """Can define and check multiple messages."""

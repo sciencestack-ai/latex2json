@@ -4,7 +4,7 @@ expl3 message (msg) handlers.
 Handles \msg_new:nnn, \msg_set:nnn, \msg_error:nn, \msg_warning:nn,
 \msg_info:nn, and related functions.
 
-Messages are stored in a module-level dictionary keyed by (module, message_name).
+Messages are stored in an instance dictionary keyed by (module, message_name).
 When a message is issued (error/warning/info), it's consumed silently since
 we're parsing LaTeX, not compiling it.
 """
@@ -12,79 +12,135 @@ we're parsing LaTeX, not compiling it.
 from typing import Dict, List, Optional, Tuple
 
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.types import Token
 
 
-# Global storage for message definitions: {(module, name): template_tokens}
-_message_store: Dict[Tuple[str, str], List[Token]] = {}
+class MsgManager:
+    """Manages message storage for expl3 msg commands."""
+
+    def __init__(self):
+        self.store: Dict[Tuple[str, str], List[Token]] = {}
+
+    def msg_new_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \msg_new:nnn {module} {message-name} {message-text}
+        Define a new message.
+        """
+        expander.skip_whitespace()
+        module_tokens = expander.parse_brace_as_tokens() or []
+        module = "".join(t.value for t in module_tokens).strip()
+
+        expander.skip_whitespace()
+        name_tokens = expander.parse_brace_as_tokens() or []
+        name = "".join(t.value for t in name_tokens).strip()
+
+        expander.skip_whitespace()
+        text_tokens = expander.parse_brace_as_tokens() or []
+
+        if module and name:
+            self.store[(module, name)] = text_tokens
+
+        return []
+
+    def msg_new_nnnn_handler(self, expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+        r"""
+        \msg_new:nnnn {module} {message-name} {message-text} {more-text}
+        Define a new message with extended text.
+        """
+        expander.skip_whitespace()
+        module_tokens = expander.parse_brace_as_tokens() or []
+        module = "".join(t.value for t in module_tokens).strip()
+
+        expander.skip_whitespace()
+        name_tokens = expander.parse_brace_as_tokens() or []
+        name = "".join(t.value for t in name_tokens).strip()
+
+        expander.skip_whitespace()
+        text_tokens = expander.parse_brace_as_tokens() or []
+
+        expander.skip_whitespace()
+        more_text_tokens = expander.parse_brace_as_tokens() or []
+
+        if module and name:
+            # Combine both text parts
+            self.store[(module, name)] = text_tokens + more_text_tokens
+
+        return []
+
+    def msg_if_exist_TF_handler(
+        self, expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        r"""
+        \msg_if_exist:nnTF {module} {message-name} {true} {false}
+        Check if a message exists.
+        """
+        expander.skip_whitespace()
+        module_tokens = expander.parse_brace_as_tokens() or []
+        module = "".join(t.value for t in module_tokens).strip()
+
+        expander.skip_whitespace()
+        name_tokens = expander.parse_brace_as_tokens() or []
+        name = "".join(t.value for t in name_tokens).strip()
+
+        expander.skip_whitespace()
+        true_branch = expander.parse_brace_as_tokens() or []
+
+        expander.skip_whitespace()
+        false_branch = expander.parse_brace_as_tokens() or []
+
+        if (module, name) in self.store:
+            expander.push_tokens(true_branch)
+        else:
+            expander.push_tokens(false_branch)
+
+        return []
+
+    def msg_if_exist_T_handler(
+        self, expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        r"""
+        \msg_if_exist:nnT {module} {message-name} {true}
+        """
+        expander.skip_whitespace()
+        module_tokens = expander.parse_brace_as_tokens() or []
+        module = "".join(t.value for t in module_tokens).strip()
+
+        expander.skip_whitespace()
+        name_tokens = expander.parse_brace_as_tokens() or []
+        name = "".join(t.value for t in name_tokens).strip()
+
+        expander.skip_whitespace()
+        true_branch = expander.parse_brace_as_tokens() or []
+
+        if (module, name) in self.store:
+            expander.push_tokens(true_branch)
+
+        return []
+
+    def msg_if_exist_F_handler(
+        self, expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        r"""
+        \msg_if_exist:nnF {module} {message-name} {false}
+        """
+        expander.skip_whitespace()
+        module_tokens = expander.parse_brace_as_tokens() or []
+        module = "".join(t.value for t in module_tokens).strip()
+
+        expander.skip_whitespace()
+        name_tokens = expander.parse_brace_as_tokens() or []
+        name = "".join(t.value for t in name_tokens).strip()
+
+        expander.skip_whitespace()
+        false_branch = expander.parse_brace_as_tokens() or []
+
+        if (module, name) not in self.store:
+            expander.push_tokens(false_branch)
+
+        return []
 
 
-def _make_brace_tokens(tokens: List[Token]) -> List[Token]:
-    """Wrap tokens in braces."""
-    return [
-        Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
-        *tokens,
-        Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP),
-    ]
-
-
-def msg_new_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \msg_new:nnn {module} {message-name} {message-text}
-    Define a new message.
-    """
-    expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
-    module = "".join(t.value for t in module_tokens).strip()
-
-    expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
-    name = "".join(t.value for t in name_tokens).strip()
-
-    expander.skip_whitespace()
-    text_tokens = expander.parse_brace_as_tokens() or []
-
-    if module and name:
-        _message_store[(module, name)] = text_tokens
-
-    return []
-
-
-def msg_set_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \msg_set:nnn {module} {message-name} {message-text}
-    Update an existing message (or create if doesn't exist).
-    """
-    # Same behavior as msg_new for our purposes
-    return msg_new_handler(expander, _token)
-
-
-def msg_new_nnnn_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
-    r"""
-    \msg_new:nnnn {module} {message-name} {message-text} {more-text}
-    Define a new message with extended text.
-    """
-    expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
-    module = "".join(t.value for t in module_tokens).strip()
-
-    expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
-    name = "".join(t.value for t in name_tokens).strip()
-
-    expander.skip_whitespace()
-    text_tokens = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    more_text_tokens = expander.parse_brace_as_tokens() or []
-
-    if module and name:
-        # Combine both text parts
-        _message_store[(module, name)] = text_tokens + more_text_tokens
-
-    return []
-
+# Pure functions that don't need instance state (just consume tokens silently)
 
 def _issue_message(
     expander: ExpanderCore, num_args: int = 0
@@ -95,10 +151,10 @@ def _issue_message(
     For our purposes, we just consume the tokens silently.
     """
     expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
+    expander.parse_brace_as_tokens()  # module
 
     expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
+    expander.parse_brace_as_tokens()  # name
 
     # Consume any additional arguments
     for _ in range(num_args):
@@ -224,81 +280,6 @@ def msg_none_nn_handler(
     return _issue_message(expander, 0)
 
 
-def msg_if_exist_TF_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \msg_if_exist:nnTF {module} {message-name} {true} {false}
-    Check if a message exists.
-    """
-    expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
-    module = "".join(t.value for t in module_tokens).strip()
-
-    expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
-    name = "".join(t.value for t in name_tokens).strip()
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if (module, name) in _message_store:
-        expander.push_tokens(true_branch)
-    else:
-        expander.push_tokens(false_branch)
-
-    return []
-
-
-def msg_if_exist_T_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \msg_if_exist:nnT {module} {message-name} {true}
-    """
-    expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
-    module = "".join(t.value for t in module_tokens).strip()
-
-    expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
-    name = "".join(t.value for t in name_tokens).strip()
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    if (module, name) in _message_store:
-        expander.push_tokens(true_branch)
-
-    return []
-
-
-def msg_if_exist_F_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \msg_if_exist:nnF {module} {message-name} {false}
-    """
-    expander.skip_whitespace()
-    module_tokens = expander.parse_brace_as_tokens() or []
-    module = "".join(t.value for t in module_tokens).strip()
-
-    expander.skip_whitespace()
-    name_tokens = expander.parse_brace_as_tokens() or []
-    name = "".join(t.value for t in name_tokens).strip()
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if (module, name) not in _message_store:
-        expander.push_tokens(false_branch)
-
-    return []
-
-
 def msg_redirect_name_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -331,12 +312,21 @@ def msg_redirect_class_handler(
 
 def register_msg_handlers(expander: ExpanderCore) -> None:
     """Register message handlers."""
-    # Creating messages
-    for name in ["\\msg_new:nnn", "\\msg_gset:nnn"]:
-        expander.register_handler(name, msg_new_handler, is_global=True)
-    expander.register_handler("\\msg_set:nnn", msg_set_handler, is_global=True)
-    expander.register_handler("\\msg_new:nnnn", msg_new_nnnn_handler, is_global=True)
+    # Create instance for this expander
+    msg_manager = MsgManager()
 
+    # Creating messages (instance methods)
+    for name in ["\\msg_new:nnn", "\\msg_gset:nnn"]:
+        expander.register_handler(name, msg_manager.msg_new_handler, is_global=True)
+    expander.register_handler("\\msg_set:nnn", msg_manager.msg_new_handler, is_global=True)
+    expander.register_handler("\\msg_new:nnnn", msg_manager.msg_new_nnnn_handler, is_global=True)
+
+    # Conditionals (instance methods)
+    expander.register_handler("\\msg_if_exist:nnTF", msg_manager.msg_if_exist_TF_handler, is_global=True)
+    expander.register_handler("\\msg_if_exist:nnT", msg_manager.msg_if_exist_T_handler, is_global=True)
+    expander.register_handler("\\msg_if_exist:nnF", msg_manager.msg_if_exist_F_handler, is_global=True)
+
+    # Pure functions (no state needed - just consume tokens silently)
     # Error messages
     expander.register_handler("\\msg_error:nn", msg_error_nn_handler, is_global=True)
     expander.register_handler("\\msg_error:nnn", msg_error_nnn_handler, is_global=True)
@@ -364,11 +354,6 @@ def register_msg_handlers(expander: ExpanderCore) -> None:
 
     # None (silent) messages
     expander.register_handler("\\msg_none:nn", msg_none_nn_handler, is_global=True)
-
-    # Conditionals
-    expander.register_handler("\\msg_if_exist:nnTF", msg_if_exist_TF_handler, is_global=True)
-    expander.register_handler("\\msg_if_exist:nnT", msg_if_exist_T_handler, is_global=True)
-    expander.register_handler("\\msg_if_exist:nnF", msg_if_exist_F_handler, is_global=True)
 
     # Redirects
     expander.register_handler("\\msg_redirect_name:nnn", msg_redirect_name_handler, is_global=True)
