@@ -564,6 +564,52 @@ def seq_item_handler(
     return []
 
 
+def seq_pop_right_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_pop_right:NN \l_my_seq \l_item_tl
+    Pops the rightmost item and stores it.
+    """
+    expander.skip_whitespace()
+    seq_var = expander.consume()
+    expander.skip_whitespace()
+    item_var = expander.consume()
+
+    if seq_var and item_var:
+        macro = expander.get_macro(seq_var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        result_tokens = []
+        if items:
+            # Set the item variable to the last item
+            result_tokens.extend(
+                [Token(TokenType.CONTROL_SEQUENCE, "def"), item_var]
+                + _make_brace_tokens(items[-1])
+            )
+            # Rebuild sequence without last item
+            new_seq_tokens = []
+            for item in items[:-1]:
+                new_seq_tokens.extend(_make_brace_tokens(item))
+            result_tokens.extend(
+                [Token(TokenType.CONTROL_SEQUENCE, "def"), seq_var]
+                + _make_brace_tokens(new_seq_tokens)
+            )
+        else:
+            # Set item to empty
+            result_tokens.extend(
+                [
+                    Token(TokenType.CONTROL_SEQUENCE, "def"),
+                    item_var,
+                    Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+                    Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP),
+                ]
+            )
+        expander.push_tokens(result_tokens)
+    return []
+
+
 def seq_get_right_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -777,6 +823,54 @@ def _strip_whitespace_tokens(tokens: List[Token]) -> List[Token]:
     return tokens[start:end]
 
 
+def seq_set_split_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_set_split:Nnn \l_my_seq {separator} {text}
+    \seq_set_split:NnV \l_my_seq {separator} \l_my_tl
+    Splits text by separator and creates a sequence from the parts.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    sep_tokens = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+    # Third argument could be braced text or a variable (for V variant)
+    text_tokens = expander.parse_brace_as_tokens()
+    if text_tokens is None:
+        # V variant - consume the variable and get its value
+        text_var = expander.consume()
+        if text_var:
+            macro = expander.get_macro(text_var)
+            text_tokens = macro.definition if macro and macro.definition else []
+        else:
+            text_tokens = []
+
+    if var:
+        sep_str = "".join(t.value for t in sep_tokens)
+        text_str = "".join(t.value for t in text_tokens)
+
+        # Split the text by separator
+        if sep_str:
+            parts = text_str.split(sep_str)
+        else:
+            # Empty separator: split into individual characters
+            parts = list(text_str) if text_str else []
+
+        # Build sequence format: {part1}{part2}...
+        new_def = []
+        for part in parts:
+            part_tokens = expander.convert_str_to_tokens(part)
+            new_def.extend(_make_brace_tokens(part_tokens))
+
+        expander.push_tokens(
+            [Token(TokenType.CONTROL_SEQUENCE, "def"), var]
+            + _make_brace_tokens(new_def)
+        )
+    return []
+
+
 def register_seq_handlers(expander: ExpanderCore) -> None:
     """Register sequence handlers."""
     # Creation and clearing
@@ -842,3 +936,10 @@ def register_seq_handlers(expander: ExpanderCore) -> None:
     # From clist
     for name in ["\\seq_set_from_clist:Nn", "\\seq_set_from_clist:Nx"]:
         expander.register_handler(name, seq_set_from_clist_handler, is_global=True)
+
+    # Pop right
+    expander.register_handler("\\seq_pop_right:NN", seq_pop_right_handler, is_global=True)
+
+    # Set split
+    for name in ["\\seq_set_split:Nnn", "\\seq_set_split:NnV"]:
+        expander.register_handler(name, seq_set_split_handler, is_global=True)
