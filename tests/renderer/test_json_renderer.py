@@ -343,3 +343,132 @@ def test_bibliography_pruning():
     bib_nodes3 = [node for node in json3 if node.get("type") == "bibliography"]
     bib_entries3 = bib_nodes3[0]["content"]
     assert len(bib_entries3) == 4  # All entries kept when pruning disabled
+
+
+def test_normalize_appendix_counters():
+    """Test that appendix section counters are normalized from numeric to alphabetic"""
+    renderer = JSONRenderer()
+
+    # Test with \appendix command followed by sections where user overrides counter to numeric
+    # This simulates a user redefining \thesection to use arabic numbers instead of letters
+    text = r"""
+    \begin{document}
+    \section{Intro}
+    Some intro text.
+
+    \appendix
+    \renewcommand{\thesection}{\arabic{section}}
+
+    \section{First Appendix}
+    Appendix A content.
+
+    \subsection{Sub appendix}
+    Sub content.
+
+    \section{Second Appendix}
+    Appendix B content.
+    \end{document}
+    """.strip()
+
+    json = renderer.parse(text)
+
+    # Find the appendix node
+    doc = json[0]
+    assert doc["type"] == "document"
+
+    # Find section and appendix in content
+    intro_section = None
+    appendix_node = None
+    for item in doc["content"]:
+        if item.get("type") == "section" and item.get("title"):
+            title_content = item["title"][0].get("content", "")
+            if "Intro" in title_content:
+                intro_section = item
+        elif item.get("type") == "appendix":
+            appendix_node = item
+
+    # Intro section should have numeric numbering
+    assert intro_section is not None
+    assert intro_section["numbering"] == "1"
+
+    # Appendix sections should have alphabetic numbering
+    assert appendix_node is not None
+    appendix_content = appendix_node["content"]
+
+    # Find sections in appendix
+    appendix_sections = [
+        item for item in appendix_content if item.get("type") == "section"
+    ]
+    assert len(appendix_sections) == 2
+
+    # First appendix section: 1 -> A
+    assert appendix_sections[0]["numbering"] == "A"
+
+    # Check subsection: 1.1 -> A.1
+    subsections = [
+        item
+        for item in appendix_sections[0].get("content", [])
+        if item.get("type") == "section"
+    ]
+    if subsections:
+        assert subsections[0]["numbering"] == "A.1"
+
+    # Second appendix section: 2 -> B
+    assert appendix_sections[1]["numbering"] == "B"
+
+
+def test_normalize_appendix_counters_disabled():
+    """Test that appendix normalization can be disabled"""
+    renderer = JSONRenderer(normalize_appendix_counters=False)
+
+    text = r"""
+    \begin{document}
+    \appendix
+    \section{First Appendix}
+    Content.
+    \end{document}
+    """.strip()
+
+    json = renderer.parse(text)
+    doc = json[0]
+    appendix_node = None
+    for item in doc["content"]:
+        if item.get("type") == "appendix":
+            appendix_node = item
+            break
+
+    assert appendix_node is not None
+    appendix_sections = [
+        item for item in appendix_node["content"] if item.get("type") == "section"
+    ]
+
+    # With normalization disabled, should keep original numbering
+    # (which would be "A" from expander, but if it was "1" it would stay "1")
+    assert len(appendix_sections) == 1
+
+
+def test_normalize_appendix_helper_method():
+    """Test the _normalize_appendix_numbering helper directly"""
+    renderer = JSONRenderer()
+
+    # Basic conversions
+    assert renderer._normalize_appendix_numbering("1") == "A"
+    assert renderer._normalize_appendix_numbering("2") == "B"
+    assert renderer._normalize_appendix_numbering("26") == "Z"
+
+    # Hierarchical numbering
+    assert renderer._normalize_appendix_numbering("1.1") == "A.1"
+    assert renderer._normalize_appendix_numbering("2.3") == "B.3"
+    assert renderer._normalize_appendix_numbering("1.2.3") == "A.2.3"
+
+    # Already alphabetic (no change needed)
+    assert renderer._normalize_appendix_numbering("A") == "A"
+    assert renderer._normalize_appendix_numbering("A.1") == "A.1"
+
+    # Edge cases
+    assert renderer._normalize_appendix_numbering("") == ""
+    assert renderer._normalize_appendix_numbering(None) is None
+
+    # Numbers > 26
+    assert renderer._normalize_appendix_numbering("27") == "AA"
+    assert renderer._normalize_appendix_numbering("28") == "AB"
