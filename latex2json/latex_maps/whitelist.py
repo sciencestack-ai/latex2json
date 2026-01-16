@@ -93,6 +93,7 @@ WHITELISTED_PACKAGES = [
     "algorithmic",
     "IEEEtran",
     "amstex",
+    "sn-jnl",
 ]
 WHITELISTED_CLASSES = WHITELISTED_PACKAGES.copy()
 WHITELISTED_TEX = ["amstex", "amstex.tex"]
