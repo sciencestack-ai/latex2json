@@ -72,6 +72,50 @@ def bool_set_false_handler(
     return []
 
 
+def bool_gset_true_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_gset_true:N \g_my_bool  ->  \global\def\g_my_bool{1}
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    if var:
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+                Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+                Token(TokenType.CHARACTER, "1", catcode=Catcode.OTHER),
+                Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP),
+            ]
+        )
+    return []
+
+
+def bool_gset_false_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_gset_false:N \g_my_bool  ->  \global\def\g_my_bool{0}
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    if var:
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+                Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+                Token(TokenType.CHARACTER, "0", catcode=Catcode.OTHER),
+                Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP),
+            ]
+        )
+    return []
+
+
 def bool_if_TF_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -110,6 +154,12 @@ def register_bool_handlers(expander: ExpanderCore) -> None:
     )
     expander.register_handler(
         "\\bool_set_false:N", bool_set_false_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_gset_true:N", bool_gset_true_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_gset_false:N", bool_gset_false_handler, is_global=True
     )
     for name in ["\\bool_if:NTF", "\\bool_if:nTF"]:
         expander.register_handler(name, bool_if_TF_handler, is_global=True)

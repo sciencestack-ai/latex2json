@@ -1,4 +1,4 @@
-"""
+r"""
 expl3 property list (prop) handlers.
 
 Handles \prop_new:N, \prop_put:Nnn, \prop_get:NnN, \prop_if_in:NnTF,
@@ -223,6 +223,45 @@ def prop_get_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Tok
         prop_tokens = macro.definition if macro and macro.definition else []
         items = _parse_prop_items(prop_tokens)
 
+        key_str = _tokens_to_str(key)
+
+        # Find value for key
+        found_value = []
+        for k, v in items:
+            if _tokens_to_str(k) == key_str:
+                found_value = v
+                break
+
+        # Set result variable
+        expander.push_tokens(
+            [Token(TokenType.CONTROL_SEQUENCE, "def"), result_var]
+            + _make_brace_tokens(found_value)
+        )
+    return []
+
+
+def prop_get_NVN_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \prop_get:NVN \l_my_prop \l_key_var \l_value_tl
+    Gets value for key (from variable) and stores in token list variable.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    key_var = expander.consume()
+    expander.skip_whitespace()
+    result_var = expander.consume()
+
+    if var and key_var and result_var:
+        macro = expander.get_macro(var)
+        prop_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_prop_items(prop_tokens)
+
+        # Get the key from the variable
+        key_macro = expander.get_macro(key_var)
+        key = key_macro.definition if key_macro and key_macro.definition else []
         key_str = _tokens_to_str(key)
 
         # Find value for key
@@ -615,6 +654,7 @@ def register_prop_handlers(expander: ExpanderCore) -> None:
     # Getting values
     for name in ["\\prop_get:NnN", "\\prop_get:NnNTF"]:
         expander.register_handler(name, prop_get_handler, is_global=True)
+    expander.register_handler("\\prop_get:NVN", prop_get_NVN_handler, is_global=True)
     for name in ["\\prop_item:Nn", "\\prop_item:cn"]:
         expander.register_handler(name, prop_item_handler, is_global=True)
 

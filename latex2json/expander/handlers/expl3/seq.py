@@ -367,6 +367,91 @@ def seq_if_empty_F_handler(
     return []
 
 
+def seq_if_in_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_if_in:NnTF \l_my_seq {item} {true} {false}
+    Tests if item is in the sequence.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    item_tokens = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if var:
+        macro = expander.get_macro(var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        item_str = "".join(t.value for t in item_tokens)
+        found = any("".join(t.value for t in it) == item_str for it in items)
+
+        if found:
+            expander.push_tokens(true_branch)
+        else:
+            expander.push_tokens(false_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def seq_if_in_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_if_in:NnT \l_my_seq {item} {true}
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    item_tokens = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    if var:
+        macro = expander.get_macro(var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        item_str = "".join(t.value for t in item_tokens)
+        found = any("".join(t.value for t in it) == item_str for it in items)
+
+        if found:
+            expander.push_tokens(true_branch)
+    return []
+
+
+def seq_if_in_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_if_in:NnF \l_my_seq {item} {false}
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    item_tokens = expander.parse_brace_as_tokens() or []
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if var:
+        macro = expander.get_macro(var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        item_str = "".join(t.value for t in item_tokens)
+        found = any("".join(t.value for t in it) == item_str for it in items)
+
+        if not found:
+            expander.push_tokens(false_branch)
+    return []
+
+
 def seq_get_left_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -479,6 +564,144 @@ def seq_item_handler(
     return []
 
 
+def seq_get_right_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_get_right:NN \l_my_seq \l_item_tl
+    Gets the rightmost item without removing it.
+    """
+    expander.skip_whitespace()
+    seq_var = expander.consume()
+    expander.skip_whitespace()
+    item_var = expander.consume()
+
+    if seq_var and item_var:
+        macro = expander.get_macro(seq_var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        if items:
+            # Set the item variable to the last item
+            expander.push_tokens(
+                [Token(TokenType.CONTROL_SEQUENCE, "def"), item_var]
+                + _make_brace_tokens(items[-1])
+            )
+        else:
+            # Set to empty
+            expander.push_tokens(
+                [
+                    Token(TokenType.CONTROL_SEQUENCE, "def"),
+                    item_var,
+                    Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+                    Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP),
+                ]
+            )
+    return []
+
+
+def seq_gput_left_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_gput_left:Nn \l_my_seq {item}  ->  globally prepend {item} to sequence
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    item = expander.parse_brace_as_tokens() or []
+
+    if var:
+        macro = expander.get_macro(var)
+        existing = macro.definition if macro and macro.definition else []
+        # Prepend new item wrapped in braces
+        new_def = _make_brace_tokens(item) + existing
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+            ]
+            + _make_brace_tokens(new_def)
+        )
+    return []
+
+
+def seq_gremove_duplicates_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_gremove_duplicates:N \g_my_seq
+    Globally removes duplicate items from sequence, keeping first occurrence.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+
+    if var:
+        macro = expander.get_macro(var)
+        seq_tokens = macro.definition if macro and macro.definition else []
+        items = _parse_seq_items(seq_tokens)
+
+        # Remove duplicates while preserving order
+        seen = []
+        unique_items = []
+        for item in items:
+            item_str = "".join(t.value for t in item)
+            if item_str not in seen:
+                seen.append(item_str)
+                unique_items.append(item)
+
+        # Rebuild sequence
+        new_def = []
+        for item in unique_items:
+            new_def.extend(_make_brace_tokens(item))
+
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+            ]
+            + _make_brace_tokens(new_def)
+        )
+    return []
+
+
+def seq_gconcat_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_gconcat:NNN \g_result_seq \l_seq_a \l_seq_b
+    Globally concatenates two sequences into the first.
+    """
+    expander.skip_whitespace()
+    result_var = expander.consume()
+    expander.skip_whitespace()
+    seq_a_var = expander.consume()
+    expander.skip_whitespace()
+    seq_b_var = expander.consume()
+
+    if result_var and seq_a_var and seq_b_var:
+        macro_a = expander.get_macro(seq_a_var)
+        tokens_a = macro_a.definition if macro_a and macro_a.definition else []
+
+        macro_b = expander.get_macro(seq_b_var)
+        tokens_b = macro_b.definition if macro_b and macro_b.definition else []
+
+        # Concatenate the sequences
+        new_def = tokens_a + tokens_b
+
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                result_var,
+            ]
+            + _make_brace_tokens(new_def)
+        )
+    return []
+
+
 def seq_set_from_clist_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -587,16 +810,34 @@ def register_seq_handlers(expander: ExpanderCore) -> None:
     for name in ["\\seq_count:N", "\\seq_count:c"]:
         expander.register_handler(name, seq_count_handler, is_global=True)
 
-    # Conditionals
+    # Conditionals - empty
     expander.register_handler("\\seq_if_empty:NTF", seq_if_empty_TF_handler, is_global=True)
     expander.register_handler("\\seq_if_empty:NT", seq_if_empty_T_handler, is_global=True)
     expander.register_handler("\\seq_if_empty:NF", seq_if_empty_F_handler, is_global=True)
 
+    # Conditionals - in (membership test)
+    expander.register_handler("\\seq_if_in:NnTF", seq_if_in_TF_handler, is_global=True)
+    expander.register_handler("\\seq_if_in:NnT", seq_if_in_T_handler, is_global=True)
+    expander.register_handler("\\seq_if_in:NnF", seq_if_in_F_handler, is_global=True)
+
     # Getting items
     expander.register_handler("\\seq_get_left:NN", seq_get_left_handler, is_global=True)
+    expander.register_handler("\\seq_get_right:NN", seq_get_right_handler, is_global=True)
     expander.register_handler("\\seq_pop_left:NN", seq_pop_left_handler, is_global=True)
     for name in ["\\seq_item:Nn", "\\seq_item:cn"]:
         expander.register_handler(name, seq_item_handler, is_global=True)
+
+    # Global put left
+    for name in ["\\seq_gput_left:Nn", "\\seq_gput_left:NV", "\\seq_gput_left:Nx"]:
+        expander.register_handler(name, seq_gput_left_handler, is_global=True)
+
+    # Remove duplicates
+    expander.register_handler(
+        "\\seq_gremove_duplicates:N", seq_gremove_duplicates_handler, is_global=True
+    )
+
+    # Concatenation
+    expander.register_handler("\\seq_gconcat:NNN", seq_gconcat_handler, is_global=True)
 
     # From clist
     for name in ["\\seq_set_from_clist:Nn", "\\seq_set_from_clist:Nx"]:

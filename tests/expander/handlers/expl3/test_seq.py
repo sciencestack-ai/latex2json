@@ -308,6 +308,81 @@ X\seq_if_empty:NF \l_my_seq {NOTEMPTY}Y
         assert to_str(result) == "XNOTEMPTYY"
 
 
+class TestSeqIfIn:
+    """Test seq_if_in:NnTF and variants."""
+
+    def setup_method(self):
+        self.expander = Expander()
+
+    def test_seq_if_in_found(self):
+        """seq_if_in:NnTF should take true branch when item exists."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+\seq_put_right:Nn \l_my_seq {banana}
+\seq_if_in:NnTF \l_my_seq {apple} {FOUND} {NOT_FOUND}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "FOUND"
+
+    def test_seq_if_in_not_found(self):
+        """seq_if_in:NnTF should take false branch when item not in seq."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+\seq_put_right:Nn \l_my_seq {banana}
+\seq_if_in:NnTF \l_my_seq {orange} {FOUND} {NOT_FOUND}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "NOT_FOUND"
+
+    def test_seq_if_in_T_variant(self):
+        """seq_if_in:NnT only executes when item found."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+X\seq_if_in:NnT \l_my_seq {apple} {FOUND}Y
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "XFOUNDY"
+
+    def test_seq_if_in_T_not_found(self):
+        """seq_if_in:NnT does nothing when item not found."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+X\seq_if_in:NnT \l_my_seq {orange} {FOUND}Y
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "XY"
+
+    def test_seq_if_in_F_variant(self):
+        """seq_if_in:NnF only executes when item not found."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+X\seq_if_in:NnF \l_my_seq {orange} {NOT_IN}Y
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "XNOT_INY"
+
+    def test_seq_if_in_F_found(self):
+        """seq_if_in:NnF does nothing when item found."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\seq_new:N \l_my_seq
+\seq_put_right:Nn \l_my_seq {apple}
+X\seq_if_in:NnF \l_my_seq {apple} {NOT_IN}Y
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "XY"
+
+
 class TestSeqGetPop:
     """Test seq_get_left:NN and seq_pop_left:NN."""
 

@@ -249,7 +249,6 @@ if __name__ == "__main__":
         # "/Users/cj/Downloads/new.tex",
         # "papers/tested/arXiv-1703.06870v3"
         # "papers/tested/arXiv-1509.05363v6"
-        # "/Users/cj/Downloads/Full-Euler-Nordstroem"
         # "papers/new/arXiv-2410.23255v2"
         # "papers/new/arXiv-2509.20328v1"
         # "papers/faulty/math_0501127v1"
@@ -257,8 +256,32 @@ if __name__ == "__main__":
         # "papers/faulty/math_0504455v1"
         # "/Users/cj/Documents/python/latex_pipeline/tests/test_data"
         # "/Users/cj/Documents/python/latex2json/tests/samples/diagram_sourcefiles"
-        # "papers/new/arXiv-1506.01497v3"
-        "papers/tested/arXiv-2010.11929v2"
+        # "papers/tested/arXiv-1509.05363v6"
+        # "papers/tested/arXiv-2010.11929v2"
+        # "papers/tested/arXiv-2103.13713v1"
+        # "papers/new/arXiv-2401.10020v3"
+        # "papers/new/arXiv-2408.15154v1"
+        # "papers/new/arXiv-2510.26692v2"
+        # "/Users/cj/Downloads/WTF_1106.1813v1.SMOTE__Synthetic_Minority_Over_sampling_Technique.tar.gz"
+        # "/Users/cj/Downloads/einstein-euler-local"
+        # "papers/new/arXiv-2511.11092v1"
+        # "papers/new/arXiv-2511.07416v1"
+        # "/Users/cj/Downloads/arXiv-2105.10386v1"
+        # "/Users/cj/Documents/science_ai/test_tex/project_test/test_paper.tex"
+        # "/Users/cj/Downloads/arXiv-1612.09375v2"
+        # "/Users/cj/Downloads/arXiv-2512.01948v1"
+        # "/Users/cj/Downloads/arXiv-2511.17959v1"
+        # TODO
+        "/Users/cj/Downloads/arXiv-2510.17581v1"
+        # "/Users/cj/Downloads/arXiv-2512.23707v1"
+        # "/Users/cj/Downloads/arXiv-2407.06968v6"
+        # "/Users/cj/Downloads/arXiv-2506.21373v2"
+        # "/Users/cj/Downloads/arXiv-2512.16649v1"
+        # "/Users/cj/Downloads/arXiv-1706.07269v3"
+        # "/Users/cj/Downloads/arXiv-2503.20783v2",
+        # "/Users/cj/Downloads/arXiv-2209.03003v1",
+        # "/Users/cj/Downloads/arXiv-2301.04104v2",
+        # "/Users/cj/Downloads/arXiv-2512.03130v1",
     ]
     cleanup = True
 
@@ -278,7 +301,7 @@ if __name__ == "__main__":
             json_output = tex_reader.to_json(output)
             # tex_reader.save_to_json(output, save_path)
             with open(save_path, "w") as f:
-                json.dump(json.loads(json_output), f, indent=2)
+                json.dump(json.loads(json_output), f, indent=2, ensure_ascii=False)
             print("SAVED TO", save_path)
         finally:
             if cleanup:

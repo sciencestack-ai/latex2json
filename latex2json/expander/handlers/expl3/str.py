@@ -1,14 +1,73 @@
-"""
+r"""
 expl3 string (str) handlers.
 
-Handles \str_if_eq:nnTF, \str_case:nnF, etc.
+Handles \str_if_eq:nnTF, \str_case:nnF, \str_set:Nn, etc.
 """
 
 from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, TokenType
+
+
+# =============================================================================
+# \str_set:... - String variable assignment
+# =============================================================================
+
+
+def str_set_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_set:Nn \l_my_str {content}  ->  \def\l_my_str{content}
+    Sets a string variable to the given content.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    content = expander.parse_brace_as_tokens() or []
+
+    if var:
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+                Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+            ]
+            + content
+            + [Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP)]
+        )
+    return []
+
+
+def str_set_V_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_set:NV \l_my_str \l_other_var
+    Sets a string variable to the value of another variable.
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+    expander.skip_whitespace()
+    source_var = expander.consume()
+
+    if var and source_var:
+        # Get the value of the source variable
+        macro = expander.get_macro(source_var)
+        content = macro.definition if macro and macro.definition else []
+
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+                Token(TokenType.CHARACTER, "{", catcode=Catcode.BEGIN_GROUP),
+            ]
+            + list(content)
+            + [Token(TokenType.CHARACTER, "}", catcode=Catcode.END_GROUP)]
+        )
+    return []
 
 
 # =============================================================================
@@ -88,6 +147,96 @@ def str_if_eq_F_handler(
 
 
 # =============================================================================
+# \str_if_in:... - String containment conditionals
+# =============================================================================
+
+
+def str_if_in_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_if_in:nnTF {haystack} {needle} {true} {false}
+    Tests if needle is contained in haystack.
+    """
+    expander.skip_whitespace()
+    haystack_tokens = expander.parse_brace_as_tokens() or []
+    haystack = "".join(t.value for t in haystack_tokens)
+
+    expander.skip_whitespace()
+    needle_tokens = expander.parse_brace_as_tokens() or []
+    needle = "".join(t.value for t in needle_tokens)
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if needle in haystack:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def str_if_in_nVTF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_if_in:nVTF {haystack} \l_needle_var {true} {false}
+    Tests if needle (from variable) is contained in haystack.
+    """
+    expander.skip_whitespace()
+    haystack_tokens = expander.parse_brace_as_tokens() or []
+    haystack = "".join(t.value for t in haystack_tokens)
+
+    expander.skip_whitespace()
+    needle_var = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    needle = ""
+    if needle_var:
+        macro = expander.get_macro(needle_var)
+        if macro and macro.definition:
+            needle = "".join(t.value for t in macro.definition)
+
+    if needle in haystack:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+# =============================================================================
+# \str_head:... - String head extraction
+# =============================================================================
+
+
+def str_head_ignore_spaces_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \str_head_ignore_spaces:n {string}
+    Returns the first non-space character of the string.
+    """
+    expander.skip_whitespace()
+    str_tokens = expander.parse_brace_as_tokens() or []
+    string = "".join(t.value for t in str_tokens)
+
+    # Find first non-space character
+    for char in string:
+        if not char.isspace():
+            return expander.convert_str_to_tokens(char)
+
+    return []
+
+
+# =============================================================================
 # \str_case:... - String pattern matching
 # =============================================================================
 
@@ -138,6 +287,11 @@ def str_case_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Tok
 
 def register_str_handlers(expander: ExpanderCore) -> None:
     """Register string handlers."""
+    # String variable assignment
+    for name in ["\\str_set:Nn", "\\str_set:Nx"]:
+        expander.register_handler(name, str_set_handler, is_global=True)
+    expander.register_handler("\\str_set:NV", str_set_V_handler, is_global=True)
+
     # Equality conditionals
     for name in ["\\str_if_eq:nnTF", "\\str_if_eq:VnTF", "\\str_if_eq:eeTF"]:
         expander.register_handler(name, str_if_eq_TF_handler, is_global=True)
@@ -145,6 +299,15 @@ def register_str_handlers(expander: ExpanderCore) -> None:
         expander.register_handler(name, str_if_eq_T_handler, is_global=True)
     for name in ["\\str_if_eq:nnF", "\\str_if_eq:VnF", "\\str_if_eq:eeF"]:
         expander.register_handler(name, str_if_eq_F_handler, is_global=True)
+
+    # Containment conditionals
+    expander.register_handler("\\str_if_in:nnTF", str_if_in_TF_handler, is_global=True)
+    expander.register_handler("\\str_if_in:nVTF", str_if_in_nVTF_handler, is_global=True)
+
+    # Head extraction
+    expander.register_handler(
+        "\\str_head_ignore_spaces:n", str_head_ignore_spaces_handler, is_global=True
+    )
 
     # Case matching
     for name in ["\\str_case:nnF", "\\str_case:onF", "\\str_case:VnF"]:
