@@ -840,6 +840,57 @@ X\l_my_tl Y
 """)
         assert to_str(result) == "bcd"
 
+    def test_tl_range_first_char(self):
+        """tl_range:nnn should extract first character."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\tl_range:nnn {Dflg} {1} {1}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "D"
+
+    def test_tl_range_from_second_to_end(self):
+        """tl_range:nnn should extract from position to end with -1."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\tl_range:nnn {Dflg} {2} {-1}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "flg"
+
+    def test_tl_range_middle(self):
+        """tl_range:nnn should extract middle portion."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\tl_range:nnn {abcde} {2} {4}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "bcd"
+
+    def test_tl_range_negative_indices(self):
+        """tl_range:nnn should handle negative indices."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\tl_range:nnn {abcde} {-2} {-1}
+\ExplSyntaxOff
+""")
+        assert to_str(result) == "de"
+
+    def test_tl_range_in_macro(self):
+        """tl_range:nnn should work inside macro definitions."""
+        result = self.expander.expand(r"""
+\ExplSyntaxOn
+\newcommand{\cat}[1]{
+  \mathcal{\tl_range:nnn {#1} {1} {1}}~
+  \text{\tl_range:nnn {#1} {2} {-1}}
+}
+\ExplSyntaxOff
+\cat{Dflg}
+""")
+        out = to_str(result)
+        assert "\\mathcal{D}" in out
+        assert "\\text{flg}" in out
+
 
 class TestPrgFunctions:
     """Test programming utility functions."""

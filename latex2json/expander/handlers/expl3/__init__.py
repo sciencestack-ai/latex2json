@@ -52,6 +52,7 @@ The expl3 handlers are organized by l3 module:
 - quark.py   - Quark special values (q_no_value, quark_if_no_value, etc.)
 - group.py   - Grouping (group_begin, group_end)
 - use.py     - Use functions (use:n, use_none:n, etc.)
+- peek.py    - Peek functions (peek_catcode, peek_meaning, etc.)
 =============================================================================
 """
 
@@ -75,6 +76,7 @@ from latex2json.expander.handlers.expl3.use import register_use_handlers
 from latex2json.expander.handlers.expl3.msg import register_msg_handlers
 from latex2json.expander.handlers.expl3.regex import register_regex_handlers
 from latex2json.expander.handlers.expl3.dim import register_dim_handlers
+from latex2json.expander.handlers.expl3.peek import register_peek_handlers
 
 
 def register_expl3_handlers(expander: ExpanderCore) -> None:
@@ -97,3 +99,4 @@ def register_expl3_handlers(expander: ExpanderCore) -> None:
     register_use_handlers(expander)
     register_msg_handlers(expander)
     register_regex_handlers(expander)
+    register_peek_handlers(expander)

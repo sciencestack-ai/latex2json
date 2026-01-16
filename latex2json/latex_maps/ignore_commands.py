@@ -363,6 +363,8 @@ separator_patterns = {
     "colrule": 0,
     "noalign": 0,
     "endfirsthead": 0,
+    "printFirstPageNotes": 0,
+    "printcredits": 0,
 }
 
 font_awesome_patterns = {

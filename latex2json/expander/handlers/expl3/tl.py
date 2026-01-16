@@ -281,6 +281,70 @@ def tl_tail_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Toke
     return []
 
 
+def tl_range_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \tl_range:nnn {token-list} {start} {end}  ->  tokens from start to end
+
+    Extracts a range of tokens from the token list.
+    - 1-based indexing (first token is 1)
+    - Negative indices count from end (-1 is last token)
+    - If start > end (after normalization), returns empty
+
+    Examples:
+    - \tl_range:nnn {abcde} {1} {1}  -> a
+    - \tl_range:nnn {abcde} {2} {4}  -> bcd
+    - \tl_range:nnn {abcde} {2} {-1} -> bcde
+    - \tl_range:nnn {abcde} {-2} {-1} -> de
+    """
+    expander.skip_whitespace()
+    tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    start_tokens = expander.parse_brace_as_tokens() or []
+    start_str = "".join(t.value for t in start_tokens).strip()
+
+    expander.skip_whitespace()
+    end_tokens = expander.parse_brace_as_tokens() or []
+    end_str = "".join(t.value for t in end_tokens).strip()
+
+    try:
+        start_idx = int(start_str)
+        end_idx = int(end_str)
+    except ValueError:
+        return []
+
+    if not tokens:
+        return []
+
+    n = len(tokens)
+
+    # Convert to 0-based indices
+    # Positive: 1 -> 0, 2 -> 1, etc.
+    # Negative: -1 -> n-1, -2 -> n-2, etc.
+    if start_idx > 0:
+        start_idx = start_idx - 1
+    elif start_idx < 0:
+        start_idx = n + start_idx
+    else:
+        start_idx = 0  # 0 treated as 1
+
+    if end_idx > 0:
+        end_idx = end_idx  # end is inclusive, so keep as-is for slicing
+    elif end_idx < 0:
+        end_idx = n + end_idx + 1  # -1 means last, which is n for slicing
+    else:
+        end_idx = n  # 0 treated as end
+
+    # Clamp to valid range
+    start_idx = max(0, min(start_idx, n))
+    end_idx = max(0, min(end_idx, n))
+
+    if start_idx >= end_idx:
+        return []
+
+    return tokens[start_idx:end_idx]
+
+
 def register_tl_handlers(expander: ExpanderCore) -> None:
     """Register token list handlers."""
     # Creation
@@ -325,3 +389,6 @@ def register_tl_handlers(expander: ExpanderCore) -> None:
     # Head/tail
     expander.register_handler("\\tl_head:n", tl_head_handler, is_global=True)
     expander.register_handler("\\tl_tail:n", tl_tail_handler, is_global=True)
+
+    # Range extraction
+    expander.register_handler("\\tl_range:nnn", tl_range_handler, is_global=True)
