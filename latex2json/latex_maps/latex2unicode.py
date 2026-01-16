@@ -18,7 +18,9 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "grq": "‘",
     "Lightning": 9889,  # ⚡
     "pounds": 163,  # £
+    "GBP": 163,  # £
     "euro": 8364,  # €
+    "EUR": 8364,  # €
     "lq": "'",
     "rq": "'",
     "LaTeX": "LaTeX",
@@ -364,6 +366,8 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "texteuro": 8364,
     "textpeso": 8369,
     "textcelsius": 8451,
+    "celsius": 8451,
+    "degreeCelsius": 8451,
     "hbar": 8463,
     "ell": 8467,
     "textnumero": 8470,
@@ -704,6 +708,7 @@ latex2unicode: Dict[str, Union[str, int]] = {
     "subsetneqq": 10955,
     "supsetneqq": 10956,
     "textdollar": 36,
+    "USD": "$",
     "textquotesingle": 39,
     "ast": 42,
     "textasciigrave": 96,
