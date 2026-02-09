@@ -104,16 +104,22 @@ def get_parsed_args_from_usage_pattern(
             i += 1
 
             # keep grabbing tokens until next_keyword_sequence is matched
-            while next_keyword_sequence and not expander.eof():
+            # Note: In TeX, delimited arguments scan across newlines until the
+            # delimiter is found. We continue past END_OF_LINE tokens but add
+            # a safety limit to prevent consuming too much on malformed input.
+            max_tokens_to_scan = 5000  # Safety limit for malformed delimited args
+            scanned = 0
+            while next_keyword_sequence and not expander.eof() and scanned < max_tokens_to_scan:
                 if expander.parse_keyword_sequence(
                     next_keyword_sequence, skip_whitespaces=False
                 ):
                     i += 1
                     break
                 tok = expander.consume()
-                if tok is None or tok.type == TokenType.END_OF_LINE:
+                if tok is None:
                     break
                 tokens.append(tok)
+                scanned += 1
 
             parsed_args[index] = tokens
 
