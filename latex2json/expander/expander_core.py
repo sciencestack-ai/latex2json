@@ -1497,7 +1497,10 @@ class ExpanderCore(TokenProcessor):
             plus_result = self._parse_dimensions()
             if plus_result:
                 plus_scaled_points, relax = plus_result
-                base_scaled_points += plus_scaled_points
+                try:
+                    base_scaled_points += plus_scaled_points
+                except TypeError:
+                    pass  # Skip if values are None
                 if relax:
                     return base_scaled_points, True
 
@@ -1522,7 +1525,10 @@ class ExpanderCore(TokenProcessor):
             minus_result = self._parse_dimensions()
             if minus_result:
                 minus_scaled_points, relax = minus_result
-                base_scaled_points -= minus_scaled_points
+                try:
+                    base_scaled_points -= minus_scaled_points
+                except TypeError:
+                    pass  # Skip if values are None
                 if relax:
                     return base_scaled_points, True
 
