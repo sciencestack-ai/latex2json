@@ -6,17 +6,19 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class EnvironmentNode(ASTNode):
+    __slots__ = ('env_name', 'numbering', 'display_name')
+
     def __init__(
         self,
         env_name: str,
-        body: List[ASTNode] = [],
+        body: Optional[List[ASTNode]] = None,
         numbering: Optional[str] = None,
         display_name: Optional[str] = None,
     ):
         super().__init__()
         self.env_name = env_name
         self.numbering = numbering
-        self.set_body(body)
+        self.set_body(body if body is not None else [])
         self.display_name = display_name or env_name
 
     def set_body(self, body: List[ASTNode]):
@@ -83,7 +85,9 @@ class EnvironmentNode(ASTNode):
 
 
 class DocumentNode(EnvironmentNode):
-    def __init__(self, body: List[ASTNode] = []):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None):
         super().__init__(NodeTypes.DOCUMENT, body)
 
     def __eq__(self, other: ASTNode):
@@ -99,16 +103,18 @@ class DocumentNode(EnvironmentNode):
 
 
 class TheoremNode(EnvironmentNode):
+    __slots__ = ('title',)
+
     def __init__(
         self,
         name: str,
-        body: List[ASTNode] = [],
+        body: Optional[List[ASTNode]] = None,
         numbering: Optional[str] = None,
         display_name: Optional[str] = None,
-        title: List[ASTNode] = [],
+        title: Optional[List[ASTNode]] = None,
     ):
         super().__init__(name, body, numbering, display_name)
-        self.title = strip_whitespace_nodes(title)
+        self.title = strip_whitespace_nodes(title) if title else []
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, TheoremNode):
@@ -156,8 +162,10 @@ class TheoremNode(EnvironmentNode):
 
 
 class BaseTableFigureNode(EnvironmentNode):
+    __slots__ = ()
+
     def __init__(
-        self, env_name: str, body: List[ASTNode] = [], numbering: Optional[str] = None
+        self, env_name: str, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None
     ):
         super().__init__(env_name, body, numbering)
 
@@ -214,31 +222,43 @@ class BaseTableFigureNode(EnvironmentNode):
 
 
 class TableNode(BaseTableFigureNode):
-    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None):
         super().__init__(NodeTypes.TABLE, body, numbering)
 
 
 class SubTableNode(BaseTableFigureNode):
-    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None):
         super().__init__(NodeTypes.SUBTABLE, body, numbering)
 
 
 class FigureNode(BaseTableFigureNode):
-    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None):
         super().__init__(NodeTypes.FIGURE, body, numbering)
 
 
 class SubFigureNode(BaseTableFigureNode):
-    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None):
         super().__init__(NodeTypes.SUBFIGURE, body, numbering)
 
 
 class AlgorithmNode(BaseTableFigureNode):
-    def __init__(self, body: List[ASTNode] = [], numbering: Optional[str] = None):
+    __slots__ = ()
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, numbering: Optional[str] = None):
         super().__init__(NodeTypes.ALGORITHM, body, numbering)
 
 
 class AlgorithmicNode(ASTNode):
+    __slots__ = ('text',)
+
     def __init__(self, text: str):
         super().__init__()
         self.text = text

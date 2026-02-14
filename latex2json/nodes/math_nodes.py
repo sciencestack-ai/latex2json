@@ -13,9 +13,11 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class EquationNode(ASTNode):
+    __slots__ = ('numbering', 'equation_type', 'env_name')
+
     def __init__(
         self,
-        math_nodes: List[ASTNode],
+        math_nodes: Optional[List[ASTNode]] = None,
         env_name: str = "equation",
         equation_type: DisplayType = DisplayType.INLINE,
         numbering: Optional[str] = None,
@@ -25,7 +27,7 @@ class EquationNode(ASTNode):
         self.equation_type = equation_type
         self.env_name = env_name
 
-        self.set_body(math_nodes)
+        self.set_body(math_nodes if math_nodes is not None else [])
 
         self.is_math = True
 
@@ -156,10 +158,12 @@ class EquationNode(ASTNode):
 
 
 class EquationArrayNode(ASTNode):
+    __slots__ = ('env_name', 'row_numberings', 'args_str')
+
     def __init__(
         self,
         env_name: str,  # can be "align", "array", "matrix", etc
-        row_nodes: List[RowNode] = [],
+        row_nodes: Optional[List[RowNode]] = None,
         row_numberings: Optional[List[Optional[str]]] = None,
         args_str: Optional[List[str]] = None,  # e.g. ["l"] if \begin{array}{l}
     ):
@@ -167,7 +171,7 @@ class EquationArrayNode(ASTNode):
         self.env_name = env_name
         self.row_numberings = row_numberings
         self.args_str = args_str
-        self.set_children(row_nodes)
+        self.set_children(row_nodes if row_nodes is not None else [])
 
         self.is_math = True
 

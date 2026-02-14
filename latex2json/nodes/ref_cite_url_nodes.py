@@ -5,15 +5,17 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class BaseRefCiteNode(ASTNode):
+    __slots__ = ('prefix', 'references', 'title')
+
     def __init__(
-        self, prefix: str, references: str | List[str], title: List[ASTNode] = []
+        self, prefix: str, references: str | List[str], title: Optional[List[ASTNode]] = None
     ):
         super().__init__()
         self.prefix = prefix
         self.references: List[str] = (
             references if isinstance(references, list) else [references]
         )
-        self.title = title
+        self.title = title if title is not None else []
 
     def __str__(self):
         return self.detokenize()
@@ -47,7 +49,9 @@ class BaseRefCiteNode(ASTNode):
 
 
 class RefNode(BaseRefCiteNode):
-    def __init__(self, references: str | List[str], title: List[ASTNode] = []):
+    __slots__ = ()
+
+    def __init__(self, references: str | List[str], title: Optional[List[ASTNode]] = None):
         super().__init__(NodeTypes.REF, references, title)
 
     def __eq__(self, other: ASTNode):
@@ -57,7 +61,9 @@ class RefNode(BaseRefCiteNode):
 
 
 class CiteNode(BaseRefCiteNode):
-    def __init__(self, references: str | List[str], title: List[ASTNode] = []):
+    __slots__ = ()
+
+    def __init__(self, references: str | List[str], title: Optional[List[ASTNode]] = None):
         super().__init__(NodeTypes.CITATION, references, title)
 
     def __eq__(self, other: ASTNode):
@@ -67,10 +73,12 @@ class CiteNode(BaseRefCiteNode):
 
 
 class URLNode(ASTNode):
-    def __init__(self, url: str, title: List[ASTNode] = []):
+    __slots__ = ('url', 'title')
+
+    def __init__(self, url: str, title: Optional[List[ASTNode]] = None):
         super().__init__()
         self.url = url
-        self.title = title
+        self.title = title if title is not None else []
 
     def __eq__(self, other: ASTNode):
         if not isinstance(other, URLNode):
@@ -100,9 +108,11 @@ class URLNode(ASTNode):
 
 
 class FootnoteNode(ASTNode):
-    def __init__(self, body: List[ASTNode], title: Optional[str] = None):
+    __slots__ = ('title',)
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, title: Optional[str] = None):
         super().__init__()
-        self.set_children(body)
+        self.set_children(body if body is not None else [])
         self.title = title
 
     def __eq__(self, other: ASTNode):

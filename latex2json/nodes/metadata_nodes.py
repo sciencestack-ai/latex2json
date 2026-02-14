@@ -4,6 +4,8 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class MetadataNode(ASTNode):
+    __slots__ = ('name',)
+
     def __init__(self, name: str, body: List[ASTNode]):
         super().__init__()
         self.name = name
@@ -38,6 +40,7 @@ class MaketitleNode(ASTNode):
     Contains frontmatter metadata nodes (title, author, date, etc.) as children.
     This node ensures frontmatter is processed in isolation from the document body.
     """
+    __slots__ = ()
 
     def __init__(self, children: List[ASTNode]):
         super().__init__()

@@ -1,4 +1,3 @@
-from copy import deepcopy
 from enum import Enum, auto
 from typing import Any, Dict, List, Optional
 
@@ -43,6 +42,8 @@ class EnvironmentType(Enum):
 # For CONTROL_SEQUENCE tokens, the value will be the command name (e.g., "section"),
 # and catcode is implicitly 0 (Escape) for the initial backslash.
 class Token:
+    __slots__ = ('type', 'value', 'position', 'catcode', 'source_file', '_metadata')
+
     def __init__(
         self,
         type: TokenType,
@@ -56,7 +57,17 @@ class Token:
         self.position = position
         self.catcode = catcode  # None for CONTROL_SEQUENCE tokens
         self.source_file = source_file
-        self.metadata: Dict[str, Any] = {}
+        self._metadata: Optional[Dict[str, Any]] = None
+
+    @property
+    def metadata(self) -> Dict[str, Any]:
+        if self._metadata is None:
+            self._metadata = {}
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value: Dict[str, Any]):
+        self._metadata = value
 
     def __str__(self) -> str:
         value = self.value
@@ -81,7 +92,8 @@ class Token:
         new_token = Token(
             self.type, self.value, self.position, self.catcode, self.source_file
         )
-        new_token.metadata = self.metadata.copy()
+        if self._metadata is not None:
+            new_token._metadata = self._metadata.copy()
         return new_token
 
     def __repr__(self) -> str:
@@ -101,6 +113,8 @@ class Token:
 
 
 class EnvironmentStartToken(Token):
+    __slots__ = ('name', 'numbering', 'env_type', 'display_name', 'args', 'direct_command')
+
     def __init__(
         self,
         name: str,
@@ -162,6 +176,8 @@ class EnvironmentStartToken(Token):
 
 
 class EnvironmentEndToken(Token):
+    __slots__ = ('direct_command', 'should_pop_scope')
+
     def __init__(
         self,
         value: str,
@@ -188,19 +204,21 @@ class EnvironmentEndToken(Token):
 
 
 class CommandWithArgsToken(Token):
+    __slots__ = ('numbering', 'name', 'args', 'opt_args', 'counter_name')
+
     def __init__(
         self,
         name: str,
-        args: List[List[Token]] = [],
-        opt_args: List[List[Token]] = [],
+        args: Optional[List[List[Token]]] = None,
+        opt_args: Optional[List[List[Token]]] = None,
         numbering: Optional[str] = None,
         counter_name: Optional[str] = None,
     ):
         super().__init__(TokenType.COMMAND_WITH_ARGS, value=name)
         self.numbering = numbering
         self.name = name
-        self.args = args
-        self.opt_args = opt_args
+        self.args = args if args is not None else []
+        self.opt_args = opt_args if opt_args is not None else []
         self.counter_name = counter_name
 
     @property
@@ -236,8 +254,8 @@ class CommandWithArgsToken(Token):
     def copy(self) -> "CommandWithArgsToken":
         return CommandWithArgsToken(
             name=self.name,
-            args=deepcopy(self.args),
-            opt_args=deepcopy(self.opt_args),
+            args=[[t.copy() for t in arg] for arg in self.args] if self.args else [],
+            opt_args=[[t.copy() for t in arg] for arg in self.opt_args] if self.opt_args else [],
             numbering=self.numbering,
             counter_name=self.counter_name,
         )

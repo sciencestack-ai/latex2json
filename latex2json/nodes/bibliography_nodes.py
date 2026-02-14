@@ -12,29 +12,35 @@ def convert_fields_to_bibtex_str(
 
 
 class BibEntryNode(ASTNode):
+    __slots__ = ('citation_key', 'label', 'format', 'entry_type', 'fields')
+
     def __init__(
         self,
         citation_key: str,
-        content: List[ASTNode] = [],
+        content: Optional[List[ASTNode]] = None,
         format: str = BibType.BIBTEX,
         label: Optional[str] = None,  # for bibitem e.g. \bibitem[...label...]{}
         # bibtex related below
         entry_type: Optional[str] = None,  # e.g. article/proceedings/etc.
-        fields: Dict[str, str] = {},  # for bibtex e.g. author, title, etc.
+        fields: Optional[Dict[str, str]] = None,  # for bibtex e.g. author, title, etc.
     ):
         super().__init__()
         self.citation_key = citation_key
         if format == BibType.BIBITEM:
             # in latex, internally anchor 'cite.{citation_key}' is created per bibitem
             item_label = f"cite.{citation_key}"
-            self.labels.append(item_label)
+            # Use _labels directly to avoid property overhead
+            if self._labels is None:
+                self._labels = [item_label]
+            else:
+                self._labels.append(item_label)
         self.label = label
         self.format = format
-        self.set_body(content)
+        self.set_body(content if content is not None else [])
 
         # BibTeX related below
         self.entry_type = entry_type
-        self.fields = fields
+        self.fields = fields if fields is not None else {}
 
     @property
     def body(self) -> List[ASTNode]:
@@ -130,13 +136,15 @@ class BibEntryNode(ASTNode):
 
 
 class BibliographyNode(ASTNode):
+    __slots__ = ('bib_items',)
+
     def __init__(
         self,
-        bib_items: List[BibEntryNode] = [],
+        bib_items: Optional[List[BibEntryNode]] = None,
     ):
         super().__init__()
-        self.bib_items = bib_items
-        self.set_children(bib_items)
+        self.bib_items = bib_items if bib_items is not None else []
+        self.set_children(self.bib_items)
 
     def add_item(self, item: BibEntryNode):
         self.bib_items.append(item)
