@@ -145,7 +145,7 @@ class CounterManager:
         return counter_name
 
     def has_counter(self, name: str) -> bool:
-        return name in self.counters
+        return name.strip() in self.counters
 
     def new_counter(
         self,
@@ -155,6 +155,9 @@ class CounterManager:
         check_exists: bool = True,
     ) -> CounterInfo:
         """Create a new counter with optional parent relationship"""
+        name = name.strip()
+        if parent:
+            parent = parent.strip()
         if check_exists and name in self.counters:
             return self.counters[name]
 
@@ -178,26 +181,21 @@ class CounterManager:
 
     def set_counter(self, name: str, value: int) -> None:
         """Set counter value"""
-        # if name not in self.counters:
-        #     raise ValueError(f"Counter '{name}' does not exist")
-
+        name = name.strip()
         self.registers.set_register(
             RegisterType.COUNT, self._get_internal_name(name), value
         )
 
     def add_to_counter(self, name: str, increment: int) -> None:
         """Add to counter value"""
-        # if name not in self.counters:
-        #     raise ValueError(f"Counter '{name}' does not exist")
-
+        name = name.strip()
         self.registers.increment_register(
             RegisterType.COUNT, self._get_internal_name(name), increment
         )
 
     def step_counter(self, name: str) -> None:
         """Increment counter by 1 and reset all children"""
-        # if name not in self.counters:
-        #     raise ValueError(f"Counter '{name}' does not exist")
+        name = name.strip()
 
         # Increment this counter
         self.add_to_counter(name, 1)
@@ -220,6 +218,7 @@ class CounterManager:
 
     def get_counter_value(self, name: str) -> Optional[int]:
         """Get current counter value"""
+        name = name.strip()
         if name not in self.counters:
             return None
 
@@ -229,6 +228,7 @@ class CounterManager:
         return value
 
     def get_counter_formatted_value(self, name: str) -> Optional[str]:
+        name = name.strip()
         value = self.get_counter_value(name)
         if value is None:
             return None
@@ -236,6 +236,7 @@ class CounterManager:
 
     def get_counter_hierarchy(self, name: str) -> List[str]:
         """Get the full hierarchy path for a counter (parent -> child)"""
+        name = name.strip()
         if name not in self.counters:
             return []
 
@@ -251,6 +252,7 @@ class CounterManager:
 
     def get_all_children(self, name: str) -> Set[str]:
         """Get all descendants of a counter (children, grandchildren, etc.)"""
+        name = name.strip()
         if name not in self.counters:
             return set()
 
@@ -266,6 +268,7 @@ class CounterManager:
         return descendants
 
     def get_counter_info(self, name: str) -> Optional[CounterInfo]:
+        name = name.strip()
         if name not in self.counters:
             return None
         return self.counters[name]
@@ -281,6 +284,7 @@ class CounterManager:
             name: Counter name to format
             hierarchy: If True, include parent counter values (e.g. 2.1.3)
         """
+        name = name.strip()
         if not name in self.counters:
             return ""
 
@@ -345,6 +349,9 @@ class CounterManager:
             counter: The counter to modify
             parent: The new parent counter, or None to remove from current parent
         """
+        counter = counter.strip()
+        if parent:
+            parent = parent.strip()
         if counter not in self.counters:
             self.logger.warning(f"Counter '{counter}' does not exist")
             return

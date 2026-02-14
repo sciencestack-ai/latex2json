@@ -60,10 +60,9 @@ def test_new_counter():
     expander.expand(r"\stepcounter{section}")
     assert expander.state.get_counter_value("mycounter") == 0
 
-    # check that it is whitespace sensitive!
+    # check that whitespace is stripped from counter names
     expander.expand(r"\newcounter{ mycounter2 } \setcounter{ mycounter2 }{5}")
-    assert expander.state.get_counter_value(" mycounter2 ") == 5
-    assert expander.state.get_counter_value(" mycounter2") is None
+    assert expander.state.get_counter_value("mycounter2") == 5
 
 
 def test_definecounter():
