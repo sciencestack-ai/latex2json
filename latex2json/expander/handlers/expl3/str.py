@@ -241,11 +241,11 @@ def str_head_ignore_spaces_handler(
 # =============================================================================
 
 
-def str_case_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+def str_case_F_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
     r"""
     \str_case:nnF {test} { {val1}{result1} ... } {false}
 
-    String pattern matching.
+    String pattern matching with false branch.
     """
     expander.skip_whitespace()
     test_tokens = expander.parse_brace_as_tokens() or []
@@ -285,6 +285,45 @@ def str_case_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Tok
     return []
 
 
+def str_case_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \str_case:nn {test} { {val1}{result1} ... }
+
+    String pattern matching without default branch.
+    """
+    expander.skip_whitespace()
+    test_tokens = expander.parse_brace_as_tokens() or []
+    test_str = "".join(t.value for t in test_tokens).strip()
+
+    expander.skip_whitespace()
+    cases_tokens = expander.parse_brace_as_tokens() or []
+
+    # Push cases tokens back onto stream and parse {key}{value} pairs
+    expander.push_tokens(cases_tokens)
+
+    matched_value = None
+    while expander.peek():
+        expander.skip_whitespace()
+        if not expander.peek() or expander.peek().catcode != Catcode.BEGIN_GROUP:
+            break
+
+        pair = expander.parse_braced_blocks(N_blocks=2)
+        if len(pair) < 2:
+            break
+
+        key_tokens, value_tokens = pair
+        key_str = "".join(t.value for t in key_tokens).strip()
+
+        if matched_value is None and key_str == test_str:
+            matched_value = value_tokens
+            # Continue parsing to consume remaining cases
+
+    # Push result if we found a match
+    if matched_value is not None:
+        expander.push_tokens(matched_value)
+    return []
+
+
 def register_str_handlers(expander: ExpanderCore) -> None:
     """Register string handlers."""
     # String variable assignment
@@ -310,5 +349,7 @@ def register_str_handlers(expander: ExpanderCore) -> None:
     )
 
     # Case matching
-    for name in ["\\str_case:nnF", "\\str_case:onF", "\\str_case:VnF"]:
+    for name in ["\\str_case:nn", "\\str_case:on", "\\str_case:Vn", "\\str_case:en"]:
         expander.register_handler(name, str_case_handler, is_global=True)
+    for name in ["\\str_case:nnF", "\\str_case:onF", "\\str_case:VnF"]:
+        expander.register_handler(name, str_case_F_handler, is_global=True)

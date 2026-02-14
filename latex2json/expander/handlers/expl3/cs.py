@@ -107,6 +107,63 @@ def cs_if_exist_TF_handler(
     return []
 
 
+def cs_if_free_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \cs_if_free:NTF \cmd {true} {false}
+    Opposite of cs_if_exist - true if command is NOT defined.
+    """
+    expander.skip_whitespace()
+    cmd = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if not cmd or not expander.get_macro(cmd):
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def cs_if_free_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \cs_if_free:NT \cmd {true}
+    """
+    expander.skip_whitespace()
+    cmd = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    if not cmd or not expander.get_macro(cmd):
+        expander.push_tokens(true_branch)
+    return []
+
+
+def cs_if_free_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \cs_if_free:NF \cmd {false}
+    """
+    expander.skip_whitespace()
+    cmd = expander.consume()
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    if cmd and expander.get_macro(cmd):
+        expander.push_tokens(false_branch)
+    return []
+
+
 def cs_if_exist_T_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -192,6 +249,84 @@ def cs_generate_variant_handler(
     return []
 
 
+def cs_gset_Nn_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \cs_gset:Nn \cmd {body}  ->  \global\def\cmd{body}
+    Globally sets a control sequence without parameters.
+    """
+    expander.skip_whitespace()
+    cmd = expander.consume()
+    expander.skip_whitespace()
+    body_tokens = expander.parse_brace_as_tokens() or []
+
+    if cmd:
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                cmd,
+            ]
+            + wrap_tokens_in_braces(body_tokens)
+        )
+    return []
+
+
+def cs_new_cx_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \cs_new:cx {cmdname} {body}
+    Creates a new command from constructed name with expanded body.
+    """
+    from latex2json.tokens.catcodes import Catcode
+
+    expander.skip_whitespace()
+    name_tokens = expander.parse_brace_as_tokens() or []
+    cmd_name = "".join(t.value for t in name_tokens).strip()
+
+    expander.skip_whitespace()
+    body_tokens = expander.parse_brace_as_tokens() or []
+
+    if cmd_name:
+        cmd = Token(TokenType.CONTROL_SEQUENCE, cmd_name)
+        expander.push_tokens(
+            [Token(TokenType.CONTROL_SEQUENCE, "def"), cmd]
+            + wrap_tokens_in_braces(body_tokens)
+        )
+    return []
+
+
+def cs_set_cx_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \cs_set:cx {cmdname} {body}
+    Sets a command from constructed name with expanded body.
+    """
+    return cs_new_cx_handler(expander, _token)
+
+
+def cs_gset_cx_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \cs_gset:cx {cmdname} {body}
+    Globally sets a command from constructed name with expanded body.
+    """
+    expander.skip_whitespace()
+    name_tokens = expander.parse_brace_as_tokens() or []
+    cmd_name = "".join(t.value for t in name_tokens).strip()
+
+    expander.skip_whitespace()
+    body_tokens = expander.parse_brace_as_tokens() or []
+
+    if cmd_name:
+        cmd = Token(TokenType.CONTROL_SEQUENCE, cmd_name)
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                cmd,
+            ]
+            + wrap_tokens_in_braces(body_tokens)
+        )
+    return []
+
+
 def register_cs_handlers(expander: ExpanderCore) -> None:
     """Register control sequence handlers."""
     # \cs_new_eq:NN variants -> \let
@@ -222,6 +357,26 @@ def register_cs_handlers(expander: ExpanderCore) -> None:
     expander.register_handler(
         "\\cs_if_exist_use:NTF", cs_if_exist_use_TF_handler, is_global=True
     )
+
+    # Free checks (opposite of exist)
+    for name in ["\\cs_if_free:NTF", "\\cs_if_free:cTF"]:
+        expander.register_handler(name, cs_if_free_TF_handler, is_global=True)
+    for name in ["\\cs_if_free:NT", "\\cs_if_free:cT"]:
+        expander.register_handler(name, cs_if_free_T_handler, is_global=True)
+    for name in ["\\cs_if_free:NF", "\\cs_if_free:cF"]:
+        expander.register_handler(name, cs_if_free_F_handler, is_global=True)
+
+    # Global set without parameters
+    for name in ["\\cs_gset:Nn", "\\cs_gset:cn"]:
+        expander.register_handler(name, cs_gset_Nn_handler, is_global=True)
+
+    # cx variants (construct name, expand body)
+    for name in ["\\cs_new:cx", "\\cs_new_protected:cx"]:
+        expander.register_handler(name, cs_new_cx_handler, is_global=True)
+    for name in ["\\cs_set:cx", "\\cs_set_protected:cx"]:
+        expander.register_handler(name, cs_set_cx_handler, is_global=True)
+    for name in ["\\cs_gset:cx", "\\cs_gset_protected:cx"]:
+        expander.register_handler(name, cs_gset_cx_handler, is_global=True)
 
     # Utilities
     expander.register_handler("\\cs_to_str:N", cs_to_str_handler, is_global=True)

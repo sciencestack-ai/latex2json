@@ -259,6 +259,157 @@ def tl_if_eq_TF_handler(
     return []
 
 
+def tl_if_blank_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_blank:nTF {test} {blank} {not blank}
+    True if the token list is blank (empty or only whitespace).
+    This is equivalent to tl_if_empty for our purposes.
+    """
+    expander.skip_whitespace()
+    test_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    # Blank means empty or only whitespace
+    is_blank = not test_tokens or all(t.value.isspace() for t in test_tokens)
+
+    if is_blank:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def tl_if_blank_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_blank:nT {test} {blank}
+    """
+    expander.skip_whitespace()
+    test_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    is_blank = not test_tokens or all(t.value.isspace() for t in test_tokens)
+
+    if is_blank:
+        expander.push_tokens(true_branch)
+    return []
+
+
+def tl_if_blank_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_blank:nF {test} {not blank}
+    """
+    expander.skip_whitespace()
+    test_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    is_blank = not test_tokens or all(t.value.isspace() for t in test_tokens)
+
+    if not is_blank:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def tl_if_head_eq_catcode_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_catcode:nNTF {token-list} <token> {true} {false}
+    Tests if the first token of the token list has the same catcode as <token>.
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    # Get first non-whitespace token from the token list
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    # Compare catcodes
+    if head_token and comparison_token and head_token.catcode == comparison_token.catcode:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def tl_if_head_eq_catcode_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_catcode:nNT {token-list} <token> {true}
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    if head_token and comparison_token and head_token.catcode == comparison_token.catcode:
+        expander.push_tokens(true_branch)
+    return []
+
+
+def tl_if_head_eq_catcode_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_catcode:nNF {token-list} <token> {false}
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    if not (head_token and comparison_token and head_token.catcode == comparison_token.catcode):
+        expander.push_tokens(false_branch)
+    return []
+
+
 def tl_head_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
     r"""
     \tl_head:n {tokens}  ->  first token
@@ -381,6 +532,22 @@ def register_tl_handlers(expander: ExpanderCore) -> None:
         expander.register_handler(name, tl_if_empty_T_handler, is_global=True)
     for name in ["\\tl_if_empty:nF", "\\tl_if_empty:NF"]:
         expander.register_handler(name, tl_if_empty_F_handler, is_global=True)
+
+    # Blank conditionals (empty or whitespace-only)
+    for name in ["\\tl_if_blank:nTF", "\\tl_if_blank:NTF", "\\tl_if_blank:VTF"]:
+        expander.register_handler(name, tl_if_blank_TF_handler, is_global=True)
+    for name in ["\\tl_if_blank:nT", "\\tl_if_blank:NT", "\\tl_if_blank:VT"]:
+        expander.register_handler(name, tl_if_blank_T_handler, is_global=True)
+    for name in ["\\tl_if_blank:nF", "\\tl_if_blank:NF", "\\tl_if_blank:VF"]:
+        expander.register_handler(name, tl_if_blank_F_handler, is_global=True)
+
+    # Head catcode comparison
+    for name in ["\\tl_if_head_eq_catcode:nNTF", "\\tl_if_head_eq_catcode:NNTF"]:
+        expander.register_handler(name, tl_if_head_eq_catcode_TF_handler, is_global=True)
+    for name in ["\\tl_if_head_eq_catcode:nNT", "\\tl_if_head_eq_catcode:NNT"]:
+        expander.register_handler(name, tl_if_head_eq_catcode_T_handler, is_global=True)
+    for name in ["\\tl_if_head_eq_catcode:nNF", "\\tl_if_head_eq_catcode:NNF"]:
+        expander.register_handler(name, tl_if_head_eq_catcode_F_handler, is_global=True)
 
     # Equality conditionals
     for name in ["\\tl_if_eq:nnTF", "\\tl_if_eq:NNTF"]:

@@ -77,6 +77,12 @@ from latex2json.expander.handlers.expl3.msg import register_msg_handlers
 from latex2json.expander.handlers.expl3.regex import register_regex_handlers
 from latex2json.expander.handlers.expl3.dim import register_dim_handlers
 from latex2json.expander.handlers.expl3.peek import register_peek_handlers
+from latex2json.expander.handlers.expl3.tex import register_tex_handlers
+from latex2json.expander.handlers.expl3.keys import register_keys_handlers
+from latex2json.expander.handlers.expl3.token import register_token_handlers
+from latex2json.expander.handlers.expl3.file import register_file_handlers
+from latex2json.expander.handlers.expl3.io import register_io_handlers
+from latex2json.expander.handlers.expl3.skip import register_skip_handlers
 
 
 def register_expl3_handlers(expander: ExpanderCore) -> None:
@@ -87,6 +93,7 @@ def register_expl3_handlers(expander: ExpanderCore) -> None:
     register_int_handlers(expander)
     register_fp_handlers(expander)
     register_dim_handlers(expander)
+    register_skip_handlers(expander)
     register_exp_handlers(expander)
     register_str_handlers(expander)
     register_bool_handlers(expander)
@@ -100,3 +107,8 @@ def register_expl3_handlers(expander: ExpanderCore) -> None:
     register_msg_handlers(expander)
     register_regex_handlers(expander)
     register_peek_handlers(expander)
+    register_tex_handlers(expander)
+    register_keys_handlers(expander)
+    register_token_handlers(expander)
+    register_file_handlers(expander)
+    register_io_handlers(expander)

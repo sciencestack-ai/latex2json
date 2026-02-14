@@ -93,6 +93,42 @@ def int_incr_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Tok
     return []
 
 
+def int_gincr_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \int_gincr:N \g_my_int  ->  \global\advance\g_my_int 1
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+
+    if var:
+        result = [
+            Token(TokenType.CONTROL_SEQUENCE, "global"),
+            Token(TokenType.CONTROL_SEQUENCE, "advance"),
+            var,
+        ]
+        result.extend(expander.convert_str_to_tokens("1"))
+        expander.push_tokens(result)
+    return []
+
+
+def int_gdecr_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \int_gdecr:N \g_my_int  ->  \global\advance\g_my_int -1
+    """
+    expander.skip_whitespace()
+    var = expander.consume()
+
+    if var:
+        result = [
+            Token(TokenType.CONTROL_SEQUENCE, "global"),
+            Token(TokenType.CONTROL_SEQUENCE, "advance"),
+            var,
+        ]
+        result.extend(expander.convert_str_to_tokens("-1"))
+        expander.push_tokens(result)
+    return []
+
+
 def int_decr_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
     r"""
     \int_decr:N \l_my_int  ->  \advance\l_my_int -1
@@ -768,6 +804,105 @@ def int_if_even_TF_handler(
     return []
 
 
+def int_to_alph_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \int_to_alph:n { 1 }  ->  a
+    \int_to_alph:n { 26 } ->  z
+    \int_to_alph:n { 27 } ->  aa
+    Converts integer to lowercase alphabetic representation.
+    """
+    expander.skip_whitespace()
+    expr_tokens = expander.parse_brace_as_tokens() or []
+    expr_str = "".join(t.value for t in expr_tokens).strip()
+
+    result = _safe_eval_int(expr_str)
+    if result is not None and result > 0:
+        # Convert to alphabetic (a=1, b=2, ..., z=26, aa=27, ...)
+        alpha = ""
+        n = result
+        while n > 0:
+            n -= 1
+            alpha = chr(ord('a') + (n % 26)) + alpha
+            n //= 26
+        return expander.convert_str_to_tokens(alpha)
+    return []
+
+
+def int_to_Alph_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \int_to_Alph:n { 1 }  ->  A
+    Converts integer to uppercase alphabetic representation.
+    """
+    expander.skip_whitespace()
+    expr_tokens = expander.parse_brace_as_tokens() or []
+    expr_str = "".join(t.value for t in expr_tokens).strip()
+
+    result = _safe_eval_int(expr_str)
+    if result is not None and result > 0:
+        alpha = ""
+        n = result
+        while n > 0:
+            n -= 1
+            alpha = chr(ord('A') + (n % 26)) + alpha
+            n //= 26
+        return expander.convert_str_to_tokens(alpha)
+    return []
+
+
+def int_to_roman_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \int_to_roman:n { 4 }  ->  iv
+    Converts integer to lowercase roman numerals.
+    """
+    expander.skip_whitespace()
+    expr_tokens = expander.parse_brace_as_tokens() or []
+    expr_str = "".join(t.value for t in expr_tokens).strip()
+
+    result = _safe_eval_int(expr_str)
+    if result is not None and result > 0:
+        roman = _int_to_roman(result)
+        return expander.convert_str_to_tokens(roman.lower())
+    return []
+
+
+def int_to_Roman_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \int_to_Roman:n { 4 }  ->  IV
+    Converts integer to uppercase roman numerals.
+    """
+    expander.skip_whitespace()
+    expr_tokens = expander.parse_brace_as_tokens() or []
+    expr_str = "".join(t.value for t in expr_tokens).strip()
+
+    result = _safe_eval_int(expr_str)
+    if result is not None and result > 0:
+        roman = _int_to_roman(result)
+        return expander.convert_str_to_tokens(roman)
+    return []
+
+
+def _int_to_roman(num: int) -> str:
+    """Convert integer to Roman numerals."""
+    val = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1]
+    syms = ['M', 'CM', 'D', 'CD', 'C', 'XC', 'L', 'XL', 'X', 'IX', 'V', 'IV', 'I']
+    roman_num = ''
+    i = 0
+    while num > 0:
+        for _ in range(num // val[i]):
+            roman_num += syms[i]
+            num -= val[i]
+        i += 1
+    return roman_num
+
+
 def register_int_handlers(expander: ExpanderCore) -> None:
     """Register integer handlers."""
     # Creation
@@ -783,7 +918,9 @@ def register_int_handlers(expander: ExpanderCore) -> None:
     for name in ["\\int_add:Nn", "\\int_add:cn"]:
         expander.register_handler(name, int_add_handler, is_global=True)
     expander.register_handler("\\int_incr:N", int_incr_handler, is_global=True)
+    expander.register_handler("\\int_gincr:N", int_gincr_handler, is_global=True)
     expander.register_handler("\\int_decr:N", int_decr_handler, is_global=True)
+    expander.register_handler("\\int_gdecr:N", int_gdecr_handler, is_global=True)
 
     # Zeroing
     for name in ["\\int_zero:N", "\\int_gzero:N"]:
@@ -829,3 +966,9 @@ def register_int_handlers(expander: ExpanderCore) -> None:
     # Odd/even
     expander.register_handler("\\int_if_odd:nTF", int_if_odd_TF_handler, is_global=True)
     expander.register_handler("\\int_if_even:nTF", int_if_even_TF_handler, is_global=True)
+
+    # Conversion to text representations
+    expander.register_handler("\\int_to_alph:n", int_to_alph_handler, is_global=True)
+    expander.register_handler("\\int_to_Alph:n", int_to_Alph_handler, is_global=True)
+    expander.register_handler("\\int_to_roman:n", int_to_roman_handler, is_global=True)
+    expander.register_handler("\\int_to_Roman:n", int_to_Roman_handler, is_global=True)

@@ -99,6 +99,35 @@ def seq_gput_right_handler(
     return []
 
 
+def seq_gput_right_cn_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \seq_gput_right:cn {seqname} {item}  ->  globally append {item} to constructed sequence
+    """
+    expander.skip_whitespace()
+    name_tokens = expander.parse_brace_as_tokens() or []
+    seq_name = "".join(t.value for t in name_tokens).strip()
+
+    expander.skip_whitespace()
+    item = expander.parse_brace_as_tokens() or []
+
+    if seq_name:
+        var = Token(TokenType.CONTROL_SEQUENCE, seq_name)
+        macro = expander.get_macro(var)
+        existing = macro.definition if macro and macro.definition else []
+        new_def = existing + _make_brace_tokens(item)
+        expander.push_tokens(
+            [
+                Token(TokenType.CONTROL_SEQUENCE, "global"),
+                Token(TokenType.CONTROL_SEQUENCE, "def"),
+                var,
+            ]
+            + _make_brace_tokens(new_def)
+        )
+    return []
+
+
 def seq_put_left_handler(
     expander: ExpanderCore, _token: Token
 ) -> Optional[List[Token]]:
@@ -884,6 +913,8 @@ def register_seq_handlers(expander: ExpanderCore) -> None:
         expander.register_handler(name, seq_put_right_handler, is_global=True)
     for name in ["\\seq_gput_right:Nn", "\\seq_gput_right:Nx"]:
         expander.register_handler(name, seq_gput_right_handler, is_global=True)
+    for name in ["\\seq_gput_right:cn", "\\seq_gput_right:cx"]:
+        expander.register_handler(name, seq_gput_right_cn_handler, is_global=True)
     for name in ["\\seq_put_left:Nn", "\\seq_put_left:Nx"]:
         expander.register_handler(name, seq_put_left_handler, is_global=True)
 
