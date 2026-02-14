@@ -17,10 +17,12 @@ SECTION_LEVELS = {
 
 
 class SectionNode(EnvironmentNode):
+    __slots__ = ('label',)
+
     def __init__(
         self,
         name: str,
-        body: List[ASTNode],
+        body: Optional[List[ASTNode]] = None,
         label: Optional[str] = None,
         numbering: Optional[str] = None,
     ):

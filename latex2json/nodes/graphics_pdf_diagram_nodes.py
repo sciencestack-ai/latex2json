@@ -4,6 +4,8 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class IncludeGraphicsNode(ASTNode):
+    __slots__ = ('path', 'page', 'code')
+
     def __init__(
         self, path: str, page: Optional[int] = None, code: Optional[str] = None
     ):
@@ -50,6 +52,8 @@ class IncludeGraphicsNode(ASTNode):
 
 
 class IncludePdfNode(ASTNode):
+    __slots__ = ('path', 'pages')
+
     def __init__(self, path: str, pages: Optional[str] = None):
         super().__init__()
         self.path = path
@@ -85,6 +89,8 @@ class IncludePdfNode(ASTNode):
 
 
 class DiagramNode(ASTNode):
+    __slots__ = ('env_name', 'diagram')
+
     def __init__(self, env_name: str, diagram: str):
         super().__init__()
         self.env_name = env_name

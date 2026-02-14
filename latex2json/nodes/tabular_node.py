@@ -1,20 +1,22 @@
-from typing import List
+from typing import List, Optional
 from latex2json.nodes.base_nodes import ASTNode, TextNode, check_asts_equal
 from latex2json.nodes.environment_nodes import EnvironmentNode
 from latex2json.nodes.node_types import NodeTypes
 
 
 class CellNode(ASTNode):
+    __slots__ = ('rowspan', 'colspan')
+
     def __init__(
         self,
-        body: List[ASTNode] = [],
+        body: Optional[List[ASTNode]] = None,
         rowspan: int = 1,
         colspan: int = 1,
     ):
         super().__init__()
         self.rowspan = rowspan
         self.colspan = colspan
-        self.set_body(body)
+        self.set_body(body if body is not None else [])
 
     @property
     def body(self) -> List[ASTNode]:
@@ -75,10 +77,6 @@ class CellNode(ASTNode):
         return self.__str__()
 
     def to_json(self):
-        # Check cache first
-        if self._json_cache is not None:
-            return self._json_cache.copy()
-
         result = super().to_json()
         result["type"] = "cell"
         result["content"] = [child.to_json() for child in self.children]
@@ -86,9 +84,6 @@ class CellNode(ASTNode):
             result["rowspan"] = self.rowspan
         if self.colspan > 1:
             result["colspan"] = self.colspan
-
-        # Cache the result
-        self._json_cache = result.copy()
         return result
 
     def copy(self):
@@ -100,10 +95,12 @@ class CellNode(ASTNode):
 
 
 class RowNode(ASTNode):
-    def __init__(self, cells: List[CellNode] = []):
+    __slots__ = ('cells',)
+
+    def __init__(self, cells: Optional[List[CellNode]] = None):
         super().__init__()
-        self.cells = cells
-        self.set_children(cells)
+        self.cells = cells if cells is not None else []
+        self.set_children(self.cells)
 
     @property
     def cols(self) -> int:
@@ -142,9 +139,11 @@ class RowNode(ASTNode):
 
 
 class TabularNode(EnvironmentNode):
+    __slots__ = ()
+
     def __init__(
         self,
-        row_nodes: List[RowNode] = [],
+        row_nodes: Optional[List[RowNode]] = None,
         auto_correct_rowspans: bool = True,
         # alignment: str = "",
     ):
@@ -328,10 +327,6 @@ class TabularNode(EnvironmentNode):
         return self.detokenize()
 
     def to_json(self):
-        # Check cache first
-        if self._json_cache is not None:
-            return self._json_cache.copy()
-
         result = super().to_json()
         result["type"] = NodeTypes.TABULAR
 
@@ -352,9 +347,6 @@ class TabularNode(EnvironmentNode):
                 row_json.append(cell_json)
             content.append(row_json)
         result["content"] = content
-
-        # Cache the result
-        self._json_cache = result.copy()
         return result
 
     def copy(self):

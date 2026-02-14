@@ -4,19 +4,21 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class CaptionNode(ASTNode):
+    __slots__ = ('opt_arg', 'numbering', 'counter_name')
+
     def __init__(
         self,
-        body: List[ASTNode],
-        opt_arg: List[ASTNode] = [],
+        body: Optional[List[ASTNode]] = None,
+        opt_arg: Optional[List[ASTNode]] = None,
         numbering: Optional[str] = None,
         counter_name: Optional[str] = None,
     ):
         super().__init__()
-        self.opt_arg = opt_arg
+        self.opt_arg = opt_arg if opt_arg is not None else []
         self.numbering = numbering
         self.counter_name = counter_name
 
-        self.set_children(body)
+        self.set_children(body if body is not None else [])
 
     @property
     def body(self) -> List[ASTNode]:

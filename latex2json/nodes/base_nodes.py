@@ -11,6 +11,9 @@ class DisplayType(Enum):
 
 
 class ASTNode(ABC):
+    __slots__ = ('_children', 'parent', '_labels', '_styles',
+                 'should_postprocess', 'is_math', 'source_file')
+
     def __init__(
         self,
         children: List["ASTNode"] = None,
@@ -18,27 +21,35 @@ class ASTNode(ABC):
         labels: List[str] = None,
         styles: List[str] = None,
     ):
-        self.children = children if children is not None else []
+        self._children = children  # None means no children (lazy init)
         self.parent = parent
-        self._labels = labels if labels is not None else []
-        self._styles = styles if styles is not None else []
+        self._labels = labels  # None means no labels (lazy init)
+        self._styles = styles  # None means no styles (lazy init)
 
         # variables for postprocessing
         self.should_postprocess = True
         self.is_math = False
         self.source_file: Optional[str] = None
 
-        # Cache for to_json to prevent redundant conversions
-        self._json_cache: Optional[dict] = None
+    @property
+    def children(self) -> List["ASTNode"]:
+        if self._children is None:
+            self._children = []
+        return self._children
+
+    @children.setter
+    def children(self, value: List["ASTNode"]):
+        self._children = value if value else None
 
     @property
     def labels(self) -> List[str]:
+        if self._labels is None:
+            self._labels = []
         return self._labels
 
     @labels.setter
     def labels(self, value: List[str]):
-        self._labels = value
-        self._json_cache = None
+        self._labels = value if value else None
 
     def __repr__(self):
         return self.__str__()
@@ -51,41 +62,37 @@ class ASTNode(ABC):
         return None
 
     def set_children(self, children: List["ASTNode"]):
-        if self.children:
+        if self._children:
             # unparent children
-            for child in self.children:
+            for child in self._children:
                 child.parent = None
 
-        self.children = children.copy()
-        for child in self.children:
+        self._children = children if children else None
+        for child in children:
             child.parent = self
-
-        # Invalidate cache when children change
-        self._json_cache = None
 
     def add_styles(self, styles: List[str], insert_at_front: bool = False):
         if not styles:
             return
 
-        total_styles = self._styles.copy()
-        self._styles = []
         if insert_at_front:
-            total_styles = styles + total_styles
+            total_styles = styles + self.styles
         else:
-            total_styles = total_styles + styles
+            total_styles = self.styles + styles
 
         # check parent styles to prevent child dupes
         parent_styles = self.parent.styles if self.parent else []
 
+        new_styles = []
         for style in total_styles:
-            if style not in self._styles and style not in parent_styles:
-                self._styles.append(style)
-
-        # Invalidate cache when styles change
-        self._json_cache = None
+            if style not in new_styles and style not in parent_styles:
+                new_styles.append(style)
+        self._styles = new_styles if new_styles else None
 
     @property
     def styles(self) -> List[str]:
+        if self._styles is None:
+            self._styles = []
         return self._styles
 
     def __eq__(self, other: "ASTNode"):
@@ -100,17 +107,13 @@ class ASTNode(ABC):
         """Base to_json implementation that handles styles and labels.
         Child classes should call this using super().to_json() and extend it with their own fields.
         """
-        # Check cache first to avoid redundant conversions
-        if self._json_cache is not None:
-            return self._json_cache.copy()
-
         result = {}
 
-        if self.styles:
-            result["styles"] = self.styles.copy()
+        if self._styles:
+            result["styles"] = list(self._styles)
 
-        if self.labels:
-            result["labels"] = self.labels.copy()
+        if self._labels:
+            result["labels"] = list(self._labels)
 
         return result
 
@@ -133,6 +136,8 @@ def check_asts_equal(ast1: List[ASTNode], ast2: List[ASTNode]):
 
 
 class TextNode(ASTNode):
+    __slots__ = ('text',)
+
     def __init__(self, text: str):
         super().__init__()
         self.text = text
@@ -165,6 +170,8 @@ class TextNode(ASTNode):
 
 
 class SpecialCharNode(ASTNode):
+    __slots__ = ('value',)
+
     def __init__(self, value: str):
         super().__init__()
         self.value = value
@@ -192,11 +199,15 @@ class SpecialCharNode(ASTNode):
 
 
 class AlignmentNode(SpecialCharNode):
+    __slots__ = ()  # No additional attributes
+
     def __init__(self, value: str):
         super().__init__(value)
 
 
 class GroupNode(ASTNode):
+    __slots__ = ()  # Uses _children from parent
+
     def __init__(self, body: List[ASTNode]):
         super().__init__()
         self.set_body(body)
@@ -230,6 +241,8 @@ class GroupNode(ASTNode):
 
 
 class VerbatimNode(ASTNode):
+    __slots__ = ('text', 'title', 'display')
+
     def __init__(
         self,
         text: str,
@@ -274,11 +287,13 @@ class VerbatimNode(ASTNode):
 
 
 class CommandNode(ASTNode):
+    __slots__ = ('name', 'numbering', 'has_star', 'args', 'opt_args')
+
     def __init__(
         self,
         name: str,
-        args: List[List[ASTNode]] = [],
-        opt_args: List[List[ASTNode]] = [],
+        args: Optional[List[List[ASTNode]]] = None,
+        opt_args: Optional[List[List[ASTNode]]] = None,
         has_star: bool = False,
         numbering: Optional[str] = None,
     ):
@@ -287,9 +302,8 @@ class CommandNode(ASTNode):
         self.numbering = numbering
         self.has_star = has_star
         # Store structure metadata
-
-        self.args = args
-        self.opt_args = opt_args
+        self.args = args if args is not None else []
+        self.opt_args = opt_args if opt_args is not None else []
 
     @property
     def num_opt_args(self):

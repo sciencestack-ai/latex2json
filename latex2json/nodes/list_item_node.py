@@ -4,10 +4,12 @@ from latex2json.nodes.node_types import NodeTypes
 
 
 class ListItemNode(ASTNode):
-    def __init__(self, body: List[ASTNode] = [], label: Optional[str] = None):
+    __slots__ = ('label',)
+
+    def __init__(self, body: Optional[List[ASTNode]] = None, label: Optional[str] = None):
         super().__init__()
         self.label = label
-        self.set_children(body)
+        self.set_children(body if body is not None else [])
 
     @property
     def body(self) -> List[ASTNode]:
@@ -56,16 +58,19 @@ class ListItemNode(ASTNode):
 
 
 class ListNode(ASTNode):
+    __slots__ = ('list_type', 'is_inline', 'list_items')
+
     def __init__(
         self,
-        list_items: List[ListItemNode] = [],
+        list_items: Optional[List[ListItemNode]] = None,
         list_type: str = "itemize",
         is_inline: bool = False,
     ):
         super().__init__()
         self.list_type = list_type  # "itemize", "enumerate", etc.
         self.is_inline = is_inline
-        self.set_list_items(list_items)
+        self.list_items = []  # Initialize before set_list_items
+        self.set_list_items(list_items if list_items is not None else [])
 
     def set_list_items(self, list_items: List[ListItemNode]):
         self.list_items = list_items
