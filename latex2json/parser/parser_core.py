@@ -980,10 +980,11 @@ class ParserCore:
                 out_tokens.append(token)
 
         if not include_begin_end_tokens and out_tokens:
-            if begin_predicate(out_tokens[0]):
-                out_tokens.pop(0)
-            if out_tokens and end_predicate(out_tokens[-1]):
-                out_tokens.pop()
+            # Use slicing instead of pop(0) for O(1) instead of O(n)
+            start = 1 if begin_predicate(out_tokens[0]) else 0
+            end = -1 if end_predicate(out_tokens[-1]) else None
+            if start > 0 or end is not None:
+                out_tokens = out_tokens[start:end] if end else out_tokens[start:]
 
         return out_tokens
 

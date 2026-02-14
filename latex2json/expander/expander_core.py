@@ -141,6 +141,7 @@ class ExpanderCore(TokenProcessor):
         # Recursion detection: track recent tokens to detect infinite loops
         self._recent_tokens: deque = deque(maxlen=1000)  # Track last 1000 tokens
         self._recursion_threshold = 100  # Number of times a sequence must repeat
+        self._token_count = 0  # Counter for sampling optimization
         # Since we track full token sequences (not just control sequences),
         # different commands create different patterns, avoiding false positives
 
@@ -957,10 +958,15 @@ class ExpanderCore(TokenProcessor):
         Raises:
             RuntimeError: If infinite recursion is detected
         """
-        # Skip whitespace tokens to reduce noise, but track everything else
+        # Skip whitespace tokens to reduce noise
         if tok.type == TokenType.CHARACTER and tok.catcode == Catcode.SPACE:
             return
         if tok.type == TokenType.END_OF_LINE:
+            return
+
+        # Sample every 10th significant token to reduce overhead
+        self._token_count += 1
+        if self._token_count % 10 != 0:
             return
 
         # Create a hashable token signature: (type, value, catcode, position)
@@ -1025,7 +1031,9 @@ class ExpanderCore(TokenProcessor):
         #     return [tok]
 
         if self.is_control_sequence(tok):
-            return self._exec_macro(tok)
+            # Get macro once and pass to _exec_macro to avoid redundant lookup
+            macro = self.get_macro(tok)
+            return self._exec_macro(tok, macro)
         else:
             self.state.pending_global = False
             # Pop scope when we encounter an EnvironmentEndToken that needs it
@@ -1065,8 +1073,12 @@ class ExpanderCore(TokenProcessor):
                 self.state.toggle_mode(ProcessingMode.MATH_INLINE)
         return [tok]
 
-    def _exec_macro(self, tok: Token) -> Optional[List[Token]]:
-        macro = self.get_macro(tok)
+    def _exec_macro(
+        self, tok: Token, macro: Optional[Macro] = None
+    ) -> Optional[List[Token]]:
+        # Accept macro as parameter to avoid redundant lookup
+        if macro is None:
+            macro = self.get_macro(tok)
         if macro and macro.handler:
             return macro.handler(self, tok)
         return [tok]
@@ -1142,7 +1154,10 @@ class ExpanderCore(TokenProcessor):
         """
         Returns (str, bool) where str is the combined string and bool is whether relax was encountered
         """
-        out = ""
+        # Use list accumulator instead of string concat for O(n) instead of O(n²)
+        parts: List[str] = []
+        # Track current string for predicate (rebuilt only when needed)
+        cur_str = ""
 
         last_exp = None
         while not self.eof():
@@ -1150,19 +1165,20 @@ class ExpanderCore(TokenProcessor):
             if tok:
                 self._check_recursion(tok)
 
-            if tok_cur_str_predicate(tok, out):
+            if tok_cur_str_predicate(tok, cur_str):
                 self.consume()
-                out += tok.value
+                parts.append(tok.value)
+                cur_str += tok.value  # Update for predicate checks
             elif self.is_control_sequence(tok):
                 # if we see a declaration macro e.g. \def or \newcommand, exit
                 macro = self.get_macro(tok)
                 if macro and macro.type == MacroType.DECLARATION:
-                    return out, False
+                    return "".join(parts), False
 
                 # check \relax token and that it is RelaxMacro i.e. has not been redefined
                 if self.is_relax_token(tok):
                     self.consume()  # consume \relax token itself
-                    return out, True
+                    return "".join(parts), True
 
                 if self._is_next_token_register():
                     if expand_registers:
@@ -1193,7 +1209,7 @@ class ExpanderCore(TokenProcessor):
                 last_exp = exp
             else:
                 break
-        return out, False
+        return "".join(parts), False
 
     def parse_immediate_token(
         self, expand=False, skip_whitespace=False

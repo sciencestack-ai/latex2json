@@ -24,6 +24,8 @@ class Tokenizer:
         self.text = ""
         self.position = 0  # Current reading position
         self.verbatim_mode = False  # When True, % is treated as a regular character
+        # Version counter for cache invalidation - incremented on catcode changes
+        self._catcode_version: int = 0
 
     @property
     def pos(self) -> int:
@@ -36,6 +38,7 @@ class Tokenizer:
     def set_catcode(self, char_code: int, catcode: Catcode) -> None:
         """Allows changing a character's catcode dynamically."""
         self._catcodes[char_code] = catcode
+        self._catcode_version += 1
 
     def set_catcode_table(self, catcodes: Dict[int, Catcode]) -> None:
         self._catcodes = catcodes

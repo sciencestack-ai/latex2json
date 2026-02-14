@@ -38,27 +38,50 @@ class StringSource(TokenSource):
     ):
         self.content = content
         self.source_file = str(source_file) if source_file else None
-        # Create new tokenizer with same settings
+        # Keep reference to shared tokenizer for catcode version tracking
+        self._shared_tokenizer = shared_tokenizer
+        # Create new tokenizer with same settings (shares catcode table by reference)
         self.tokenizer = Tokenizer()
         self.tokenizer.set_catcode_table(shared_tokenizer._catcodes)
         self.tokenizer.verbatim_mode = shared_tokenizer.verbatim_mode
         self.tokenizer.set(content)
-        # self.current_pos = 0
+        # Peek cache for O(1) lookahead
+        self._peek_cache: Optional[Token] = None
+        self._peek_pos: int = 0  # Position AFTER the cached token
+        self._peek_catcode_version: int = 0  # Catcode version when token was cached
 
     def activate(self):
         pass
 
     def deactivate(self):
         pass
-        # self.current_pos = self.tokenizer.pos
+
+    def _is_cache_valid(self) -> bool:
+        """Check if peek cache is valid (catcodes haven't changed)."""
+        return (
+            self._peek_cache is not None
+            and self._peek_catcode_version == self._shared_tokenizer._catcode_version
+        )
 
     def consume(self) -> Optional[Token]:
-        token = self.tokenizer.get_next_token()
+        # Use cached token if available and catcodes haven't changed
+        if self._is_cache_valid():
+            token = self._peek_cache
+            self._peek_cache = None
+            # Advance tokenizer to position after the cached token
+            self.tokenizer.pos = self._peek_pos
+        else:
+            self._peek_cache = None  # Invalidate stale cache
+            token = self.tokenizer.get_next_token()
         if token and self.source_file:
             token.source_file = self.source_file
         return token
 
     def peek(self, n: int = 0) -> Optional[Token]:
+        # Fast path: return cached token for n=0 if catcodes haven't changed
+        if n == 0 and self._is_cache_valid():
+            return self._peek_cache
+
         saved_pos = self.tokenizer.pos
         token = None
 
@@ -68,10 +91,15 @@ class StringSource(TokenSource):
             if token is None:
                 break
 
+        # Cache the result for n=0 (save position BEFORE restoring)
+        if n == 0:
+            self._peek_cache = token
+            self._peek_pos = self.tokenizer.pos  # Position after token
+            self._peek_catcode_version = self._shared_tokenizer._catcode_version
+
         # Restore position
         self.tokenizer.pos = saved_pos
-        # if token and self.source_file:
-        #     token.source_file = self.source_file
+
         return token
 
     def eof(self) -> bool:
@@ -195,6 +223,7 @@ class TokenStream:
     def set_catcode(self, char_code: int, catcode: Catcode):
         """Change catcodes globally across all sources"""
         self.tokenizer.set_catcode(char_code, catcode)
+        # Note: peek cache invalidation is handled automatically via catcode version checking
 
     def set_verbatim_mode(self, verbatim: bool):
         """Set verbatim mode on the shared tokenizer and all active sources"""
