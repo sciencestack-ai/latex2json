@@ -179,6 +179,7 @@ def register_counter_handlers(expander: ExpanderCore):
     )  # same as stepcounter
     expander.register_handler("value", value_handler, is_global=True)
     expander.register_handler("newcounter", newcounter_handler, is_global=True)
+    expander.register_handler("@definecounter", newcounter_handler, is_global=True)
 
     # counter without/within
     expander.register_handler("counterwithout", counterwithout_handler, is_global=True)

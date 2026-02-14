@@ -66,6 +66,27 @@ def test_new_counter():
     assert expander.state.get_counter_value(" mycounter2") is None
 
 
+def test_definecounter():
+    r"""Test \@definecounter - used by llncs.cls and similar class files."""
+    expander = Expander()
+
+    # @definecounter requires makeatletter to use @ in command name
+    expander.expand(r"\makeatletter")
+
+    # Test that @definecounter creates a counter
+    expander.expand(r"\@definecounter{myenv}")
+    assert expander.state.has_counter("myenv")
+    assert expander.state.get_counter_value("myenv") == 0
+
+    # Test that the counter works normally
+    expander.expand(r"\stepcounter{myenv}")
+    assert expander.state.get_counter_value("myenv") == 1
+
+    # Test \the<counter> command is created
+    out = expander.expand(r"\themyenv")
+    assert expander.convert_tokens_to_str(out) == "1"
+
+
 def test_counter_the_command():
     expander = Expander()
 
