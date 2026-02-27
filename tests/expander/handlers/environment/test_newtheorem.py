@@ -6,6 +6,38 @@ from latex2json.tokens.utils import is_whitespace_token, strip_whitespace_tokens
 from tests.expander.handlers.environment.test_environment_handlers import mock_env_token
 
 
+def test_bracket_with_math_containing_bracket():
+    """Test that ] inside $...$ doesn't prematurely close optional argument.
+
+    e.g. \\begin{theorem}[Global regularity for $\\alpha\\in(2,3]$]
+    The ] after 3 is inside math mode and should NOT close the optional arg.
+    """
+    from latex2json.parser.parser import Parser
+
+    expander = Expander()
+    parser = Parser(expander)
+    expander.expand(r"\newtheorem{theorem}{Theorem}")
+
+    text = r"\begin{theorem}[Global regularity for $\alpha\in(2,3]$]content\end{theorem}"
+    nodes = parser.parse(text)
+
+    assert len(nodes) == 1
+    thm = nodes[0]
+    assert thm.env_name == "theorem"
+    assert thm.numbering == "1"
+
+    # The title should contain the full optional arg including ] inside math
+    title_json = [n.to_json() for n in thm.title]
+    # Should have text + inline equation containing "2,3]"
+    assert any(
+        "2,3]" in str(n) for n in title_json
+    ), f"Expected '2,3]' in title but got: {title_json}"
+
+    # Body should be "content"
+    body_json = [n.to_json() for n in thm.body]
+    assert any("content" in str(n) for n in body_json)
+
+
 def test_newtheorem():
     expander = Expander()
 

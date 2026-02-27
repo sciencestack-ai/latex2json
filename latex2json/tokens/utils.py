@@ -69,6 +69,54 @@ def is_end_parenthesis_token(tok: Token) -> bool:
     )
 
 
+TokenPredicate = Callable[[Token], bool]
+
+
+class DelimiterDepthTracker:
+    """Tracks delimiter depth with awareness of brace groups and math mode.
+
+    When matching non-brace delimiters (e.g. brackets), a closing delimiter
+    inside {...} or $...$ should not count. This class encapsulates that logic
+    so it lives in one place instead of being duplicated across expander/parser.
+    """
+
+    __slots__ = ("depth", "_brace_depth", "_math_depth", "_math_brace_aware")
+
+    def __init__(self, begin_predicate: TokenPredicate):
+        self.depth = 1
+        self._brace_depth = 0
+        self._math_depth = 0
+        # Only track inner braces/math when delimiters are NOT braces themselves
+        self._math_brace_aware = begin_predicate is not is_begin_group_token
+
+    def update(
+        self,
+        token: Token,
+        begin_predicate: TokenPredicate,
+        end_predicate: TokenPredicate,
+    ) -> None:
+        """Update depth for a token. Call once per token in order."""
+        if self._math_brace_aware:
+            if is_begin_group_token(token):
+                self._brace_depth += 1
+            elif is_end_group_token(token):
+                self._brace_depth = max(0, self._brace_depth - 1)
+            elif is_mathshift_token(token):
+                self._math_depth = 0 if self._math_depth > 0 else 1
+
+        if not self._math_brace_aware or (
+            self._brace_depth == 0 and self._math_depth == 0
+        ):
+            if begin_predicate(token):
+                self.depth += 1
+            elif end_predicate(token):
+                self.depth -= 1
+
+    @property
+    def is_open(self) -> bool:
+        return self.depth > 0
+
+
 def is_whitespace_token(tok: Token) -> bool:
     if tok.type == TokenType.END_OF_LINE:
         return True

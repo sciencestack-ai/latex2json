@@ -11,6 +11,7 @@ from typing import Callable, Dict, List, Optional
 from latex2json.tokens import Catcode, Token, TokenType, Tokenizer
 from latex2json.tokens.token_stream import TokenStream
 from latex2json.tokens.utils import (
+    DelimiterDepthTracker,
     is_begin_bracket_token,
     is_begin_group_token,
     is_begin_parenthesis_token,
@@ -294,9 +295,9 @@ class TokenProcessor:
         self._set_verbatim_mode(verbatim)
         try:
             out_tokens: List[Token] = []
-            depth = 1
+            tracker = DelimiterDepthTracker(begin_predicate)
 
-            while depth > 0:
+            while tracker.is_open:
                 current_token = self.peek()
 
                 if current_token is None:
@@ -305,14 +306,10 @@ class TokenProcessor:
                     )
                     break
 
-                if begin_predicate(current_token):
-                    depth += 1
-                elif end_predicate(current_token):
-                    depth -= 1
-
+                tracker.update(current_token, begin_predicate, end_predicate)
                 current_token = self.parse_token(verbatim=verbatim)
 
-                if depth > 0:
+                if tracker.is_open:
                     out_tokens.append(current_token)
 
             return out_tokens

@@ -234,6 +234,32 @@ def test_parse_bracket_as_tokens():
     )
 
 
+def test_parse_bracket_skips_bracket_inside_math():
+    """Test that ] inside $...$ doesn't close a bracket-delimited argument."""
+    expander = ExpanderCore()
+
+    expander.set_text(r"[text $x\in(0,1]$ end]rest")
+    tokens = expander.parse_bracket_as_tokens()
+    result = expander.convert_tokens_to_str(tokens)
+    assert result == r"text $x\in(0,1]$ end"
+
+    # Remaining should be "rest"
+    remaining_tokens = []
+    while expander.peek() is not None:
+        remaining_tokens.append(expander.consume())
+    assert expander.convert_tokens_to_str(remaining_tokens) == "rest"
+
+
+def test_parse_bracket_skips_bracket_inside_braces():
+    """Test that ] inside {...} doesn't close a bracket-delimited argument."""
+    expander = ExpanderCore()
+
+    expander.set_text("[text {a]} end]rest")
+    tokens = expander.parse_bracket_as_tokens()
+    result = expander.convert_tokens_to_str(tokens)
+    assert result == "text {a]} end"
+
+
 def test_parse_keyword_and_sequences():
     expander = ExpanderCore()
 

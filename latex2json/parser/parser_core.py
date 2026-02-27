@@ -44,6 +44,7 @@ from latex2json.utils.tex_utils import (
 
 from latex2json.tokens.catcodes import DEFAULT_CATCODES, Catcode
 from latex2json.tokens.utils import (
+    DelimiterDepthTracker,
     is_alignment_token,
     is_asterisk_token,
     is_begin_bracket_token,
@@ -954,26 +955,18 @@ class ParserCore:
             begin_token = self.consume()
             out_tokens.append(begin_token)
 
-        brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
+        tracker = DelimiterDepthTracker(begin_predicate)
 
-        # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
-        while brace_depth > 0 and not self.eof():
+        while tracker.is_open and not self.eof():
             current_token = self.peek()
 
             if current_token is None:
-                # Error: Reached the end of the input stream before finding a matching closing brace.
                 self.logger.info(
                     "Parser - Unmatched braces: Reached end of stream within a definition."
                 )
-                # Depending on your error handling strategy, you might raise an exception here
-                # or return the partially collected tokens.
-                break  # Exit loop due to error
+                break
 
-            # Check token type and update brace_depth
-            if begin_predicate(current_token):
-                brace_depth += 1
-            elif end_predicate(current_token):
-                brace_depth -= 1
+            tracker.update(current_token, begin_predicate, end_predicate)
 
             token = self.consume()
             if token:

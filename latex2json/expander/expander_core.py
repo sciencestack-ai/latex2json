@@ -38,6 +38,7 @@ from latex2json.tokens.token_stream import (
     TokenStream,
 )
 from latex2json.tokens.utils import (
+    DelimiterDepthTracker,
     is_1_to_9_token,
     is_begin_bracket_token,
     is_begin_group_token,
@@ -1691,30 +1692,21 @@ class ExpanderCore(TokenProcessor):
         self._set_verbatim_mode_context(verbatim)
         try:
             out_tokens: List[Token] = []
-            brace_depth = 1  # We've consumed one opening brace, so depth starts at 1
+            tracker = DelimiterDepthTracker(begin_predicate)
 
-            # 3. Loop until the matching closing brace is found (brace_depth returns to 0)
-            while brace_depth > 0:
+            while tracker.is_open:
                 current_token = self.peek()
 
                 if current_token is None:
-                    # Error: Reached the end of the input stream before finding a matching closing brace.
                     self.logger.info(
                         "Expander - Unmatched braces: Reached end of stream within a definition."
                     )
-                    # Depending on your error handling strategy, you might raise an exception here
-                    # or return the partially collected tokens.
-                    break  # Exit loop due to error
+                    break
 
-                # Check token type and update brace_depth
-                if begin_predicate(current_token):
-                    brace_depth += 1
-                elif end_predicate(current_token):
-                    brace_depth -= 1
-
+                tracker.update(current_token, begin_predicate, end_predicate)
                 current_token = self.parse_token(verbatim=verbatim)
 
-                if brace_depth > 0:
+                if tracker.is_open:
                     out_tokens.append(current_token)
 
             return out_tokens
