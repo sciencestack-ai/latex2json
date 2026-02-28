@@ -228,3 +228,65 @@ def test_ifnum_with_unresolved_tokens():
     out = expander.expand(text)
     out = strip_whitespace_tokens(out)
     assert_token_sequence(out, expander.expand("FALSE"))
+
+
+def test_ifnum_with_newcounter():
+    r"""Counters created via \newcounter should work as registers in \ifnum and \advance."""
+    expander = Expander()
+
+    # \makeatletter needed so \c@mycnt tokenizes as a single control sequence
+    text = r"""
+    \makeatletter
+    \newcounter{mycnt}
+    \setcounter{mycnt}{5}
+    \ifnum\c@mycnt>3
+        TRUE
+    \else
+        FALSE
+    \fi
+    \makeatother
+    """.strip()
+    out = strip_whitespace_tokens(expander.expand(text))
+    assert_token_sequence(out, expander.expand("TRUE"))
+
+
+def test_ifnum_with_newcounter_and_advance():
+    r"""\advance should work with counters created via \newcounter."""
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+    \newcounter{mycnt}
+    \advance\c@mycnt by 3
+    \ifnum\c@mycnt=3
+        TRUE
+    \else
+        FALSE
+    \fi
+    \makeatother
+    """.strip()
+    out = strip_whitespace_tokens(expander.expand(text))
+    assert_token_sequence(out, expander.expand("TRUE"))
+
+
+def test_ifnum_recursive_with_newcounter():
+    r"""Recursive macro with \ifnum termination on a \newcounter should terminate.
+    Reproduces the infinite loop from arxiv 2103.17255."""
+    expander = Expander()
+
+    text = r"""
+    \makeatletter
+    \newcounter{idx}
+    \def\mycount{3}
+    \def\printloop{%
+      \ifnum\c@idx<\mycount
+        X%
+        \advance\c@idx by 1
+        \expandafter\printloop
+      \fi}
+    \printloop
+    \makeatother
+    """.strip()
+    out = expander.expand(text)
+    x_tokens = [t for t in out if t.value == "X"]
+    assert len(x_tokens) == 3

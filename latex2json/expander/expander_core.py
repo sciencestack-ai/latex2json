@@ -368,6 +368,14 @@ class ExpanderCore(TokenProcessor):
         if counter_name.isalpha():
             self.register_counter_macro(counter_name, is_user_defined=is_user_defined)
 
+        # Register c@{counter} as a RegisterMacro so \ifnum, \advance, etc. can use it
+        from latex2json.expander.handlers.registers.counter_handlers import (
+            register_counter_register_macro,
+        )
+
+        internal_name = f"c@{counter_name}"
+        register_counter_register_macro(self, internal_name)
+
     def has_counter(self, counter_name: str) -> bool:
         return self.state.has_counter(counter_name)
 

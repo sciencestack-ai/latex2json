@@ -159,17 +159,21 @@ def base_counter_handler(expander: ExpanderCore, token: Token) -> Optional[List[
     return []
 
 
+def register_counter_register_macro(expander: ExpanderCore, internal_name: str):
+    r"""Register c@{name} as a RegisterMacro so \ifnum, \advance, etc. can use it."""
+    macro = RegisterMacro(
+        register_type=RegisterType.COUNT,
+        command_name=internal_name,
+        handler=base_counter_handler,
+        is_id_integer=False,
+    )
+    expander.register_macro(internal_name, macro, is_global=True)
+
+
 def register_counter_handlers(expander: ExpanderCore):
     for counter in expander.state.get_counters():
         # e.g. \c@section
-        # make it a register macro so that it can be parsed as an integer
-        macro = RegisterMacro(
-            register_type=RegisterType.COUNT,
-            command_name=counter,
-            handler=base_counter_handler,
-            is_id_integer=False,
-        )
-        expander.register_macro(counter, macro, is_global=True)
+        register_counter_register_macro(expander, counter)
 
     expander.register_handler("setcounter", setcounter_handler, is_global=True)
     expander.register_handler("addtocounter", addtocounter_handler, is_global=True)
