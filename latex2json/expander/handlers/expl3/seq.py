@@ -11,9 +11,9 @@ Each item is wrapped in braces for easy iteration.
 from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.expl3._tf_factory import make_conditional_handlers
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
-# (removed unused import)
 
 
 def seq_new_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
@@ -327,73 +327,20 @@ def seq_count_handler(expander: ExpanderCore, _token: Token) -> Optional[List[To
     return expander.convert_str_to_tokens("0")
 
 
-def seq_if_empty_TF_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \seq_if_empty:NTF \l_my_seq {true} {false}
-    """
+def _eval_seq_if_empty(expander: ExpanderCore, _token: Token) -> bool:
+    r"""Evaluate \seq_if_empty — consume var token and check if sequence is empty."""
     expander.skip_whitespace()
     var = expander.consume()
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if var:
-        macro = expander.get_macro(var)
-        seq_tokens = macro.definition if macro and macro.definition else []
-        items = _parse_seq_items(seq_tokens)
-
-        if len(items) == 0:
-            expander.push_tokens(true_branch)
-        else:
-            expander.push_tokens(false_branch)
-    else:
-        expander.push_tokens(true_branch)
-    return []
+    if not var:
+        return True
+    macro = expander.get_macro(var)
+    seq_tokens = macro.definition if macro and macro.definition else []
+    return len(_parse_seq_items(seq_tokens)) == 0
 
 
-def seq_if_empty_T_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \seq_if_empty:NT \l_my_seq {true}
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    if var:
-        macro = expander.get_macro(var)
-        seq_tokens = macro.definition if macro and macro.definition else []
-        items = _parse_seq_items(seq_tokens)
-
-        if len(items) == 0:
-            expander.push_tokens(true_branch)
-    return []
-
-
-def seq_if_empty_F_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \seq_if_empty:NF \l_my_seq {false}
-    """
-    expander.skip_whitespace()
-    var = expander.consume()
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if var:
-        macro = expander.get_macro(var)
-        seq_tokens = macro.definition if macro and macro.definition else []
-        items = _parse_seq_items(seq_tokens)
-
-        if len(items) > 0:
-            expander.push_tokens(false_branch)
-    return []
+seq_if_empty_TF_handler, seq_if_empty_T_handler, seq_if_empty_F_handler = (
+    make_conditional_handlers(_eval_seq_if_empty)
+)
 
 
 def seq_if_in_TF_handler(

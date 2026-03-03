@@ -1,4 +1,23 @@
-from typing import List, Optional
+from typing import Callable, List, Optional
+
+from latex2json.tokens.types import Token, TokenType
+
+
+RELAX_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "relax")
+
+
+def is_token_command_name(tok: Token, command_name: str) -> bool:
+    return tok.type == TokenType.CONTROL_SEQUENCE and tok.value == command_name
+
+
+def integer_tok_cur_str_predicate(tok: Token, cur_str: str) -> bool:
+    if tok.value.isdigit() or tok.value in "ABCDEF":
+        return True
+    has_digit = any(c.isdigit() or c in "ABCDEF" for c in cur_str)
+    # allows for hex + octal + ascii + sign
+    if not has_digit and tok.value in ["+", "-", " ", "'", '"', "`"]:
+        return True
+    return False
 
 
 def parse_number_str_to_float(sequence: str) -> Optional[float]:

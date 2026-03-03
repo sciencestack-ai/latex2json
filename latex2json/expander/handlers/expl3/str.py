@@ -7,6 +7,7 @@ Handles \str_if_eq:nnTF, \str_case:nnF, \str_set:Nn, etc.
 from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.expl3._tf_factory import make_conditional_handlers
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 
@@ -75,75 +76,20 @@ def str_set_V_handler(
 # =============================================================================
 
 
-def str_if_eq_TF_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \str_if_eq:nnTF {str1} {str2} {true} {false}
-    """
+def _eval_str_if_eq(expander: ExpanderCore, _token: Token) -> bool:
+    r"""Evaluate \str_if_eq — parse two brace args and compare."""
     expander.skip_whitespace()
     str1_tokens = expander.parse_brace_as_tokens() or []
     str1 = "".join(t.value for t in str1_tokens)
-
     expander.skip_whitespace()
     str2_tokens = expander.parse_brace_as_tokens() or []
     str2 = "".join(t.value for t in str2_tokens)
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if str1 == str2:
-        expander.push_tokens(true_branch)
-    else:
-        expander.push_tokens(false_branch)
-    return []
+    return str1 == str2
 
 
-def str_if_eq_T_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \str_if_eq:nnT {str1} {str2} {true}  (no false branch)
-    """
-    expander.skip_whitespace()
-    str1_tokens = expander.parse_brace_as_tokens() or []
-    str1 = "".join(t.value for t in str1_tokens)
-
-    expander.skip_whitespace()
-    str2_tokens = expander.parse_brace_as_tokens() or []
-    str2 = "".join(t.value for t in str2_tokens)
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    if str1 == str2:
-        expander.push_tokens(true_branch)
-    return []
-
-
-def str_if_eq_F_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \str_if_eq:nnF {str1} {str2} {false}  (no true branch)
-    """
-    expander.skip_whitespace()
-    str1_tokens = expander.parse_brace_as_tokens() or []
-    str1 = "".join(t.value for t in str1_tokens)
-
-    expander.skip_whitespace()
-    str2_tokens = expander.parse_brace_as_tokens() or []
-    str2 = "".join(t.value for t in str2_tokens)
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    if str1 != str2:
-        expander.push_tokens(false_branch)
-    return []
+str_if_eq_TF_handler, str_if_eq_T_handler, str_if_eq_F_handler = (
+    make_conditional_handlers(_eval_str_if_eq)
+)
 
 
 # =============================================================================

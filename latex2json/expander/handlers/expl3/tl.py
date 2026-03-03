@@ -8,6 +8,7 @@ Handles \tl_new:N, \tl_set:Nn, \tl_gset:Nn, \tl_use:N, \tl_put_right:Nn,
 from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.expl3._tf_factory import make_conditional_handlers
 from latex2json.tokens.catcodes import Catcode
 from latex2json.tokens.types import Token, TokenType
 from latex2json.tokens.utils import wrap_tokens_in_braces
@@ -169,67 +170,16 @@ def tl_to_str_N_handler(
     return []
 
 
-def tl_if_empty_TF_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \tl_if_empty:nTF {test} {empty} {not empty}
-    """
+def _eval_tl_if_empty(expander: ExpanderCore, _token: Token) -> bool:
+    r"""Evaluate \tl_if_empty — parse one brace arg and check if empty/whitespace."""
     expander.skip_whitespace()
     test_tokens = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    # Check if empty (ignoring whitespace)
-    is_empty = all(t.value.isspace() for t in test_tokens) if test_tokens else True
-
-    if is_empty:
-        expander.push_tokens(true_branch)
-    else:
-        expander.push_tokens(false_branch)
-    return []
+    return all(t.value.isspace() for t in test_tokens) if test_tokens else True
 
 
-def tl_if_empty_T_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \tl_if_empty:nT {test} {empty}
-    """
-    expander.skip_whitespace()
-    test_tokens = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    true_branch = expander.parse_brace_as_tokens() or []
-
-    is_empty = all(t.value.isspace() for t in test_tokens) if test_tokens else True
-
-    if is_empty:
-        expander.push_tokens(true_branch)
-    return []
-
-
-def tl_if_empty_F_handler(
-    expander: ExpanderCore, _token: Token
-) -> Optional[List[Token]]:
-    r"""
-    \tl_if_empty:nF {test} {not empty}
-    """
-    expander.skip_whitespace()
-    test_tokens = expander.parse_brace_as_tokens() or []
-
-    expander.skip_whitespace()
-    false_branch = expander.parse_brace_as_tokens() or []
-
-    is_empty = all(t.value.isspace() for t in test_tokens) if test_tokens else True
-
-    if not is_empty:
-        expander.push_tokens(false_branch)
-    return []
+tl_if_empty_TF_handler, tl_if_empty_T_handler, tl_if_empty_F_handler = (
+    make_conditional_handlers(_eval_tl_if_empty)
+)
 
 
 def tl_if_eq_TF_handler(

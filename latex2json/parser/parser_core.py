@@ -64,7 +64,7 @@ Handler = Callable[["ParserCore", Token], Optional[List[ASTNode]]]
 EnvHandler = Callable[["ParserCore", EnvironmentStartToken], Optional[List[ASTNode]]]
 
 
-class Macro:
+class ParserCommand:
     def __init__(
         self,
         name: str,
@@ -76,6 +76,10 @@ class Macro:
         self.handler = handler
         self.text_mode_only = text_mode_only
         self.math_mode_only = math_mode_only
+
+
+# Backwards-compatible alias
+Macro = ParserCommand
 
 
 class MacroPattern:

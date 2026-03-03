@@ -72,6 +72,22 @@ class Macro:
         )
 
 
+class EmptyMacro(Macro):
+    def __init__(self):
+        super().__init__("empty", lambda expander, token: [], definition=[])
+
+
+class RelaxMacro(Macro):
+    def __init__(self):
+        from latex2json.expander.utils import RELAX_TOKEN
+
+        super().__init__(
+            "relax",
+            lambda expander, token: [token],  # return the \relax token itself
+            definition=[RELAX_TOKEN.copy()],
+        )
+
+
 class MacroRegistry:
     """
     Manages macro and primitive definitions for a single scope layer.
