@@ -20,9 +20,12 @@ def make_at_document_hook(expander: ExpanderCore, cmd_name: str, is_begin=True):
             return None
 
         def expand_tokens_hook():
-            # Don't return the tokens since AtBeginDocument/AtEndDocument
-            # are typically in the preamble and normally not meant as semantic content in the body of the document
+            # In real LaTeX, \AtBeginDocument code runs at the top level (no enclosing group).
+            # Force definitions to be global so they persist across scope boundaries.
+            old_force = expander.state.force_global_defs
+            expander.state.force_global_defs = True
             expander.expand_tokens(tokens)
+            expander.state.force_global_defs = old_force
             return []
 
         hooks = doc_env_def.hooks.begin if is_begin else doc_env_def.hooks.end

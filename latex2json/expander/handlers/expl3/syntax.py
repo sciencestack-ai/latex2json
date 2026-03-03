@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.tokens.catcodes import Catcode
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, TokenType
 
 
 def _enable_expl3_syntax(expander: ExpanderCore) -> None:
@@ -19,6 +19,79 @@ def _enable_expl3_syntax(expander: ExpanderCore) -> None:
     expander.set_catcode(ord(" "), Catcode.IGNORED)
     expander.set_catcode(ord("\t"), Catcode.IGNORED)
     expander.set_catcode(ord("~"), Catcode.SPACE)
+
+
+def _remerge_expl3_tokens_in_source(expander: ExpanderCore) -> None:
+    r"""Re-merge split expl3 control sequences in pre-tokenized token sources.
+
+    When \ExplSyntaxOn appears inside a conditional branch (\if...\else...\fi),
+    the branch tokens are pre-tokenized before \ExplSyntaxOn fires. This means
+    expl3 names like \bool_lazy_and:nnTF get split into \bool + _ + l + a + z + ...
+
+    This function scans remaining tokens in the current TokenListSource and merges
+    these split sequences back into single control sequence tokens.
+    """
+    from latex2json.tokens.token_stream import TokenListSource
+
+    # Find the active TokenListSource on the stream stack
+    source = None
+    for s in reversed(expander.stream.source_stack):
+        if isinstance(s, TokenListSource) and not s.eof():
+            source = s
+            break
+
+    if source is None:
+        return
+
+    tokens = source.tokens
+    idx = source.index
+    if idx >= len(tokens):
+        return
+
+    # Scan and merge split expl3 control sequences in remaining tokens
+    new_tokens = tokens[:idx]  # Keep already-consumed tokens as-is
+    i = idx
+
+    while i < len(tokens):
+        tok = tokens[i]
+
+        # Look for pattern: CS token followed by _ or : characters
+        if tok.type == TokenType.CONTROL_SEQUENCE and i + 1 < len(tokens):
+            next_tok = tokens[i + 1]
+            # Check if next token is _ or : (which should be part of the CS name)
+            if (
+                next_tok.type == TokenType.CHARACTER
+                and next_tok.value in ("_", ":")
+                and next_tok.catcode != Catcode.LETTER  # Only fix wrongly-catcoded ones
+            ):
+                # Merge: collect CS name + all following _ : and letter chars
+                merged_name = tok.value
+                j = i + 1
+                while j < len(tokens):
+                    t = tokens[j]
+                    if t.type == TokenType.CHARACTER and t.value in ("_", ":"):
+                        merged_name += t.value
+                        j += 1
+                    elif t.type == TokenType.CHARACTER and t.catcode == Catcode.LETTER:
+                        merged_name += t.value
+                        j += 1
+                    else:
+                        break
+
+                # Only merge if we actually absorbed _ or : chars
+                if len(merged_name) > len(tok.value):
+                    merged_tok = Token(TokenType.CONTROL_SEQUENCE, merged_name)
+                    merged_tok.source_file = tok.source_file
+                    merged_tok.position = tok.position
+                    new_tokens.append(merged_tok)
+                    i = j
+                    continue
+
+        new_tokens.append(tok)
+        i += 1
+
+    # Replace the token list in-place
+    source.tokens = new_tokens
 
 
 def _disable_expl3_syntax(expander: ExpanderCore) -> None:
@@ -43,6 +116,7 @@ def expl_syntax_on_handler(
     - ~ (tilde) -> SPACE (10) - ~ produces a space in expl3
     """
     _enable_expl3_syntax(expander)
+    _remerge_expl3_tokens_in_source(expander)
     return []
 
 

@@ -31,8 +31,15 @@ def let_handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             # copy it and adjust the handler to force return the definition token
             macro_copy = macro.copy()
 
-            def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
-                return macro.handler(expander, def_tok)
+            if macro.type == MacroType.CHAR:
+                # For passthrough macros (math symbols, delimiters), use the NEW name.
+                # This prevents \let\ulcorner=\@recthy@ulcorner from leaking internal
+                # names — \ulcorner should produce \ulcorner in output, not \@recthy@ulcorner.
+                def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+                    return [token]
+            else:
+                def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+                    return macro.handler(expander, def_tok)
 
             macro_copy.name = cmd.value
             macro_copy.handler = handler

@@ -104,3 +104,55 @@ def test_iflatar_handler():
     out = expander.expand(text)
     out_str = expander.convert_tokens_to_str(out).strip()
     assert out_str == "A"
+
+
+def test_ltx_ifpackageloaded():
+    r"""\ltx@ifpackageloaded should behave identically to \@ifpackageloaded."""
+    expander = Expander()
+    text = r"""
+    \makeatletter
+    \ltx@ifpackageloaded{amsmath}{LOADED}{NOT LOADED}
+    \makeatother
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    # No packages are loaded in test context
+    assert out_str == "NOT LOADED"
+
+
+def test_ltx_ifclassloaded():
+    r"""\ltx@ifclassloaded should behave identically to \@ifclassloaded."""
+    expander = Expander()
+    text = r"""
+    \makeatletter
+    \ltx@ifclassloaded{article}{LOADED}{NOT LOADED}
+    \makeatother
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == "NOT LOADED"
+
+
+def test_iftex_conditionals():
+    r"""iftex engine detection: \ifpdftex true, \ifluatex false, \ifxetex false."""
+    expander = Expander()
+
+    # pdftex should be true (default assumption)
+    text = r"\ifpdftex PDFTEX\else NOT PDFTEX\fi"
+    out_str = expander.convert_tokens_to_str(expander.expand(text)).strip()
+    assert out_str == "PDFTEX"
+
+    # luatex should be false
+    text = r"\ifluatex LUATEX\else NOT LUATEX\fi"
+    out_str = expander.convert_tokens_to_str(expander.expand(text)).strip()
+    assert out_str == "NOT LUATEX"
+
+    # xetex should be false
+    text = r"\ifxetex XETEX\else NOT XETEX\fi"
+    out_str = expander.convert_tokens_to_str(expander.expand(text)).strip()
+    assert out_str == "NOT XETEX"
+
+    # etex should be true
+    text = r"\ifetex ETEX\else NOT ETEX\fi"
+    out_str = expander.convert_tokens_to_str(expander.expand(text)).strip()
+    assert out_str == "ETEX"

@@ -83,6 +83,18 @@ Tests are organized to mirror the main package structure:
 - `tests/tokens/` - Tokenization tests
 - `samples/` - Test LaTeX files for integration testing
 
+### Debugging Tips
+
+**Tracing the expander**: Always patch at the CLASS level (`ExpanderCore.method = traced`), never at the instance level (`expander.method = types.MethodType(...)`). Instance patching silently fails due to Python MRO with the `Expander` subclass.
+
+**Token flow**: The parser gets tokens from `expander.next_non_expandable_tokens()` → `expand_next()` → `_exec_macro()`. But `parser.process_tokens()` pushes pre-collected tokens into `parser.token_buffer`, which are consumed WITHOUT re-expansion. If unexpanded macros appear in parser output, check whether they came from the buffer (bypassing expander) or from `expand_next` returning them as non-expandable.
+
+**Scope debugging**: Macros defined with `\def` (is_global=False) are LOCAL to the current scope layer. Trace `ExpanderState.push_scope`/`pop_scope` to find where macros are lost. `\begin{env}` pushes scope; `}` tokens in `expand_next` also push/pop scope.
+
+**`\AtBeginDocument` hooks**: Fire inside `process_environment_begin()` (line ~253), NOT in the fallback path of `begin_environment_handler`. The `force_global_defs` flag on `ExpanderState` ensures definitions inside hooks are global, matching real LaTeX top-level behavior.
+
+**Common macro leak pattern**: If `\@internal@macro` appears literally in equation output, the macro was either (a) never defined, (b) defined locally and lost via scope pop, or (c) defined after the token was already collected. Check `get_macro()` at the point of expansion.
+
 ### Important Notes
 
 - The system prioritizes semantic content extraction over visual layout preservation

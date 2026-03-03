@@ -101,6 +101,7 @@ class ExpanderState:
 
         # variable states
         self.pending_global = False
+        self.force_global_defs = False
         # self.is_verbatim_mode = False
 
         # collect frontmatter tokens and only emit on \maketitle
@@ -239,7 +240,7 @@ class ExpanderState:
         self.current.set_macro(
             name,
             macro,
-            is_global or self.pending_global,
+            is_global or self.pending_global or self.force_global_defs,
             is_active_char=is_active_char,
         )
         self.pending_global = False

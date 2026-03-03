@@ -200,6 +200,57 @@ def test_let_can_be_anything():
     assert out_str == r"\title"
 
 
+def test_let_char_macro_preserves_new_name():
+    r"""\let on a CHAR passthrough macro should use the NEW command name in output.
+
+    Real scenario: \DeclareMathDelimiter{\@recthy@ulcorner}... registers an internal
+    name. \let\ulcorner=\@recthy@ulcorner should make \ulcorner produce \ulcorner
+    in output (which KaTeX knows), NOT \@recthy@ulcorner (which KaTeX doesn't).
+    """
+    expander = Expander()
+    text = r"""
+    \makeatletter
+    \DeclareMathDelimiter{\@recthy@ulcorner}{4}{AMSa}{'70}{AMSa}{'70}
+    \let\ulcorner=\@recthy@ulcorner
+    \makeatother
+    """.strip()
+    expander.expand(text)
+
+    # \ulcorner should produce \ulcorner, not \@recthy@ulcorner
+    tokens = expander.expand(r"\ulcorner")
+    assert len(tokens) == 1
+    assert tokens[0].type == TokenType.CONTROL_SEQUENCE
+    assert tokens[0].value == "ulcorner"
+
+    # The internal name should still produce itself
+    expander.expand(r"\makeatletter")
+    tokens = expander.expand(r"\@recthy@ulcorner")
+    assert len(tokens) == 1
+    assert tokens[0].type == TokenType.CONTROL_SEQUENCE
+    assert tokens[0].value == "@recthy@ulcorner"
+
+
+def test_let_char_macro_chain():
+    r"""Chained \let on CHAR macros should each preserve their own name."""
+    expander = Expander()
+    text = r"""
+    \DeclareMathSymbol{\boxdot}{0}{AMSa}{'00}
+    \let\myboxdot=\boxdot
+    \let\anotherboxdot=\myboxdot
+    """.strip()
+    expander.expand(text)
+
+    for cmd, expected_name in [
+        (r"\boxdot", "boxdot"),
+        (r"\myboxdot", "myboxdot"),
+        (r"\anotherboxdot", "anotherboxdot"),
+    ]:
+        tokens = expander.expand(cmd)
+        assert len(tokens) == 1
+        assert tokens[0].type == TokenType.CONTROL_SEQUENCE
+        assert tokens[0].value == expected_name
+
+
 def test_LetLtxMacro():
     expander = Expander()
     text = r"""

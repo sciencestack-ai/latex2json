@@ -146,6 +146,133 @@ def bool_if_TF_handler(
     return []
 
 
+def bool_lazy_and_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_and:nnTF {test1} {test2} {true} {false}
+
+    Lazy AND: evaluates test1, then test2 only if test1 is true.
+    Since we cannot fully evaluate expl3 predicate expressions,
+    we consume all arguments and default to the false branch.
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    # Default to false branch — safe for content extraction since
+    # the true branch is typically a special-case formatting path
+    expander.push_tokens(false_branch)
+    return []
+
+
+def bool_lazy_and_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_and:nnT {test1} {test2} {true}
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # true (discarded)
+
+    return []
+
+
+def bool_lazy_and_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_and:nnF {test1} {test2} {false}
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    expander.push_tokens(false_branch)
+    return []
+
+
+def bool_lazy_or_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_or:nnTF {test1} {test2} {true} {false}
+
+    Lazy OR: evaluates test1, then test2 only if test1 is false.
+    Defaults to false branch.
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    expander.push_tokens(false_branch)
+    return []
+
+
+def bool_lazy_or_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_or:nnT {test1} {test2} {true}
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # true (discarded)
+
+    return []
+
+
+def bool_lazy_or_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \bool_lazy_or:nnF {test1} {test2} {false}
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test1
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # test2
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    expander.push_tokens(false_branch)
+    return []
+
+
 def register_bool_handlers(expander: ExpanderCore) -> None:
     """Register boolean handlers."""
     expander.register_handler("\\bool_new:N", bool_new_handler, is_global=True)
@@ -163,3 +290,23 @@ def register_bool_handlers(expander: ExpanderCore) -> None:
     )
     for name in ["\\bool_if:NTF", "\\bool_if:nTF"]:
         expander.register_handler(name, bool_if_TF_handler, is_global=True)
+
+    # Lazy boolean operators
+    expander.register_handler(
+        "\\bool_lazy_and:nnTF", bool_lazy_and_TF_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_lazy_and:nnT", bool_lazy_and_T_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_lazy_and:nnF", bool_lazy_and_F_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_lazy_or:nnTF", bool_lazy_or_TF_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_lazy_or:nnT", bool_lazy_or_T_handler, is_global=True
+    )
+    expander.register_handler(
+        "\\bool_lazy_or:nnF", bool_lazy_or_F_handler, is_global=True
+    )

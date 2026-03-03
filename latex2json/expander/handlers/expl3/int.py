@@ -903,6 +903,28 @@ def _int_to_roman(num: int) -> str:
     return roman_num
 
 
+def int_compare_p_nNn_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \int_compare_p:nNn {expr1} <relation> {expr2}
+
+    Predicate form — consumes arguments. Used inside boolean expressions
+    but we cannot produce a result that expl3 boolean parsing can evaluate.
+    Returns empty.
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # expr1
+
+    expander.skip_whitespace()
+    expander.consume()  # relation token (=, <, >)
+
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # expr2
+
+    return []
+
+
 def register_int_handlers(expander: ExpanderCore) -> None:
     """Register integer handlers."""
     # Creation
@@ -972,3 +994,8 @@ def register_int_handlers(expander: ExpanderCore) -> None:
     expander.register_handler("\\int_to_Alph:n", int_to_Alph_handler, is_global=True)
     expander.register_handler("\\int_to_roman:n", int_to_roman_handler, is_global=True)
     expander.register_handler("\\int_to_Roman:n", int_to_Roman_handler, is_global=True)
+
+    # Predicate form (used inside boolean expressions)
+    expander.register_handler(
+        "\\int_compare_p:nNn", int_compare_p_nNn_handler, is_global=True
+    )

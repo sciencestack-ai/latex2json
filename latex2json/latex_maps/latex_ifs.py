@@ -21,6 +21,15 @@ LATEX_IFS = {
     "vmode": False,
     "inner": False,
     "pdf": True,  # set to True since LaTeX mostly compiles to pdf
+    # Engine detection conditionals (iftex package)
+    "pdftex": True,  # assume pdfTeX by default
+    "luatex": False,
+    "luahbtex": False,
+    "xetex": False,
+    "ptex": False,
+    "uptex": False,
+    "etex": True,  # eTeX extensions are always available in modern TeX
+    "TUTeX": False,
     # Internal LaTeX conditionals
     "@tempswa": False,
     "@ignore": False,

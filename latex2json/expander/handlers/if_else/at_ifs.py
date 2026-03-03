@@ -167,6 +167,8 @@ def register_atifs(expander: ExpanderCore):
         "\\@ifdefinable": ifdefinable_handler,
         "\\@ifpackageloaded": make_ifloaded_handler("package"),
         "\\@ifclassloaded": make_ifloaded_handler("class"),
+        "\\ltx@ifpackageloaded": make_ifloaded_handler("package"),
+        "\\ltx@ifclassloaded": make_ifloaded_handler("class"),
         "\\@ifl@t@r": iflatar_handler,
     }
     for name, handler in if_handlers.items():

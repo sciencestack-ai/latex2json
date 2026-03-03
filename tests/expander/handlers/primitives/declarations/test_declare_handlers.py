@@ -1,5 +1,6 @@
 import pytest
 from latex2json.expander.expander import Expander
+from latex2json.tokens.types import Token, TokenType
 
 
 def test_declare_robust_command():
@@ -50,7 +51,7 @@ def test_declare_ignored_commands():
     expander = Expander()
     # Test that ignored commands don't raise errors
     assert expander.expand(r"\DeclareFontFamily{T1}{cmr}{}") == []
-    assert expander.expand(r"\DeclareMathSymbol{\alpha}{0}{letters}{alpha}") == []
+    # DeclareMathSymbol and DeclareMathDelimiter are tested separately (they register passthroughs)
     assert expander.expand(r"\DeclareOption*{draft}") == []
     assert expander.expand(r"\DeclareOption{draft}{}") == []
     assert expander.expand(r"\DeclareGraphicsExtensions{pdf,png,jpg}") == []
@@ -60,6 +61,39 @@ def test_declare_ignored_commands():
         )
         == []
     )
+
+
+def test_declare_math_symbol_registers_passthrough():
+    """DeclareMathSymbol should register the command as a passthrough macro."""
+    expander = Expander()
+    # Declaration consumes all args and produces no output
+    assert expander.expand(r"\DeclareMathSymbol{\boxdot}{0}{AMSa}{'00}") == []
+    # The command should now be registered
+    assert expander.get_macro("boxdot")
+    assert expander.check_macro_is_user_defined("boxdot")
+    # Using the command should produce itself as a control sequence token
+    tokens = expander.expand(r"\boxdot")
+    assert len(tokens) == 1
+    assert tokens[0].type == TokenType.CONTROL_SEQUENCE
+    assert tokens[0].value == "boxdot"
+
+
+def test_declare_math_delimiter_registers_passthrough():
+    """DeclareMathDelimiter should register the command as a passthrough macro."""
+    expander = Expander()
+    # 6 args: \cmd, type, font1, slot1, font2, slot2
+    assert (
+        expander.expand(
+            r"\DeclareMathDelimiter{\ulcorner}{4}{AMSa}{'70}{AMSa}{'70}"
+        )
+        == []
+    )
+    assert expander.get_macro("ulcorner")
+    assert expander.check_macro_is_user_defined("ulcorner")
+    tokens = expander.expand(r"\ulcorner")
+    assert len(tokens) == 1
+    assert tokens[0].type == TokenType.CONTROL_SEQUENCE
+    assert tokens[0].value == "ulcorner"
 
 
 def test_declare_math_operator_invalid():

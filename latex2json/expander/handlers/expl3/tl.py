@@ -496,6 +496,174 @@ def tl_range_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Tok
     return tokens[start_idx:end_idx]
 
 
+def tl_count_handler(expander: ExpanderCore, _token: Token) -> Optional[List[Token]]:
+    r"""
+    \tl_count:n {tokens}  ->  number of tokens in the list
+
+    Counts top-level tokens (brace groups count as one token).
+    """
+    expander.skip_whitespace()
+    tokens = expander.parse_brace_as_tokens() or []
+
+    # Count top-level items: each brace group {..} is one item
+    count = 0
+    i = 0
+    while i < len(tokens):
+        tok = tokens[i]
+        if tok.value.isspace():
+            i += 1
+            continue
+        if tok.catcode == Catcode.BEGIN_GROUP or (
+            tok.type == TokenType.CHARACTER and tok.value == "{"
+        ):
+            # Skip entire brace group as one item
+            depth = 1
+            i += 1
+            while i < len(tokens) and depth > 0:
+                t = tokens[i]
+                if t.catcode == Catcode.BEGIN_GROUP or (
+                    t.type == TokenType.CHARACTER and t.value == "{"
+                ):
+                    depth += 1
+                elif t.catcode == Catcode.END_GROUP or (
+                    t.type == TokenType.CHARACTER and t.value == "}"
+                ):
+                    depth -= 1
+                i += 1
+            count += 1
+        else:
+            count += 1
+            i += 1
+
+    return expander.convert_str_to_tokens(str(count))
+
+
+def tl_if_head_eq_meaning_TF_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_meaning:nNTF {token-list} <token> {true} {false}
+
+    Tests if the first token of the token list has the same meaning as <token>.
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    # Get first non-whitespace token
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    # Compare meaning (approximated by comparing type and value)
+    is_same = (
+        head_token is not None
+        and comparison_token is not None
+        and head_token.type == comparison_token.type
+        and head_token.value == comparison_token.value
+    )
+
+    if is_same:
+        expander.push_tokens(true_branch)
+    else:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def tl_if_head_eq_meaning_T_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_meaning:nNT {token-list} <token> {true}
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    true_branch = expander.parse_brace_as_tokens() or []
+
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    is_same = (
+        head_token is not None
+        and comparison_token is not None
+        and head_token.type == comparison_token.type
+        and head_token.value == comparison_token.value
+    )
+
+    if is_same:
+        expander.push_tokens(true_branch)
+    return []
+
+
+def tl_if_head_eq_meaning_F_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_meaning:nNF {token-list} <token> {false}
+    """
+    expander.skip_whitespace()
+    tl_tokens = expander.parse_brace_as_tokens() or []
+
+    expander.skip_whitespace()
+    comparison_token = expander.consume()
+
+    expander.skip_whitespace()
+    false_branch = expander.parse_brace_as_tokens() or []
+
+    head_token = None
+    for tok in tl_tokens:
+        if not tok.value.isspace():
+            head_token = tok
+            break
+
+    is_same = (
+        head_token is not None
+        and comparison_token is not None
+        and head_token.type == comparison_token.type
+        and head_token.value == comparison_token.value
+    )
+
+    if not is_same:
+        expander.push_tokens(false_branch)
+    return []
+
+
+def tl_if_head_eq_meaning_p_handler(
+    expander: ExpanderCore, _token: Token
+) -> Optional[List[Token]]:
+    r"""
+    \tl_if_head_eq_meaning_p:nN {token-list} <token>
+
+    Predicate form — consumes arguments but cannot produce a boolean
+    result that expl3 boolean expressions can evaluate. Returns empty.
+    """
+    expander.skip_whitespace()
+    expander.parse_brace_as_tokens()  # token-list
+
+    expander.skip_whitespace()
+    expander.consume()  # comparison token
+
+    return []
+
+
 def register_tl_handlers(expander: ExpanderCore) -> None:
     """Register token list handlers."""
     # Creation
@@ -559,3 +727,20 @@ def register_tl_handlers(expander: ExpanderCore) -> None:
 
     # Range extraction
     expander.register_handler("\\tl_range:nnn", tl_range_handler, is_global=True)
+
+    # Count
+    for name in ["\\tl_count:n", "\\tl_count:N"]:
+        expander.register_handler(name, tl_count_handler, is_global=True)
+
+    # Head meaning comparison
+    for name in ["\\tl_if_head_eq_meaning:nNTF", "\\tl_if_head_eq_meaning:NNTF"]:
+        expander.register_handler(name, tl_if_head_eq_meaning_TF_handler, is_global=True)
+    for name in ["\\tl_if_head_eq_meaning:nNT", "\\tl_if_head_eq_meaning:NNT"]:
+        expander.register_handler(name, tl_if_head_eq_meaning_T_handler, is_global=True)
+    for name in ["\\tl_if_head_eq_meaning:nNF", "\\tl_if_head_eq_meaning:NNF"]:
+        expander.register_handler(name, tl_if_head_eq_meaning_F_handler, is_global=True)
+
+    # Head meaning predicate (used in boolean expressions)
+    expander.register_handler(
+        "\\tl_if_head_eq_meaning_p:nN", tl_if_head_eq_meaning_p_handler, is_global=True
+    )

@@ -24,12 +24,46 @@ ignored_declare_patterns = {
     "DeclareMathAlphabet": 5,
     "DeclareMathVersion": 1,
     # math symbol declarations http://labmaster.mi.infn.it/wwwasdoc.web.cern.ch/wwwasdoc/TL8/texmf/doc/latex/base/html/fntguide/node18.html
-    "DeclareMathSymbol": 4,
-    "DeclareMathDelimiter": 6,
+    # DeclareMathSymbol and DeclareMathDelimiter handled separately to register the command
     "DeclareMathAccent": 4,
     "DeclareMathRadical": 5,
     "DeclareGraphicsRule": 4,
 }
+
+
+def _make_declare_math_cmd_handler(n_remaining_args: int):
+    r"""Create a handler for \DeclareMathSymbol or \DeclareMathDelimiter.
+
+    These register the first argument (a command name) as a passthrough math symbol,
+    then consume the remaining font-related arguments. This ensures the command is
+    known to \let and other copiers, and passes through to the output for KaTeX.
+    """
+
+    def handler(expander: ExpanderCore, token: Token) -> Optional[list[Token]]:
+        expander.skip_whitespace()
+        cmd = expander.parse_command_name_token()
+        if cmd is None:
+            expander.logger.warning(f"{token.value} expects a command name")
+            return None
+
+        # Consume remaining font-related arguments
+        expander.parse_braced_blocks(n_remaining_args, check_immediate_tokens=True)
+
+        # Register the command as a passthrough (token passes through to output)
+        def passthrough_handler(
+            expander: ExpanderCore, token: Token
+        ) -> Optional[list[Token]]:
+            return [token]
+
+        expander.register_macro(
+            cmd,
+            Macro(cmd, passthrough_handler, type=MacroType.CHAR),
+            is_global=True,
+            is_user_defined=True,
+        )
+        return []
+
+    return handler
 
 
 def declare_math_operator_handler(
@@ -189,6 +223,27 @@ def register_declare_commands(expander: ExpanderCore):
         Macro(
             "\\DeclareMathOperator",
             declare_math_operator_handler,
+            type=MacroType.DECLARATION,
+        ),
+        is_global=True,
+    )
+
+    # DeclareMathSymbol: \DeclareMathSymbol{\cmd}{\type}{font}{slot} (3 remaining args)
+    expander.register_macro(
+        "\\DeclareMathSymbol",
+        Macro(
+            "\\DeclareMathSymbol",
+            _make_declare_math_cmd_handler(3),
+            type=MacroType.DECLARATION,
+        ),
+        is_global=True,
+    )
+    # DeclareMathDelimiter: \DeclareMathDelimiter{\cmd}{\type}{font}{slot}{lgfont}{lgslot} (5 remaining args)
+    expander.register_macro(
+        "\\DeclareMathDelimiter",
+        Macro(
+            "\\DeclareMathDelimiter",
+            _make_declare_math_cmd_handler(5),
             type=MacroType.DECLARATION,
         ),
         is_global=True,
