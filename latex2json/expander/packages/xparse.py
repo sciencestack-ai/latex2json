@@ -568,6 +568,56 @@ def register_ifvalue_commands(expander: ExpanderCore):
     expander.register_handler("\\IfValueT", ifvalue_t_handler, is_global=True)
     expander.register_handler("\\IfValueF", ifvalue_f_handler, is_global=True)
 
+    # \IfNoValueTF is the inverse of \IfValueTF
+    def ifnovalue_tf_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not true_branch:
+            return None
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not false_branch:
+            return None
+
+        is_novalue = len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-"
+        expander.push_tokens(true_branch if is_novalue else false_branch)
+        return []
+
+    def ifnovalue_t_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+        true_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not true_branch:
+            return None
+
+        if len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-":
+            expander.push_tokens(true_branch)
+        return []
+
+    def ifnovalue_f_handler(
+        expander: ExpanderCore, _token: Token
+    ) -> Optional[List[Token]]:
+        arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
+        if not arg_to_test:
+            return None
+        false_branch = expander.parse_immediate_token(skip_whitespace=True)
+        if not false_branch:
+            return None
+
+        if not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-"):
+            expander.push_tokens(false_branch)
+        return []
+
+    expander.register_handler("\\IfNoValueTF", ifnovalue_tf_handler, is_global=True)
+    expander.register_handler("\\IfNoValueT", ifnovalue_t_handler, is_global=True)
+    expander.register_handler("\\IfNoValueF", ifnovalue_f_handler, is_global=True)
+
 
 def register_xparse(expander: ExpanderCore):
     """Register xparse commands."""

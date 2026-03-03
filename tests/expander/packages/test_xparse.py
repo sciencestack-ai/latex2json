@@ -367,6 +367,67 @@ def test_ifvalue_with_novalue():
     assert "HAS:hello:world" in result2_str
 
 
+def test_ifnovalue_tf():
+    r"""Test \IfNoValueTF — inverse of \IfValueTF."""
+    expander = Expander()
+
+    expander.expand(
+        r"""
+        \NewDocumentCommand{\test}{o m}{%
+          \IfNoValueTF{#1}{MISSING}{PRESENT:#1}:%
+          #2%
+        }
+        """
+    )
+
+    # Without optional argument — should take true (MISSING) branch
+    result = expander.expand(r"\test{world}")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+    assert "MISSING:world" in result_str
+
+    # With optional argument — should take false (PRESENT) branch
+    result = expander.expand(r"\test[hello]{world}")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+    assert "PRESENT:hello:world" in result_str
+
+
+def test_ifnovalue_t():
+    r"""Test \IfNoValueT — only executes when arg is missing."""
+    expander = Expander()
+
+    expander.expand(
+        r"\NewDocumentCommand{\test}{o m}{\IfNoValueT{#1}{DEFAULT} #2}"
+    )
+
+    result = expander.expand(r"\test{world}")
+    result_str = expander.convert_tokens_to_str(result)
+    assert "DEFAULT" in result_str
+
+    result = expander.expand(r"\test[given]{world}")
+    result_str = expander.convert_tokens_to_str(result)
+    assert "DEFAULT" not in result_str
+    assert "world" in result_str
+
+
+def test_ifnovalue_f():
+    r"""Test \IfNoValueF — only executes when arg is present."""
+    expander = Expander()
+
+    expander.expand(
+        r"\NewDocumentCommand{\test}{o m}{\IfNoValueF{#1}{HAS:#1} #2}"
+    )
+
+    # Without optional — F branch should NOT fire
+    result = expander.expand(r"\test{world}")
+    result_str = expander.convert_tokens_to_str(result)
+    assert "HAS:" not in result_str
+
+    # With optional — F branch should fire
+    result = expander.expand(r"\test[val]{world}")
+    result_str = expander.convert_tokens_to_str(result)
+    assert "HAS:val" in result_str
+
+
 def test_embellishment_order_in_spec():
     """Test that e{_^} assigns #1 to _ and #2 to ^, regardless of input order."""
     expander = Expander()
