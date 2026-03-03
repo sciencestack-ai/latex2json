@@ -30,6 +30,25 @@ from latex2json.tokens.utils import (
 )
 
 
+# Sentinel token for missing optional arguments. Uses a CONTROL_SEQUENCE so that
+# if it leaks through without an \IfNoValueTF guard, it won't render as visible text.
+NOVALUE_TOKEN = Token(TokenType.CONTROL_SEQUENCE, "q__xparse_no_value")
+
+
+def _is_novalue(tokens: List[Token]) -> bool:
+    """Check if a token list is the -NoValue- sentinel."""
+    return (
+        len(tokens) == 1
+        and tokens[0].type == TokenType.CONTROL_SEQUENCE
+        and tokens[0].value == "q__xparse_no_value"
+    )
+
+
+def _make_novalue_token() -> List[Token]:
+    """Create a fresh -NoValue- sentinel token list."""
+    return [Token(TokenType.CONTROL_SEQUENCE, "q__xparse_no_value")]
+
+
 @dataclass
 class ArgSpec:
     """Represents a single argument specification."""
@@ -251,7 +270,7 @@ def parse_xparse_arguments(
                 parsed_args.append(arg)
             else:
                 # Missing optional argument - use special marker
-                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
+                parsed_args.append(_make_novalue_token())
 
         elif spec.spec_type == "O":
             # Optional argument with default
@@ -272,7 +291,7 @@ def parse_xparse_arguments(
                 arg = expander.parse_brace_as_tokens()
                 parsed_args.append(arg)
             else:
-                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
+                parsed_args.append(_make_novalue_token())
 
         elif spec.spec_type == "G":
             # Optional braced argument with default
@@ -295,7 +314,7 @@ def parse_xparse_arguments(
                 expander.consume()  # consume close delimiter
                 parsed_args.append(arg)
             else:
-                parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
+                parsed_args.append(_make_novalue_token())
 
         elif spec.spec_type == "v":
             # Verbatim argument - read until next delimiter
@@ -338,7 +357,7 @@ def parse_xparse_arguments(
                 if embellishment_char in found_embellishments:
                     parsed_args.append(found_embellishments[embellishment_char])
                 else:
-                    parsed_args.append([Token(TokenType.CHARACTER, "-NoValue-")])
+                    parsed_args.append(_make_novalue_token())
 
         else:
             # Unknown spec type
@@ -522,7 +541,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
             return None
 
         # Check if argument is NOT -NoValue-
-        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        has_value = not (_is_novalue(arg_to_test))
         if has_value:
             expander.push_tokens(true_branch)
         else:
@@ -541,7 +560,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
         if not true_branch:
             return None
 
-        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        has_value = not (_is_novalue(arg_to_test))
         if has_value:
             expander.push_tokens(true_branch)
 
@@ -558,7 +577,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
         if not false_branch:
             return None
 
-        has_value = not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-")
+        has_value = not (_is_novalue(arg_to_test))
         if not has_value:
             expander.push_tokens(false_branch)
 
@@ -582,7 +601,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
         if not false_branch:
             return None
 
-        is_novalue = len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-"
+        is_novalue = _is_novalue(arg_to_test)
         expander.push_tokens(true_branch if is_novalue else false_branch)
         return []
 
@@ -596,7 +615,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
         if not true_branch:
             return None
 
-        if len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-":
+        if _is_novalue(arg_to_test):
             expander.push_tokens(true_branch)
         return []
 
@@ -610,7 +629,7 @@ def register_ifvalue_commands(expander: ExpanderCore):
         if not false_branch:
             return None
 
-        if not (len(arg_to_test) == 1 and arg_to_test[0].value == "-NoValue-"):
+        if not (_is_novalue(arg_to_test)):
             expander.push_tokens(false_branch)
         return []
 

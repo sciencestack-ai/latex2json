@@ -102,10 +102,10 @@ def test_newdocumentcommand_optional_no_default():
     text = r"\NewDocumentCommand{\test}{o m}{Arg1: #1, Arg2: #2}"
     expander.expand(text)
 
-    # Without optional - should get -NoValue-
+    # Without optional - NoValue sentinel is a CS token, not visible text
     result = expander.expand(r"\test{world}")
     result_str = expander.convert_tokens_to_str(result)
-    assert "Arg1: -NoValue-" in result_str
+    assert "-NoValue-" not in result_str  # sentinel should NOT appear as text
     assert "Arg2: world" in result_str
 
     # With optional
