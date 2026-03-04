@@ -457,17 +457,17 @@ def register_ifboolean_commands(expander: ExpanderCore):
     ) -> Optional[List[Token]]:
         # Parse the argument to test (should be #1, #2, etc.)
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         # Parse true branch
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
 
         # Parse false branch
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         # Check if argument is TrueBooleanValue
@@ -482,11 +482,11 @@ def register_ifboolean_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
 
         if len(arg_to_test) == 1 and arg_to_test[0].value == "TrueBooleanValue":
@@ -498,11 +498,11 @@ def register_ifboolean_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         if len(arg_to_test) == 1 and arg_to_test[0].value != "TrueBooleanValue":
@@ -527,17 +527,17 @@ def register_ifvalue_commands(expander: ExpanderCore):
     ) -> Optional[List[Token]]:
         # Parse the argument to test (should be #1, #2, etc.)
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         # Parse true branch
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
 
         # Parse false branch
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         # Check if argument is NOT -NoValue-
@@ -553,11 +553,11 @@ def register_ifvalue_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
 
         has_value = not (_is_novalue(arg_to_test))
@@ -570,11 +570,11 @@ def register_ifvalue_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
 
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         has_value = not (_is_novalue(arg_to_test))
@@ -592,13 +592,13 @@ def register_ifvalue_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         is_novalue = _is_novalue(arg_to_test)
@@ -609,10 +609,10 @@ def register_ifvalue_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
         true_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not true_branch:
+        if true_branch is None:
             return None
 
         if _is_novalue(arg_to_test):
@@ -623,10 +623,10 @@ def register_ifvalue_commands(expander: ExpanderCore):
         expander: ExpanderCore, _token: Token
     ) -> Optional[List[Token]]:
         arg_to_test = expander.parse_immediate_token(skip_whitespace=True)
-        if not arg_to_test:
+        if arg_to_test is None:
             return None
         false_branch = expander.parse_immediate_token(skip_whitespace=True)
-        if not false_branch:
+        if false_branch is None:
             return None
 
         if not (_is_novalue(arg_to_test)):

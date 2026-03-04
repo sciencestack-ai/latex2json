@@ -454,3 +454,50 @@ def test_embellishment_order_in_spec():
     # even though ^ appears first in the input
     assert "SUB:b" in result2_str or "SUB:{b}" in result2_str
     assert "SUP:a" in result2_str or "SUP:{a}" in result2_str
+
+
+def test_ifnovalue_with_empty_branches():
+    r"""Regression: \IfNoValueTF with empty true/false branches must not leak sentinel.
+
+    When a branch is {}, parse_immediate_token returns [] (empty list).
+    The handlers must check `is None` not truthiness, or they bail early
+    and leak \q__xparse_no_value into the output.
+    """
+    expander = Expander()
+
+    # Pattern from rec-thy.sty: \Oleq has empty true branch
+    expander.expand(
+        r"\NewDocumentCommand{\Oleq}{o}{\leq_{\mathcal{O}\IfNoValueTF{#1}{}{,#1}}}"
+    )
+
+    # Without optional arg: true branch is empty {}, sentinel must NOT leak
+    result = expander.expand(r"\Oleq")
+    result_str = "".join(tok.value for tok in result)
+    assert "q__xparse_no_value" not in result_str
+    assert ",," not in result_str  # no stray comma either
+
+    # With optional arg: false branch produces ,#1
+    result = expander.expand(r"\Oleq[x]")
+    result_str = "".join(tok.value for tok in result)
+    assert ",x" in result_str
+    assert "q__xparse_no_value" not in result_str
+
+
+def test_ifvalue_with_empty_branches():
+    r"""Regression: \IfValueTF with empty branches must work correctly."""
+    expander = Expander()
+
+    expander.expand(
+        r"\NewDocumentCommand{\test}{o m}{\IfValueTF{#1}{}{FALLBACK}#2}"
+    )
+
+    # Without optional: should get FALLBACK (false branch)
+    result = expander.expand(r"\test{ok}")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+    assert "FALLBACK" in result_str
+
+    # With optional: true branch is empty {}, should just get #2
+    result = expander.expand(r"\test[hi]{ok}")
+    result_str = "".join(tok.value for tok in result if tok.value.strip())
+    assert "FALLBACK" not in result_str
+    assert "ok" in result_str
