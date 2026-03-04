@@ -1,6 +1,6 @@
 # LaTeX2JSON
 
-A robust, pure Python LaTeX-to-JSON parser. No TeX installation, no C bindings, no subprocesses. [500k+ arXiv papers in production.](#tested-on-500000-arxiv-papers)
+A fast and robust LaTeX-to-JSON parser in pure python (no TeX installations). [Tested on 500k+ arXiv papers.](#tested-on-500000-arxiv-papers) Extract sections, equations, figures, citations, and metadata from LaTeX into typed JSON.
 
 ## Why LaTeX2JSON?
 
@@ -9,11 +9,31 @@ We needed to parse hundreds of thousands of real arXiv papers into structured da
 LaTeX2JSON focuses specifically on this problem: **reliably extracting semantic structure from real-world LaTeX into JSON**.
 
 - **Pure Python** — No TeX installation required. Runs anywhere Python runs.
-- **Agent-ready** — Typed, hierarchical tokens with accurate numbering make papers queryable, not just readable. Built for RAG pipelines, claim extraction, and any agent that needs to reference specific parts of a paper.
 - **Macro expansion** — Resolves `\newcommand`, `\def`, `\let`, `\renewcommand`, `\csname`, nested definitions, starred variants, optional arguments
 - **Scoping** — Tracks scope correctly when macros are redefined mid-document
 - **Style files** — Parses real-world `.sty` and `.cls` files, expanding the macro definitions they provide
 - **expl3** — Partial support for LaTeX3 programming layer (22 modules)
+
+Every token is typed with a `type` field (`section`, `equation`, `figure`, `citation`, ...) and carries its metadata — numbering, display mode, nesting depth. The output is a tree you can walk, filter, and query:
+
+```python
+from latex2json import TexReader
+import json
+
+reader = TexReader()
+result = reader.process("paper.tar.gz")
+tokens = json.loads(reader.to_json(result))
+
+# pull all block equations from the paper
+def walk(nodes):
+    for node in nodes:
+        if node.get("type") == "equation" and node.get("display") == "block":
+            yield node
+        yield from walk(node.get("content", []) if isinstance(node.get("content"), list) else [])
+
+equations = list(walk(tokens))
+# [{"type": "equation", "display": "block", "numbering": "1", "content": [...]}, ...]
+```
 
 ## Table of Contents
 
