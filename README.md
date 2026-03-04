@@ -1,152 +1,102 @@
-# LaTeX2JSON Parser
+# LaTeX2JSON
 
-A python package for parsing LaTeX (.tex) files into structured JSON output. Simplifies LaTeX content into basic semantic tokens (sections, equations, tables, etc.) and hierarchy, focusing on content extraction rather than visual formatting (see [sample output](#output-structure) and all [token types](#token-types))
+A robust, pure Python LaTeX-to-JSON parser. No TeX installation, no C bindings, no subprocesses. [500k+ arXiv papers in production.](#tested-on-500000-arxiv-papers)
+
+## Why LaTeX2JSON?
+
+We needed to parse hundreds of thousands of real arXiv papers into structured data. Outside of full LaTeX engines, existing LaTeX conversion tools like Pandoc do not handle complex real world LaTeX. None of them produce a clean JSON AST from arbitrary papers that could also handle custom macros and bundled style files.
+
+LaTeX2JSON focuses specifically on this problem: **reliably extracting semantic structure from real-world LaTeX into JSON**.
+
+- **Pure Python** — No TeX installation required. Runs anywhere Python runs.
+- **Agent-ready** — Typed, hierarchical tokens with accurate numbering make papers queryable, not just readable. Built for RAG pipelines, claim extraction, and any agent that needs to reference specific parts of a paper.
+- **Macro expansion** — Resolves `\newcommand`, `\def`, `\let`, `\renewcommand`, `\csname`, nested definitions, starred variants, optional arguments
+- **Scoping** — Tracks scope correctly when macros are redefined mid-document
+- **Style files** — Parses real-world `.sty` and `.cls` files, expanding the macro definitions they provide
+- **expl3** — Partial support for LaTeX3 programming layer (22 modules)
 
 ## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
 - [Quick Start](#quick-start)
-  - [Read from .tex files/folders/gz](#read-directly-from-tex-filesfoldersgz)
 - [Output Structure](#output-structure)
   - [Token Types](#token-types)
-- [Tested Papers](#tested-papers)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Tested on 500,000+ arXiv Papers](#tested-on-500000-arxiv-papers)
 - [Limitations](#limitations)
 - [Contributions](#contributions)
 - [MIT License](#license)
 
-Currently supports a wide variety of latex papers on arxiv.
+## Quick Start
 
-## Why LaTeX2JSON instead of Pandoc or plasTeX?
-
-LaTeX2JSON is first and foremost a **much more reliable LaTeX parser**. Where other tools often fail on complex, real-world documents, LaTeX2JSON is designed to handle a wide range of macros, environments, and scoping rules you actually see in academic papers.
-### What makes it different
-- **Stronger Core Parsing**  
-  Handles tricky macro definitions and expansions (`\newcommand`, `\def`, `\renewcommand`, nested parameters, `##1` patterns) that Pandoc ignores and plasTeX only partially supports.
-- **Tested on Real Research Papers**  
-  Built and stress-tested against hundreds of arXiv papers in math, physics, and CS. It works on the documents that typically break Pandoc/plasTeX, not just minimal LaTeX examples.
-- **Structured JSON Output**  
-  Instead of HTML or XML, LaTeX2JSON gives you a clean JSON AST — making it easy to plug into React frontends, annotation systems, or AI pipelines without post-processing.
-- **Scoping and Redefinitions**  
-  Tracks scope correctly when macros are redefined mid-document (common in math papers). This avoids subtle inconsistencies that appear in other parsers.
-- **Built for Developers**  
-  Designed as a transpiler — you get a semantically faithful representation of the document, ready for programmatic use, not just a rendered view.
-
-## Brief
-This parser focuses on extracting document content rather than preserving LaTeX's visual format:
-
-- While the semantic structure (sections, equations, etc.) is maintained, layout-specific elements like page formatting, column arrangements, and table styling are not represented in the JSON output.
-- Section, figure, table and equation counters etc may deviate from the original latex implementation.
-- Text formatting is preserved as much as possible.
-
-## Features
-
-### Core functionality
-
-- Complex nested macro handling:
-  - Correct parameter substitution in nested definitions
-  - Proper scoping of redefined commands
-- Rich table support:
-  - Multi-row/multi-column cells
-  - Mixed content (text, math, citations)
-  - Styling and formatting within cells
-- Bibliography features:
-  - Citations with titles/notes
-  - Multiple citation handling
-- Comprehensive math mode support:
-  - Complex mathematical constructs
-  - Special operators and delimiters
-- Text styling and colors:
-  - Color definitions and scoping
-  - Mixed styling within environments
-
-### Macro and nested environment processing
-
-- Full macro expansion system:
-  - Resolves `\newcommand`, `\def`, `\let`, `\renewcommand`, `\csname` and other command definitions
-  - Expands all macros recursively across nested content
-  - Maintains proper scoping for redefined commands
-  - Handles complex parameter substitution (e.g. `##1` in nested definitions)
-  - Supports both starred and non-starred command variants
-  - Processes command defaults and optional arguments
-- Advanced environment handling:
-  - Nested environments support
-  - Complex table structures i.e. tabular within tabular
-  - Mathematical expressions and equations for inline/block/align etc
-
-### Components
-
-- Modular parsing system with specialized components:
-  - Bibliography parsing (`bib_parser.py`) # handles .bib and .bbl files
-  - Style file parsing (`sty_parser.py`) # handles .sty files
-- Clean JSON output generation (`structure/builder.py`)
-
-### What about tikz/pgfpicture/picture etc?
-
-- These drawing environments are stored as verbatim, raw latex blocks (type: `diagram`)
-
-## Installation
-
-### From GitHub
+### Installation
 
 ```bash
 pip install git+https://github.com/mrlooi/latex2json.git
 ```
 
-### Or from Source
+Requires Python 3.10+.
 
-1. Clone the repository
-
-```bash
-git clone https://github.com/mrlooi/latex2json.git
-cd latex2json
-```
-
-2. Install requirements
-
-```bash
-pip install -r requirements.txt
-```
-
-### Requirements
-
-Python 3.10 or higher
-
-### Testing
-
-```bash
-pytest tests/
-```
-
-## Quick Start
+### Parse a string
 
 ```python
 from latex2json import Latex2JSONRenderer
 
-parser = Latex2JSONRenderer()
-
-latex_text = r"""
-  % refer to tests/parser/test_parser.py for examples
-
-  \newcommand{\outermacro}[2]{
-      Outer parameters: #1 and #2
-
-      \newcommand{\innermacro}[2]{
-            Outer-inner parameters: #1 and #2
-            Inner parameters: ##1 and ##2
-      }
-      \innermacro{inner-first}{inner-second}
-  }
-
-  \outermacro{outer-first}{outer-second}
-"""
-
-tokens = parser.parse(latex_text)
+renderer = Latex2JSONRenderer()
+tokens = renderer.parse(r"""
+\begin{document}
+\title{My Paper}
+\maketitle
+\section{Introduction}
+We propose a method for $E = mc^2$.
+\subsection{Subsection}
+\begin{equation}
+E = mc^2
+\end{equation}
+\end{document}
+""")
 ```
+
+### Parse files, folders, or archives
+
+```python
+from latex2json import TexReader
+
+tex_reader = TexReader()
+
+# .tex file, folder with multiple .tex files, or .tar.gz from arXiv
+result = tex_reader.process("/path/to/paper.tar.gz")
+
+# result.tokens contains the parsed token list
+json_output = tex_reader.to_json(result)
+
+# Clean up temp files if processing an archive
+result.cleanup()
+```
+
+`TexReader.process()` accepts `.tex` files, directories, `.gz`, and `.tar.gz` archives. It auto-detects the main `.tex` file, resolves `\input`/`\include` dependencies, and parses bundled `.sty`/`.cls`/`.bib` files.
+
+### Error handling
+
+```python
+from latex2json import TexReader, TexProcessingError
+
+try:
+    result = TexReader().process("paper.tar.gz")
+except FileNotFoundError:
+    pass  # File doesn't exist
+except TexProcessingError as e:
+    pass  # Wraps extraction/processing failures
+except RuntimeError as e:
+    pass  # Infinite macro recursion detected
+```
+
+The parser degrades gracefully: unsupported commands become `command` tokens, missing `.bib`/`.sty` files are skipped with a warning, and infinite recursion is caught by automatic depth limits.
+
 
 ## Output Structure
 
-The parser generates a structured JSON output that preserves the document hierarchy. Here's a simplified example:
+The parser produces a JSON array of semantic tokens preserving document hierarchy:
 
 ```json
 [
@@ -181,27 +131,25 @@ The parser generates a structured JSON output that preserves the document hierar
 ]
 ```
 
-For more detailed examples of the output structure, see the expected test output in [tests/structure/test_builder.py](tests/structure/test_builder.py).
+For more examples, see [tests/renderer/test_json_renderer.py](tests/renderer/test_json_renderer.py).
 
 ### Token Types
-
-The parser organizes latex tokens into the following token types:
 
 #### Document Structure
 
 - `document` - Root document container
 - `title` - Document title
-- `section` - Section headers (includes subsections)
+- `section` - Section headers (includes subsections via `level`)
 - `paragraph` - Text paragraphs
 - `abstract` - Document abstract
 - `appendix` - Appendix sections
 
 #### Content Elements
 
-- `text` - Plain text content with optional styling
+- `text` - Plain text with optional `styles` array
 - `quote` - Quoted text content
-- `equation` - Mathematical equations (inline or block)
-- `equation_array` - Mathematical Align/matrix/array etc 
+- `equation` - Math equations (`display`: `"inline"` or `"block"`)
+- `equation_array` - Align/matrix/array environments
 - `figure`, `subfigure` - Figure environments
 - `table`, `subtable` - Table environments
 - `tabular` - Table content structure
@@ -209,26 +157,20 @@ The parser organizes latex tokens into the following token types:
 - `list` - Enumerated or itemized lists
 - `item` - List items
 - `code` - Code blocks
-- `algorithm` - Algorithm environments
-- `algorithmic` - Algorithmic content
+- `algorithm`, `algorithmic` - Algorithm environments
 
-#### Graphics Elements
+#### Graphics
 
-- `includegraphics` - Image inclusion commands
-- `includepdf` - PDF inclusion commands
-- `diagram` - tikz/picture diagrams containing verbatim the raw latex for those blocks
-
-#### Environment Types
-
-- `environment` - Generic LaTeX environments
-- `math_env` - Mathematical environments
+- `includegraphics` - Image references
+- `includepdf` - PDF references
+- `diagram` - tikz/pgfpicture/picture as verbatim LaTeX
 
 #### References
 
 - `citation` - Bibliography citations
 - `ref` - Cross-references
 - `url` - URL links
-- `footnote` - Footnote content
+- `footnote` - Footnotes
 - `bibliography` - Bibliography section
 - `bibitem` - Bibliography entries
 
@@ -240,77 +182,146 @@ The parser organizes latex tokens into the following token types:
 - `keywords` - Document keywords
 - `address` - Address information
 
-#### Other
+#### Fallback
 
-- `command` - Generic LaTeX commands (unsuccessfully parsed)
+- `command` - Unsupported LaTeX commands (preserved rather than dropped)
+- `environment` - Generic environments
+- `math_env` - Generic math environments
 - `group` - Grouped content
 
+## Features
 
-## Read directly from .tex files/folders/gz
+### Macro expansion
 
-```python
-from latex2json import TexReader
+- Resolves `\newcommand`, `\def`, `\let`, `\renewcommand`, `\csname` and other command definitions
+- Recursive expansion across nested content
+- Proper scoping — `\begin{env}` pushes scope, `\end{env}` pops it
+- Complex parameter substitution (e.g. `##1` in nested definitions)
+- Starred and non-starred command variants
+- Command defaults and optional arguments
 
-# Initialize the parser
-tex_reader = TexReader()
+### Environment handling
 
-# Process a regular TeX file/folder
-result = tex_reader.process("/path/to/folder_or_file")
-# Or process a compressed TeX file (supports .gz and .tar.gz)
-result = tex_reader.process("path/to/paper.tar.gz")
+- Nested environments (e.g. tabular within tabular)
+- Math environments: inline, block, align, gather, array, matrix
+- Tables: multi-row/multi-column, mixed content
+- Lists, figures, algorithms, theorems
+- Drawing environments (tikz, pgfpicture) preserved as verbatim `diagram` tokens
 
-# Convert to JSON
-json_output = tex_reader.to_json(result)
+### Style file processing
+
+- Parses real-world `.sty` and `.cls` files bundled with papers
+- Handles custom class files, package options, conditional definitions
+- Unsupported commands skipped gracefully
+
+### expl3 support
+
+Partial support for LaTeX3 programming layer — handles common expl3 modules used in modern packages:
+
+`bool`, `clist`, `cs`, `dim`, `exp`, `file`, `fp`, `group`, `int`, `io`, `keys`, `msg`, `peek`, `prg`, `prop`, `quark`, `regex`, `seq`, `skip`, `str`, `tl`, `token`
+
+Not all expl3 primitives are covered, but enough to parse most papers that use expl3-based packages.
+
+### Numbering
+
+LaTeX2JSON implements LaTeX's full counter system to produce accurate numbering for sections, equations, figures, tables, theorems, and captions — as close to real LaTeX-to-PDF output as possible.
+
+- **Hierarchical numbering** — Sections produce `1`, `1.1`, `1.2.3`, etc. Stepping a parent counter resets its children, matching LaTeX behavior.
+- **Equation numbering** — Block equations are numbered sequentially. `\nonumber`/`\notag` suppress numbering. `\tag{...}` overrides it. In `align` environments, each row is numbered independently.
+- **Sub-numbering** — `subequation` produces `1a`, `1b`; `subfigure`/`subtable` produce `1a`, `1b` under their parent float.
+- **`\numberwithin` / `\counterwithin`** — `\numberwithin{equation}{section}` makes equations number as `1.1`, `1.2` within each section, resetting on section change.
+- **Counter commands** — `\setcounter`, `\addtocounter`, `\stepcounter`, `\refstepcounter`, `\newcounter`, `\value` all work.
+- **Format styles** — Arabic (`1, 2, 3`), roman (`i, ii, iii`), Roman (`I, II, III`), alpha (`a, b, c`), Alpha (`A, B, C`). Appendix sections default to alphabetic (`A`, `B`, `C`).
+- **`\the<counter>` overrides** — Custom numbering formats via `\renewcommand{\theequation}{...}` are respected.
+- **Theorem numbering** — `\newtheorem` environments get their own counters with optional parent counters, producing `Theorem 1`, `Lemma 1.1`, etc.
+
+Every numberable node in the output JSON includes a `numbering` field:
+
+```json
+{ "type": "section", "level": 2, "numbering": "3.1", "title": [...] }
+{ "type": "equation", "display": "block", "numbering": "3.2", "content": "..." }
+{ "type": "caption", "numbering": "1a", "content": [...] }
 ```
 
-## Tested Papers
+### Bibliography
 
-This parser has been successfully tested on the following arxiv papers, including:
+- Parses `.bib` and `.bbl` files
+- Resolves `\cite`, `\citep`, `\citet` and variants
+- Handles multiple citations and citation notes
 
-- [1706.03762v7] Attention is all you need (AI/ML, 2017)
-- [2303.08774v6] GPT-4 Technical Report (AI/ML, 2023)
-- [1509.05363] The Erdos discrepancy problem (Math/combinatorics, 2015)
-- [2501.12948] DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (AI/ML, 2025)
-- [hep-th/0603057] Dynamics of dark energy (Physics/High Energy Physics, 2006)
-- [2307.09288v2] Llama 2: Open Foundation and Fine-Tuned Chat Models (AI/ML, 2023)
-- [1703.06870] Mask R-CNN (Computer Vision, 2017)
-- [2301.10945v1] A Fully First-Order Method for Stochastic Bilevel Optimization (Computer Science/Optimization, 2023)
-- [1907.11692v1] RoBERTa: A Robustly Optimized BERT Pretraining Approach (AI/ML, 2019)
-- [math/0503066] Stable signal recovery from incomplete and inaccurate measurements (Math/Numerical Analysis, 2006)
-- [2304.02643] Segment Anything (Computer Vision, 2023)
-- [1712.01815v1] Mastering Chess and Shogi by Self-Play with a General Reinforcement Learning Algorithm (AI/ML, 2017) # limitations on /chess related commands
+## Architecture
 
-And many more across math, physics, and computer science.
+```
+Raw LaTeX → Tokenizer → Expander → Parser → Renderer → JSON AST
+```
 
-You may view some of the JSON outputs in [arxiv latex2json samples](https://drive.google.com/drive/u/5/folders/1lZTWIq5q_vjMs5GUScuvdDjnktpXRajV)
+1. **Tokenization** (`latex2json/tokens/`) — Converts raw LaTeX text into tokens with proper catcode handling
+2. **Expansion** (`latex2json/expander/`) — Resolves macro definitions, expansions, and LaTeX primitives
+3. **Parsing** (`latex2json/parser/`) — Converts expanded tokens into semantic AST nodes
+4. **Rendering** (`latex2json/renderer/`) — Transforms AST into final JSON output
+
+### Key Components
+
+| Component | Location | Description |
+|-----------|----------|-------------|
+| **TexReader** | `tex_reader.py` | Main entry point. Handles files, folders, and archives. |
+| **ExpanderCore** | `expander/expander_core.py` | Core macro expansion engine with state and scope management. |
+| **MacroRegistry** | `expander/macro_registry.py` | Stores macro definitions and maps commands to handlers. |
+| **ParserCore** | `parser/parser_core.py` | Converts expanded tokens to semantic AST nodes. |
+| **Handlers** | `expander/handlers/`, `parser/handlers/` | Specialized processors for primitives, environments, conditionals, bibliography, etc. |
+| **Nodes** | `nodes/` | AST node types — `TextNode`, `CommandNode`, sections, equations, tables, captions. |
+
+### Extending the Parser
+
+To add support for a new LaTeX command or package:
+
+- **Expander-level** (macro expansion): Add a handler in `expander/handlers/`. This is where you teach the system how to expand a new command into tokens.
+- **Parser-level** (semantic output): Add a handler in `parser/handlers/`. This is where you define what AST node a command produces.
+- **Package-level**: Package handlers live in `expander/packages/` and register commands that a specific LaTeX package provides.
+
+~1000 unit tests mirror the main package structure (`tests/expander/`, `tests/parser/`, `tests/nodes/`, `tests/tokens/`).
+
+## Tested on 500,000+ arXiv Papers
+
+LaTeX2JSON has parsed **500k+ papers** across math, physics, computer science, and 40+ other arXiv categories — from recent 2025 submissions to highly-cited classics. It powers [ScienceStack](https://sciencestack.ai), which serves these as structured APIs for AI agents, RAG pipelines, and research tools.
+
+Papers span a good range of LaTeX complexity:
+
+- [2303.08774] GPT-4 Technical Report
+- [1706.03762] Attention Is All You Need
+- [2307.09288] Llama 2
+- [2501.12948] DeepSeek-R1
+- [2304.02643] Segment Anything
+- [1703.06870] Mask R-CNN
+- [1509.05363] The Erdos Discrepancy Problem
+- [math/0503066] Stable Signal Recovery from Incomplete and Inaccurate Measurements
+- [hep-th/0603057] Dynamics of Dark Energy
+
+View any parsed paper live at [`sciencestack.ai/paper/{arxiv_id}`](https://sciencestack.ai).
+
 ## Limitations
 
-- Does not support expl3
-- Does not currently support specialized LaTeX drawing commands and environments (e.g., Chess commands etc). Treats them as unknown command tokens i.e. type: "command"
-- Does not preserve latex->PDF visual formatting
-- Does not properly support font and symbol declarations (e.g., \newfont, \newsymbol, etc.)
+- **Macro expansion is best-effort.** The expander handles standard LaTeX primitives and common packages, but some `.sty` files use low-level TeX internals that aren't fully supported. Unexpanded macros are emitted as `command` tokens rather than crashing.
+- **LaTeX is Turing-complete.** Some macro patterns can trigger infinite recursion. The expander has automatic recursion detection and depth limits to catch these, but pathological cases exist.
+- Drawing commands (tikz, pgfpicture, Chess, etc.) are preserved as verbatim blocks, not parsed
+- Does not preserve visual formatting (page layout, column arrangement, table styling)
+- Font and symbol declarations (`\newfont`, `\newsymbol`) not fully supported
 
 ### Numbering Limitations
 
-Due to the single-pass architecture of the expander/parser, several numbering-related features have known limitations:
+Due to the single-pass architecture:
 
-1. **Restatable Environments (`\begin{restatable}`)**: In real LaTeX, starred references like `\MainResult*` should display the final numbering from the last occurrence in the document. Our implementation shows the current counter state at the time of call, which may not reflect the final numbering after all restatements.
-
-2. **ContinuedFloat**: The `\ContinuedFloat` command (from the caption package) is not properly handled. Continued floats are currently ignored, and new figure captions receive new numbering instead of continuing the previous float's numbering.
-
-3. **Conditional Equation Numbering (`mathtools` `showonlyrefs`)**: The `\mathtoolsset{showonlyrefs}` option is not supported. All equations will be numbered regardless of whether they are referenced in the document, rather than only numbering referenced equations.
+1. **Restatable Environments** — `\MainResult*` shows the counter state at time of call, not final numbering after all restatements
+2. **ContinuedFloat** — Not handled; continued floats receive new numbering
+3. **`showonlyrefs`** — All equations are numbered regardless of whether they're referenced
 
 ## Contributions
 
-Contributions to improve LaTeX2JSON are welcome! Here are some areas where help is needed:
+Areas where help is needed:
 
-1. **Expl3 and other modern latex patterns**
-
-2. **Better support for complex `@if` conditionals and LaTeX internals**
-
-3. **Additional commands from various packages**
-
-   - If you find a command that is not supported, please feel free to add them!
+1. **Broader expl3 coverage** — many modules are supported but not all primitives
+2. **Complex `@if` conditionals and LaTeX internals**
+3. **Additional package commands** — if you find an unsupported command, add a handler
 
 ### How to Contribute
 
@@ -320,10 +331,7 @@ Contributions to improve LaTeX2JSON are welcome! Here are some areas where help 
 4. Push to the branch (`git push origin feature/some-feature`)
 5. Open a Pull Request
 
-Please ensure your PR includes:
-
-- A clear description of the changes
-- Updated tests where applicable
+Please ensure your PR includes a clear description and updated tests where applicable.
 
 ## License
 

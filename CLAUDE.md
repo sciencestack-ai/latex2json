@@ -100,4 +100,4 @@ Tests are organized to mirror the main package structure:
 - The system prioritizes semantic content extraction over visual layout preservation
 - Complex drawing environments (tikz, pgfpicture) are preserved as verbatim blocks
 - Section numbering may differ from original LaTeX compilation
-- Requires Python 3.7+
+- Requires Python 3.10+
