@@ -1,5 +1,6 @@
 from latex2json.expander.expander import Expander
-from latex2json.tokens.types import Token
+from latex2json.tokens.types import Token, EnvironmentStartToken, EnvironmentEndToken
+from latex2json.tokens.utils import strip_whitespace_tokens
 
 
 def test_etoolbox_patchcmds():
@@ -338,3 +339,43 @@ def test_etoolbox_ifdef_nested():
     out_str = expander.convert_tokens_to_str(out).strip()
     out_strs = [s.strip() for s in out_str.split("\n") if s.strip()]
     assert out_strs == ["OUTER-TRUE", "INNER-TRUE"]
+
+
+def test_before_begin_environment():
+    r"""Test \BeforeBeginEnvironment hooks."""
+    expander = Expander()
+
+    text = r"""
+    \BeforeBeginEnvironment{center}{BEFORE }
+    \begin{center}CONTENT\end{center}
+    """.strip()
+    out = strip_whitespace_tokens(expander.expand(text))
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert "BEFORE" in out_str
+
+
+def test_after_end_environment():
+    r"""Test \AfterEndEnvironment hooks."""
+    expander = Expander()
+
+    text = r"""
+    \AfterEndEnvironment{center}{AFTER}
+    \begin{center}CONTENT\end{center}
+    """.strip()
+    out = strip_whitespace_tokens(expander.expand(text))
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert "AFTER" in out_str
+
+
+def test_before_begin_and_after_end_environment():
+    r"""Test both hooks on the same environment."""
+    expander = Expander()
+
+    text = r"""
+    \BeforeBeginEnvironment{center}{\def\myvar{HOOKED}}
+    \AfterEndEnvironment{center}{AFTER}
+    \begin{center}CONTENT\end{center}
+    """.strip()
+    out = strip_whitespace_tokens(expander.expand(text))
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert "AFTER" in out_str

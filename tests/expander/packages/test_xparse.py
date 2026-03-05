@@ -501,3 +501,47 @@ def test_ifvalue_with_empty_branches():
     result_str = "".join(tok.value for tok in result if tok.value.strip())
     assert "FALLBACK" not in result_str
     assert "ok" in result_str
+
+
+def test_newdocumentenvironment_basic():
+    """Test basic NewDocumentEnvironment with no args."""
+    expander = Expander()
+
+    text = r"""
+    \NewDocumentEnvironment{mybox}{}{\textbf{Start}}{\textbf{End}}
+    \begin{mybox}Content\end{mybox}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    assert "Content" in out_str
+
+
+def test_newdocumentenvironment_with_optional_arg():
+    """Test NewDocumentEnvironment with optional argument O{default}."""
+    expander = Expander()
+
+    text = r"""
+    \NewDocumentEnvironment{myenv}{ O{default} }{[#1]}{[end]}
+    \begin{myenv}Content\end{myenv}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    assert "default" in out_str
+
+    text2 = r"\begin{myenv}[custom]Content\end{myenv}"
+    out2 = expander.expand(text2)
+    out_str2 = expander.convert_tokens_to_str(out2)
+    assert "custom" in out_str2
+
+
+def test_newdocumentenvironment_with_mandatory_arg():
+    """Test NewDocumentEnvironment with mandatory argument."""
+    expander = Expander()
+
+    text = r"""
+    \NewDocumentEnvironment{titled}{m}{Title: #1.}{}
+    \begin{titled}{Hello}Content\end{titled}
+    """.strip()
+    out = expander.expand(text)
+    out_str = expander.convert_tokens_to_str(out)
+    assert "Title: Hello." in out_str

@@ -638,6 +638,121 @@ def register_ifvalue_commands(expander: ExpanderCore):
     expander.register_handler("\\IfNoValueF", ifnovalue_f_handler, is_global=True)
 
 
+class NewDocumentEnvironmentMacro(Macro):
+    """Handler for \\NewDocumentEnvironment{env}{argspec}{begin}{end}"""
+
+    def __init__(self, name: str, allow_redefine: bool = True):
+        super().__init__(name)
+        self.allow_redefine = allow_redefine
+        self.handler = lambda expander, node: self._expand(expander, node)
+        self.type = MacroType.DECLARATION
+
+    def _expand(self, expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
+        from latex2json.latex_maps.environments import EnvironmentDefinition
+
+        # Parse environment name
+        expander.skip_whitespace()
+        env_name = expander.parse_brace_name()
+        if env_name is None:
+            expander.logger.warning(
+                f"{self.name} expects an environment name"
+            )
+            return None
+
+        # Check if environment already exists
+        if not self.allow_redefine and expander.get_environment_definition(env_name):
+            expander.logger.info(
+                f"environment {env_name} already exists"
+            )
+            return None
+
+        # Parse argument specification
+        expander.skip_whitespace()
+        arg_specs = parse_argument_specification(expander)
+        if arg_specs is None:
+            expander.logger.warning(
+                f"{self.name} {env_name} expects an argument specification"
+            )
+            return None
+
+        # Parse begin definition
+        expander.skip_whitespace()
+        begin_definition = expander.parse_brace_as_tokens()
+        if begin_definition is None:
+            expander.logger.warning(
+                f"{self.name} {env_name} expects a begin definition"
+            )
+            return None
+
+        # Parse end definition
+        expander.skip_whitespace()
+        end_definition = expander.parse_brace_as_tokens()
+        if end_definition is None:
+            expander.logger.warning(
+                f"{self.name} {env_name} expects an end definition"
+            )
+            return None
+
+        # Count mandatory args for num_args (xparse args that consume input)
+        num_args = len(arg_specs)
+
+        # Determine default_arg: if first spec is optional, set default_arg
+        default_arg = None
+        if arg_specs and arg_specs[0].spec_type in ("o", "O", "g", "G", "d", "s"):
+            default_arg = []
+
+        # Create environment definition with begin_definition containing
+        # both the arg parsing logic and the user's begin code
+        captured_arg_specs = arg_specs
+        captured_begin_def = begin_definition
+        captured_end_def = end_definition
+
+        # We create an environment with a custom begin_handler that does
+        # xparse-style argument parsing, then substitutes into the definition
+        def env_begin_handler(expander, token):
+            from latex2json.expander.handlers.environment.environment_utils import (
+                process_environment_begin,
+            )
+
+            # Parse xparse arguments
+            args = parse_xparse_arguments(expander, captured_arg_specs)
+            if args is None:
+                args = []
+
+            # Substitute arguments into begin definition
+            subbed_begin = expander.substitute_token_args(captured_begin_def, args)
+
+            # Create a temporary env def with the substituted begin definition
+            # and no args (since we already parsed them)
+            temp_env_def = env_def.copy()
+            temp_env_def.begin_definition = subbed_begin
+            temp_env_def.end_definition = expander.substitute_token_args(
+                captured_end_def, args
+            )
+            temp_env_def.num_args = 0
+            temp_env_def.default_arg = None
+
+            return process_environment_begin(
+                expander, token, env_name, temp_env_def
+            )
+
+        env_def = EnvironmentDefinition(
+            name=env_name,
+            begin_definition=begin_definition,
+            end_definition=end_definition,
+            num_args=0,  # We handle args in the custom handler
+            default_arg=None,
+            has_direct_command=env_name.isalpha(),
+        )
+        env_def.begin_handler = env_begin_handler
+
+        expander.register_environment(
+            env_name, env_def, is_global=True, is_user_defined=True
+        )
+
+        return []
+
+
 def register_xparse(expander: ExpanderCore):
     """Register xparse commands."""
     expander.register_macro(
@@ -658,6 +773,25 @@ def register_xparse(expander: ExpanderCore):
     expander.register_macro(
         "\\DeclareDocumentCommand",
         NewDocumentCommandMacro("\\DeclareDocumentCommand", allow_redefine=True),
+        is_global=True,
+    )
+
+    # Environment declarations
+    expander.register_macro(
+        "\\NewDocumentEnvironment",
+        NewDocumentEnvironmentMacro("\\NewDocumentEnvironment", allow_redefine=False),
+        is_global=True,
+    )
+    expander.register_macro(
+        "\\RenewDocumentEnvironment",
+        NewDocumentEnvironmentMacro("\\RenewDocumentEnvironment", allow_redefine=True),
+        is_global=True,
+    )
+    expander.register_macro(
+        "\\DeclareDocumentEnvironment",
+        NewDocumentEnvironmentMacro(
+            "\\DeclareDocumentEnvironment", allow_redefine=True
+        ),
         is_global=True,
     )
 

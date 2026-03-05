@@ -405,6 +405,72 @@ def ifcsundef_handler(expander: ExpanderCore, _token: Token):
     return []
 
 
+def before_begin_environment_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \BeforeBeginEnvironment{env}{code}
+    Registers a hook that runs before \begin{env}.
+    """
+    expander.skip_whitespace()
+    env_name = expander.parse_brace_name()
+    if not env_name:
+        expander.logger.warning("\\BeforeBeginEnvironment expects an environment name")
+        return []
+
+    expander.skip_whitespace()
+    hook_tokens = expander.parse_brace_as_tokens(expand=False)
+    if hook_tokens is None:
+        expander.logger.warning("\\BeforeBeginEnvironment expects code in braces")
+        return []
+
+    env_def = expander.get_environment_definition(env_name)
+    if not env_def:
+        expander.logger.warning(
+            f"\\BeforeBeginEnvironment: environment '{env_name}' not found"
+        )
+        return []
+
+    captured_tokens = hook_tokens
+
+    def before_begin_hook():
+        return expander.expand_tokens(list(captured_tokens))
+
+    env_def.hooks.begin.append(before_begin_hook)
+    return []
+
+
+def after_end_environment_handler(expander: ExpanderCore, token: Token):
+    r"""
+    \AfterEndEnvironment{env}{code}
+    Registers a hook that runs after \end{env}.
+    """
+    expander.skip_whitespace()
+    env_name = expander.parse_brace_name()
+    if not env_name:
+        expander.logger.warning("\\AfterEndEnvironment expects an environment name")
+        return []
+
+    expander.skip_whitespace()
+    hook_tokens = expander.parse_brace_as_tokens(expand=False)
+    if hook_tokens is None:
+        expander.logger.warning("\\AfterEndEnvironment expects code in braces")
+        return []
+
+    env_def = expander.get_environment_definition(env_name)
+    if not env_def:
+        expander.logger.warning(
+            f"\\AfterEndEnvironment: environment '{env_name}' not found"
+        )
+        return []
+
+    captured_tokens = hook_tokens
+
+    def after_end_hook():
+        return expander.expand_tokens(list(captured_tokens))
+
+    env_def.hooks.end.append(after_end_hook)
+    return []
+
+
 def register_etoolbox_handler(expander: ExpanderCore):
     # Patch commands
     expander.register_handler("patchcmd", patchcmd_macro_handler, is_global=True)
@@ -434,6 +500,18 @@ def register_etoolbox_handler(expander: ExpanderCore):
     expander.register_handler("ifcsdef", ifcsdef_handler, is_global=True)
     expander.register_handler("ifundef", ifundef_handler, is_global=True)
     expander.register_handler("ifcsundef", ifcsundef_handler, is_global=True)
+
+    # Environment hooks
+    expander.register_handler(
+        "BeforeBeginEnvironment",
+        before_begin_environment_handler,
+        is_global=True,
+    )
+    expander.register_handler(
+        "AfterEndEnvironment",
+        after_end_environment_handler,
+        is_global=True,
+    )
 
 
 if __name__ == "__main__":
