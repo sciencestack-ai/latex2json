@@ -1,5 +1,4 @@
 import chardet
-from chardet.universaldetector import UniversalDetector
 
 
 def detect_encoding(path: str) -> str:
