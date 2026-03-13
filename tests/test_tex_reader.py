@@ -8,6 +8,25 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 samples_dir_path = os.path.join(dir_path, "samples")
 
 
+def test_process_text():
+    tex_reader = TexReader()
+    result = tex_reader.process_text(
+        r"\begin{document}\section{Hello}Some \textbf{bold} text.\end{document}"
+    )
+
+    assert result.tokens is not None
+    assert len(result.tokens) > 0
+    assert result.main_tex_path is None
+    assert result.project_root is None
+
+    # Find the section
+    doc = result.tokens[0]
+    assert doc["type"] == "document"
+    section = doc["content"][0]
+    assert section["type"] == "section"
+    assert section["title"][0]["content"] == "Hello"
+
+
 def test_tex_reader():
     tex_reader = TexReader()
 

@@ -60,10 +60,10 @@ Requires Python 3.10+.
 ### Parse a string
 
 ```python
-from latex2json import Latex2JSONRenderer
+from latex2json import TexReader
 
-renderer = Latex2JSONRenderer()
-tokens = renderer.parse(r"""
+reader = TexReader()
+result = reader.process_text(r"""
 \begin{document}
 \title{My Paper}
 \maketitle
@@ -75,6 +75,7 @@ E = mc^2
 \end{equation}
 \end{document}
 """)
+tokens = result.tokens
 ```
 
 ### Parse files, folders, or archives

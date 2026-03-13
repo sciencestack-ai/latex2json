@@ -92,48 +92,50 @@ class TexReader:
         if not file_path.exists():
             raise FileNotFoundError(f"{file_type} not found: {file_path}")
 
-    def process_file(
-        self, file_path: Path | str, project_root: Path | str = None
-    ) -> ProcessingResult:
-        file_path = Path(file_path)
-        if project_root:
-            project_root = Path(project_root)
-        else:
-            # Default to parent directory of the file
-            project_root = file_path.parent
+    # --- Public API ---
 
+    def process_text(self, text: str) -> ProcessingResult:
+        """Process raw LaTeX text directly without requiring a file."""
         self.clear()
-        self._verify_file_exists(file_path)
-        # is_supported, error_msg = is_supported_tex_version(file_path)
-        # if not is_supported:
-        #     raise TexProcessingError(f"Unsupported TeX version: {error_msg}")
-        output = (
-            self.json_renderer.parse_file(
-                file_path, project_root=str(project_root) if project_root else None
-            )
-            or []
-        )
+        output = self.json_renderer.parse(text) or []
         color_map = self.json_renderer.get_colors()
+        return ProcessingResult(tokens=output, color_map=color_map)
 
-        return ProcessingResult(
-            tokens=output,
-            color_map=color_map,
-            main_tex_path=file_path,
-            project_root=project_root,
+    def process(
+        self, input_path: str | Path, project_root: str | Path = None, cleanup: bool = False
+    ) -> ProcessingResult:
+        """Process a .tex file, folder, or archive (.gz, .tar.gz, .zip).
+
+        Args:
+            input_path: Path to a .tex file, folder, or compressed archive.
+            project_root: Root directory for resolving \\input/\\include paths.
+                          Defaults to parent directory of the .tex file.
+            cleanup: If True, remove temporary files after processing archives.
+        """
+        input_path = Path(input_path)
+        self._verify_file_exists(input_path)
+
+        def _process() -> ProcessingResult:
+            if input_path.is_dir():
+                return self._process_folder(input_path)
+            elif input_path.suffix in [".gz", ".tar.gz", ".tgz", ".zip"]:
+                result = self._process_compressed(str(input_path), cleanup=False)
+                if cleanup:
+                    result.cleanup()
+                return result
+            else:
+                return self._process_file(input_path, project_root=project_root)
+
+        return self._handle_file_operation(
+            _process, f"Failed to process input {input_path}"
         )
 
     def to_json(self, result: ProcessingResult) -> str:
         def _convert() -> str:
-            # with warnings.catch_warnings():
-            #     warnings.filterwarnings("ignore", module="pydantic")
-            #     json_output = [
-            #         t.model_dump(mode="json", exclude_none=True) for t in result.tokens
-            #     ]
             data = {
                 "tokens": result.tokens,
                 "color_map": result.color_map,
             }
-            # ensure_ascii=False to prevent unnecessary escape characters
             return json.dumps(data, ensure_ascii=False)
 
         return self._handle_file_operation(_convert, "Failed to convert tokens to JSON")
@@ -153,7 +155,35 @@ class TexReader:
             _save, f"Failed to save JSON output to {json_path}"
         )
 
-    def process_compressed(
+    # --- Private ---
+
+    def _process_file(
+        self, file_path: Path | str, project_root: Path | str = None
+    ) -> ProcessingResult:
+        file_path = Path(file_path)
+        if project_root:
+            project_root = Path(project_root)
+        else:
+            project_root = file_path.parent
+
+        self.clear()
+        self._verify_file_exists(file_path)
+        output = (
+            self.json_renderer.parse_file(
+                file_path, project_root=str(project_root) if project_root else None
+            )
+            or []
+        )
+        color_map = self.json_renderer.get_colors()
+
+        return ProcessingResult(
+            tokens=output,
+            color_map=color_map,
+            main_tex_path=file_path,
+            project_root=project_root,
+        )
+
+    def _process_compressed(
         self, compressed_path: str, temp_dir: Optional[str] = None, cleanup: bool = True
     ):
         if not os.path.exists(compressed_path):
@@ -169,39 +199,18 @@ class TexReader:
                 f"Found main TeX file in archive: {main_tex}, {compressed_path}"
             )
             file_path = os.path.join(temp_dir, main_tex)
-            output = self.process_file(file_path, project_root=temp_dir)
+            output = self._process_file(file_path, project_root=temp_dir)
             output.temp_dir = Path(temp_dir)
             return output
 
-    def process_folder(self, folder_path: str | Path) -> ProcessingResult:
+    def _process_folder(self, folder_path: str | Path) -> ProcessingResult:
         folder_path = Path(folder_path)
 
         self._verify_file_exists(folder_path, file_type="Folder")
         main_tex, _ = TexFileExtractor.from_folder(str(folder_path))
         self.logger.info(f"Found main TeX file in folder: {main_tex}, {folder_path}")
         file_path = folder_path / main_tex
-        return self.process_file(file_path, project_root=folder_path)
-
-    def process(
-        self, input_path: str | Path, cleanup: bool = False
-    ) -> ProcessingResult:
-        input_path = Path(input_path)
-        self._verify_file_exists(input_path)
-
-        def _process() -> ProcessingResult:
-            if input_path.is_dir():
-                return self.process_folder(input_path)
-            elif input_path.suffix in [".gz", ".tar.gz", ".tgz", ".zip"]:
-                result = self.process_compressed(str(input_path), cleanup=False)
-                if cleanup:
-                    result.cleanup()
-                return result
-            else:
-                return self.process_file(input_path)
-
-        return self._handle_file_operation(
-            _process, f"Failed to process input {input_path}"
-        )
+        return self._process_file(file_path, project_root=folder_path)
 
 
 if __name__ == "__main__":
