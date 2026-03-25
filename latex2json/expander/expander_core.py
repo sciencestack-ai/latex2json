@@ -256,6 +256,15 @@ class ExpanderCore(ExpansionMixin, ParsingMixin, FileIOMixin, TokenProcessor):
             expander.state.pending_global = True
             return []
 
+        def protect_handler(expander: "ExpanderCore", token: Token):
+            # In LaTeX, \protect generally prevents expansion of the next token
+            # in moving arguments; model it as \noexpand semantics.
+            expander.skip_whitespace()
+            next_token = expander.consume()
+            if next_token is None:
+                return []
+            return [next_token]
+
         def bye_handler(expander: "ExpanderCore", token: Token):
             expander.logger.info(r"\bye triggered, popped source")
             expander.stream.pop_source()
@@ -266,7 +275,7 @@ class ExpanderCore(ExpansionMixin, ParsingMixin, FileIOMixin, TokenProcessor):
         self.register_macro("\\@empty", EmptyMacro(), is_global=True)
         self.register_macro("\\relax", RelaxMacro(), is_global=True)
         self.register_handler("\\null", lambda expander, token: [], is_global=True)
-        self.register_handler("\\protect", lambda expander, token: [], is_global=True)
+        self.register_handler("\\protect", protect_handler, is_global=True)
         self.register_handler("\\protected", lambda expander, token: [], is_global=True)
         self.register_handler("\\bye", bye_handler, is_global=True)
 

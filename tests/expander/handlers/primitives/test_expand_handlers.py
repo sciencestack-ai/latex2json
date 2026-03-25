@@ -19,6 +19,16 @@ def test_noexpand_basic():
     assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
 
 
+def test_protect_basic():
+    expander = Expander()
+
+    expander.expand(r"\def\foo{BAR}")
+
+    # \protect should keep the next token unexpanded (LaTeX moving-arg behavior)
+    out = expander.expand(r"\protect\foo")
+    assert_token_sequence(out, [Token(TokenType.CONTROL_SEQUENCE, "foo")])
+
+
 def test_noexpand_with_csname():
     expander = Expander()
 
