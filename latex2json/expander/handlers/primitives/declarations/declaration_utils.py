@@ -1,7 +1,29 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
-from latex2json.tokens.types import Token
-from latex2json.tokens.utils import is_begin_bracket_token
+from latex2json.tokens.types import Token, TokenType
+from latex2json.tokens.utils import is_begin_bracket_token, strip_whitespace_tokens
+
+
+def is_self_referential_definition(
+    cmd: Token, usage_pattern: List[Token], definition: List[Token]
+) -> bool:
+    r"""Detect \def\X{\X} (a no-op in our model, infinite loop otherwise).
+
+    Shows up in older papers via guards like ``\def\mathbb{\Bbb}`` once ``\Bbb``
+    has been rewritten to ``\mathbb`` by the AMSTeX preprocessor (see arXiv
+    1012.3760).
+    """
+    if usage_pattern:
+        return False
+    body = strip_whitespace_tokens(list(definition))
+    if len(body) != 1:
+        return False
+    tok = body[0]
+    return (
+        tok.type == TokenType.CONTROL_SEQUENCE
+        and cmd.type == TokenType.CONTROL_SEQUENCE
+        and tok.value == cmd.value
+    )
 
 
 def get_newcommand_args_and_definition(

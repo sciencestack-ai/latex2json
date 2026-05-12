@@ -1,5 +1,8 @@
 from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
+from latex2json.expander.handlers.primitives.declarations.declaration_utils import (
+    is_self_referential_definition,
+)
 from latex2json.expander.macro_registry import Macro, MacroType
 from dataclasses import dataclass, field
 
@@ -151,6 +154,12 @@ class DefMacro(Macro):
         out = def_handler(expander, token)
         if out is None:
             return None
+
+        if is_self_referential_definition(out.cmd, out.usage_pattern, out.definition):
+            expander.logger.info(
+                f"skipping self-referential definition {out.cmd.to_str()} -> {out.cmd.to_str()}"
+            )
+            return []
 
         if not self.is_lazy:
             out.definition = expander.expand_tokens(out.definition)

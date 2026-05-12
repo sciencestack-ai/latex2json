@@ -3,6 +3,7 @@ from typing import List, Optional, Tuple
 from latex2json.expander.expander_core import ExpanderCore
 from latex2json.expander.handlers.primitives.declarations.declaration_utils import (
     get_newcommand_args_and_definition,
+    is_self_referential_definition,
 )
 from latex2json.expander.macro_registry import Macro, MacroType
 from latex2json.tokens.types import Token
@@ -27,6 +28,14 @@ class NewCommandMacro(Macro):
         out = newcommand_handler(expander, token, self.allow_redefine)
         if out is None:
             return None
+
+        if out.num_args == 0 and is_self_referential_definition(
+            out.cmd_token, [], out.definition
+        ):
+            expander.logger.info(
+                f"skipping self-referential definition {out.cmd_token.to_str()} -> {out.cmd_token.to_str()}"
+            )
+            return []
 
         def handler(expander: ExpanderCore, token: Token) -> Optional[List[Token]]:
             # Parse exactly num_args arguments

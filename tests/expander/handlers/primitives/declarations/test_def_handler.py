@@ -615,3 +615,22 @@ def test_def_delimited_recursive():
     # 1) B 2) CC
     assert out_str.startswith("1) AAA 2) B CC ")
     assert out_str.endswith(" 1) B 2) CC")
+
+
+def test_def_self_referential_is_noop():
+    r"""\def\X{\X} would loop forever; we skip registering it.
+
+    Shows up in older papers as guards like \def\mathbb{\Bbb} once the AMSTeX
+    preprocessor has rewritten \Bbb -> \mathbb (see arXiv 1012.3760).
+    """
+    expander = Expander()
+    out = expander.expand(r"\def\mathbb{\mathbb} \mathbb R")
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"\mathbb R"
+
+
+def test_newcommand_self_referential_is_noop():
+    expander = Expander()
+    out = expander.expand(r"\newcommand{\foo}{\foo} \foo")
+    out_str = expander.convert_tokens_to_str(out).strip()
+    assert out_str == r"\foo"
